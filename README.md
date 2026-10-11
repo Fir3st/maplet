@@ -17,6 +17,115 @@ their attribution and license are included in [NOTICE](NOTICE).
 > [implementation status](docs/status.md) for known limitations and the scope of
 > testing. Development-machine timings are not reference benchmarks.
 
+## Why Maplet exists
+
+Leaflet inspired Maplet because it makes working with maps straightforward.
+I wanted that approachable experience for maps where thousands of objects are
+not just displayed, but continually change: points move, change color, appear
+or disappear, react to selection, and update the geometry connected to them.
+The goal is **rich, individually controllable map objects together with fast
+GPU rendering**, designed in TypeScript from the start.
+
+### Why Leaflet + PixiJS is a useful model
+
+Leaflet handles the map; PixiJS handles a scene of graphical objects. That
+combination is useful when an application needs many changing icons or sprites,
+not just a static collection of dots:
+
+- **Objects with persistent visual state.** A PixiJS sprite has position,
+  visibility, tint, scale and rotation. Applications can change those properties
+  directly instead of treating each update as a new drawing command.
+- **Batched GPU rendering and shared textures.** Many sprites can reuse a
+  texture or spritesheet and be rendered in batches, without an HTML element
+  for every marker. This is a useful foundation for dense, dynamic symbol layers.
+- **A scene graph for coordinated changes.** Containers let applications move,
+  scale or organize related graphics together. Animated symbols and richer
+  visual effects fit this model naturally.
+- **A bridge between map and graphics coordinates.** Leaflet.PixiOverlay
+  connects PixiJS to Leaflet's view and supports scaling projected geometry
+  during zoom rather than reprojecting every object.
+
+Canvas can also support changing visibility, color and position. Leaflet's
+Canvas renderer already supplies mutable vector objects, events and partial
+redraws. The distinction is therefore **not “Canvas is static, PixiJS is
+interactive”**: it is the GPU-oriented sprite scene, its rendering capabilities
+and the workflow it offers for many changing graphical objects. Nor does GPU
+rendering automatically solve pointer hit testing or make every workload faster.
+
+These capabilities are documented in [Leaflet.PixiOverlay](https://github.com/manubb/Leaflet.PixiOverlay)
+and the [PixiJS scene-object](https://pixijs.com/8.x/guides/components/scene-objects)
+and [batching documentation](https://pixijs.com/8.x/guides/concepts/performance-tips).
+They explain the architectural motivation, not a measured claim that every
+developer prefers PixiJS or that Maplet already outperforms it.
+
+### What Maplet aims to bring together
+
+Maplet targets the same need for dynamic GPU-rendered objects, but as a
+standalone mapping library rather than a graphics overlay attached to Leaflet.
+Map coordinates, rendering, feature identity, visual state and data updates
+belong to one API. A point can change position or appearance while keeping its
+identity, and a connected line can follow it through a computed binding.
+
+The intended benefit is not merely drawing more dots: it is making **large,
+changing, interconnected maps practical to build and maintain**, without
+assembling a separate map engine, rendering overlay and application-specific
+synchronization layer. That direction shapes the implementation:
+
+- **TypeScript from the start.** Leaflet 1.9.x is written in JavaScript;
+  TypeScript applications generally use separately maintained `@types/leaflet`
+  declarations. Maplet is written in TypeScript and ships declarations generated
+  from its implementation, with typed sources, feature references, expressions
+  and events forming part of the API design.
+- **No DOM element per marker.** Standard Leaflet markers use HTML image or div
+  elements, with additional elements for shadows or permanent tooltips when
+  enabled. With thousands of markers, managing and updating those elements can
+  become a significant memory and rendering cost. Maplet batches points and
+  image sprites into GPU draws rather than creating a DOM element for each one.
+  Labels are rendered through texture atlases as well.
+- **A GPU rendering pipeline.** Leaflet supports SVG and Canvas renderers for
+  vector paths, and Canvas circle markers can avoid per-point DOM elements;
+  plugins also offer alternative marker renderers. Maplet instead makes GPU
+  rendering the core architecture, using WebGPU or WebGL for tiles, vectors,
+  sprites, labels and picking rather than adding a separate rendering plugin.
+- **SVG tiles in the same pipeline.** Maplet accepts SVG tile images alongside
+  PNG and JPEG: the browser decodes them and the renderer draws them as GPU
+  textures. Leaflet can also display SVG URLs as image tiles, so SVG support
+  alone is not the distinction. The goal here is a shared GPU pipeline—not
+  resolution-independent rendering of SVG paths on the GPU.
+- **Data that stays connected.** Dense, interactive maps need more than drawing
+  markers. Maplet separates sources from layers and provides stable identities,
+  atomic updates, relations and computed bindings, so moving a point can update
+  its connected geometry in the same transaction.
+
+This is not a claim that Leaflet is slow for every map or that GPU rendering
+removes every bottleneck. Leaflet remains a good fit for many applications.
+Maplet explores a TypeScript-first, GPU-based alternative for data-heavy maps;
+the [500,000-point example](demo/scale.html) exposes measured timings, while
+[implementation status](docs/status.md) documents the remaining limits.
+
+### Measured scale, not just architectural claims
+
+The alpha has been checked with **500,000 points**: Maplet submits **258,420
+planned point instances in one GPU draw call**, including its culling margin,
+without per-point DOM markers. **180 visibility, color and position changes**
+passed pixel and data-retention checks across Maplet and the Leaflet Canvas
+comparison. These are demonstrated capabilities, not proof of a general speed
+advantage or a complete benchmark of animated, sprite-heavy maps.
+
+The goal above is still ahead of the current performance: in the simple-circle
+comparison, Leaflet Canvas was faster at setup, pan and individual updates.
+Maplet currently rebuilds its frame plan after revision changes. See
+[measurements, methodology and raw records](docs/benchmarks/README.md) for the
+results and limitations; PixiJS itself has not been benchmarked.
+
+Reproduce the existing measurements with an installed Chromium browser:
+
+```bash
+npm run build
+python3 demo/compare.py               # setup/pan, including bounded HTML-marker runs
+python3 demo/compare.py --updates     # visibility, color and position with pixel checks
+```
+
 ## Features
 
 - **GPU rendering:** WebGPU with a configurable WebGL 1 fallback, a shared frame

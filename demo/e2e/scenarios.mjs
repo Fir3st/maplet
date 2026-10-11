@@ -8,9 +8,14 @@
  * input (mouse, wheel, keyboard) and asserts on the public API plus the real
  * rendered pixels — the same path a user takes.
  */
+import { compareUpdates } from './compare-updates.mjs';
+
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const batteries = [
+  { name: 'comparison:maplet', page: 'compare.html', hook: '__compareCheckResult', query: 'engine=maplet', manual: true },
+  { name: 'comparison:leaflet-canvas', page: 'compare.html', hook: '__compareCheckResult', query: 'engine=leaflet-canvas', manual: true },
+  { name: 'comparison:leaflet-dom', page: 'compare.html', hook: '__compareCheckResult', query: 'engine=leaflet-dom', manual: true },
   { name: 'battery:interaction', page: 'interaction.html', hook: '__interactionCheckResult' },
   { name: 'battery:pick', page: 'pick.html', hook: '__pickCheckResult' },
   { name: 'battery:tiles-svg', page: 'tiles.html', hook: '__tileCheckResult', query: 'mode=svg' },
@@ -68,6 +73,10 @@ async function emptyScreen(session, from) {
 /* -------------------------------- scenarios ------------------------------- */
 
 export const scenarios = [
+  { name: 'comparison-updates:maplet', page: 'compare.html', query: 'engine=maplet',
+    ready: '!!window.__comparison', manual: true, run: compareUpdates },
+  { name: 'comparison-updates:leaflet-canvas', page: 'compare.html', query: 'engine=leaflet-canvas',
+    ready: '!!window.__comparison', manual: true, run: compareUpdates },
   {
     name: 'scene-renders',
     page: 'e2e/scene.html',

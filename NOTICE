@@ -21,8 +21,9 @@ The coordinate math in `src/math/crs.ts` (spherical Web Mercator x/y, the
 (https://leafletjs.com, L.Projection.SphericalMercator, L.CRS, L.LatLng wrap and
 bounds behavior). Tests in `test/math/crs.test.ts` compare the preserved contracts
 against the real Leaflet 1.9.4 build as an independent oracle.
-The unmodified ESM test oracle is included at `demo/vendor/leaflet.esm.js`;
-it is a development dependency only and is not part of the published package.
+The unmodified ESM test oracle is included at `demo/vendor/leaflet.esm.js`,
+with Leaflet's stylesheet at `demo/vendor/leaflet.css` for comparison pages.
+These are development dependencies only, not part of the published package.
 
     Leaflet is licensed under the BSD 2-Clause License:
     Copyright (c) 2010-2023, Volodymyr Agafonkin

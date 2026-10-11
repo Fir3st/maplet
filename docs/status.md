@@ -50,6 +50,23 @@ The 500,000-point example recorded roughly 1.2–1.3 s for worker import and
 development-machine observations, **not reference benchmarks or performance
 guarantees**. The demo HUD measures the current run.
 
+A fresh three-run-per-backend check on October 11, 2026 recorded imports of
+1,200–1,302 ms (WebGL 1) and 1,207–1,376 ms (WebGPU), with 258,420 visible
+instances and one draw call. Its short headless pan check recorded approximately
+one-second intervals, not smooth interactive frame rates. See the
+[README measurement table](../README.md#measured-scale-not-just-architectural-claims)
+for workload, memory observations, timing definitions and limitations. These
+current observations should not be confused with the earlier development record.
+
+The subsequent [matched Leaflet comparison](benchmarks/README.md) includes
+Canvas and HTML-marker variants, longer warmed-up pan measurements, and
+pixel-verified visibility/color/position changes. Leaflet Canvas was faster
+than the current Maplet alpha for setup, pan and these single-point updates;
+Maplet used less main-thread JS heap after GC. Three HTML-marker runs timed out
+within the 120-second whole-process budget, so no successful DOM timing is
+claimed. All 180 single-point mutation checks passed across the completed
+Maplet/Canvas variants. PixiJS was researched, not benchmarked.
+
 ## Known limitations
 
 - **Performance:** reference hardware and the reference benchmark suite have
@@ -128,6 +145,7 @@ Open the paths below under `http://localhost:8400/demo/`. Most test pages accept
 | --- | --- |
 | `index.html` | Interactive library demo; local tiles by default, live providers via `?tiles=osm` or the basemap buttons |
 | `scale.html` | 500,000-point example with measured import/render/pan HUD |
+| `compare.html` | Opt-in matched Maplet / Leaflet 500,000-point comparison; see `benchmarks/README.md` |
 | `tiles.html?mode=svg` | Offline tile orientation, pixel sampling and seams |
 | `tiles.html?mode=osm` | Live OpenStreetMap tile comparison |
 | `tiles.html?mode=esri-imagery&live=1` | Live JPEG provider comparison |

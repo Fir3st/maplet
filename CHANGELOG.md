@@ -4,6 +4,9 @@
 
 - License original Maplet material under Apache-2.0, preserving third-party
   license terms and attribution.
+- Add an opt-in, reproducible 500,000-point Leaflet comparison with recorded
+  setup/pan results and pixel-verified single-point visibility, color and
+  position updates. Document limitations without claiming a general GPU speedup.
 
 ## 0.1.0-alpha.1
 

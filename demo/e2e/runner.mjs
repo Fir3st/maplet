@@ -23,7 +23,7 @@
  * Playwright cache under ~/Library/Caches/ms-playwright, Google Chrome.
  */
 import { spawn } from 'node:child_process';
-import { mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
@@ -386,7 +386,8 @@ async function runScenario(kind, definition, context) {
 
   const ms = Date.now() - started;
   let screenshot = null;
-  if (failures.length > 0) {
+  if (failures.length > 0 || definition.manual) {
+    mkdirSync(context.checksDir, { recursive: true });
     const file = path.join(context.checksDir, `e2e-${definition.name}.png`);
     try {
       screenshot = await session.screenshot(file);
@@ -454,7 +455,7 @@ async function main() {
   }
   const selected = flags.scenario
     ? list.filter((entry) => entry.name === flags.scenario)
-    : list;
+    : list.filter((entry) => !entry.manual);
   if (selected.length === 0) {
     console.error(`no scenario named ${flags.scenario}; use --list`);
     return 1;

@@ -1,0 +1,16 @@
+- main [ref=e2]:
+  - generic "500,000 interactive points" [ref=e3]
+  - complementary [ref=e5]:
+    - heading "Maplet / Leaflet comparison" [level=1] [ref=e6]
+    - paragraph [ref=e7]:
+      - text: The same 500,000-point grid, 720 × 520 viewport, zoom 10 and two-pixel blue circles. Use
+      - code [ref=e8]: "?engine=maplet"
+      - text: ","
+      - code [ref=e9]: "?engine=leaflet-canvas"
+      - text: or
+      - code [ref=e10]: "?engine=leaflet-dom"
+      - text: . Maplet also accepts
+      - code [ref=e11]: "&backend=webgpu"
+      - text: .
+    - paragraph [ref=e12]: Fresh-process setup, a short pan and a longer warmed-up pan are measured separately. These are observations on this machine, not universal performance guarantees.
+    - generic [ref=e13]: running…
