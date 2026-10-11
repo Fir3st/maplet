@@ -1,0 +1,15 @@
+maplet-subset.woff2
+-------------------
+Roboto (glyph subset), Copyright 2011 Google Inc.
+Licensed under the Apache License, Version 2.0
+(https://www.apache.org/licenses/LICENSE-2.0).
+
+Source: Google Fonts CSS API v2, family=Roboto, weight 400, subset via the
+`text=` parameter. Regenerate with `python3 demo/fetch-font.py --force`.
+
+The subset contains exactly the glyphs used by the browser font checks
+(TEXT-02/03/05):
+
+    Maplet fonts test Příliš žluťoučký kůň 0123456789  (plus U+0301)
+
+It is a development/test fixture only; it is not part of the published bundle.

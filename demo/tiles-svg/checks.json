@@ -1,0 +1,75 @@
+{
+  "source": "demo/generate-tiles.py",
+  "tile": {
+    "z": 2,
+    "x": 1,
+    "y": 1
+  },
+  "size": 256,
+  "samples": [
+    {
+      "name": "circleCenter",
+      "x": 128,
+      "y": 128,
+      "expected": [
+        255,
+        45,
+        85
+      ]
+    },
+    {
+      "name": "crosshairTop",
+      "x": 128,
+      "y": 20,
+      "expected": [
+        16,
+        16,
+        16
+      ]
+    },
+    {
+      "name": "borderLeft",
+      "x": 4,
+      "y": 40,
+      "expected": [
+        16,
+        16,
+        16
+      ]
+    },
+    {
+      "name": "background",
+      "x": 40,
+      "y": 200,
+      "expected": [
+        180,
+        74,
+        171
+      ]
+    }
+  ],
+  "text": {
+    "inkThreshold": 200,
+    "mustHaveInk": {
+      "x": 8,
+      "y": 8,
+      "w": 44,
+      "h": 24,
+      "minInk": 3
+    },
+    "mustBeEmpty": [
+      {
+        "x": 204,
+        "y": 8,
+        "w": 44,
+        "h": 24
+      },
+      {
+        "x": 8,
+        "y": 224,
+        "w": 44,
+        "h": 24
+      }
+    ]
+  }
+}

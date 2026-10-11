@@ -1,0 +1,19 @@
+node_modules/
+dist/
+demo/tiles/
+demo/tiles-providers/
+demo/checks/
+__pycache__/
+*.py[cod]
+.DS_Store
+*.tsbuildinfo
+*.tgz
+
+# Local environment and key material must not be committed.
+.env
+.env.*
+*.env
+*.pem
+*.key
+*.p12
+*.pfx

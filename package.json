@@ -1,0 +1,62 @@
+{
+  "name": "maplet",
+  "version": "0.1.0-alpha.1",
+  "description": "Standalone GPU map library for WebGPU and WebGL 1 - sources, stable feature references, relations, bindings, raster and vector layers",
+  "type": "module",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Fir3st/maplet.git"
+  },
+  "homepage": "https://github.com/Fir3st/maplet#readme",
+  "bugs": {
+    "url": "https://github.com/Fir3st/maplet/issues"
+  },
+  "private": true,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./math": {
+      "types": "./dist/math/index.d.ts",
+      "import": "./dist/math/index.js"
+    },
+    "./formats": {
+      "types": "./dist/formats/geojson.d.ts",
+      "import": "./dist/formats/geojson.js"
+    }
+  },
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "NOTICE",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node scripts/rewrite-declarations.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "typecheck:tests": "tsc -p tsconfig.test.json --noEmit",
+    "test": "node --test test/",
+    "check": "npm run build && npm run typecheck && npm run typecheck:tests && npm run typecheck:types && npm run test",
+    "demo": "python3 demo/serve.py",
+    "e2e": "node demo/e2e/runner.mjs",
+    "typecheck:types": "tsc -p tsconfig.type-tests.json --noEmit"
+  },
+  "keywords": [
+    "map",
+    "webgpu",
+    "webgl",
+    "gis",
+    "leaflet-inspired",
+    "vector",
+    "raster",
+    "tiles",
+    "features"
+  ],
+  "engines": {
+    "node": ">=22"
+  }
+}

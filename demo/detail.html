@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Maplet detail and accessible list checks</title>
+<style>
+  html, body { margin: 0; font: 13px/1.5 system-ui, sans-serif; background: #111827; color: #e5e7eb; }
+  main { display: flex; gap: 16px; padding: 16px; align-items: flex-start; }
+  .map { position: relative; background: #ffffff; flex: none; }
+  #map-main { width: 520px; height: 420px; }
+  #map-live { width: 320px; height: 240px; }
+  .label { font: 600 12px ui-monospace, monospace; color: #9ca3af; margin: 4px 0 0; }
+  h1 { font-size: 15px; margin: 0 0 6px; }
+  #summary { font-weight: 600; }
+  #summary.pass { color: #4ade80; }
+  #summary.fail { color: #f87171; }
+  #details { white-space: pre-wrap; font: 11px/1.45 ui-monospace, monospace; max-width: 620px; max-height: 84vh; overflow: auto; color: #9ca3af; }
+  .hint { color: #9ca3af; margin: 0 0 10px; }
+</style>
+</head>
+<body>
+<main>
+  <div>
+    <div id="map-main" class="map" aria-label="Detail map"></div>
+    <p class="label">detail lifecycle + accessible list</p>
+  </div>
+  <div>
+    <div id="map-live" class="map" aria-label="Live list map"></div>
+    <p class="label">live map for real input checks</p>
+    <h1>Maplet detail &amp; a11y list</h1>
+    <p class="hint">
+      UI-05/06: a detail is bound to one generation-checked reference, follows the
+      feature, never shows a new generation of the same id, renders string content
+      as text and appends explicit DOM only through the documented path.
+      UI-08: the result list stays bounded and mirrors the selection.
+      Results: <code>window.__detailCheckResult</code>.
+    </p>
+    <p id="summary">running…</p>
+    <pre id="details"></pre>
+  </div>
+</main>
+<script type="module" src="./detail.js"></script>
+</body>
+</html>

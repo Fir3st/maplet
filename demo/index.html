@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Maplet — demo (WebGL 1 / WebGPU)</title>
+<style>
+  :root {
+    --ink: #1f2937;
+    --panel: rgba(255, 255, 255, 0.94);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; font: 14px/1.45 system-ui, sans-serif; color: var(--ink); }
+  #app { display: grid; grid-template-columns: 320px 1fr; height: 100%; }
+  /* Neutral tone behind the transparent canvas so the very first tiles do not
+     flash white while they decode. */
+  #map { position: relative; height: 100%; background: #dfe3e6; }
+  #panel {
+    padding: 14px 16px;
+    background: var(--panel);
+    border-right: 1px solid #e5e7eb;
+    overflow: auto;
+  }
+  h1 { font-size: 17px; margin: 0 0 4px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: #6b7280; margin: 18px 0 6px; }
+  button { font: inherit; padding: 6px 10px; margin: 0 6px 6px 0; border: 1px solid #d1d5db; background: #fff; border-radius: 6px; cursor: pointer; }
+  button:hover { border-color: #9ca3af; }
+  #stats { white-space: pre-wrap; font: 12px/1.5 ui-monospace, monospace; color: #374151; }
+  #log { white-space: pre-wrap; font: 12px/1.5 ui-monospace, monospace; color: #6b7280; max-height: 180px; overflow: auto; }
+  #attribution {
+    position: absolute; right: 6px; bottom: 4px; font-size: 11px; color: #374151;
+    background: rgba(255, 255, 255, 0.85); padding: 1px 5px; border-radius: 3px;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="panel">
+    <h1>Maplet</h1>
+    <p>Maplet is a new, independent mapping library inspired by Leaflet, with GPU rendering via WebGPU and WebGL. Drag a point to update its connected line, or Shift+drag to select an area.</p>
+    <h2>Data</h2>
+    <button id="btn-points">Add points</button>
+    <button id="btn-lines">Add lines</button>
+    <button id="btn-fills">Polygon info</button>
+    <button id="btn-bind">Move linked point</button>
+    <button id="btn-move">Move point</button>
+    <button id="btn-hide">Hide/show point</button>
+    <h2>Basemap</h2>
+    <div id="tile-buttons">
+      <button data-tile="local">Local</button>
+      <button data-tile="svg">SVG</button>
+      <button data-tile="osm">OSM</button>
+      <button data-tile="osm-de">OSM-DE</button>
+      <button data-tile="opentopomap">Topo</button>
+      <button data-tile="esri-imagery">Esri</button>
+      <button data-tile="osm-de-cache">OSM-DE cache</button>
+    </div>
+    <h2>View</h2>
+    <button id="btn-fit">Fit Czechia</button>
+    <button id="btn-zoom">Zoom +</button>
+    <h2>Statistics</h2>
+    <div id="stats">–</div>
+    <h2>Recent events</h2>
+    <div id="log"></div>
+  </aside>
+  <div id="map" aria-label="Map" role="application">
+    <div id="attribution">Local test tiles (Maplet)</div>
+  </div>
+</div>
+<script type="module" src="./demo.js"></script>
+</body>
+</html>

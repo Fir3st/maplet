@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Maplet soak checks</title>
+<style>
+  html, body { margin: 0; font: 13px/1.5 system-ui, sans-serif; background: #111827; color: #e5e7eb; }
+  main { display: flex; gap: 16px; padding: 16px; align-items: flex-start; }
+  .map { position: relative; background: #ffffff; flex: none; }
+  #map { width: 420px; height: 320px; }
+  .label { font: 600 12px ui-monospace, monospace; color: #9ca3af; margin: 4px 0 0; }
+  h1 { font-size: 15px; margin: 0 0 6px; }
+  #summary { font-weight: 600; }
+  #summary.pass { color: #4ade80; }
+  #summary.fail { color: #f87171; }
+  #details { white-space: pre-wrap; font: 11px/1.45 ui-monospace, monospace; max-width: 620px; max-height: 84vh; overflow: auto; color: #9ca3af; }
+  .hint { color: #9ca3af; margin: 0 0 10px; }
+</style>
+</head>
+<body>
+<main>
+  <div>
+    <div id="map" class="map" aria-label="Soak checks map"></div>
+    <p class="label">12 create/destroy cycles, 500k import, 2.5 s run</p>
+  </div>
+  <div>
+    <h1>Maplet soak</h1>
+    <p class="hint">
+      Lifecycle at scale: twelve create/destroy cycles (canvas and font cleanup,
+      GC-stabilized heap growth), a sustained pan/update run, a 500k-point
+      worker import with a cancelled heavy job, and a heavy map destroy that
+      must release the store. Heap deltas use <code>gc()</code> when the runner
+      exposes it (<code>npm run e2e</code>); manual runs report a looser bound.
+      Results: <code>window.__soakCheckResult</code>.
+    </p>
+    <p id="summary">running…</p>
+    <pre id="details"></pre>
+  </div>
+</main>
+<script type="module" src="./soak.js"></script>
+</body>
+</html>

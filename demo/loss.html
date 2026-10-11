@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Maplet backend loss checks</title>
+<style>
+  html, body { margin: 0; font: 13px/1.5 system-ui, sans-serif; background: #111827; color: #e5e7eb; }
+  main { display: flex; gap: 16px; padding: 16px; align-items: flex-start; }
+  .map { width: 512px; height: 512px; position: relative; background: #ffffff; flex: none; }
+  .map.small { width: 192px; height: 192px; }
+  .label { font: 600 12px ui-monospace, monospace; color: #9ca3af; margin: 4px 0 0; }
+  h1 { font-size: 15px; margin: 0 0 6px; }
+  #summary { font-weight: 600; }
+  #summary.pass { color: #4ade80; }
+  #summary.fail { color: #f87171; }
+  #details { white-space: pre-wrap; font: 11px/1.45 ui-monospace, monospace; max-width: 620px; max-height: 84vh; overflow: auto; color: #9ca3af; }
+  .hint { color: #9ca3af; margin: 0 0 10px; }
+</style>
+</head>
+<body>
+<main>
+  <div>
+    <div id="map-main" class="map" aria-label="Recovery map"></div>
+    <p class="label">main (device loss, fallback, context loss)</p>
+  </div>
+  <div>
+    <div id="map-fail" class="map small" aria-label="Total failure map"></div>
+    <p class="label">both paths fail</p>
+    <h1>Maplet backend loss</h1>
+    <p class="hint">
+      Device/context loss recovery (GPU-07..10): the real backend is replaced, the
+      public handle, view, selection, state, bindings and feature generations stay.
+      Results: <code>window.__lossCheckResult</code>.
+    </p>
+    <p id="summary">running…</p>
+    <pre id="details"></pre>
+  </div>
+</main>
+<script type="module" src="./loss.js"></script>
+</body>
+</html>

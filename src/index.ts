@@ -1,0 +1,175 @@
+/**
+ * Maplet public facade.
+ *
+ * Importing this module never touches `document`, `navigator` or the GPU; only
+ * `createMap` with a GPU renderer requires a browser environment (DIST-05,
+ * MAP-07). Pure math lives in the `maplet/math` subpath.
+ */
+
+export { createMap } from './map.ts';
+export type {
+  AreaQueryOptions,
+  AreaQueryResult,
+  AssetsHandle,
+  BindingsHandle,
+  ControlHandle,
+  ControlKind,
+  ControlLayerEntry,
+  ControlPosition,
+  ControlSpec,
+  ControlsHandle,
+  DetailContent,
+  DetailContentFactory,
+  DetailHandle,
+  DetailOptions,
+  DetailServiceHandle,
+  GroupHandle,
+  GroupsHandle,
+  LayerFeaturesHandle,
+  LayerHandle,
+  LayersHandle,
+  ListControlOptions,
+  LocateErrorCode,
+  LocateHandle,
+  LocateOptions,
+  LocateResult,
+  LocateWatch,
+  LocateWatchOptions,
+  LocatedPosition,
+  MapHandle,
+  MapOptions,
+  QueryCursor,
+  QueryHandle,
+  RelationsHandle,
+  RendererOptions,
+  SelectionHandle,
+  SourcesHandle,
+  StateHandle,
+  ViewHandle,
+} from './map.ts';
+
+export { crs, wrapLongitude, wrapLatitude, haversineMeters } from './math/crs.ts';
+export type { Crs, CustomCrsSpec, Distance, DistanceUnit } from './math/crs.ts';
+export type {
+  Bounds,
+  GeoBounds,
+  PlanarBounds,
+} from './math/bounds.ts';
+export { expr } from './scene/expression.ts';
+export type { Expression, ExpressionInput, ColorValue, Filter, FilterExpression, TypedField } from './scene/expression.ts';
+
+export { MapletError, isMapletError } from './api/errors.ts';
+export type { MapletErrorCode } from './api/errors.ts';
+
+export type {
+  BackendKind,
+  Capabilities,
+  CircleGeometry,
+  Commit,
+  FeatureId,
+  FeatureProperties,
+  FeatureRef,
+  FeatureSnapshot,
+  GeoPosition,
+  Geometry,
+  LineStringGeometry,
+  MapStats,
+  MultiLineStringGeometry,
+  MultiPointGeometry,
+  MultiPolygonGeometry,
+  PickStallStats,
+  PlanarPosition,
+  PointGeometry,
+  PolygonGeometry,
+  Position,
+  RectangleGeometry,
+  ScreenPoint,
+  SubscribeOptions,
+  Unsubscribe,
+  WorldPoint,
+} from './api/types.ts';
+
+export type {
+  FeatureInput,
+  FeaturePatch,
+  FeatureQueryOptions,
+  ColumnarImportOptions,
+  SourceChange,
+  SourceSnapshot,
+  VectorSourceHandle,
+  FeaturesHandle,
+} from './scene/source.ts';
+export type {
+  ColumnarBatch,
+  ColumnarIndexArray,
+  ColumnarKind,
+  ColumnarPartsBatch,
+  ColumnarPointBatch,
+  ColumnarPositionArray,
+  ColumnarPositionKind,
+  ColumnarToFeaturesOptions,
+} from './io/columnar.ts';
+export { columnarToFeatures } from './io/columnar.ts';
+export type { ImportPipelineDebug, ImportWorkerLike } from './io/import-pipeline.ts';
+export type { RasterSourceHandle, RasterSourceSnapshot } from './scene/raster-source.ts';
+export type { ImageAssetHandle, ImageAssetSnapshot, ImageAssetState } from './scene/assets.ts';
+export type {
+  FontAssetHandle,
+  FontAssetSnapshot,
+  FontAssetState,
+} from './scene/assets.ts';
+export type {
+  ImageSourceOptions,
+  MediaBounds,
+  MediaPixelData,
+  MediaRegion,
+  MediaSourceHandle,
+  MediaSourceKind,
+  MediaSourceSnapshot,
+  MediaState,
+  VideoSourceOptions,
+} from './scene/media-source.ts';
+export type { RasterTilesOptions, TileCoord, WmsOptions } from './formats/raster.ts';
+export type {
+  TileFetch,
+  TileFetchResponse,
+  VectorTilesFeaturesHandle,
+  VectorTilesOptions,
+  VectorTilesSourceHandle,
+  VectorTilesSourceSnapshot,
+  VectorTilesStats,
+} from './scene/vector-tile-source.ts';
+export type {
+  MvtDecodeOptions,
+  MvtDecodeResult,
+  MvtFeature,
+  MvtGeometry,
+  MvtLayer,
+  MvtLineGeometry,
+  MvtPointGeometry,
+  MvtPolygonGeometry,
+  MvtTile,
+} from './formats/mvt.ts';
+export { decodeMvtTile } from './formats/mvt.ts';
+export type { GeoJsonFeatureCollection } from './formats/geojson.ts';
+export { parseGeoJson, featuresToGeoJson } from './formats/geojson.ts';
+export type { EndpointPolicy, RelationInput, RelationSnapshot, NeighborOptions, TraverseOptions } from './scene/relations.ts';
+export type { BindingInput, BindingSnapshot, GeometryBindingDescriptor, CopyPropertyDescriptor, OnMissingPolicy } from './scene/bindings.ts';
+export type { FeatureState, FeatureStatePatch } from './scene/state.ts';
+export type {
+  LayerKind,
+  LayerSpec,
+  PointsLayerStyle,
+  LinesLayerStyle,
+  FillsLayerStyle,
+  LabelsLayerStyle,
+  RasterLayerStyle,
+  FeatureOverride,
+  MoveTarget,
+  PointShape,
+} from './scene/layers.ts';
+export type { PickResult } from './render/picking.ts';
+export { defaultClock } from './view/view.ts';
+export type { Clock, FitOptions, FlyOptions, FitPadding, ViewSnapshot, ViewUpdate } from './view/view.ts';
+
+export const version = '0.1.0-alpha.1';

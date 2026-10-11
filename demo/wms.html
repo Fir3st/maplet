@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Maplet WMS checks</title>
+<style>
+  html, body { margin: 0; font: 13px/1.5 system-ui, sans-serif; background: #111827; color: #e5e7eb; }
+  main { display: flex; gap: 20px; padding: 16px; align-items: flex-start; }
+  #map { width: 512px; height: 512px; position: relative; background: #1f2937; flex: none; }
+  h1 { font-size: 15px; margin: 0 0 6px; }
+  #summary { font-weight: 600; }
+  #summary.pass { color: #4ade80; }
+  #summary.fail { color: #f87171; }
+  #details { white-space: pre-wrap; font: 11px/1.45 ui-monospace, monospace; max-width: 620px; max-height: 82vh; overflow: auto; color: #9ca3af; }
+  .hint { color: #9ca3af; margin: 0 0 10px; }
+</style>
+</head>
+<body>
+<main>
+  <div id="map" aria-label="WMS check map"></div>
+  <div>
+    <h1>Maplet WMS checks</h1>
+    <p class="hint">
+      Real GetMap images from the deterministic <code>/wms</code> fixture (red = longitude,
+      green = latitude, blue = version/CRS/layers, magenta = <code>MARK</code>):
+      1.1.1 vs 1.3.0 axis order, EPSG:4326 vs CRS:84 vs EPSG:3857 metres, special
+      characters, held bitmap + late-response discard on parameter changes, and the
+      bitmap's own interactive area. <code>?mode=live</code> checks a public WMS.
+      Results: <code>window.__wmsCheckResult</code>.
+    </p>
+    <p id="summary">running…</p>
+    <pre id="details"></pre>
+  </div>
+</main>
+<script type="module" src="./wms.js"></script>
+</body>
+</html>

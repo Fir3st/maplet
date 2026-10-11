@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Maplet minimal fills probe</title>
+<style>html,body{margin:0;height:100%}#map{width:600px;height:400px;position:relative}</style>
+</head>
+<body>
+<div id="map"></div>
+<script type="module">
+import { createMap } from '../dist/index.js';
+
+const map = await createMap({
+  container: 'map',
+  renderer: { primary: 'webgl1', fallback: false },
+  size: { width: 600, height: 400 },
+  view: { center: { lat: 50, lng: 14 }, zoom: 8 },
+});
+const shapes = map.sources.vector({ id: 'shapes' });
+await shapes.features.replace([{
+  id: 'poly',
+  geometry: { type: 'polygon', rings: [[
+    { lat: 49.9, lng: 13.9 }, { lat: 49.9, lng: 14.1 }, { lat: 50.1, lng: 14.1 }, { lat: 50.1, lng: 13.9 },
+  ]] },
+  properties: {},
+}]);
+map.layers.add({ id: 'fills', type: 'fills', source: shapes, style: { fillColor: '#f59e0b', fillOpacity: 0.5, strokeColor: '#b45309', strokeWidthPx: 2 } });
+
+window.__probe = async (lat, lng) => {
+  const p = map.view.positionToScreen({ lat, lng });
+  const pixel = await map.debug.samplePixel(p);
+  const hits = await map.query.rendered(p);
+  return { p, pixel, hits: hits.map((h) => h.feature.id) };
+};
+window.__setStyle = (style) => map.layers.get('fills').setStyle(style);
+window.__maplet = { map };
+document.title = 'probe-ready';
+</script>
+</body>
+</html>

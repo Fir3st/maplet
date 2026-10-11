@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Maplet · 500 000 points</title>
+<style>
+  html, body { margin: 0; font: 13px/1.5 system-ui, sans-serif; background: #0f172a; color: #e2e8f0; }
+  main { display: flex; gap: 16px; padding: 16px; align-items: flex-start; }
+  .map-wrap { flex: none; }
+  #map { width: 720px; height: 520px; background: #ffffff; }
+  .label { font: 600 12px ui-monospace, monospace; color: #94a3b8; margin: 6px 0 0; }
+  aside { max-width: 340px; }
+  h1 { font-size: 16px; margin: 0 0 6px; }
+  .hint { color: #94a3b8; margin: 0 0 12px; }
+  .controls { display: flex; gap: 8px; margin-bottom: 12px; }
+  button {
+    font: 600 12px system-ui, sans-serif; color: #0f172a; background: #93c5fd;
+    border: 0; border-radius: 4px; padding: 6px 10px; cursor: pointer;
+  }
+  button:disabled { opacity: 0.5; cursor: default; }
+  dl { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; margin: 0 0 12px; font: 11px/1.6 ui-monospace, monospace; }
+  dt { color: #94a3b8; }
+  dd { margin: 0; text-align: right; }
+  #details { white-space: pre-wrap; font: 11px/1.45 ui-monospace, monospace; color: #94a3b8; max-height: 40vh; overflow: auto; }
+</style>
+</head>
+<body>
+<main>
+  <div class="map-wrap">
+    <div id="map" aria-label="500 000 points map"></div>
+    <p class="label">500 000 points · drag, zoom, hover a point</p>
+  </div>
+  <aside>
+    <h1>Maplet · 500 000 points</h1>
+    <p class="hint">
+      The whole batch is generated in the page, prepared by the real import
+      worker (<code>copy:false</code> transfers the position buffer) and drawn
+      as one instanced draw. “Pan test” runs a scripted 2.5 s pan and reports
+      the measured frame cadence; the numbers below are this machine, not a
+      reference benchmark (B01–B12 wait for reference hardware).
+    </p>
+    <div class="controls">
+      <button id="reimport">Regenerate &amp; import</button>
+      <button id="pan">Pan test</button>
+    </div>
+    <dl>
+      <dt>features</dt><dd id="hud-features">–</dd>
+      <dt>generate</dt><dd id="hud-generate">–</dd>
+      <dt>import (worker)</dt><dd id="hud-import">–</dd>
+      <dt>first render</dt><dd id="hud-render">–</dd>
+      <dt>instances in view</dt><dd id="hud-instances">–</dd>
+      <dt>draw calls</dt><dd id="hud-draws">–</dd>
+      <dt>GPU bytes</dt><dd id="hud-gpu">–</dd>
+      <dt>engine frames</dt><dd id="hud-frames">–</dd>
+      <dt>pan p50 / p95</dt><dd id="hud-pan">–</dd>
+      <dt>heap used</dt><dd id="hud-heap">–</dd>
+      <dt>hovered</dt><dd id="hud-hover">–</dd>
+    </dl>
+    <pre id="details">running…</pre>
+  </aside>
+</main>
+<script type="module" src="./scale.js"></script>
+</body>
+</html>
