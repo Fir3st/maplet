@@ -26,7 +26,7 @@ import { boundsFromPositions, type Bounds } from '../math/bounds.ts';
 import { geometryPositions, type PreparedFeatureGeometry } from '../geometry/geometry.ts';
 import { EMPTY_PROPERTIES, FeatureStore, type GeometryState, type SlotRecord } from './store.ts';
 import { featuresToGeoJson, type GeoJsonFeatureCollection } from '../formats/geojson.ts';
-import type { ColumnarBatch } from '../io/columnar.ts';
+import type { ColumnarBatch, ColumnarPointBatch } from '../io/columnar.ts';
 import type { ImportPipeline } from '../io/import-pipeline.ts';
 
 export interface SourceChange {
@@ -759,6 +759,14 @@ export function createSourceHandle(source: SourceImpl, scene: SourceHandleContex
       return { revision: scene.revision };
     },
     async importColumnar(batch, options = {}) {
+      if (batch?.kind === 'point') {
+        const prepared = await scene.importPipeline.submit({
+          kind: 'columnar-points', sourceId: source.id, batch, positionKind: source.crs.positionKind,
+        }, pipelineOptions(options));
+        throwIfAborted(options.signal);
+        source.mutate((change) => importPointTransaction(source, change, prepared, options.mode ?? 'replace', options.signal));
+        return { revision: scene.revision };
+      }
       const items = await scene.importPipeline.submit(
         {
           kind: 'columnar',
@@ -877,5 +885,36 @@ function replaceTransaction(
     } else {
       source.addOne(change, item, options);
     }
+  }
+}
+
+/** Publish the validated columns directly, avoiding a second full feature-object tree. */
+function importPointTransaction(source: SourceImpl, change: PendingChange, batch: ColumnarPointBatch, mode: 'replace' | 'append', signal: AbortSignal | undefined): void {
+  const count = batch.positions.length / 2;
+  const ids: FeatureId[] = new Array(count);
+  const seen = new Set<string>();
+  for (let i = 0; i < count; i++) {
+    const id = batch.ids?.[i] ?? source.nextId();
+    const key = featureIdKey(id);
+    if (seen.has(key)) fail('duplicate-id', `columnar import: duplicate id in input: ${String(id)}`, { id });
+    seen.add(key);
+    ids[i] = id;
+  }
+  if (mode === 'replace') {
+    const removed: SlotRecord[] = [];
+    source.store.forEachLive((record) => { if (!seen.has(record.key)) removed.push(record); });
+    for (const record of removed) source.removeOne(change, source.refOf(record), 'importColumnar');
+  }
+  for (let i = 0; i < count; i++) {
+    throwIfAborted(signal);
+    const x = batch.positions[i * 2]!;
+    const y = batch.positions[i * 2 + 1]!;
+    const altitude = batch.altitudes?.[i];
+    const position = source.crs.positionKind === 'planar' ? { x, y } :
+      altitude === undefined || Number.isNaN(altitude) ? { lng: x, lat: y } : { lng: x, lat: y, altitude };
+    const input = { id: ids[i]!, geometry: { type: 'point', position } as Geometry, properties: batch.properties?.[i] ?? EMPTY_PROPERTIES };
+    const record = source.store.get(input.id);
+    if (record && mode === 'replace') source.replaceOne(change, source.refOf(record), input);
+    else source.addOne(change, input, {});
   }
 }

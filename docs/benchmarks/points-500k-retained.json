@@ -1,0 +1,1003 @@
+{
+  "measuredAtUtc": "2026-10-12T13:56:24.518392+00:00",
+  "mode": "setup-and-pan",
+  "workload": {
+    "points": 500000,
+    "viewportCssPx": [
+      720,
+      520
+    ],
+    "zoom": 10,
+    "radiusCssPx": 2,
+    "color": "#2563eb",
+    "interactive": true,
+    "coldPanMs": 2500,
+    "warmupPanMs": 5000,
+    "measuredWarmPanMs": 10000
+  },
+  "repetitions": 3,
+  "processBudgetSeconds": 120,
+  "runs": [
+    {
+      "profile": "maplet-webgl1",
+      "repetition": 1,
+      "elapsedSeconds": 19.52,
+      "status": "pass",
+      "measurements": [
+        {
+          "engine": "maplet",
+          "backend": "webgl1",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+          "dpr": 1,
+          "count": 500000,
+          "renderedPointsOrDomMarkers": 258420,
+          "markerDomElements": 0,
+          "mapCreateMs": 4,
+          "generateMs": 15,
+          "loadMs": 616,
+          "paintWaitMs": 65,
+          "setupToPaintMs": 700,
+          "gcAvailable": true,
+          "heapDeltaMiB": 139.1,
+          "drawCalls": 1,
+          "gpuMiB": 15.8,
+          "output": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ],
+          "projections": [
+            {
+              "expected": {
+                "x": 360,
+                "y": 260
+              },
+              "actual": {
+                "x": 360.0000000000291,
+                "y": 260
+              },
+              "pass": true
+            },
+            {
+              "expected": {
+                "x": 505.635555555555,
+                "y": 429.66218561920687
+              },
+              "actual": {
+                "x": 505.6355555555783,
+                "y": 429.6621856191923
+              },
+              "pass": true
+            }
+          ]
+        },
+        {
+          "coldPan": {
+            "samples": 5,
+            "renderUpdates": 5,
+            "elapsedMs": 3037,
+            "p50Ms": 1003.1,
+            "p95Ms": 1017,
+            "maxMs": 1017
+          },
+          "warmupMs": 5000,
+          "warmPan": {
+            "samples": 538,
+            "renderUpdates": 538,
+            "elapsedMs": 10000,
+            "p50Ms": 16.7,
+            "p95Ms": 16.9,
+            "maxMs": 1016.7
+          },
+          "afterPan": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "profile": "leaflet-canvas",
+      "repetition": 1,
+      "elapsedSeconds": 19.67,
+      "status": "pass",
+      "measurements": [
+        {
+          "engine": "leaflet-canvas",
+          "backend": "1.9.4",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+          "dpr": 1,
+          "count": 500000,
+          "renderedPointsOrDomMarkers": 231240,
+          "markerDomElements": 0,
+          "mapCreateMs": 1,
+          "generateMs": 15,
+          "loadMs": 219,
+          "paintWaitMs": 51,
+          "setupToPaintMs": 285,
+          "gcAvailable": true,
+          "heapDeltaMiB": 207.1,
+          "drawCalls": null,
+          "gpuMiB": null,
+          "output": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 235,
+                "a": 255
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 235,
+                "a": 255
+              }
+            }
+          ],
+          "projections": [
+            {
+              "expected": {
+                "x": 360,
+                "y": 260
+              },
+              "actual": {
+                "x": 360,
+                "y": 260
+              },
+              "pass": true
+            },
+            {
+              "expected": {
+                "x": 505.635555555555,
+                "y": 429.66218561920687
+              },
+              "actual": {
+                "x": 506,
+                "y": 429
+              },
+              "pass": true
+            }
+          ]
+        },
+        {
+          "coldPan": {
+            "samples": 6,
+            "renderUpdates": 6,
+            "elapsedMs": 3413,
+            "p50Ms": 1004.8,
+            "p95Ms": 1016.7,
+            "maxMs": 1016.7
+          },
+          "warmupMs": 5000,
+          "warmPan": {
+            "samples": 68,
+            "renderUpdates": 68,
+            "elapsedMs": 10034,
+            "p50Ms": 131.4,
+            "p95Ms": 151.8,
+            "maxMs": 1016.3
+          },
+          "afterPan": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 98,
+                "b": 235,
+                "a": 255
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 35,
+                "g": 98,
+                "b": 235,
+                "a": 255
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "profile": "maplet-webgpu",
+      "repetition": 1,
+      "elapsedSeconds": 19.55,
+      "status": "pass",
+      "measurements": [
+        {
+          "engine": "maplet",
+          "backend": "webgpu",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+          "dpr": 1,
+          "count": 500000,
+          "renderedPointsOrDomMarkers": 258420,
+          "markerDomElements": 0,
+          "mapCreateMs": 3,
+          "generateMs": 15,
+          "loadMs": 627,
+          "paintWaitMs": 64,
+          "setupToPaintMs": 709,
+          "gcAvailable": true,
+          "heapDeltaMiB": 139,
+          "drawCalls": 1,
+          "gpuMiB": 15.8,
+          "output": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ],
+          "projections": [
+            {
+              "expected": {
+                "x": 360,
+                "y": 260
+              },
+              "actual": {
+                "x": 360.0000000000291,
+                "y": 260
+              },
+              "pass": true
+            },
+            {
+              "expected": {
+                "x": 505.635555555555,
+                "y": 429.66218561920687
+              },
+              "actual": {
+                "x": 505.6355555555783,
+                "y": 429.6621856191923
+              },
+              "pass": true
+            }
+          ]
+        },
+        {
+          "coldPan": {
+            "samples": 3,
+            "renderUpdates": 3,
+            "elapsedMs": 3023,
+            "p50Ms": 1016.7,
+            "p95Ms": 1016.7,
+            "maxMs": 1016.7
+          },
+          "warmupMs": 5000,
+          "warmPan": {
+            "samples": 539,
+            "renderUpdates": 539,
+            "elapsedMs": 10016,
+            "p50Ms": 16.7,
+            "p95Ms": 16.8,
+            "maxMs": 1016.4
+          },
+          "afterPan": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "profile": "maplet-webgl1",
+      "repetition": 2,
+      "elapsedSeconds": 19.59,
+      "status": "pass",
+      "measurements": [
+        {
+          "engine": "maplet",
+          "backend": "webgl1",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+          "dpr": 1,
+          "count": 500000,
+          "renderedPointsOrDomMarkers": 258420,
+          "markerDomElements": 0,
+          "mapCreateMs": 5,
+          "generateMs": 15,
+          "loadMs": 634,
+          "paintWaitMs": 66,
+          "setupToPaintMs": 720,
+          "gcAvailable": true,
+          "heapDeltaMiB": 139.1,
+          "drawCalls": 1,
+          "gpuMiB": 15.8,
+          "output": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ],
+          "projections": [
+            {
+              "expected": {
+                "x": 360,
+                "y": 260
+              },
+              "actual": {
+                "x": 360.0000000000291,
+                "y": 260
+              },
+              "pass": true
+            },
+            {
+              "expected": {
+                "x": 505.635555555555,
+                "y": 429.66218561920687
+              },
+              "actual": {
+                "x": 505.6355555555783,
+                "y": 429.6621856191923
+              },
+              "pass": true
+            }
+          ]
+        },
+        {
+          "coldPan": {
+            "samples": 5,
+            "renderUpdates": 5,
+            "elapsedMs": 3046,
+            "p50Ms": 1011,
+            "p95Ms": 1016.7,
+            "maxMs": 1016.7
+          },
+          "warmupMs": 5000,
+          "warmPan": {
+            "samples": 541,
+            "renderUpdates": 541,
+            "elapsedMs": 10017,
+            "p50Ms": 16.7,
+            "p95Ms": 17.2,
+            "maxMs": 1016.3
+          },
+          "afterPan": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "profile": "leaflet-canvas",
+      "repetition": 2,
+      "elapsedSeconds": 19.77,
+      "status": "pass",
+      "measurements": [
+        {
+          "engine": "leaflet-canvas",
+          "backend": "1.9.4",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+          "dpr": 1,
+          "count": 500000,
+          "renderedPointsOrDomMarkers": 231240,
+          "markerDomElements": 0,
+          "mapCreateMs": 1,
+          "generateMs": 15,
+          "loadMs": 229,
+          "paintWaitMs": 52,
+          "setupToPaintMs": 297,
+          "gcAvailable": true,
+          "heapDeltaMiB": 207.1,
+          "drawCalls": null,
+          "gpuMiB": null,
+          "output": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 235,
+                "a": 255
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 235,
+                "a": 255
+              }
+            }
+          ],
+          "projections": [
+            {
+              "expected": {
+                "x": 360,
+                "y": 260
+              },
+              "actual": {
+                "x": 360,
+                "y": 260
+              },
+              "pass": true
+            },
+            {
+              "expected": {
+                "x": 505.635555555555,
+                "y": 429.66218561920687
+              },
+              "actual": {
+                "x": 506,
+                "y": 429
+              },
+              "pass": true
+            }
+          ]
+        },
+        {
+          "coldPan": {
+            "samples": 6,
+            "renderUpdates": 6,
+            "elapsedMs": 3402,
+            "p50Ms": 994.9,
+            "p95Ms": 1016.7,
+            "maxMs": 1016.7
+          },
+          "warmupMs": 5000,
+          "warmPan": {
+            "samples": 68,
+            "renderUpdates": 68,
+            "elapsedMs": 10125,
+            "p50Ms": 137.1,
+            "p95Ms": 153.7,
+            "maxMs": 1016.4
+          },
+          "afterPan": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 98,
+                "b": 235,
+                "a": 255
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 35,
+                "g": 98,
+                "b": 235,
+                "a": 255
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "profile": "maplet-webgpu",
+      "repetition": 2,
+      "elapsedSeconds": 19.55,
+      "status": "pass",
+      "measurements": [
+        {
+          "engine": "maplet",
+          "backend": "webgpu",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+          "dpr": 1,
+          "count": 500000,
+          "renderedPointsOrDomMarkers": 258420,
+          "markerDomElements": 0,
+          "mapCreateMs": 3,
+          "generateMs": 15,
+          "loadMs": 623,
+          "paintWaitMs": 65,
+          "setupToPaintMs": 706,
+          "gcAvailable": true,
+          "heapDeltaMiB": 139,
+          "drawCalls": 1,
+          "gpuMiB": 15.8,
+          "output": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ],
+          "projections": [
+            {
+              "expected": {
+                "x": 360,
+                "y": 260
+              },
+              "actual": {
+                "x": 360.0000000000291,
+                "y": 260
+              },
+              "pass": true
+            },
+            {
+              "expected": {
+                "x": 505.635555555555,
+                "y": 429.66218561920687
+              },
+              "actual": {
+                "x": 505.6355555555783,
+                "y": 429.6621856191923
+              },
+              "pass": true
+            }
+          ]
+        },
+        {
+          "coldPan": {
+            "samples": 3,
+            "renderUpdates": 3,
+            "elapsedMs": 3010,
+            "p50Ms": 1016.7,
+            "p95Ms": 1017.7,
+            "maxMs": 1017.7
+          },
+          "warmupMs": 5000,
+          "warmPan": {
+            "samples": 538,
+            "renderUpdates": 538,
+            "elapsedMs": 10016,
+            "p50Ms": 16.7,
+            "p95Ms": 17.9,
+            "maxMs": 1016.6
+          },
+          "afterPan": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "profile": "maplet-webgl1",
+      "repetition": 3,
+      "elapsedSeconds": 19.57,
+      "status": "pass",
+      "measurements": [
+        {
+          "engine": "maplet",
+          "backend": "webgl1",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+          "dpr": 1,
+          "count": 500000,
+          "renderedPointsOrDomMarkers": 258420,
+          "markerDomElements": 0,
+          "mapCreateMs": 5,
+          "generateMs": 15,
+          "loadMs": 619,
+          "paintWaitMs": 69,
+          "setupToPaintMs": 708,
+          "gcAvailable": true,
+          "heapDeltaMiB": 139.1,
+          "drawCalls": 1,
+          "gpuMiB": 15.8,
+          "output": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ],
+          "projections": [
+            {
+              "expected": {
+                "x": 360,
+                "y": 260
+              },
+              "actual": {
+                "x": 360.0000000000291,
+                "y": 260
+              },
+              "pass": true
+            },
+            {
+              "expected": {
+                "x": 505.635555555555,
+                "y": 429.66218561920687
+              },
+              "actual": {
+                "x": 505.6355555555783,
+                "y": 429.6621856191923
+              },
+              "pass": true
+            }
+          ]
+        },
+        {
+          "coldPan": {
+            "samples": 5,
+            "renderUpdates": 5,
+            "elapsedMs": 3043,
+            "p50Ms": 1008.3,
+            "p95Ms": 1017.1,
+            "maxMs": 1017.1
+          },
+          "warmupMs": 5000,
+          "warmPan": {
+            "samples": 540,
+            "renderUpdates": 540,
+            "elapsedMs": 10017,
+            "p50Ms": 16.7,
+            "p95Ms": 17.5,
+            "maxMs": 1018.4
+          },
+          "afterPan": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "profile": "leaflet-canvas",
+      "repetition": 3,
+      "elapsedSeconds": 19.77,
+      "status": "pass",
+      "measurements": [
+        {
+          "engine": "leaflet-canvas",
+          "backend": "1.9.4",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+          "dpr": 1,
+          "count": 500000,
+          "renderedPointsOrDomMarkers": 231240,
+          "markerDomElements": 0,
+          "mapCreateMs": 1,
+          "generateMs": 15,
+          "loadMs": 217,
+          "paintWaitMs": 51,
+          "setupToPaintMs": 284,
+          "gcAvailable": true,
+          "heapDeltaMiB": 207.1,
+          "drawCalls": null,
+          "gpuMiB": null,
+          "output": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 235,
+                "a": 255
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 235,
+                "a": 255
+              }
+            }
+          ],
+          "projections": [
+            {
+              "expected": {
+                "x": 360,
+                "y": 260
+              },
+              "actual": {
+                "x": 360,
+                "y": 260
+              },
+              "pass": true
+            },
+            {
+              "expected": {
+                "x": 505.635555555555,
+                "y": 429.66218561920687
+              },
+              "actual": {
+                "x": 506,
+                "y": 429
+              },
+              "pass": true
+            }
+          ]
+        },
+        {
+          "coldPan": {
+            "samples": 6,
+            "renderUpdates": 6,
+            "elapsedMs": 3410,
+            "p50Ms": 997.6,
+            "p95Ms": 1017.5,
+            "maxMs": 1017.5
+          },
+          "warmupMs": 5000,
+          "warmPan": {
+            "samples": 66,
+            "renderUpdates": 66,
+            "elapsedMs": 10135,
+            "p50Ms": 145.2,
+            "p95Ms": 176.6,
+            "maxMs": 1016.8
+          },
+          "afterPan": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 98,
+                "b": 235,
+                "a": 255
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 35,
+                "g": 98,
+                "b": 235,
+                "a": 255
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "profile": "maplet-webgpu",
+      "repetition": 3,
+      "elapsedSeconds": 19.67,
+      "status": "pass",
+      "measurements": [
+        {
+          "engine": "maplet",
+          "backend": "webgpu",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+          "dpr": 1,
+          "count": 500000,
+          "renderedPointsOrDomMarkers": 258420,
+          "markerDomElements": 0,
+          "mapCreateMs": 3,
+          "generateMs": 15,
+          "loadMs": 623,
+          "paintWaitMs": 64,
+          "setupToPaintMs": 705,
+          "gcAvailable": true,
+          "heapDeltaMiB": 139,
+          "drawCalls": 1,
+          "gpuMiB": 15.8,
+          "output": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ],
+          "projections": [
+            {
+              "expected": {
+                "x": 360,
+                "y": 260
+              },
+              "actual": {
+                "x": 360.0000000000291,
+                "y": 260
+              },
+              "pass": true
+            },
+            {
+              "expected": {
+                "x": 505.635555555555,
+                "y": 429.66218561920687
+              },
+              "actual": {
+                "x": 505.6355555555783,
+                "y": 429.6621856191923
+              },
+              "pass": true
+            }
+          ]
+        },
+        {
+          "coldPan": {
+            "samples": 3,
+            "renderUpdates": 3,
+            "elapsedMs": 3010,
+            "p50Ms": 1016.6,
+            "p95Ms": 1016.7,
+            "maxMs": 1016.7
+          },
+          "warmupMs": 5000,
+          "warmPan": {
+            "samples": 538,
+            "renderUpdates": 538,
+            "elapsedMs": 10016,
+            "p50Ms": 16.7,
+            "p95Ms": 16.9,
+            "maxMs": 1016.5
+          },
+          "afterPan": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

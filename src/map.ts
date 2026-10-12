@@ -67,6 +67,7 @@ import type { SceneEventMap } from './scene/scene.ts';
 import {
   buildFramePlan,
   framePlanBuildCount,
+  FLAG_HIDDEN,
   type LabelPlacement,
   type MediaPlacement,
   type SpritePlacement,
@@ -891,26 +892,26 @@ function buildHandle(
         scene.assertAlive('layer.setFilter');
         layer.filter = filter;
         layer.touch();
-        scene.publishStateChange();
+        scene.publishStateChange(true);
       },
       setStyle(style) {
         scene.assertAlive('layer.setStyle');
         layer.style = style as typeof layer.style;
         layer.touch();
-        scene.publishStateChange();
+        scene.publishStateChange(true);
       },
       features: {
         setOverride(target, override) {
           scene.assertAlive('layer.features.setOverride');
           const ref = resolveLayerTarget(scene, layer, target);
           layer.setOverride(ref, override);
-          scene.publishStateChange();
+          scene.publishStateChange(true);
         },
         clearOverride(target) {
           scene.assertAlive('layer.features.clearOverride');
           const ref = resolveLayerTarget(scene, layer, target);
           layer.clearOverride(ref);
-          scene.publishStateChange();
+          scene.publishStateChange(true);
         },
         hasOverride(target) {
           const ref = resolveLayerTarget(scene, layer, target);
@@ -1288,7 +1289,7 @@ function buildHandle(
       let total = 0;
       for (const draw of plan.draws) {
         if (draw.type !== 'batch' || draw.batch.layerId !== layerId) continue;
-        total += draw.batch.kind === 'fills' ? draw.batch.count / 3 : draw.batch.count;
+        total += draw.batch.visibleCount ?? (draw.batch.kind === 'fills' ? draw.batch.count / 3 : draw.batch.count);
       }
       return Math.round(total);
     },
@@ -1299,7 +1300,12 @@ function buildHandle(
         const data = draw.batch.data;
         if (data.length === 0) continue;
         if (draw.batch.kind === 'points') {
-          return rgbaHex(data[4]!, data[5]!, data[6]!);
+          for (let i = 0; i < draw.batch.count; i++) {
+            const at = i * 16;
+            if (data[at + 15]! >= FLAG_HIDDEN) continue;
+            return rgbaHex(data[at + 4]!, data[at + 5]!, data[at + 6]!);
+          }
+          continue;
         }
         if (draw.batch.kind === 'lines') {
           return rgbaHex(data[8]!, data[9]!, data[10]!);
@@ -1318,7 +1324,8 @@ function buildHandle(
         const count = draw.batch.kind === 'fills' ? draw.batch.count / 3 : draw.batch.count;
         for (let i = 0; i < count; i++) {
           const pickIndex = draw.batch.data[i * stride + pickOffset]!;
-          const entry = plan.pickTable[pickIndex];
+          if (draw.batch.kind === 'points' && draw.batch.data[i * stride + 15]! >= FLAG_HIDDEN) continue;
+          const entry = plan.pickTable.get(pickIndex + (draw.batch.pickBase ?? 0));
           if (!entry) continue;
           order.push(entry.feature.id);
         }

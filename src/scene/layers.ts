@@ -13,6 +13,7 @@ import { fail } from '../api/errors.ts';
 import type { FeatureId, FeatureRef, MapFeatureEvent } from '../api/types.ts';
 import { featureRefKey } from '../api/types.ts';
 import { Emitter } from '../api/events.ts';
+import { ChangeJournal } from './change-journal.ts';
 import type { ExpressionInput, Filter, ColorValue } from './expression.ts';
 
 export type LayerKind = 'raster' | 'points' | 'lines' | 'fills' | 'labels';
@@ -171,6 +172,9 @@ export class LayerImpl {
   removed = false;
   /** Incremented on every change that affects what this layer draws. */
   revision = 0;
+  /** Whole-layer changes are distinct from local overrides. */
+  layoutRevision = 0;
+  readonly overrideChanges = new ChangeJournal<FeatureRef | FeatureId>();
 
   constructor(spec: LayerSpec) {
     this.id = spec.id;
@@ -187,6 +191,7 @@ export class LayerImpl {
 
   touch(): void {
     this.revision++;
+    this.layoutRevision++;
   }
 
   overrideKey(target: FeatureRef | FeatureId): string {
@@ -198,12 +203,14 @@ export class LayerImpl {
 
   setOverride(target: FeatureRef | FeatureId, override: FeatureOverride): void {
     this.overrides.set(this.overrideKey(target), override);
-    this.touch();
+    this.overrideChanges.note(target);
+    this.revision++;
   }
 
   clearOverride(target: FeatureRef | FeatureId): void {
     this.overrides.delete(this.overrideKey(target));
-    this.touch();
+    this.overrideChanges.note(target);
+    this.revision++;
   }
 }
 

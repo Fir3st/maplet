@@ -15,6 +15,7 @@
 import { fail } from '../api/errors.ts';
 import type { FeatureId } from '../api/types.ts';
 import { featureIdKey } from '../api/types.ts';
+import { ChangeJournal } from './change-journal.ts';
 import type { Crs } from '../math/crs.ts';
 import {
   GEOMETRY_KIND,
@@ -181,6 +182,8 @@ export class SpatialIndex {
 }
 
 export class FeatureStore {
+  readonly changes = new ChangeJournal<number>();
+  private complexCount = 0;
   private readonly byKey = new Map<string, number>();
   /** Generation counter per identity; kept for the store's whole lifetime. */
   private readonly generationCounters = new Map<string, number>();
@@ -201,6 +204,9 @@ export class FeatureStore {
   get count(): number {
     return this.liveCount;
   }
+
+  get pointOnly(): boolean { return this.complexCount === 0; }
+  get slotCapacity(): number { return this.slots.length; }
 
   keyOf(id: FeatureId, namespace?: string): string {
     return featureIdKey(id, namespace);
@@ -283,6 +289,9 @@ export class FeatureStore {
       properties: input.properties ?? EMPTY_PROPERTIES,
     };
     this.slots[slot] = record;
+    if (previous?.geometry) this.complexCount--;
+    if (record.geometry) this.complexCount++;
+    this.changes.note(slot);
     this.byKey.set(key, slot);
     this.index.add(slot, recordBBox(record));
     if (existingSlot === undefined) this.liveCount++;
@@ -292,7 +301,11 @@ export class FeatureStore {
 
   /** Undo support: re-inserts a previous record at its own slot (after a removal). */
   restore(record: SlotRecord): void {
+    const free = this.freeSlots.indexOf(record.slot);
+    if (free >= 0) this.freeSlots.splice(free, 1);
     this.slots[record.slot] = record;
+    if (record.geometry) this.complexCount++;
+    this.changes.note(record.slot);
     this.byKey.set(record.key, record.slot);
     this.index.add(record.slot, recordBBox(record));
     this.liveCount++;
@@ -307,6 +320,9 @@ export class FeatureStore {
     const current = this.slots[previous.slot];
     if (!current) fail('invalid-state', `slot ${previous.slot} is not live`);
     this.index.removeWithBBox(previous.slot, currentBBox);
+    if (current.geometry) this.complexCount--;
+    if (previous.geometry) this.complexCount++;
+    this.changes.note(previous.slot);
     this.slots[previous.slot] = previous;
     this.byKey.set(previous.key, previous.slot);
     this.index.add(previous.slot, recordBBox(previous));
@@ -321,6 +337,8 @@ export class FeatureStore {
     const record = this.slots[slot];
     if (!record) return null;
     this.index.removeWithBBox(slot, recordBBox(record));
+    if (record.geometry) this.complexCount--;
+    this.changes.note(slot);
     this.slots[slot] = null;
     this.byKey.delete(key);
     this.freeSlots.push(slot);
@@ -340,6 +358,7 @@ export class FeatureStore {
       geometry: record.geometry,
       bbox: recordBBox(record),
     };
+    if (record.geometry) this.complexCount--;
     record.kind = prepared.kind;
     record.wx = prepared.anchorX;
     record.wy = prepared.anchorY;
@@ -348,6 +367,8 @@ export class FeatureStore {
         ? prepared.payload.alt
         : undefined;
     record.geometry = prepared.kind === GEOMETRY_KIND.point ? null : prepared;
+    if (record.geometry) this.complexCount++;
+    this.changes.note(slot);
     this.index.update(slot, previous.bbox, recordBBox(record));
     this.boundsDirty = true;
     return previous;
@@ -357,11 +378,14 @@ export class FeatureStore {
     const record = this.slots[slot];
     if (!record) fail('invalid-state', `slot ${slot} is not live`);
     this.index.removeWithBBox(slot, currentBBox);
+    if (record.geometry) this.complexCount--;
     record.kind = state.kind;
     record.wx = state.wx;
     record.wy = state.wy;
     record.alt = state.alt;
     record.geometry = state.geometry;
+    if (record.geometry) this.complexCount++;
+    this.changes.note(slot);
     this.index.add(slot, state.bbox);
     this.boundsDirty = true;
   }
@@ -374,6 +398,7 @@ export class FeatureStore {
     if (!record) fail('invalid-state', `slot ${slot} is not live`);
     const previous = record.properties;
     record.properties = properties;
+    this.changes.note(slot);
     return previous;
   }
 

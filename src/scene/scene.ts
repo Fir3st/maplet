@@ -106,6 +106,8 @@ export class Scene {
   readonly layers: LayerRegistry;
 
   private publishedRevision = 0;
+  /** Broad render invalidation; view and local source edits do not bump it. */
+  renderEpoch = 0;
   private renderedRevisionValue = 0;
   private framesValue = 0;
   private destroyedValue = false;
@@ -169,8 +171,9 @@ export class Scene {
     });
     this.selection = new SelectionStore();
     this.selection.sourceLookup = (sourceId) => this.sources.get(sourceId);
-    this.selection.setPublisher(() => {
-      this.publishStateChange();
+    this.selection.setPublisher((refs) => {
+      for (const ref of refs) this.noteFeatureState(ref);
+      this.publishStateChange(true);
       this.emitter.emit('selectchange', {
         revision: this.publishedRevision,
         selected: this.selection.get(),
@@ -180,12 +183,15 @@ export class Scene {
       {
         sceneId: this.id,
         getSourceImpl: (sourceId) => this.sources.get(sourceId),
-        publishStateChange: () => this.publishStateChange(),
+        publishStateChange: (ref) => {
+          this.noteFeatureState(ref);
+          this.publishStateChange(true);
+        },
       },
       this.selection,
     );
     this.layers = new LayerRegistry((sourceId) => this.hasSource(sourceId));
-    this.layers.onChange = () => this.publishStateChange();
+    this.layers.onChange = () => this.publishStateChange(true);
   }
 
   hasSource(id: string): boolean {
@@ -296,11 +302,19 @@ export class Scene {
   }
 
   /** Publishes changes caused outside source stores (layers, state, selection). */
-  publishStateChange(): void {
-    if (this.destroyedValue || this.finishing) return;
+  publishStateChange(local = false): void {
+    if (this.destroyedValue) return;
+    if (!local) this.renderEpoch++;
+    if (this.finishing) return;
     this.publishedRevision++;
     this.emitter.emit('commit', { revision: this.publishedRevision });
     this.requestFrame();
+  }
+
+  private noteFeatureState(ref: FeatureRef): void {
+    const store = this.sources.get(ref.sourceId)?.store;
+    const record = store?.get(ref.id, ref.namespace);
+    if (record) store!.changes.note(record.slot);
   }
 
   requestFrame(): void {

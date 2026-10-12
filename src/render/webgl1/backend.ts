@@ -20,6 +20,7 @@ import {
   POINT_STRIDE,
   type FramePlan,
   type MediaPlacement,
+  type PlanBatch,
 } from './../frame-plan.ts';
 import { monotonicNow, PickStallRecorder, type PickResult } from './../picking.ts';
 import { QUAD_UVS, quadBounds, quadVertices } from './../quad.ts';
@@ -35,6 +36,8 @@ attribute vec4 aMeta;
 uniform vec2 uViewport;
 uniform float uDpr;
 uniform float uPickMode;
+uniform vec2 uOffset;
+uniform float uPickBase;
 varying vec2 vLocal;
 varying vec4 vFill;
 varying vec4 vStroke;
@@ -44,14 +47,15 @@ void main() {
   vec2 radius = max(aPos.zw, vec2(0.01));
   float strokePad = aStroke.a > 0.0 ? aMeta.y * 0.5 : 0.0;
   vec2 offset = aCorner * (radius + strokePad);
-  vec2 cssPos = aPos.xy + offset;
+  vec2 cssPos = aPos.xy + uOffset + offset;
   vec2 device = cssPos * uDpr;
   vec2 clip = vec2(device.x / uViewport.x * 2.0 - 1.0, 1.0 - device.y / uViewport.y * 2.0);
   gl_Position = vec4(clip, 0.0, 1.0);
+  if (aMeta.w >= 2.0) gl_Position = vec4(2.0, 2.0, 0.0, 1.0);
   vLocal = offset / max(radius, vec2(0.01));
   vFill = aFill;
   vStroke = aStroke;
-  vMeta = aMeta;
+  vMeta = vec4(aMeta.xy, aMeta.z + uPickBase, aMeta.w);
   vRadius = radius;
 }
 `;
@@ -439,15 +443,13 @@ export class WebGl1Backend implements MapBackend {
     vertexAttribDivisorANGLE(index: number, divisor: number): void;
   } | null;
   private readonly programs = new Map<string, ProgramBundle>();
+  private readonly batchBuffers = new Map<Float32Array, { buffer: WebGLBuffer; version: number; bytes: number }>();
   private readonly buffers = {
     quad: null as WebGLBuffer | null,
     tri: null as WebGLBuffer | null,
-    instances: null as WebGLBuffer | null,
-    fills: null as WebGLBuffer | null,
     tiles: null as WebGLBuffer | null,
     media: null as WebGLBuffer | null,
     labels: null as WebGLBuffer | null,
-    expanded: null as WebGLBuffer | null,
   };
   private readonly tileCache = new Map<string, TileEntry>();
   private readonly labelCache = new Map<string, LabelEntry>();
@@ -605,15 +607,12 @@ export class WebGl1Backend implements MapBackend {
     for (const entry of this.spriteCache.values()) {
       bytes += Math.round(entry.width * this.dpr) * Math.round(entry.height * this.dpr) * 4;
     }
-    if (this.plan) {
-      for (const draw of this.plan.draws) {
-        if (draw.type === 'batch') bytes += draw.batch.data.byteLength;
-      }
-    }
+    for (const entry of this.batchBuffers.values()) bytes += entry.bytes;
     return bytes;
   }
 
   private drawPlan(plan: FramePlan, pickMode: boolean): void {
+    this.pruneBatchBuffers(plan);
     const gl = this.gl;
     gl.viewport(0, 0, this.canvas.width, this.canvas.height);
     if (pickMode) {
@@ -644,9 +643,9 @@ export class WebGl1Backend implements MapBackend {
         continue;
       }
       const batch = draw.batch;
-      if (batch.kind === 'points') this.drawPoints(batch.data, batch.count, pickMode);
-      else if (batch.kind === 'lines') this.drawLines(batch.data, batch.count, pickMode, batch.dash ?? null);
-      else this.drawFills(batch.data, batch.count, pickMode);
+      if (batch.kind === 'points') this.drawPoints(batch, pickMode);
+      else if (batch.kind === 'lines') this.drawLines(batch, pickMode, batch.dash ?? null);
+      else this.drawFills(batch, pickMode);
     }
   }
 
@@ -720,7 +719,7 @@ export class WebGl1Backend implements MapBackend {
           POINT_VERTEX,
           POINT_FRAGMENT,
           ['aCorner', 'aPos', 'aFill', 'aStroke', 'aMeta'],
-          ['uViewport', 'uDpr', 'uPickMode'],
+          ['uViewport', 'uDpr', 'uPickMode', 'uOffset', 'uPickBase'],
         );
       case 'lines':
         return this.compile(
@@ -758,7 +757,57 @@ export class WebGl1Backend implements MapBackend {
     const buffer = this.gl.createBuffer();
     if (!buffer) throw new MapletError('render-failed', 'buffer allocation failed');
     this.buffers[name] = buffer;
+    if (name === 'quad' || name === 'tri') {
+      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
+      this.gl.bufferData(this.gl.ARRAY_BUFFER, name === 'quad' ? CORNERS_QUAD : CORNERS_TRI, this.gl.STATIC_DRAW);
+    }
     return buffer;
+  }
+
+  private pruneBatchBuffers(plan: FramePlan): void {
+    const live = new Set(plan.draws.flatMap((draw) => draw.type === 'batch' ? [draw.batch.data] : []));
+    let attributesDisabled = false;
+    for (const [data, entry] of this.batchBuffers) {
+      if (live.has(data)) continue;
+      if (!attributesDisabled) {
+        // Deleting a buffer unbinds its attribute pointers. WebGL validates even
+        // enabled attributes unused by the next shader; each draw rebinds its own.
+        const max = this.gl.getParameter(this.gl.MAX_VERTEX_ATTRIBS) as number;
+        for (let i = 0; i < max; i++) this.gl.disableVertexAttribArray(i);
+        attributesDisabled = true;
+      }
+      this.gl.deleteBuffer(entry.buffer);
+      this.batchBuffers.delete(data);
+    }
+  }
+
+  /** Buffers belong to batches, not the draw scratch area; unchanged data stays resident. */
+  private bindBatchBuffer(batch: PlanBatch, corners?: Float32Array): void {
+    const gl = this.gl;
+    const version = batch.upload?.version ?? 0;
+    let entry = this.batchBuffers.get(batch.data);
+    if (!entry) {
+      const buffer = gl.createBuffer();
+      if (!buffer) throw new MapletError('render-failed', 'buffer allocation failed');
+      entry = { buffer, version: -1, bytes: 0 };
+      this.batchBuffers.set(batch.data, entry);
+    }
+    gl.bindBuffer(gl.ARRAY_BUFFER, entry.buffer);
+    if (entry.version === version) return;
+    const stride = batch.kind === 'fills' ? FILL_STRIDE : POINT_STRIDE;
+    if (batch.upload && entry.version >= 0 && entry.version === batch.upload.previousVersion) {
+      for (const { start, end } of batch.upload.ranges) {
+        const slice = batch.data.subarray(start, end);
+        const data = corners ? expandInstances(slice, stride, slice.length / stride, corners, 2) : slice;
+        const offset = corners ? start / stride * 6 * (stride + 2) * 4 : start * 4;
+        gl.bufferSubData(gl.ARRAY_BUFFER, offset, data);
+      }
+    } else {
+      const data = corners ? expandInstances(batch.data, stride, batch.count, corners, 2) : batch.data;
+      gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
+      entry.bytes = data.byteLength;
+    }
+    entry.version = version;
   }
 
   /**
@@ -781,14 +830,16 @@ export class WebGl1Backend implements MapBackend {
 
   /* ------------------------------- points --------------------------------- */
 
-  private drawPoints(data: Float32Array, count: number, pickMode: boolean): void {
+  private drawPoints(batch: PlanBatch, pickMode: boolean): void {
+    const { count } = batch;
     if (count === 0) return;
     const gl = this.gl;
     const bundle = this.program('points');
     gl.useProgram(bundle.program);
     this.setViewportUniforms(bundle, pickMode);
+    gl.uniform2f(bundle.uniforms['uOffset']!, batch.offsetX ?? 0, batch.offsetY ?? 0);
+    gl.uniform1f(bundle.uniforms['uPickBase']!, batch.pickBase ?? 0);
     const corner = this.ensureBuffer('quad');
-    const instances = this.ensureBuffer('instances');
 
     const bindInstanceAttribs = (stride: number, byteOffsetBase: number, divisor: number): void => {
       const layout = [
@@ -808,7 +859,6 @@ export class WebGl1Backend implements MapBackend {
 
     if (this.instanced) {
       gl.bindBuffer(gl.ARRAY_BUFFER, corner);
-      gl.bufferData(gl.ARRAY_BUFFER, CORNERS_QUAD, gl.STATIC_DRAW);
       const cornerLocation = bundle.attribs['aCorner']!;
       if (cornerLocation >= 0) {
         gl.enableVertexAttribArray(cornerLocation);
@@ -816,8 +866,7 @@ export class WebGl1Backend implements MapBackend {
         this.instanced.vertexAttribDivisorANGLE(cornerLocation, 0);
       }
 
-      gl.bindBuffer(gl.ARRAY_BUFFER, instances);
-      gl.bufferData(gl.ARRAY_BUFFER, data, gl.STREAM_DRAW);
+      this.bindBatchBuffer(batch);
       bindInstanceAttribs(POINT_STRIDE * 4, 0, 1);
       this.frameDrawCalls++;
       this.instanced.drawArraysInstancedANGLE(gl.TRIANGLE_STRIP, 0, 4, count);
@@ -826,9 +875,7 @@ export class WebGl1Backend implements MapBackend {
     }
 
     // CPU expansion: corner + instance attributes per vertex.
-    const expanded = expandInstances(data, POINT_STRIDE, count, CORNERS_QUAD_TRI, 2);
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.ensureBuffer('expanded'));
-    gl.bufferData(gl.ARRAY_BUFFER, expanded, gl.STREAM_DRAW);
+    this.bindBatchBuffer(batch, CORNERS_QUAD_TRI);
     const strideBytes = (2 + POINT_STRIDE) * 4;
     const cornerLocation = bundle.attribs['aCorner']!;
     gl.enableVertexAttribArray(cornerLocation);
@@ -858,11 +905,11 @@ export class WebGl1Backend implements MapBackend {
   /* -------------------------------- lines --------------------------------- */
 
   private drawLines(
-    data: Float32Array,
-    count: number,
+    batch: PlanBatch,
     pickMode: boolean,
     dash: readonly number[] | null,
   ): void {
+    const { count } = batch;
     if (count === 0) return;
     const gl = this.gl;
     const bundle = this.program('lines');
@@ -877,11 +924,9 @@ export class WebGl1Backend implements MapBackend {
     }
     gl.uniform1f(bundle.uniforms['uDashOffset']!, 0);
     const corner = this.ensureBuffer('tri');
-    const instances = this.ensureBuffer('instances');
 
     if (this.instanced) {
       gl.bindBuffer(gl.ARRAY_BUFFER, corner);
-      gl.bufferData(gl.ARRAY_BUFFER, CORNERS_TRI, gl.STATIC_DRAW);
       const cornerLocation = bundle.attribs['aCorner']!;
       if (cornerLocation >= 0) {
         gl.enableVertexAttribArray(cornerLocation);
@@ -889,8 +934,7 @@ export class WebGl1Backend implements MapBackend {
         this.instanced.vertexAttribDivisorANGLE(cornerLocation, 0);
       }
 
-      gl.bindBuffer(gl.ARRAY_BUFFER, instances);
-      gl.bufferData(gl.ARRAY_BUFFER, data, gl.STREAM_DRAW);
+      this.bindBatchBuffer(batch);
       const layout = [
         ['aSeg', 0],
         ['aLine', 16],
@@ -909,9 +953,7 @@ export class WebGl1Backend implements MapBackend {
       return;
     }
 
-    const expanded = expandInstances(data, LINE_STRIDE, count, CORNERS_TRI, 2);
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.ensureBuffer('expanded'));
-    gl.bufferData(gl.ARRAY_BUFFER, expanded, gl.STREAM_DRAW);
+    this.bindBatchBuffer(batch, CORNERS_TRI);
     const strideBytes = (2 + LINE_STRIDE) * 4;
     const cornerLocation = bundle.attribs['aCorner']!;
     gl.enableVertexAttribArray(cornerLocation);
@@ -932,14 +974,14 @@ export class WebGl1Backend implements MapBackend {
 
   /* -------------------------------- fills --------------------------------- */
 
-  private drawFills(data: Float32Array, vertexCount: number, pickMode: boolean): void {
+  private drawFills(batch: PlanBatch, pickMode: boolean): void {
+    const vertexCount = batch.count;
     if (vertexCount === 0) return;
     const gl = this.gl;
     const bundle = this.program('fills');
     gl.useProgram(bundle.program);
     this.setViewportUniforms(bundle, pickMode);
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.ensureBuffer('fills'));
-    gl.bufferData(gl.ARRAY_BUFFER, data, gl.STREAM_DRAW);
+    this.bindBatchBuffer(batch);
     const strideBytes = FILL_STRIDE * 4;
     const layout = [
       ['aPos', 0],
@@ -1725,7 +1767,7 @@ export class WebGl1Backend implements MapBackend {
       const index = r * 65536 + g * 256 + b;
       if (seen.has(index)) continue;
       seen.add(index);
-      const entry = plan.pickTable[index];
+      const entry = plan.pickTable.get(index);
       if (!entry) continue;
       const source = scene.getSourceImpl(entry.feature.sourceId);
       if (source) {
@@ -1791,6 +1833,8 @@ export class WebGl1Backend implements MapBackend {
       this.rafHandle = null;
     }
     const gl = this.gl;
+    for (const entry of this.batchBuffers.values()) gl.deleteBuffer(entry.buffer);
+    this.batchBuffers.clear();
     for (const bundle of this.programs.values()) gl.deleteProgram(bundle.program);
     for (const buffer of Object.values(this.buffers)) {
       if (buffer) gl.deleteBuffer(buffer);

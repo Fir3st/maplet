@@ -12,11 +12,11 @@
  */
 
 import { isMapletError } from '../api/errors.ts';
-import { prepareImport, type ImportJobRequest } from '../io/prepare.ts';
+import { prepareImport, type WorkerImportRequest } from '../io/prepare.ts';
 
 interface WorkerScope {
   onmessage: ((event: MessageEvent) => void) | null;
-  postMessage(message: unknown): void;
+  postMessage(message: unknown, transfer?: Transferable[]): void;
 }
 
 const scope = self as unknown as WorkerScope;
@@ -38,15 +38,22 @@ function serializeError(error: unknown): {
 }
 
 scope.onmessage = (event: MessageEvent) => {
-  const data = event.data as { requestId?: unknown; request?: ImportJobRequest } | null;
+  const data = event.data as { requestId?: unknown; request?: WorkerImportRequest } | null;
   if (typeof data !== 'object' || data === null || typeof data.requestId !== 'number') {
     // Not a request of this protocol; the pipeline ignores foreign messages too.
     return;
   }
   const requestId = data.requestId;
   try {
-    const features = prepareImport(data.request as ImportJobRequest);
-    scope.postMessage({ requestId, ok: true, features });
+    const features = prepareImport(data.request as WorkerImportRequest);
+    const transfer: Transferable[] = [];
+    if (!Array.isArray(features)) {
+      const buffers = new Set<ArrayBuffer>();
+      if (features.positions.buffer instanceof ArrayBuffer) buffers.add(features.positions.buffer);
+      if (features.altitudes?.buffer instanceof ArrayBuffer) buffers.add(features.altitudes.buffer);
+      transfer.push(...buffers);
+    }
+    scope.postMessage({ requestId, ok: true, features }, transfer);
   } catch (error) {
     scope.postMessage({ requestId, ok: false, error: serializeError(error) });
   }

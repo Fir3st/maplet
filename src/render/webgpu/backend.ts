@@ -30,6 +30,7 @@ import {
   type MediaPlacement,
   type SpritePlacement,
   type TilePlacement,
+  type PlanBatch,
 } from './../frame-plan.ts';
 import { monotonicNow, PickStallRecorder, type PickResult } from './../picking.ts';
 import { QUAD_UVS, quadBounds, quadVertices } from './../quad.ts';
@@ -47,6 +48,9 @@ struct Uniforms {
   pickThreshold: f32,
   pad0: f32,
   dash: array<vec4f, 2>,
+  offset: vec2f,
+  pickBase: f32,
+  pad1: f32,
 };
 @group(0) @binding(0) var<uniform> u: Uniforms;
 
@@ -87,11 +91,12 @@ fn vs_main(
   let radius = max(aPos.zw, vec2f(0.01));
   let strokePad = select(0.0, aMeta.y * 0.5, aStroke.a > 0.0);
   let offset = aCorner * (radius + strokePad);
-  out.pos = clipFromCss(aPos.xy + offset);
+  out.pos = clipFromCss(aPos.xy + u.offset + offset);
+  if (aMeta.w >= 2.0) { out.pos = vec4f(2.0, 2.0, 0.0, 1.0); }
   out.localPos = offset / max(radius, vec2f(0.01));
   out.fill = aFill;
   out.stroke = aStroke;
-  out.pickMeta = aMeta;
+  out.pickMeta = vec4f(aMeta.xy, aMeta.z + u.pickBase, aMeta.w);
   out.radius = radius;
   return out;
 }
@@ -463,6 +468,7 @@ export class WebGpuBackend implements MapBackend {
   private readonly textureLayout: GPUBindGroupLayout;
   private readonly pipelines = new Map<string, PipelineBundle>();
   private readonly staticBuffers = new Map<string, GPUBuffer>();
+  private readonly batchBuffers = new Map<Float32Array, { buffer: GPUBuffer; version: number }>();
   private readonly vertexPages = new Map<
     string,
     { buffer: GPUBuffer; capacity: number; used: number }[]
@@ -477,7 +483,7 @@ export class WebGpuBackend implements MapBackend {
   private uniformOffset = 0;
   /** Buffers are destroyed after the submit that last referenced them. */
   private readonly retiredBuffers: GPUBuffer[] = [];
-  private readonly uniformScratch = new Float32Array(16);
+  private readonly uniformScratch = new Float32Array(20);
   private offscreen: {
     kind: 'pick' | 'sample';
     texture: GPUTexture;
@@ -529,7 +535,7 @@ export class WebGpuBackend implements MapBackend {
         {
           binding: 0,
           visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
-          buffer: { type: 'uniform', hasDynamicOffset: true, minBindingSize: 64 },
+          buffer: { type: 'uniform', hasDynamicOffset: true, minBindingSize: 80 },
         },
       ],
     });
@@ -688,6 +694,12 @@ export class WebGpuBackend implements MapBackend {
    */
   private beginUniformFrame(plan: FramePlan, passes = 1): void {
     this.resetVertexPages();
+    const live = new Set(plan.draws.flatMap((draw) => draw.type === 'batch' ? [draw.batch.data] : []));
+    for (const [data, entry] of this.batchBuffers) {
+      if (live.has(data)) continue;
+      this.retiredBuffers.push(entry.buffer);
+      this.batchBuffers.delete(data);
+    }
     this.uniformOffset = 0;
     this.ensureUniformCapacity(plan.stats.drawCalls * passes + 256);
   }
@@ -715,6 +727,7 @@ export class WebGpuBackend implements MapBackend {
     pickMode: boolean,
     dash: readonly number[] | null,
     pickThreshold: number,
+    batch?: PlanBatch,
   ): number {
     const offset = this.uniformOffset * UNIFORM_SLOT;
     this.uniformOffset++;
@@ -732,6 +745,9 @@ export class WebGpuBackend implements MapBackend {
       const count = Math.min(8, dash.length);
       for (let i = 0; i < count; i++) scratch[8 + i] = dash[i]!;
     }
+    scratch[16] = batch?.offsetX ?? 0;
+    scratch[17] = batch?.offsetY ?? 0;
+    scratch[18] = batch?.pickBase ?? 0;
     this.device.queue.writeBuffer(this.uniforms!, offset, scratch);
     return offset;
   }
@@ -876,7 +892,7 @@ export class WebGpuBackend implements MapBackend {
       pickPipeline: make(undefined),
       uniformGroup: this.device.createBindGroup({
         layout: this.uniformLayout,
-        entries: [{ binding: 0, resource: { buffer: this.uniforms!, size: 64 } }],
+        entries: [{ binding: 0, resource: { buffer: this.uniforms!, size: 80 } }],
       }),
       textureGroups: new Map(),
     };
@@ -984,6 +1000,27 @@ export class WebGpuBackend implements MapBackend {
     return buffer;
   }
 
+  private uploadBatch(batch: PlanBatch): GPUBuffer {
+    const version = batch.upload?.version ?? 0;
+    let entry = this.batchBuffers.get(batch.data);
+    if (!entry) {
+      entry = {
+        buffer: this.device.createBuffer({ size: Math.max(4, batch.data.byteLength), usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST }),
+        version: -1,
+      };
+      this.batchBuffers.set(batch.data, entry);
+    }
+    if (entry.version !== version) {
+      if (batch.upload && entry.version >= 0 && entry.version === batch.upload.previousVersion) {
+        for (const { start, end } of batch.upload.ranges) {
+          this.device.queue.writeBuffer(entry.buffer, start * 4, batch.data.subarray(start, end));
+        }
+      } else this.device.queue.writeBuffer(entry.buffer, 0, batch.data);
+      entry.version = version;
+    }
+    return entry.buffer;
+  }
+
   /* -------------------------------- draws ---------------------------------- */
 
   private drawPlan(pass: GPURenderPassEncoder, plan: FramePlan, pickMode: boolean): void {
@@ -1005,52 +1042,51 @@ export class WebGpuBackend implements MapBackend {
         continue;
       }
       const batch = draw.batch;
-      if (batch.kind === 'points') this.drawPoints(pass, batch.data, batch.count, pickMode);
+      if (batch.kind === 'points') this.drawPoints(pass, batch, pickMode);
       else if (batch.kind === 'lines') {
-        this.drawLines(pass, batch.data, batch.count, pickMode, batch.dash ?? null);
+        this.drawLines(pass, batch, pickMode, batch.dash ?? null);
       } else {
-        this.drawFills(pass, batch.data, batch.count, pickMode);
+        this.drawFills(pass, batch, pickMode);
       }
     }
   }
 
-  private drawPoints(pass: GPURenderPassEncoder, data: Float32Array, count: number, pickMode: boolean): void {
+  private drawPoints(pass: GPURenderPassEncoder, batch: PlanBatch, pickMode: boolean): void {
+    const { count } = batch;
     if (count === 0) return;
     const bundle = this.program('points');
     pass.setPipeline(pickMode ? bundle.pickPipeline : bundle.pipeline);
-    pass.setBindGroup(0, bundle.uniformGroup, [this.allocUniform(pickMode, null, 0)]);
-    const instances = this.uploadBuffer('pointsInstances', data);
+    pass.setBindGroup(0, bundle.uniformGroup, [this.allocUniform(pickMode, null, 0, batch)]);
     pass.setVertexBuffer(0, this.staticBuffer('quad', CORNERS_QUAD));
-    pass.setVertexBuffer(1, instances.buffer, instances.offset, instances.size);
+    pass.setVertexBuffer(1, this.uploadBatch(batch));
     this.frameDrawCalls++;
     pass.draw(4, count);
   }
 
   private drawLines(
     pass: GPURenderPassEncoder,
-    data: Float32Array,
-    count: number,
+    batch: PlanBatch,
     pickMode: boolean,
     dash: readonly number[] | null,
   ): void {
+    const { count } = batch;
     if (count === 0) return;
     const bundle = this.program('lines');
     pass.setPipeline(pickMode ? bundle.pickPipeline : bundle.pipeline);
     pass.setBindGroup(0, bundle.uniformGroup, [this.allocUniform(pickMode, dash, 0)]);
-    const instances = this.uploadBuffer('linesInstances', data);
     pass.setVertexBuffer(0, this.staticBuffer('tri', CORNERS_TRI));
-    pass.setVertexBuffer(1, instances.buffer, instances.offset, instances.size);
+    pass.setVertexBuffer(1, this.uploadBatch(batch));
     this.frameDrawCalls++;
     pass.draw(6, count);
   }
 
-  private drawFills(pass: GPURenderPassEncoder, data: Float32Array, vertexCount: number, pickMode: boolean): void {
+  private drawFills(pass: GPURenderPassEncoder, batch: PlanBatch, pickMode: boolean): void {
+    const vertexCount = batch.count;
     if (vertexCount === 0) return;
     const bundle = this.program('fills');
     pass.setPipeline(pickMode ? bundle.pickPipeline : bundle.pipeline);
     pass.setBindGroup(0, bundle.uniformGroup, [this.allocUniform(pickMode, null, 0)]);
-    const fills = this.uploadBuffer('fills', data);
-    pass.setVertexBuffer(0, fills.buffer, fills.offset, fills.size);
+    pass.setVertexBuffer(0, this.uploadBatch(batch));
     this.frameDrawCalls++;
     pass.draw(vertexCount);
   }
@@ -1772,7 +1808,7 @@ export class WebGpuBackend implements MapBackend {
         const index = r * 65536 + g * 256 + b;
         if (seen.has(index)) continue;
         seen.add(index);
-        const entry = plan.pickTable[index];
+        const entry = plan.pickTable.get(index);
         if (!entry) continue;
         const source = scene.getSourceImpl(entry.feature.sourceId);
         if (source) {
@@ -1869,6 +1905,8 @@ export class WebGpuBackend implements MapBackend {
       this.rafHandle = null;
     }
     for (const buffer of this.staticBuffers.values()) buffer.destroy();
+    for (const entry of this.batchBuffers.values()) entry.buffer.destroy();
+    this.batchBuffers.clear();
     this.staticBuffers.clear();
     for (const pages of this.vertexPages.values()) {
       for (const page of pages) page.buffer.destroy();

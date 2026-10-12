@@ -10,7 +10,7 @@
 
 import { parseGeoJson, parsedToFeatureInput } from '../formats/geojson.ts';
 import type { FeatureInput } from '../scene/source.ts';
-import { columnarToFeatures, type ColumnarBatch, type ColumnarPositionKind } from './columnar.ts';
+import { columnarToFeatures, validatePointBatch, type ColumnarBatch, type ColumnarPointBatch, type ColumnarPositionKind } from './columnar.ts';
 
 export type ImportJobRequest =
   | {
@@ -25,8 +25,23 @@ export type ImportJobRequest =
       readonly input: string | object;
     };
 
+export interface PointImportJobRequest {
+  readonly kind: 'columnar-points';
+  readonly sourceId: string;
+  readonly batch: ColumnarPointBatch;
+  readonly positionKind: ColumnarPositionKind;
+}
+export type WorkerImportRequest = ImportJobRequest | PointImportJobRequest;
+export type PreparedImport = FeatureInput[] | ColumnarPointBatch;
+
 /** Validates and converts an import request into feature inputs. */
-export function prepareImport(request: ImportJobRequest): FeatureInput[] {
+export function prepareImport(request: ImportJobRequest): FeatureInput[];
+export function prepareImport(request: PointImportJobRequest): ColumnarPointBatch;
+export function prepareImport(request: WorkerImportRequest): PreparedImport;
+export function prepareImport(request: WorkerImportRequest): PreparedImport {
+  if (request.kind === 'columnar-points') {
+    return validatePointBatch(request.batch, { positionKind: request.positionKind, context: `columnar(${request.sourceId})` });
+  }
   if (request.kind === 'geojson') {
     return parseGeoJson(request.input as never, { sourceId: request.sourceId }).map(
       parsedToFeatureInput,

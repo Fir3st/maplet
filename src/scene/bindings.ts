@@ -381,6 +381,7 @@ export class BindingStore {
   /* ------------------------------- evaluation ------------------------------ */
 
   isTargetHidden(ref: FeatureRef): boolean {
+    if (this.hidden.size === 0) return false;
     return this.hidden.has(this.refNodeKey(ref));
   }
 

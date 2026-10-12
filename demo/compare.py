@@ -27,6 +27,8 @@ TIMEOUT_SECONDS = 120
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--updates', action='store_true', help='measure validated single-point visibility, color and position changes')
+    parser.add_argument('--no-dom', action='store_true', help='compare the completed GPU/Canvas profiles without the known DOM timeout runs')
+    parser.add_argument('--output', type=Path, help='write a separate before/after record instead of replacing the published baseline')
     args = parser.parse_args()
     report = {
         "measuredAtUtc": datetime.now(timezone.utc).isoformat(),
@@ -43,6 +45,8 @@ def main():
                                           "operations": ["hide", "show", "color", "position"], "moveCssPx": 40}
     for repetition in range(1, 4):
         for profile, scenario, extra in PROFILES:
+            if args.no_dom and profile == 'leaflet-dom':
+                continue
             if args.updates:
                 if profile == 'leaflet-dom':
                     continue  # No successful full-scene DOM setup within the budget.
@@ -75,10 +79,10 @@ def main():
                 entry['error'] = f'Expected {expected_records} measurement records, got {len(checks)}'
             report["runs"].append(entry)
             print(json.dumps(entry), flush=True)
-    destination = ROOT / "docs" / "benchmarks" / ("points-500k-updates.json" if args.updates else "points-500k.json")
+    destination = args.output or ROOT / "docs" / "benchmarks" / ("points-500k-updates.json" if args.updates else "points-500k.json")
     destination.parent.mkdir(exist_ok=True)
     destination.write_text(json.dumps(report, indent=2) + "\n")
-    print(f"Results: {destination.relative_to(ROOT)}", flush=True)
+    print(f"Results: {destination}", flush=True)
     if any(run["status"] == "fail" for run in report["runs"]):
         raise SystemExit(1)
 

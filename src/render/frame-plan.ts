@@ -28,6 +28,7 @@ import { GEOMETRY_KIND } from '../geometry/geometry.ts';
 import { formatTileUrl, tileZoomForView, tilesForWorldRect, wmsGetMapUrl } from '../formats/raster.ts';
 import { parseColor, type Rgba } from './color.ts';
 import { triangulatePolygonWithHoles } from './triangulate.ts';
+import { PointCache } from './point-cache.ts';
 import type {
   FeatureOverride,
   FillsLayerStyle,
@@ -44,6 +45,14 @@ export const FILL_STRIDE = 12;
 
 export const POINT_SHAPES = { circle: 0, square: 1, diamond: 2, triangle: 3 } as const;
 export const FLAG_INTERACTIVE = 1;
+export const FLAG_HIDDEN = 2;
+
+export interface BufferUpload {
+  readonly version: number;
+  readonly previousVersion: number;
+  /** Changed Float32 ranges; full upload if the consumer missed a version. */
+  readonly ranges: readonly { readonly start: number; readonly end: number }[];
+}
 
 export interface PlanBatch {
   readonly layerId: string;
@@ -53,6 +62,12 @@ export interface PlanBatch {
   readonly count: number;
   /** Dash pattern for line batches (null = solid). GEOM-07. */
   readonly dash?: readonly number[] | null;
+  readonly visibleCount?: number;
+  readonly upload?: BufferUpload;
+  readonly offsetX?: number;
+  readonly offsetY?: number;
+  /** Retained point buffers use local pick indices plus this draw's base. */
+  readonly pickBase?: number;
 }
 
 /** A coarser tile drawn scaled-up until the requested tile is decoded. */
@@ -170,6 +185,40 @@ export interface PickEntry {
   readonly layerId: string;
 }
 
+/** Segments share retained identities without copying hundreds of thousands of refs. */
+export class PlanPickTable {
+  private readonly segments: { start: number; entries: readonly PickEntry[] }[] = [];
+  private pending: PickEntry[] = [];
+  length = 0;
+
+  push(entry: PickEntry): void {
+    if (this.pending.length === 0) this.segments.push({ start: this.length, entries: this.pending });
+    this.pending.push(entry);
+    this.length++;
+  }
+
+  append(entries: readonly PickEntry[]): number {
+    const start = this.length;
+    if (entries.length > 0) this.segments.push({ start, entries });
+    this.length += entries.length;
+    this.pending = [];
+    return start;
+  }
+
+  get(index: number): PickEntry | undefined {
+    let lo = 0;
+    let hi = this.segments.length - 1;
+    while (lo <= hi) {
+      const mid = (lo + hi) >>> 1;
+      const segment = this.segments[mid]!;
+      if (index < segment.start) hi = mid - 1;
+      else if (index >= segment.start + segment.entries.length) lo = mid + 1;
+      else return segment.entries[index - segment.start];
+    }
+    return undefined;
+  }
+}
+
 export interface FramePlan {
   readonly revision: number;
   readonly view: ViewTransform;
@@ -177,7 +226,7 @@ export interface FramePlan {
   readonly deviceHeight: number;
   readonly dpr: number;
   readonly draws: readonly DrawItem[];
-  readonly pickTable: readonly PickEntry[];
+  readonly pickTable: PlanPickTable;
   readonly stats: { readonly instances: number; readonly drawCalls: number };
 }
 
@@ -200,10 +249,8 @@ const DEFAULT_FILL_COLOR: Rgba = [0.23, 0.51, 0.96, 0.25];
 const DEFAULT_STROKE_COLOR: Rgba = [0.2, 0.25, 0.33, 1];
 const TRANSPARENT: Rgba = [0, 0, 0, 0];
 
-let planCounter = 0;
-let planRevision = -1;
-let planKey = '';
-let cachedPlan: FramePlan | null = null;
+let plans = new WeakMap<Scene, { key: string; plan: FramePlan }>();
+let pointCaches = new WeakMap<LayerImpl, PointCache>();
 
 /* -------------------------------------------------------------------------- */
 /* Tile fallback chains                                                        */
@@ -262,23 +309,19 @@ function tileChildren(
 export function buildFramePlan(scene: Scene, options: FramePlanOptions): FramePlan {
   const view = scene.attachedView;
   const transform = view.transform();
-  planCounter++;
-  void planCounter;
   const key = `${scene.id}:${scene.revision}:${scene.rasterEpoch}:${transform.zoom}:${transform.width}x${transform.height}:${options.deviceWidth}x${options.deviceHeight}@${options.dpr}:${transform.centerWorld.x},${transform.centerWorld.y}`;
-  if (cachedPlan && planKey === key && planRevision === scene.revision) {
-    return cachedPlan;
+  const cached = plans.get(scene);
+  if (cached?.key === key) {
+    return cached.plan;
   }
   const plan = computePlan(scene, options);
-  cachedPlan = plan;
-  planKey = key;
-  planRevision = scene.revision;
+  plans.set(scene, { key, plan });
   return plan;
 }
 
 export function invalidateFramePlanCache(): void {
-  cachedPlan = null;
-  planKey = '';
-  planRevision = -1;
+  plans = new WeakMap();
+  pointCaches = new WeakMap();
 }
 
 let planBuildCount = 0;
@@ -302,7 +345,7 @@ function computePlan(scene: Scene, options: FramePlanOptions): FramePlan {
     maxY: origin.y + (transform.height + margin) / scale,
   };
   const draws: DrawItem[] = [];
-  const pickTable: PickEntry[] = [];
+  const pickTable = new PlanPickTable();
   let instances = 0;
   let drawCalls = 0;
 
@@ -336,6 +379,23 @@ function computePlan(scene: Scene, options: FramePlanOptions): FramePlan {
       continue;
     }
     if (layer.kind === 'points') {
+      const style = layer.style as PointsLayerStyle;
+      if (source.store.pointOnly && style.icon === undefined) {
+        if (transform.zoom < (style.minZoom ?? 0) || transform.zoom > (style.maxZoom ?? 24)) continue;
+        let cached = pointCaches.get(layer);
+        if (!cached || cached.source !== source || !cached.update(transform)) {
+          cached = new PointCache(scene, layer, source, transform);
+          pointCaches.set(layer, cached);
+        }
+        const batch = cached.batch(transform, pickTable.append(cached.entries));
+        if (batch.count > 0) {
+          draws.push({ type: 'batch', batch });
+          instances += batch.visibleCount!;
+          drawCalls++;
+        }
+        continue;
+      }
+      pointCaches.delete(layer);
       const sprites: SpritePlacement[] = [];
       const batch = collectPoints(scene, layer, source, rect, origin, scale, pickTable, sprites);
       if (batch) {
@@ -447,7 +507,7 @@ function collectPoints(
   rect: WorldRect,
   origin: { x: number; y: number },
   scale: number,
-  pickTable: PickEntry[],
+  pickTable: PlanPickTable,
   sprites: SpritePlacement[],
 ): PlanBatch | null {
   const style = layer.style as PointsLayerStyle;
@@ -596,7 +656,7 @@ function collectLabels(
   rect: WorldRect,
   origin: { x: number; y: number },
   scale: number,
-  pickTable: PickEntry[],
+  pickTable: PlanPickTable,
 ): LabelPlacement[] | null {
   const style = layer.style as LabelsLayerStyle;
   const filter = compileFilter(layer.filter);
@@ -686,7 +746,7 @@ function collectLines(
   rect: WorldRect,
   origin: { x: number; y: number },
   scale: number,
-  pickTable: PickEntry[],
+  pickTable: PlanPickTable,
 ): PlanBatch | null {
   const style = layer.style as LinesLayerStyle;
   const filter = compileFilter(layer.filter);
@@ -829,7 +889,7 @@ function collectFills(
   rect: WorldRect,
   origin: { x: number; y: number },
   scale: number,
-  pickTable: PickEntry[],
+  pickTable: PlanPickTable,
 ): { fill: PlanBatch | null; stroke: PlanBatch | null } {
   const style = layer.style as FillsLayerStyle;
   if (style.visible === false) return { fill: null, stroke: null };
@@ -997,7 +1057,7 @@ function collectMedia(
   scene: Scene,
   layer: LayerImpl,
   transform: ViewTransform,
-  pickTable: PickEntry[],
+  pickTable: PlanPickTable,
 ): MediaPlacement[] {
   const source = scene.getMediaSource(layer.sourceId);
   if (!source || !source.hasPixels()) return [];
@@ -1049,7 +1109,7 @@ function collectTiles(
   layer: LayerImpl,
   rect: WorldRect,
   transform: ViewTransform,
-  pickTable: PickEntry[],
+  pickTable: PlanPickTable,
 ): TilePlacement[] {
   const source = scene.getRasterSource(layer.sourceId);
   if (!source) return [];

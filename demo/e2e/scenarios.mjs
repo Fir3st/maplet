@@ -9,6 +9,7 @@
  * rendered pixels — the same path a user takes.
  */
 import { compareUpdates } from './compare-updates.mjs';
+import { retainedPoints } from './retained-points.mjs';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -73,6 +74,7 @@ async function emptyScreen(session, from) {
 /* -------------------------------- scenarios ------------------------------- */
 
 export const scenarios = [
+  { name: 'retained-point-buffers', page: 'e2e/scene.html', run: retainedPoints },
   { name: 'comparison-updates:maplet', page: 'compare.html', query: 'engine=maplet',
     ready: '!!window.__comparison', manual: true, run: compareUpdates },
   { name: 'comparison-updates:leaflet-canvas', page: 'compare.html', query: 'engine=leaflet-canvas',

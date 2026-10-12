@@ -4,13 +4,13 @@ import assert from 'node:assert/strict';
 import { isMapletError, MapletError } from '../../src/index.ts';
 import type { FeatureInput, ImportWorkerLike } from '../../src/index.ts';
 import { ImportPipeline } from '../../src/io/import-pipeline.ts';
-import type { ImportJobRequest } from '../../src/io/prepare.ts';
+import type { ImportJobRequest, PointImportJobRequest, WorkerImportRequest } from '../../src/io/prepare.ts';
 
 /* ------------------------------- fake worker ------------------------------ */
 
 interface Posted {
   readonly requestId: number;
-  readonly request: ImportJobRequest;
+  readonly request: WorkerImportRequest;
   readonly transfer: readonly Transferable[];
 }
 
@@ -20,7 +20,7 @@ class FakeWorker implements ImportWorkerLike {
   terminated = false;
 
   postMessage(message: unknown, transfer: readonly Transferable[] = []): void {
-    const envelope = message as { requestId: number; request: ImportJobRequest };
+    const envelope = message as { requestId: number; request: WorkerImportRequest };
     this.posted.push({ requestId: envelope.requestId, request: envelope.request, transfer });
   }
 
@@ -95,6 +95,20 @@ test('IO-09: the worker prepares a job and the pipeline reports its use', async 
   assert.equal(debug.backend, 'worker');
   assert.equal(debug.pending, 0);
   assert.deepEqual(debug.used, { worker: 1, inline: 0 });
+  pipeline.destroy();
+});
+
+test('compact point worker replies stay columnar and malformed columns fail closed', async () => {
+  const { pipeline, worker } = pipelineWithWorker();
+  const batch = { kind: 'point' as const, positions: Float64Array.of(14, 50), ids: ['a'] };
+  const prepared = pipeline.submit({ kind: 'columnar-points', sourceId: 's', positionKind: 'geographic', batch }, { copy: false });
+  assert.deepEqual(worker.posted[0]!.transfer, [batch.positions.buffer]);
+  worker.reply({ requestId: worker.posted[0]!.requestId, ok: true, features: batch });
+  assert.equal((await prepared).positions.length, 2);
+  const malformed = pipeline.submit({ kind: 'columnar-points', sourceId: 's', positionKind: 'geographic', batch });
+  worker.reply({ requestId: worker.posted[1]!.requestId, ok: true, features: { kind: 'point', positions: Float64Array.of(Number.NaN, 0) } });
+  await assert.rejects(malformed, (error: unknown) => isMapletError(error) && error.code === 'worker-failed');
+  assert.equal(worker.terminated, true);
   pipeline.destroy();
 });
 
@@ -204,6 +218,29 @@ test('IO-10: stale and foreign replies are ignored without touching the active j
   worker.reply({ requestId, ok: true, features: features() });
   await job;
   pipeline.destroy();
+});
+
+test('IO-10: late replies from cancelled imports cannot poison a different result format', async () => {
+  const compact: PointImportJobRequest = { kind: 'columnar-points', sourceId: 's', positionKind: 'geographic',
+    batch: { kind: 'point', positions: Float64Array.of(14, 50) } };
+  for (const oldCompact of [false, true]) {
+    const { pipeline, worker } = pipelineWithWorker();
+    const controller = new AbortController();
+    const aborted = oldCompact ? pipeline.submit(compact, { signal: controller.signal }) :
+      pipeline.submit(pointJob(), { signal: controller.signal });
+    const oldId = worker.posted[0]!.requestId;
+    controller.abort();
+    await assert.rejects(aborted, (error: unknown) => isMapletError(error) && error.code === 'aborted');
+    const next = oldCompact ? pipeline.submit(pointJob()) : pipeline.submit(compact);
+    void next.catch(() => {});
+    worker.reply({ requestId: oldId, ok: true, features: oldCompact ? compact.batch : features() });
+    assert.equal(pipeline.debug().backend, 'worker', 'the late result must be ignored before validating its format');
+    assert.equal(pipeline.debug().pending, 1);
+    worker.reply({ requestId: worker.posted[1]!.requestId, ok: true, features: oldCompact ? features() : compact.batch });
+    await next;
+    assert.equal(pipeline.debug().used.worker, 1);
+    pipeline.destroy();
+  }
 });
 
 test('IO-11: a worker result error rejects typed without breaking the worker', async () => {

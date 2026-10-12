@@ -112,18 +112,27 @@ passed pixel and data-retention checks across Maplet and the Leaflet Canvas
 comparison. These are demonstrated capabilities, not proof of a general speed
 advantage or a complete benchmark of animated, sprite-heavy maps.
 
-The goal above is still ahead of the current performance: in the simple-circle
-comparison, Leaflet Canvas was faster at setup, pan and individual updates.
-Maplet currently rebuilds its frame plan after revision changes. See
-[measurements, methodology and raw records](docs/benchmarks/README.md) for the
-results and limitations; PixiJS itself has not been benchmarked.
+The retained-point revision removes repeated point planning and uploads: small
+pan changes shader uniforms, and an individual edit uploads **64 bytes** (432
+bytes without instancing). On the matched 500,000-circle workload, warmed small
+pan measured **16.7 ms versus Leaflet Canvas's 137.1 ms**—an **8.2× shorter
+interval**. Visibility/color/position paint fences fell from 162.5–178.8 ms to
+23.5–30.4 ms, versus Canvas's 33.2–33.3 ms; all 180 mutation checks passed.
+
+Setup improved to 706–708 ms but remains slower than Canvas's 285 ms. Maplet's
+main-thread JS heap increase after GC is 139 MiB versus Canvas's 207 MiB, about 33% less,
+but 9% above pre-retention Maplet. Headless scheduling still produced occasional
+one-second pan intervals. These are local measurements, not smooth-playback or
+all-workload guarantees; icons/complex geometry retain the existing planner.
+See [methodology, before/after records and limitations](docs/benchmarks/README.md).
+PixiJS itself has not been benchmarked.
 
 Reproduce the existing measurements with an installed Chromium browser:
 
 ```bash
 npm run build
-python3 demo/compare.py               # setup/pan, including bounded HTML-marker runs
-python3 demo/compare.py --updates     # visibility, color and position with pixel checks
+python3 demo/compare.py --no-dom --output docs/benchmarks/points-500k-retained.json
+python3 demo/compare.py --updates --no-dom --output docs/benchmarks/points-500k-updates-retained.json
 ```
 
 ## Features

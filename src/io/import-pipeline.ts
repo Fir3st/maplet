@@ -32,8 +32,8 @@
 
 import { isMapletError, isMapletErrorCode, MapletError, type MapletErrorCode, type MapletErrorDetail } from '../api/errors.ts';
 import type { FeatureInput } from '../scene/source.ts';
-import { prepareImport, type ImportJobRequest } from './prepare.ts';
-import type { ColumnarBatch } from './columnar.ts';
+import { prepareImport, type ImportJobRequest, type PointImportJobRequest, type WorkerImportRequest, type PreparedImport } from './prepare.ts';
+import { validatePointBatch, type ColumnarBatch, type ColumnarPointBatch } from './columnar.ts';
 
 /** Minimal worker surface; `Worker` satisfies it structurally. */
 export interface ImportWorkerLike {
@@ -69,9 +69,9 @@ export interface ImportPipelineDebug {
 const DEFAULT_QUEUE_LIMIT = 4;
 
 interface PendingJob {
-  readonly request: ImportJobRequest;
+  readonly request: WorkerImportRequest;
   readonly options: ImportSubmitOptions;
-  readonly resolve: (features: FeatureInput[]) => void;
+  readonly resolve: (features: PreparedImport) => void;
   readonly reject: (error: unknown) => void;
   onAbort: (() => void) | null;
   aborted: boolean;
@@ -86,11 +86,20 @@ interface WorkerReply {
   readonly error?: unknown;
 }
 
-function parseReply(data: unknown): WorkerReply | null {
+function parseReply(data: unknown, request: WorkerImportRequest, requestId: number): WorkerReply | null {
   if (typeof data !== 'object' || data === null) return null;
   const reply = data as WorkerReply;
   if (typeof reply.requestId !== 'number' || typeof reply.ok !== 'boolean') return null;
-  if (reply.ok && !Array.isArray(reply.features)) return null;
+  // A cancelled job may finish with a different payload shape than the active
+  // job. Its envelope is enough to identify and ignore it; do not validate it
+  // against the active request's schema or mark the worker as broken.
+  if (reply.requestId !== requestId) return reply;
+  if (reply.ok) {
+    if (request.kind === 'columnar-points') {
+      try { validatePointBatch(reply.features as ColumnarPointBatch, { positionKind: request.positionKind }); }
+      catch { return null; }
+    } else if (!Array.isArray(reply.features)) return null;
+  }
   if (!reply.ok && (typeof reply.error !== 'object' || reply.error === null)) return null;
   return reply;
 }
@@ -118,8 +127,8 @@ function abortError(options: ImportSubmitOptions): MapletError {
   ) as MapletError;
 }
 
-function transferablesOf(request: ImportJobRequest): Transferable[] {
-  if (request.kind !== 'columnar') return [];
+function transferablesOf(request: WorkerImportRequest): Transferable[] {
+  if (request.kind === 'geojson') return [];
   const batch: ColumnarBatch = request.batch;
   // The transfer list holds ArrayBuffers (a typed-array view is not a
   // Transferable); deduplicated because several columns may share one buffer.
@@ -165,8 +174,10 @@ export class ImportPipeline {
   }
 
   /** Prepares an import; the caller applies the returned features transactionally. */
-  submit(request: ImportJobRequest, options: ImportSubmitOptions = {}): Promise<FeatureInput[]> {
-    return new Promise<FeatureInput[]>((resolve, reject) => {
+  submit(request: PointImportJobRequest, options?: ImportSubmitOptions): Promise<ColumnarPointBatch>;
+  submit(request: ImportJobRequest, options?: ImportSubmitOptions): Promise<FeatureInput[]>;
+  submit(request: WorkerImportRequest, options: ImportSubmitOptions = {}): Promise<PreparedImport> {
+    return new Promise<PreparedImport>((resolve, reject) => {
       if (this.destroyed) {
         reject(new MapletError('destroyed', 'import: the map has been destroyed', {}));
         return;
@@ -254,7 +265,11 @@ export class ImportPipeline {
     this.releaseActive();
     this.detachAbort(job);
     try {
-      const features = prepareImport(job.request);
+      // Compact columns stay compact; inline still owns its input like a worker does.
+      const request = job.request.kind === 'columnar-points'
+        ? { ...job.request, batch: structuredClone(job.request.batch) }
+        : job.request;
+      const features = prepareImport(request);
       this.used.inline++;
       job.resolve(features);
     } catch (error) {
@@ -334,7 +349,7 @@ export class ImportPipeline {
   private onWorkerMessage = (event: { readonly data?: unknown }): void => {
     const job = this.active;
     if (!job) return; // no job in flight: stale or foreign message, ignored
-    const reply = parseReply(event.data);
+    const reply = parseReply(event.data, job.request, job.requestId);
     if (reply === null) {
       this.failWorker(job, 'the import worker replied with an invalid message');
       return;
@@ -346,7 +361,7 @@ export class ImportPipeline {
     this.releaseActive();
     if (reply.ok) {
       this.used.worker++;
-      job.resolve(reply.features as FeatureInput[]);
+      job.resolve(reply.features as PreparedImport);
     } else {
       job.reject(tagRevision(replyError(reply.error), job.options.revision));
     }

@@ -169,6 +169,24 @@ function readProperties(
   return value as readonly (FeatureProperties | undefined)[];
 }
 
+/** Validate a point batch without expanding it into hundreds of thousands of objects. */
+export function validatePointBatch(batch: ColumnarPointBatch, options: ColumnarToFeaturesOptions): ColumnarPointBatch {
+  const context = options.context ?? 'columnar';
+  if (typeof batch !== 'object' || batch === null || batch.kind !== 'point') invalid(`${context}: expected a point batch`);
+  if ('partOffsets' in batch || 'featurePartOffsets' in batch) invalid(`${context}: a point batch has no part offsets`);
+  const positions = readPositions(batch.positions, context);
+  const count = positions.length / 2;
+  readAltitudes(batch.altitudes, count, options.positionKind, context);
+  readIds(batch.ids, count, context);
+  readProperties(batch.properties, count, context);
+  for (let i = 0; i < count; i++) {
+    if (!Number.isFinite(positions[i * 2]) || !Number.isFinite(positions[i * 2 + 1])) {
+      invalid(`${context}.positions[${i}] must be finite numbers`);
+    }
+  }
+  return batch;
+}
+
 /** Converts a validated columnar batch into feature inputs (IO-05, IO-06). */
 export function columnarToFeatures(
   batch: ColumnarBatch,

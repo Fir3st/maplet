@@ -13,7 +13,7 @@ to use this repository.
 | Data | Stable identities/generations, CRUD, transactions/rollback, snapshots, state, selection, queries, GeoJSON and columnar imports; `test/scene/`, `test/io/` |
 | Layers and styles | Groups, ordering, filters, overrides, expressions, points, lines and polygon holes; scene/render tests |
 | Relations and bindings | Endpoint policies, traversal, dependency DAGs, field ownership, `lineBetween`, `anchorOnLine`, `copyProperty`; relation and data tests |
-| Rendering | WebGPU and WebGL 1, CPU expansion without instancing, shared frame plan, pixel/pick parity and loss recovery; `demo/parity.html`, `demo/loss.html` |
+| Rendering | WebGPU and WebGL 1, retained plain-point buffers with local uploads, CPU expansion without instancing, shared frame plan, pixel/pick parity and loss recovery; `test/render/`, `demo/parity.html`, `demo/loss.html`, `retained-point-buffers` E2E scenario |
 | Raster | XYZ/TMS/retina, decoded parent/child fallback, previous-bitmap retention, WMS axis/CRS semantics; raster tests, `demo/tiles.html`, `demo/wms.html` |
 | MVT | Decoder, source-layer namespaces, exact large IDs, fragments, unload/reload, overzoom and attribution; vector-tile tests, `demo/mvt.html` |
 | Interaction | Pan, zoom, hover/click/drag, pinch, keyboard, selection, bubbling; `demo/interaction.html` and real-input E2E scenarios |
@@ -21,7 +21,7 @@ to use this repository.
 | Text and fonts | Labels, collisions, rotation, atlas eviction, font loading/fallback, platform shaping, bidi; `demo/labels.html`, `demo/fonts.html` |
 | Media | Sprites, anchor rotation, image/video bounds, partial uploads and cleanup; `demo/icons.html`, `demo/media.html` |
 | HTML UI | Optional controls, scale, attribution, geolocation, feature detail and bounded accessible lists; `test/ui/`, `demo/ui.html`, `demo/detail.html` |
-| Worker imports | Validation, copy/move, cancellation, bounded queue, crash/CSP fallback; import tests, `demo/import.html`, `demo/csp.html?csp=worker-none` |
+| Worker imports | Compact point columns across the worker boundary, validation, copy/move, cancellation, bounded queue, crash/CSP fallback; import tests, `demo/import.html`, `demo/csp.html?csp=worker-none` |
 | Distribution | ESM/declaration/subpath/worker assets, archive audit and consumer types; `test/publish/`, `type-tests/` |
 | Lifecycle and scale | Repeated create/destroy, GC-stabilized memory checks, cancellation and 500,000-point example; `demo/soak.html`, `demo/scale.html` |
 
@@ -32,6 +32,14 @@ and **34 passing E2E scenarios/batteries** on each of WebGL 1, WebGPU and the
 forced basic WebGL 1 profile. These are historical results, not a guarantee
 about a different checkout, browser or machine. Run the commands below for
 current results.
+
+The retained-point revision checked on October 12, 2026 passes **204 unit tests**
+and **35 E2E scenarios/batteries per profile** (WebGL 1, WebGPU and forced basic
+WebGL 1). The new `retained-point-buffers` scenario instruments actual GPU calls:
+small pan uploads no point data; a local edit uploads 64 bytes, or 432 bytes in
+the CPU-expanded basic profile. Pixels, picking and all 20,000 source records
+are checked together. Import tests also cover slot reuse, atomic publication
+and late cancelled replies crossing different worker result formats.
 
 The recorded browser environment was headless Chromium on an Apple M5 Pro,
 using ANGLE Metal for WebGL and `apple metal-3` for WebGPU. Pixel comparisons
@@ -58,20 +66,33 @@ one-second intervals, not smooth interactive frame rates. See the
 for workload, memory observations, timing definitions and limitations. These
 current observations should not be confused with the earlier development record.
 
-The subsequent [matched Leaflet comparison](benchmarks/README.md) includes
+The October 11 [matched Leaflet comparison](benchmarks/README.md) includes
 Canvas and HTML-marker variants, longer warmed-up pan measurements, and
 pixel-verified visibility/color/position changes. Leaflet Canvas was faster
-than the current Maplet alpha for setup, pan and these single-point updates;
+than the pre-retention alpha for setup, pan and these single-point updates;
 Maplet used less main-thread JS heap after GC. Three HTML-marker runs timed out
 within the 120-second whole-process budget, so no successful DOM timing is
 claimed. All 180 single-point mutation checks passed across the completed
 Maplet/Canvas variants. PixiJS was researched, not benchmarked.
 
+The October 12 retained-point [before/after comparison](benchmarks/README.md)
+uses the same workload and checks: warmed small pan is 16.7 ms p50 on both
+Maplet backends versus Canvas's 137.1 ms (8.2× shorter). Single-point paint
+fences are 23.5–30.4 ms p50, down from 162.5–178.8 ms, with all 180 mutation
+checks passing. Setup is 706–708 ms versus Canvas's 285 ms. Main-thread JS
+heap increase is 139 MiB versus 207 MiB for Canvas, but 9% above pre-change Maplet.
+Every final warm run still contains a roughly one-second maximum interval;
+these results do not establish hitch-free playback, large-pan/zoom throughput,
+sprite performance or a universal advantage over Canvas.
+
 ## Known limitations
 
 - **Performance:** reference hardware and the reference benchmark suite have
-  not been established. Revision/view changes rebuild instance planning data;
-  chunk caching and upload budgeting remain future work.
+  not been established. Plain-point layers without icons retain instance data:
+  pan within a 32-CSS-pixel resident margin changes uniforms, and local edits
+  upload changed rows. Zoom, resident-set/order changes and invalidation-journal
+  overflow rebuild safely. Icons, labels and complex geometry still use the
+  existing planner; results for plain circles do not establish their performance.
 - **Memory:** point positions use columnar storage, but properties and composite
   geometry remain objects. Columnar input does not mean a fully columnar store.
 - **Text:** platform Canvas2D supplies shaping and metrics; no custom font

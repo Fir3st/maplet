@@ -214,3 +214,52 @@ test('GeoJSON imports share the pipeline and its diagnostics', async () => {
   assert.equal(map.debug.imports().used.inline, 1, 'geojson goes through the same preparation pipeline');
   map.destroy();
 });
+
+test('compact point import preserves generations, metadata ownership and empty replacement', async () => {
+  const { map } = await makeMap();
+  const source = map.sources.vector({ id: 's' });
+  const batch = { kind: 'point' as const, positions: Float64Array.of(14, 50, 15, 51),
+    altitudes: Float64Array.of(123, Number.NaN), ids: [42, '42'], properties: [{ value: 1 }, { value: 2 }] };
+  await source.importColumnar(batch);
+  const ref = source.features.ref(42);
+  batch.properties[0]!.value = 99;
+  batch.positions[0] = 17;
+  assert.equal(source.features.get(42)!.properties.value, 1, 'the caller cannot mutate imported properties');
+  assert.equal((source.features.get(42)!.geometry as { position: { altitude: number } }).position.altitude, 123);
+  await source.importColumnar(batch);
+  assert.deepEqual(source.features.ref(42), ref, 'retained IDs keep their generation');
+  assert.equal(source.features.get('42')!.properties.value, 2, 'numeric and string IDs stay separate');
+  await source.importColumnar({ kind: 'point', positions: new Float64Array() });
+  assert.equal(source.features.count(), 0);
+  map.destroy();
+});
+
+test('compact point import validates all columns and append duplicates before publication', async () => {
+  const { map } = await makeMap();
+  const source = map.sources.vector({ id: 's' });
+  await source.importColumnar({ kind: 'point', positions: Float64Array.of(14, 50), ids: ['keep'] });
+  const before = source.features.get('keep');
+  const revision = map.stats().revision;
+  for (const batch of [
+    { kind: 'point' as const, positions: Float64Array.of(14, 50, Number.NaN, 0) },
+    { kind: 'point' as const, positions: Float64Array.of(14, 50), altitudes: Float64Array.of(1, 2) },
+    { kind: 'point' as const, positions: Float64Array.of(14, 50), ids: [] },
+    { kind: 'point' as const, positions: Float64Array.of(14, 50), properties: [] },
+  ]) await assert.rejects(source.importColumnar(batch));
+  await assert.rejects(source.importColumnar({ kind: 'point', positions: Float64Array.of(15, 51, 16, 52), ids: ['new', 'keep'] }, { mode: 'append' }));
+  assert.equal(source.features.count(), 1);
+  assert.deepEqual(source.features.get('keep'), before);
+  assert.equal(map.stats().revision, revision);
+  map.destroy();
+});
+
+test('compact point imports retain the existing altitude semantics', async () => {
+  const { map } = await makeMap();
+  const source = map.sources.vector({ id: 'compact' });
+  const direct = map.sources.vector({ id: 'direct' });
+  // Altitude is metadata, not a projected coordinate; the existing store accepts Infinity.
+  direct.features.add({ id: 'p', geometry: { type: 'point', position: { lng: 14, lat: 50, altitude: Infinity } } });
+  await source.importColumnar({ kind: 'point', positions: Float64Array.of(14, 50), altitudes: Float64Array.of(Infinity), ids: ['p'] });
+  assert.deepEqual(source.features.get('p')!.geometry, direct.features.get('p')!.geometry);
+  map.destroy();
+});

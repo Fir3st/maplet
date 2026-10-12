@@ -10,7 +10,7 @@
 import { assertArgument, fail } from '../api/errors.ts';
 import { Emitter } from '../api/events.ts';
 import type { FeatureRef, SubscribeOptions, Unsubscribe } from '../api/types.ts';
-import { featureRefKey } from '../api/types.ts';
+import { featureIdKey } from '../api/types.ts';
 import type { SourceImpl } from './source.ts';
 import type { SlotRecord } from './store.ts';
 
@@ -32,7 +32,7 @@ export interface FeatureStatePatch {
 export interface StateStoreHost {
   readonly sceneId: string;
   getSourceImpl(sourceId: string): SourceImpl | undefined;
-  publishStateChange(): void;
+  publishStateChange(ref: FeatureRef): void;
 }
 
 interface StateEntry {
@@ -69,11 +69,13 @@ export class StateStore {
   }
 
   stateOf(source: SourceImpl, record: SlotRecord): FeatureState {
+    const selected = this.selection.hasRef(source, record);
+    if (this.entries.size === 0 && !selected) return EMPTY_STATE;
     const key = `${source.id}\u0000${record.key}`;
     const entry = this.entries.get(key);
     return {
       hovered: entry?.hovered ?? false,
-      selected: this.selection.hasRef(source, record),
+      selected,
       disabled: entry?.disabled ?? false,
       custom: entry?.custom ?? EMPTY_CUSTOM,
     };
@@ -115,7 +117,7 @@ export class StateStore {
       id: record.id,
       state: this.stateOf(source, record),
     });
-    this.host.publishStateChange();
+    this.host.publishStateChange(ref);
   }
 
   /** Drops all state of a removed feature. */
@@ -144,9 +146,10 @@ export class SelectionStore {
   private readonly items = new Map<string, FeatureRef>();
   private readonly emitter = new Emitter<{ change: SelectionChangeEvent }>();
   private revision = 0;
-  private publish: (() => void) | null = null;
+  private publish: ((refs: readonly FeatureRef[]) => void) | null = null;
+  private readonly changed = new Set<FeatureRef>();
 
-  setPublisher(publish: () => void): void {
+  setPublisher(publish: (refs: readonly FeatureRef[]) => void): void {
     this.publish = publish;
   }
 
@@ -177,6 +180,7 @@ export class SelectionStore {
   sourceLookup: ((sourceId: string) => SourceImpl | undefined) | null = null;
 
   hasRef(source: SourceImpl, record: SlotRecord): boolean {
+    if (this.items.size === 0) return false;
     return this.items.has(`${source.id}\u0000${record.key}`);
   }
 
@@ -197,13 +201,19 @@ export class SelectionStore {
   addInternal(source: SourceImpl, record: SlotRecord): boolean {
     const key = `${source.id}\u0000${record.key}`;
     if (this.items.has(key)) return false;
-    this.items.set(key, source.refOf(record));
+    const ref = source.refOf(record);
+    this.items.set(key, ref);
+    this.changed.add(ref);
     return true;
   }
 
   /** Removes by value identity; returns whether anything changed. */
   removeInternal(source: SourceImpl, record: SlotRecord): boolean {
-    return this.items.delete(`${source.id}\u0000${record.key}`);
+    const key = `${source.id}\u0000${record.key}`;
+    const ref = this.items.get(key);
+    if (!ref) return false;
+    this.changed.add(ref);
+    return this.items.delete(key);
   }
 
   /** Emits a change for a mutation performed through the state store. */
@@ -229,13 +239,12 @@ export class SelectionStore {
   remove(refs: readonly FeatureRef[]): void {
     let changed = false;
     for (const ref of refs) {
-      const key = featureRefKey(ref);
-      for (const [itemKey, item] of this.items) {
-        if (itemKey === key || (item.id === ref.id && item.sourceId === ref.sourceId && item.namespace === ref.namespace)) {
-          this.items.delete(itemKey);
-          changed = true;
-        }
-      }
+      const key = `${ref.sourceId}\u0000${featureIdKey(ref.id, ref.namespace)}`;
+      const item = this.items.get(key);
+      if (!item) continue;
+      this.changed.add(item);
+      this.items.delete(key);
+      changed = true;
     }
     if (changed) this.emitChange();
   }
@@ -247,18 +256,26 @@ export class SelectionStore {
   }
 
   private clearInternal(): void {
+    for (const ref of this.items.values()) this.changed.add(ref);
     this.items.clear();
   }
 
   /** SELECT-04: removing a selected feature invalidates the selection entry. */
   forget(sourceId: string, record: SlotRecord): void {
     const key = `${sourceId}\u0000${record.key}`;
-    if (this.items.delete(key)) this.emitChange();
+    const ref = this.items.get(key);
+    if (ref) {
+      this.changed.add(ref);
+      this.items.delete(key);
+      this.emitChange();
+    }
   }
 
   private emitChange(): void {
     this.revision++;
-    this.publish?.();
+    const changed = Array.from(this.changed);
+    this.changed.clear();
+    this.publish?.(changed);
     this.emitter.emit('change', { revision: this.revision, selected: this.get() });
   }
 
@@ -268,6 +285,7 @@ export class SelectionStore {
 }
 
 const EMPTY_CUSTOM: Readonly<Record<string, unknown>> = Object.freeze({});
+const EMPTY_STATE: FeatureState = Object.freeze({ hovered: false, selected: false, disabled: false, custom: EMPTY_CUSTOM });
 
 export function assertSelectionInput(refs: unknown): asserts refs is readonly FeatureRef[] {
   assertArgument(

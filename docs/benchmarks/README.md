@@ -2,13 +2,20 @@
 
 ## Environment and records
 
-Measured October 11, 2026, on an Apple M5 Pro with 64 GiB RAM, using headless
+Measured October 11–12, 2026, on an Apple M5 Pro with 64 GiB RAM, using headless
 Chromium 153.0.0.0 (installed `chromium-1243` build), DPR 1. Leaflet is the
 vendored, unmodified 1.9.4 ESM build. Maplet is the locally built alpha package.
 
-- [Setup and pan runs](points-500k.json): three fresh processes each for
+- [Retained-point setup and pan](points-500k-retained.json): October 12, three
+  fresh processes each for Maplet WebGL 1, WebGPU and Leaflet Canvas.
+- [Retained-point updates](points-500k-updates-retained.json): the same profiles,
+  three fresh processes each, with all **180 pixel/data-retention checks passing**.
+- [Immediate pre-change setup and pan](points-500k-before-retained.json) and
+  [updates](points-500k-updates-before-retained.json): captured against the
+  unchanged build before implementing retention, on the same machine/browser.
+- [Archived October 11 setup and pan](points-500k.json): three fresh processes each for
   Maplet WebGL 1, Leaflet Canvas, Maplet WebGPU and Leaflet HTML markers.
-- [Single-point update runs](points-500k-updates.json): three fresh processes
+- [Archived October 11 updates](points-500k-updates.json): three fresh processes
   each for the two Maplet backends and Leaflet Canvas, with 20 mutations per
   process. All 180 mutation checks passed.
 
@@ -21,20 +28,35 @@ These expensive scenarios are opt-in, not added to the default E2E suite.
 
 | Measurement | Maplet WebGL 1 | Maplet WebGPU | Leaflet Canvas |
 | --- | ---: | ---: | ---: |
-| Setup to paint opportunity, median | 1,541 ms | 1,462 ms | 293 ms |
-| Data loading, median | 1,278 ms | 1,212 ms | 225 ms |
-| Main-thread JS heap increase after GC | 127.3 MiB | 127.3 MiB | 207.1 MiB |
-| Warm pan interval p50, median across runs | 167.2 ms | 200.8 ms | 137.5 ms |
-| Warm pan interval p95, median across runs | 207.5 ms | 233.9 ms | 164.1 ms |
+| Setup to paint opportunity, median | 708 ms | 706 ms | 285 ms |
+| Data loading, median | 619 ms | 623 ms | 219 ms |
+| Main-thread JS heap increase after GC | 139.1 MiB | 139.0 MiB | 207.1 MiB |
+| Warm pan interval p50, median across runs | 16.7 ms | 16.7 ms | 137.1 ms |
+| Warm pan interval p95, median across runs | 17.2 ms | 16.9 ms | 153.7 ms |
+
+The measured small-pan interval is **8.2× shorter than Leaflet Canvas**. Setup
+is roughly twice as fast as the immediate pre-change Maplet build, but still
+slower than Canvas. This is a fixed-workload result, not an all-maps speed claim.
+
+| Immediate before → after | Maplet WebGL 1 | Maplet WebGPU |
+| --- | ---: | ---: |
+| Setup to paint opportunity, median | 1,375 → 708 ms | 1,388 → 706 ms |
+| Data loading, median | 1,133 → 619 ms | 1,152 → 623 ms |
+| Warm pan p50 | 163.9 → 16.7 ms | 160.1 → 16.7 ms |
+| Main-thread JS heap increase after GC | 127.3 → 139.1 MiB | 127.3 → 139.0 MiB |
 
 | Single-point operation: p50 / p95 to paint fence | Maplet WebGL 1 | Maplet WebGPU | Leaflet Canvas |
 | --- | ---: | ---: | ---: |
-| Hide | 164.3 / 202.8 ms | 174.2 / 215.2 ms | 33.3 / 33.4 ms |
-| Show | 149.5 / 198.8 ms | 152.8 / 231.1 ms | 33.3 / 33.4 ms |
-| Change color | 171.9 / 205.3 ms | 152.1 / 263.8 ms | 33.3 / 33.4 ms |
-| Move by 40 CSS pixels | 160.1 / 191.9 ms | 169.8 / 195.0 ms | 33.3 / 33.4 ms |
+| Hide | 23.5 / 27.9 ms | 24.0 / 30.0 ms | 33.3 / 33.9 ms |
+| Show | 29.8 / 31.7 ms | 29.0 / 30.4 ms | 33.2 / 34.2 ms |
+| Change color | 30.4 / 31.4 ms | 28.9 / 30.7 ms | 33.3 / 33.6 ms |
+| Move by 40 CSS pixels | 30.1 / 31.9 ms | 28.8 / 30.8 ms | 33.3 / 34.1 ms |
 
-All three HTML-marker runs exceeded the 120-second whole-process budget;
+Against the immediate pre-change Maplet build, these p50 values are **5.4–7.2×
+shorter** (before: 162.5–178.8 ms). Their small difference from Canvas is close
+to the animation-frame fence floor; it is not a GPU-only speedup measurement.
+
+All three archived HTML-marker runs exceeded the 120-second whole-process budget;
 no completed timing is available for that variant. Timing definitions,
 sample sizes and limits are described below.
 
@@ -87,11 +109,12 @@ Each interval is `view.set`/`panTo` to the next animation-frame callback.
 Leaflet rounds its pan offsets; Maplet retains fractional coordinates. This
 test is not a realistic continuous large-distance drag or a display FPS counter.
 
-The measured warm runs contain 54–61 samples for Maplet WebGL 1, 48–51 for
-Maplet WebGPU and 62–64 for Leaflet Canvas. The setup/pan table reports the median of
-the three per-run p50/p95 values, not a pooled percentile. The initial runs
-contained approximately one-second intervals in all three renderers; warm-up
-reduces that confounder but does not eliminate every scheduling outlier.
+The retained-point warm runs contain 538–541 samples for Maplet WebGL 1,
+538–539 for WebGPU and 66–68 for Leaflet Canvas. The setup/pan table reports the
+median of the three per-run p50/p95 values, not a pooled percentile. **Every
+final warm run still contains a roughly one-second maximum interval**, including
+Canvas. The lower p50/p95 is not proof of hitch-free playback; headless scheduling
+outliers remain visible in the raw records.
 
 ### Visibility, color and position
 
@@ -119,25 +142,61 @@ sorted index `floor(15 × 0.95)`, so it is the maximum for this small sample.
 
 Leaflet's roughly 33 ms paint-fence time is near two 60 Hz animation-frame
 intervals. Its actual redraw can be substantially shorter; the measurement
-does not isolate that time. The Maplet observations are about 150–175 ms p50.
-Both systems support these changes; this test does not show Maplet outperforming
-Leaflet Canvas at them, or establish performance for changing many points per frame.
+does not isolate that time. Retained-point Maplet records 23.5–30.4 ms p50,
+instead of the pre-change 162.5–178.8 ms. Readback occurs outside the timer but
+can change the next operation's phase relative to an animation frame. Do not
+interpret the small Maplet/Canvas fence difference as an isolated redraw-time
+advantage. Both systems support these changes; throughput for changing many
+points per frame is not established.
 
 ### Memory and timeouts
 
 Main-thread JS heap deltas are sampled after exposed GC before setup and after
-initial rendering. They are 127.3 MiB for Maplet and 207.1 MiB for Leaflet Canvas.
+initial rendering. They are 139.0–139.1 MiB for retained-point Maplet and
+207.1 MiB for Leaflet Canvas: about **33% less than Canvas**, but about **9% more
+than the pre-change Maplet build**. Retaining row indices and per-instance state
+trades some persistent memory for much less repeated planning/upload work.
 They do not include all worker memory, DOM/native allocations or driver memory.
 Maplet's GPU counter reports 15.8 MiB, not total driver VRAM. The older scale
 page's non-GC heap readings are not comparable with these GC-stabilized deltas.
 
-All three HTML-marker runs exceeded the **whole-process** 120-second budget.
+All three archived HTML-marker runs exceeded the **whole-process** 120-second budget.
 The wrapper terminated each process group it created, including its browser.
 No completed initial-render, pan, mutation or memory result was captured for
 that variant. The timeout does not identify which phase exceeded the budget,
 and must not be reported as a 120-second startup measurement, crash, universal
 marker limit or speedup multiplier. DOM mutation tests were not run because
 the full-scene prerequisites did not complete.
+
+## Retained-point implementation and regression checks
+
+- Plain-point layers without icons retain their sorted, viewport-relative
+  instances, slot-to-row lookup and generation-bound pick references. Small pan
+  inside the 32-CSS-pixel resident margin changes shader uniforms, not point data.
+- Bounded, independently consumed change journals localize position, property,
+  override, hover and selection changes. Filters and visibility update the same
+  rows; hiding never discards source data. Adjacent dirty rows share an upload.
+- WebGL and WebGPU retain batch buffers across color, pick and sample passes.
+  A local point change uploads **64 bytes**; the basic WebGL fallback expands
+  only that row and uploads **432 bytes**. These sizes and zero-upload small pan
+  are asserted against actual GPU calls in `retained-point-buffers`, alongside
+  pixels, picking and all 20,000 retained records, on all three profiles.
+- Zoom, resident-set/order changes, slot-identity changes, broad render
+  invalidations and journal overflow rebuild safely. A backend that missed an
+  upload version refreshes the full buffer. Icons, labels and complex geometry
+  keep the existing planner; the circle benchmark does not establish their speed.
+- Columnar point imports stay compact across the worker boundary. Position
+  buffers transfer back without an expanded per-feature geometry tree. Store
+  publication still uses normal transactional validation and ownership checks.
+
+The final checks pass **204 unit tests** and **35 browser scenarios/batteries per
+profile** (WebGL 1, WebGPU, basic WebGL 1). Regression checks include failed
+transactions, recycled slots with equal generations but different identities,
+late cancelled worker replies of a different result format, first/skipped-version
+uploads and disabling stale WebGL attribute pointers before freeing buffers.
+Existing MVT, bindings, raster, labels, sprites, interaction and loss recovery
+checks remain enabled. Current Maplet and Canvas comparison screenshots were
+opened and inspected; coordinate and pixel probes are retained in the records.
 
 ## Canvas, PixiJS and dynamic maps
 
@@ -155,9 +214,10 @@ PixiJS can still be a useful alternative for sprite-heavy maps:
   zoom animation. This is an architectural capability, not a measured speedup here.
 - Canvas partial redraws and GPU batching are different strategies. Leaflet
   Canvas tracks a changed region, scans its draw list and redraws intersecting
-  paths. In this local single-point workload, that is effective. Maplet currently
-  rebuilds its frame plan after a revision change, even for one feature; GPU
-  drawing alone does not remove that CPU preparation cost.
+  paths. In this local single-point workload, that is effective. Maplet now
+  retains plain-point instance data and uploads changed rows rather than
+  rebuilding all point data for a single feature; GPU drawing alone did not
+  remove that CPU preparation cost in the archived build.
 - Pointer interaction is a separate problem. Leaflet 1.9.4 Canvas walks its
   draw list to find hover/click targets. PixiJS likewise has scene-tree hit
   testing; GPU rendering does not automatically make hit testing cheap.
@@ -168,8 +228,9 @@ PixiJS can still be a useful alternative for sprite-heavy maps:
 Maplet's intended advantage is integrated dynamic GPU rendering **and** a
 native typed data/identity/update model, not the claim that Canvas cannot change
 point state. Visibility, color and position are implemented and checked here;
-competitive update throughput still needs work. No PixiJS/PixiOverlay timing
-baseline was run, and these tests do not justify a Maplet-versus-PixiJS claim.
+these results do not establish throughput for changing many points per frame.
+No PixiJS/PixiOverlay timing baseline was run, and these tests do not justify a
+Maplet-versus-PixiJS claim.
 
 Primary sources (reviewed October 11, 2026):
 
@@ -188,13 +249,15 @@ for its hard deadline (macOS/Linux):
 
 ```bash
 npm run build
-python3 demo/compare.py
-python3 demo/compare.py --updates
+python3 demo/compare.py --no-dom --output docs/benchmarks/points-500k-retained.json
+python3 demo/compare.py --updates --no-dom --output docs/benchmarks/points-500k-updates-retained.json
 ```
 
-The first command group takes several minutes because each of three DOM runs
-has a 120-second budget. Records are regenerated in this directory. Screenshots
-go to Git-ignored `demo/checks/` and are not part of the public result records.
+These commands preserve the archived/pre-change records. Omit `--no-dom` to
+include HTML markers in setup/pan; each of their three runs has a 120-second
+budget. `--output` chooses the record destination; without it the original
+`points-500k.json` / `points-500k-updates.json` is replaced. Screenshots go to
+Git-ignored `demo/checks/` and are not part of the public result records.
 
 To inspect one variant:
 
