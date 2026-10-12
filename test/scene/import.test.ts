@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { crs, isMapletError } from '../../src/index.ts';
-import { makeMap } from '../helpers/fixture.ts';
+import { Scene } from '../../src/scene/scene.ts';
+import { makeMap, manualClock } from '../helpers/fixture.ts';
 
 function pointBatch(count: number, startLng = 14): {
   kind: 'point';
@@ -262,4 +263,29 @@ test('compact point imports retain the existing altitude semantics', async () =>
   await source.importColumnar({ kind: 'point', positions: Float64Array.of(14, 50), altitudes: Float64Array.of(Infinity), ids: ['p'] });
   assert.deepEqual(source.features.get('p')!.geometry, direct.features.get('p')!.geometry);
   map.destroy();
+});
+
+test('insertion returns the stored slot identity without a second ID lookup', () => {
+  const scene = new Scene(crs.webMercator(), manualClock());
+  const source = scene.createVectorSource('s');
+  const store = scene.getSourceImpl('s')!.store;
+  const originalGet = store.get;
+  let lookups = 0;
+  store.get = function (...args) { lookups++; return originalGet.apply(this, args); };
+  const input = { id: 42, namespace: 'points', geometry: { type: 'point' as const, position: { lng: 14, lat: 50 } } };
+  try {
+    const first = source.features.add([input, { ...input, id: '42' }]);
+    assert.equal(lookups, 0, 'the insert result already supplies the live slot');
+    assert.deepEqual(first.refs.map(ref => [ref.id, ref.namespace, ref.generation]), [[42, 'points', 1], ['42', 'points', 1]]);
+    assert.equal(store.getBySlot(0)!.id, 42);
+    assert.equal(store.getBySlot(1)!.id, '42');
+    const replacement = source.features.add(input, { upsert: true });
+    assert.equal(lookups, 0, 'upsert also returns its resolved slot');
+    assert.equal(replacement.refs[0]!.generation, 2);
+    assert.equal(store.getBySlot(0)!.generation, 2);
+    assert.equal(source.features.count(), 2);
+  } finally {
+    store.get = originalGet;
+    scene.destroy();
+  }
 });

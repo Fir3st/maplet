@@ -13,13 +13,14 @@
  */
 
 import { fail } from '../api/errors.ts';
-import type { FeatureId } from '../api/types.ts';
+import type { FeatureId, Position } from '../api/types.ts';
 import { featureIdKey } from '../api/types.ts';
 import { ChangeJournal } from './change-journal.ts';
 import type { Crs } from '../math/crs.ts';
 import {
   GEOMETRY_KIND,
   prepareGeometry,
+  positionToWorldChecked,
   type GeometryKindCode,
   type PreparedFeatureGeometry,
 } from '../geometry/geometry.ts';
@@ -72,6 +73,8 @@ export interface GeometryState {
   readonly bbox: Float64Array;
 }
 
+type RecordGeometry = Pick<SlotRecord, 'kind' | 'wx' | 'wy' | 'alt' | 'geometry'>;
+
 const INDEX_LEVEL = 12;
 const MAX_CELLS_PER_FEATURE = 64;
 export const EMPTY_PROPERTIES: Readonly<Record<string, unknown>> = Object.freeze({});
@@ -112,15 +115,25 @@ export class SpatialIndex {
     }
     for (let cy = y0; cy <= y1; cy++) {
       for (let cx = x0; cx <= x1; cx++) {
-        const key = cy * this.n + cx;
-        let bucket = this.cells.get(key);
-        if (!bucket) {
-          bucket = [];
-          this.cells.set(key, bucket);
-        }
-        bucket.push(slot);
+        this.addToCell(cy * this.n + cx, slot);
       }
     }
+  }
+
+  /** A point occupies one cell; no temporary rectangle or typed array is needed. */
+  addPoint(slot: number, wx: number, wy: number): void {
+    const cx = this.clampCell(Math.floor((wx / 256) * this.n));
+    const cy = this.clampCell(Math.floor((wy / 256) * this.n));
+    this.addToCell(cy * this.n + cx, slot);
+  }
+
+  private addToCell(key: number, slot: number): void {
+    let bucket = this.cells.get(key);
+    if (!bucket) {
+      bucket = [];
+      this.cells.set(key, bucket);
+    }
+    bucket.push(slot);
   }
 
   removeWithBBox(slot: number, bbox: Float64Array): void {
@@ -235,7 +248,20 @@ export class FeatureStore {
    * Returns the previous record so callers can build undo entries.
    */
   add(input: AddRecordInput, upsert = false): AddRecordResult {
-    return this.insert(
+    const geometry = input.geometry;
+    if (typeof geometry === 'object' && geometry !== null && (geometry as { type?: unknown }).type === 'point') {
+      // Keep the same CRS validation/normalization, but store the checked point
+      // inline instead of allocating a prepared payload and degenerate bbox.
+      const point = positionToWorldChecked(this.crs, (geometry as { position: Position }).position, 'geometry.position');
+      return this.insert(input, {
+        kind: GEOMETRY_KIND.point,
+        wx: point.wx,
+        wy: point.wy,
+        alt: point.alt,
+        geometry: null,
+      }, upsert);
+    }
+    return this.addPrepared(
       {
         id: input.id,
         namespace: input.namespace,
@@ -248,10 +274,18 @@ export class FeatureStore {
 
   /** Adds a record whose geometry was prepared by the caller (vector tiles). */
   addPrepared(input: AddPreparedRecordInput, upsert = false): AddRecordResult {
-    return this.insert(input, upsert);
+    const prepared = input.prepared;
+    return this.insert(input, {
+      kind: prepared.kind,
+      wx: prepared.anchorX,
+      wy: prepared.anchorY,
+      alt: prepared.kind === GEOMETRY_KIND.point && prepared.payload.kind === GEOMETRY_KIND.point
+        ? prepared.payload.alt : undefined,
+      geometry: prepared.kind === GEOMETRY_KIND.point ? null : prepared,
+    }, upsert);
   }
 
-  private insert(input: AddPreparedRecordInput, upsert: boolean): AddRecordResult {
+  private insert(input: Omit<AddRecordInput, 'geometry'>, geometry: RecordGeometry, upsert: boolean): AddRecordResult {
     const key = this.keyOf(input.id, input.namespace);
     const existingSlot = this.byKey.get(key);
     if (existingSlot !== undefined && !upsert) {
@@ -260,7 +294,6 @@ export class FeatureStore {
         namespace: input.namespace ?? null,
       });
     }
-    const prepared = input.prepared;
     const generation = (this.generationCounters.get(key) ?? 0) + 1;
     this.generationCounters.set(key, generation);
     let previous: SlotRecord | null = null;
@@ -278,14 +311,11 @@ export class FeatureStore {
       id: input.id,
       namespace: input.namespace,
       generation,
-      kind: prepared.kind,
-      wx: prepared.anchorX,
-      wy: prepared.anchorY,
-      alt:
-        prepared.kind === GEOMETRY_KIND.point && prepared.payload.kind === GEOMETRY_KIND.point
-          ? prepared.payload.alt
-          : undefined,
-      geometry: prepared.kind === GEOMETRY_KIND.point ? null : prepared,
+      kind: geometry.kind,
+      wx: geometry.wx,
+      wy: geometry.wy,
+      alt: geometry.alt,
+      geometry: geometry.geometry,
       properties: input.properties ?? EMPTY_PROPERTIES,
     };
     this.slots[slot] = record;
@@ -293,7 +323,8 @@ export class FeatureStore {
     if (record.geometry) this.complexCount++;
     this.changes.note(slot);
     this.byKey.set(key, slot);
-    this.index.add(slot, recordBBox(record));
+    if (record.geometry) this.index.add(slot, record.geometry.bbox);
+    else this.index.addPoint(slot, record.wx, record.wy);
     if (existingSlot === undefined) this.liveCount++;
     this.boundsDirty = true;
     return { slot, generation, replaced: existingSlot !== undefined, previous };

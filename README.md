@@ -119,7 +119,11 @@ pan measured **16.7 ms versus Leaflet Canvas's 137.1 ms**—an **8.2× shorter
 interval**. Visibility/color/position paint fences fell from 162.5–178.8 ms to
 23.5–30.4 ms, versus Canvas's 33.2–33.3 ms; all 180 mutation checks passed.
 
-Setup improved to 706–708 ms but remains slower than Canvas's 285 ms. Maplet's
+An initialization follow-up measured **743 → 685 ms for WebGL 1** and
+**756 → 654 ms for WebGPU** in a fresh, alternating three-run A/B comparison:
+**7.8% and 13.5% shorter setup**, respectively. Import alone fell from
+659 → 598 ms and 674 → 571 ms. These are median reductions; individual runs vary.
+Setup remains slower than Canvas's 288 ms. Maplet's
 main-thread JS heap increase after GC is 139 MiB versus Canvas's 207 MiB, about 33% less,
 but 9% above pre-retention Maplet. Headless scheduling still produced occasional
 one-second pan intervals. These are local measurements, not smooth-playback or
@@ -131,8 +135,8 @@ Reproduce the existing measurements with an installed Chromium browser:
 
 ```bash
 npm run build
-python3 demo/compare.py --no-dom --output docs/benchmarks/points-500k-retained.json
-python3 demo/compare.py --updates --no-dom --output docs/benchmarks/points-500k-updates-retained.json
+python3 demo/compare.py --no-dom --output docs/benchmarks/points-500k-local.json
+python3 demo/compare.py --updates --no-dom --output docs/benchmarks/points-500k-updates-local.json
 ```
 
 ## Features

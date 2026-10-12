@@ -6,6 +6,13 @@ Measured October 11–12, 2026, on an Apple M5 Pro with 64 GiB RAM, using headle
 Chromium 153.0.0.0 (installed `chromium-1243` build), DPR 1. Leaflet is the
 vendored, unmodified 1.9.4 ESM build. Maplet is the locally built alpha package.
 
+- [Initialization A/B setup and pan](points-500k-initialization-ab.json): October
+  12, three fresh processes per version/backend against an isolated build of
+  `f656c7f`, with alternating before/after order, plus three Canvas controls.
+- [Initialization follow-up updates](points-500k-updates-initialization.json):
+  final-build WebGL 1, WebGPU and Canvas, three fresh processes each; all
+  **180 pixel/data-retention checks pass**.
+
 - [Retained-point setup and pan](points-500k-retained.json): October 12, three
   fresh processes each for Maplet WebGL 1, WebGPU and Leaflet Canvas.
 - [Retained-point updates](points-500k-updates-retained.json): the same profiles,
@@ -25,6 +32,43 @@ The comparison source is `demo/compare.js`. Mutations are executed by
 These expensive scenarios are opt-in, not added to the default E2E suite.
 
 ## Results
+
+### Initialization follow-up
+
+| Measurement after direct point ingest | Maplet WebGL 1 | Maplet WebGPU | Leaflet Canvas |
+| --- | ---: | ---: | ---: |
+| Setup to paint opportunity, median | 685 ms | 654 ms | 288 ms |
+| Data loading, median | 598 ms | 571 ms | 220 ms |
+| Main-thread JS heap increase after GC | 139.1 MiB | 139.0 MiB | 207.1 MiB |
+| Warm pan interval p50, median across runs | 16.7 ms | 16.7 ms | 137.1 ms |
+| Warm pan interval p95, median across runs | 16.9 ms | 17.5 ms | 167.4 ms |
+
+| Alternating A/B: retained-point baseline → direct ingest | Maplet WebGL 1 | Maplet WebGPU |
+| --- | ---: | ---: |
+| Setup to paint opportunity, median | 743 → 685 ms (7.8% shorter) | 756 → 654 ms (13.5% shorter) |
+| Data loading, median | 659 → 598 ms (9.3% shorter) | 674 → 571 ms (15.3% shorter) |
+| Main-thread JS heap increase after GC | 139.1 → 139.1 MiB | 139.0 → 139.0 MiB |
+| Warm pan p50 | 16.7 → 16.7 ms | 16.7 → 16.7 ms |
+
+Both versions use the same demo endpoint, browser, fixture and evaluator; only
+the served `dist/` root changes. Before/after order reverses in repetition two.
+All **15 setup/pan runs** pass count, projection and pixel checks; no build or
+other benchmark runs concurrently. The record includes the evaluator's SHA-256.
+The older retained-point record below is preserved, not used as the paired
+baseline for these percentages.
+
+These are reductions of three-run medians, not statistical confidence bounds
+or guarantees: WebGL 1 repetition two and WebGPU repetition three are slower
+after the change. Warm Maplet runs have 535–545 samples and Canvas 63–65;
+roughly one-second maximum pan intervals still occur. Import/publication, not
+the paint-wait fence, supplies the improvement; Canvas setup remains faster.
+
+The final-build mutation check retains all 500,000 records and passes **180/180
+checks**. Its paint-fence p50 values are 26.0–30.9 ms for Maplet and 33.2–33.3 ms
+for Canvas. As before, these timings are near the two-frame floor and do not
+isolate GPU execution time.
+
+### Retained-point revision (preceding stage)
 
 | Measurement | Maplet WebGL 1 | Maplet WebGPU | Leaflet Canvas |
 | --- | ---: | ---: | ---: |
@@ -189,7 +233,7 @@ the full-scene prerequisites did not complete.
   buffers transfer back without an expanded per-feature geometry tree. Store
   publication still uses normal transactional validation and ownership checks.
 
-The final checks pass **204 unit tests** and **35 browser scenarios/batteries per
+The retained-point checks passed **204 unit tests** and **35 browser scenarios/batteries per
 profile** (WebGL 1, WebGPU, basic WebGL 1). Regression checks include failed
 transactions, recycled slots with equal generations but different identities,
 late cancelled worker replies of a different result format, first/skipped-version
@@ -197,6 +241,23 @@ uploads and disabling stale WebGL attribute pointers before freeing buffers.
 Existing MVT, bindings, raster, labels, sprites, interaction and loss recovery
 checks remain enabled. Current Maplet and Canvas comparison screenshots were
 opened and inspected; coordinate and pixel probes are retained in the records.
+
+### Direct point ingestion and regression checks
+
+- Points use the existing checked CRS conversion, then store coordinates and
+  altitude inline, without allocating a prepared geometry payload or degenerate
+  typed-array bounding box. Complex geometries keep their prepared path.
+- Point indexing inserts directly into its one clamped grid cell; the shared
+  bucket operation is also used by rectangle indexing. Generations, journal
+  entries, rollback and metadata ownership keep the same store implementation.
+- Insertion uses the returned slot and one feature reference instead of an
+  additional composite-ID lookup and duplicate reference allocation.
+- The final check passes **208 unit tests**, source/test/consumer type checks,
+  distribution checks, and **35 browser scenarios/batteries per profile** on
+  WebGL 1, WebGPU and basic WebGL 1. Differential tests cover CRS/wrapping,
+  altitude, validation failures and index boundaries. The allocation regression
+  check rejects the original ingest path. Final Maplet/Canvas screenshots were
+  opened and inspected; pixel and projection probes remain unchanged.
 
 ## Canvas, PixiJS and dynamic maps
 
@@ -249,8 +310,8 @@ for its hard deadline (macOS/Linux):
 
 ```bash
 npm run build
-python3 demo/compare.py --no-dom --output docs/benchmarks/points-500k-retained.json
-python3 demo/compare.py --updates --no-dom --output docs/benchmarks/points-500k-updates-retained.json
+python3 demo/compare.py --no-dom --output docs/benchmarks/points-500k-local.json
+python3 demo/compare.py --updates --no-dom --output docs/benchmarks/points-500k-updates-local.json
 ```
 
 These commands preserve the archived/pre-change records. Omit `--no-dom` to
@@ -258,6 +319,13 @@ include HTML markers in setup/pan; each of their three runs has a 120-second
 budget. `--output` chooses the record destination; without it the original
 `points-500k.json` / `points-500k-updates.json` is replaced. Screenshots go to
 Git-ignored `demo/checks/` and are not part of the public result records.
+
+For an initialization A/B check, also build `f656c7f` in an isolated directory.
+Serve the unchanged current demo while selecting that build's `dist/` or the
+current `dist/` at the same URL. Run the Maplet scenario below in fresh processes,
+alternating version order over three repetitions on each backend, with a Canvas
+control per repetition. Do not build or run another benchmark during timing;
+keep new results separate from the checked-in records.
 
 To inspect one variant:
 

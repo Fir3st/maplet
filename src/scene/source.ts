@@ -349,9 +349,10 @@ export class SourceImpl {
       });
       change.added.push(id);
     }
-    const record = this.store.get(id, namespace)!;
-    this.noteTouched(change, this.refOf(record));
-    return { ref: this.refOf(record), slot: record.slot };
+    const record = this.store.getBySlot(result.slot)!;
+    const ref = this.refOf(record);
+    this.noteTouched(change, ref);
+    return { ref, slot: record.slot };
   }
 
   updateOne(

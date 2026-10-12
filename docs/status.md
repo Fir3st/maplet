@@ -41,6 +41,13 @@ the CPU-expanded basic profile. Pixels, picking and all 20,000 source records
 are checked together. Import tests also cover slot reuse, atomic publication
 and late cancelled replies crossing different worker result formats.
 
+The initialization follow-up passes **208 unit tests** and the same **35 E2E
+scenarios/batteries on each of all three profiles**. Additional tests compare
+direct point ingestion with prepared geometry across CRS, wrapping, altitude,
+validation failures and spatial-index boundaries, and verify insertion slot
+identity without a second ID lookup. A fresh 500,000-point mutation comparison
+passes **180/180 pixel/data-retention checks** on the final build.
+
 The recorded browser environment was headless Chromium on an Apple M5 Pro,
 using ANGLE Metal for WebGL and `apple metal-3` for WebGPU. Pixel comparisons
 against decoded source bitmaps and between backends found zero differences at
@@ -84,6 +91,15 @@ heap increase is 139 MiB versus 207 MiB for Canvas, but 9% above pre-change Mapl
 Every final warm run still contains a roughly one-second maximum interval;
 these results do not establish hitch-free playback, large-pan/zoom throughput,
 sprite performance or a universal advantage over Canvas.
+
+The initialization follow-up [alternating A/B record](benchmarks/points-500k-initialization-ab.json)
+compares an isolated build of `f656c7f` with the direct point-ingest path, using
+the unchanged evaluator. Three fresh runs per version/backend plus three Canvas
+controls give setup medians of **743 → 685 ms (WebGL 1, 7.8% shorter)** and
+**756 → 654 ms (WebGPU, 13.5% shorter)**. Import medians are **659 → 598 ms** and
+**674 → 571 ms**, respectively. Heap deltas stay at 139 MiB and warm pan p50
+stays at 16.7 ms; Canvas setup is still faster at 288 ms. Some individual runs
+are slower after the change, and roughly one-second pan outliers remain.
 
 ## Known limitations
 
