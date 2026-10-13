@@ -13,6 +13,7 @@ import { retainedPoints } from './retained-points.mjs';
 import { complexScene } from './complex-scene.mjs';
 import { retainedScene } from './retained-scene.mjs';
 import { denseGeometry } from './dense-geometry.mjs';
+import { plugins } from './plugins.mjs';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -77,6 +78,7 @@ async function emptyScreen(session, from) {
 /* -------------------------------- scenarios ------------------------------- */
 
 export const scenarios = [
+  { name: 'plugins', page: 'e2e/scene.html', run: plugins },
   { name: 'dense-geometry-performance', page: 'e2e/scene.html', manual: true, run: denseGeometry },
   { name: 'retained-mixed-scene', page: 'e2e/scene.html', run: retainedScene },
   { name: 'complex-scene-performance', page: 'e2e/scene.html', manual: true, run: complexScene },

@@ -7,6 +7,32 @@
  */
 
 export { createMap } from './map.ts';
+export type { Plugin, PluginContext, PluginHandle } from './plugins.ts';
+export type { CustomRenderer, RenderFrame, RenderHandle } from './render/extensions.ts';
+export {
+  POINT_STRIDE,
+  LINE_STRIDE,
+  FILL_STRIDE,
+  POINT_SHAPES,
+  FLAG_INTERACTIVE,
+  FLAG_HIDDEN,
+  PlanPickTable,
+} from './render/frame-plan.ts';
+export type {
+  FramePlan,
+  PlanBatch,
+  DrawItem,
+  PickEntry,
+  PickEntries,
+  BufferUpload,
+  TilePlacement,
+  TileFallback,
+  LabelPlacement,
+  SpritePlacement,
+  MediaPlacement,
+  SymbolTransform,
+  SymbolAppearance,
+} from './render/frame-plan.ts';
 export type {
   AreaQueryOptions,
   AreaQueryResult,

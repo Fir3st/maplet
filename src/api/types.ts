@@ -226,7 +226,7 @@ export interface MapPointerEvent {
 
 export interface Capabilities {
   /** Backend that is actually active. */
-  readonly backend: BackendKind | 'unavailable';
+  readonly backend: BackendKind | 'custom' | 'unavailable';
   /** Backend requested by configuration. */
   readonly requestedPrimary: BackendKind;
   /** Fallback requested by configuration; `false` when disabled. */

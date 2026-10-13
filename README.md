@@ -190,6 +190,10 @@ python3 demo/compare.py --updates --no-dom --output docs/benchmarks/points-500k-
   feature dragging, box selection and events bubbling through layers and groups.
 - **Optional HTML UI:** zoom, layers, attribution, scale and accessible list
   controls, generation-bound feature details and typed geolocation results.
+- **Function-based plugins:** typed plugin APIs, HTML access and scoped cleanup;
+  shared render-plan transforms, custom drawing and replaceable renderers.
+  See [creating and integrating plugins](docs/plugins.md) and the
+  [interactive HTML example](demo/plugins.html).
 - **Diagnostics:** capabilities, frame/draw-call/GPU-memory statistics, measured
   picking stalls and debugging tools.
 

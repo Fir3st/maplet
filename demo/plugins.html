@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Maplet — plugin playground</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; font: 14px/1.5 system-ui, sans-serif; color: #1f2937; background: #f8fafc; }
+    a { color: #1d4ed8; }
+    #app { display: grid; grid-template-columns: 360px minmax(0, 1fr); min-height: 100vh; }
+    aside { padding: 24px; background: #fff; border-right: 1px solid #e2e8f0; }
+    h1 { margin: 16px 0 8px; font-size: 24px; letter-spacing: -0.03em; }
+    h2 { margin: 24px 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; }
+    p { margin: 0 0 16px; }
+    .muted { color: #64748b; }
+    fieldset { padding: 0; margin: 0; border: 0; min-width: 0; }
+    legend { font-weight: 600; margin-bottom: 8px; }
+    .plugin { display: grid; grid-template-columns: 20px 1fr; column-gap: 10px; padding: 14px 0; border-bottom: 1px solid #e2e8f0; cursor: pointer; }
+    .plugin input { margin: 4px 0 0; width: 17px; height: 17px; accent-color: #2563eb; }
+    .plugin strong { display: block; margin-bottom: 3px; }
+    .plugin small { display: block; font-size: 12px; color: #64748b; }
+    button { font: inherit; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; color: #1f2937; cursor: pointer; }
+    button:hover:not(:disabled) { background: #f1f5f9; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    button.primary { background: #2563eb; border-color: #2563eb; color: #fff; }
+    button.primary:hover:not(:disabled) { background: #1d4ed8; }
+    :focus-visible { outline: 3px solid #60a5fa; outline-offset: 3px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+    pre { margin: 0; padding: 14px; overflow: auto; background: #f1f5f9; border-radius: 6px; font: 12px/1.7 ui-monospace, monospace; }
+    #status { display: block; margin-top: 16px; color: #475569; font-size: 12px; }
+    #status.error { color: #b91c1c; }
+    .map-area { display: grid; grid-template-rows: minmax(380px, 1fr) auto; min-width: 0; }
+    #map { position: relative; min-height: 380px; background: #eef2f5; overflow: hidden; }
+    .map-caption { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding: 12px 20px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b; }
+    .plugin-badge { position: absolute; top: 12px; left: 62px; padding: 8px 12px; background: #fff; border: 1px solid #cbd5e1; border-radius: 6px; box-shadow: 0 2px 8px #0f172a10; pointer-events: none; }
+    .plugin-badge strong { display: block; font-size: 12px; }
+    .plugin-badge span { color: #64748b; font-size: 11px; }
+    @media (max-width: 760px) {
+      #app { display: flex; flex-direction: column; }
+      .map-area { order: -1; }
+      #map { height: 48vh; min-height: 300px; }
+      aside { padding: 20px; border-right: 0; border-top: 1px solid #e2e8f0; }
+      h1 { margin-top: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <main id="app">
+    <aside>
+      <a href="./">← Maplet demo</a>
+      <h1>Plugin playground</h1>
+      <p class="muted">A plugin is just a function. Toggle each one to install it; toggle it off to see its resources disappear.</p>
+      <fieldset id="tools" disabled>
+        <legend>Live plugins</legend>
+        <label class="plugin"><input id="html-plugin" type="checkbox" checked /><span><strong>HTML &amp; controls</strong><small>Adds a live badge and changes the existing zoom control's title.</small></span></label>
+        <label class="plugin"><input id="pins-plugin" type="checkbox" checked /><span><strong>A new functionality layer</strong><small>Owns a point source and layer, with an API for adding pins.</small></span></label>
+        <label class="plugin"><input id="color-plugin" type="checkbox" /><span><strong>Change the render plan</strong><small>Turns the orange pins blue without changing their data or styles.</small></span></label>
+        <label class="plugin"><input id="canvas-plugin" type="checkbox" /><span><strong>Replace the renderer</strong><small>Draws this point/line scene on Canvas, including pin hit testing. Removing it restores the default renderer.</small></span></label>
+        <div class="actions">
+          <button id="add-pin" class="primary" type="button">Add a pin</button>
+          <button id="reset-view" type="button">Reset view</button>
+          <button id="remove-all" type="button">Remove all plugins</button>
+        </div>
+      </fieldset>
+      <output id="status" aria-live="polite">Starting map…</output>
+      <h2>Your first HTML plugin</h2>
+      <pre><code>const plugin = map.use(({
+  container, onCleanup
+}) =&gt; {
+  const el = document
+    .createElement('span');
+  el.textContent = 'My plugin';
+  container.append(el);
+  onCleanup(() =&gt; el.remove());
+  return { element: el };
+});
+
+plugin.api.element; // typed API
+plugin.remove();    // cleanup</code></pre>
+      <p class="muted" style="margin-top:12px;font-size:12px">Read the runnable <a href="./plugins.js">example source</a> or the <a href="https://github.com/Fir3st/maplet/blob/main/docs/plugins.md">plugin guide</a>. No external tiles, assets or runtime dependencies.</p>
+    </aside>
+    <section class="map-area" aria-label="Interactive plugin example">
+      <div id="map" aria-label="Offline planar map with demo pins"></div>
+      <div class="map-caption"><span>Drag to pan · scroll to zoom · click a pin</span><span>Demo data · planar coordinates · offline</span></div>
+    </section>
+  </main>
+  <script type="module" src="./plugins.js"></script>
+</body>
+</html>

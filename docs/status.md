@@ -21,11 +21,21 @@ to use this repository.
 | Text and fonts | Labels, collisions, rotation, atlas eviction, font loading/fallback, platform shaping, bidi; `demo/labels.html`, `demo/fonts.html` |
 | Media | Sprites, anchor rotation, image/video bounds, partial uploads and cleanup; `demo/icons.html`, `demo/media.html` |
 | HTML UI | Optional controls, scale, attribution, geolocation, feature detail and bounded accessible lists; `test/ui/`, `demo/ui.html`, `demo/detail.html` |
+| Plugins | Plain setup functions, typed APIs, HTML access, abort/cleanup, render transforms, after-frame drawing and replaceable renderers; `test/scene/plugins.test.ts`, consumer types and `plugins` browser scenario; [guide](plugins.md) |
 | Worker imports | Compact columns/canonical line and polygon pools, owned metadata on the publishing thread, validation, copy/move, cancellation, bounded queue, crash/CSP fallback; import tests, `demo/import.html`, `demo/csp.html?csp=worker-none` |
 | Distribution | ESM/declaration/subpath/worker assets, archive audit and consumer types; `test/publish/`, `type-tests/` |
 | Lifecycle and scale | Repeated create/destroy, GC-stabilized memory checks, cancellation and 500,000-point example; `demo/soak.html`, `demo/scale.html` |
 
 ## Recorded validation
+
+The plugin addition passes **268 unit tests** and all build/type/distribution
+checks. The new `plugins` browser scenario passes **16 assertions per profile**
+on WebGL 1, WebGPU and forced basic WebGL 1, run through Playwright against the
+built package. It checks actual GPU/Canvas pixels, HTML addition/modification,
+cleanup, custom-only initialization, keyboard interaction, custom picking and
+restoration. A 10,000-point unit fixture verifies packed-buffer retention and
+coalesced plugin invalidation, not a throughput benchmark. The complete existing
+browser battery was not rerun for this addition.
 
 The development record from October 10–11, 2026 reports **189 passing unit tests**
 and **34 passing E2E scenarios/batteries** on each of WebGL 1, WebGPU and the

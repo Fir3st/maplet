@@ -28,6 +28,7 @@ export interface MapBackend extends FrameDriver {
   readonly notes: readonly string[];
   attach(scene: Scene): void;
   resize(width: number, height: number): void;
+  setVisible(visible: boolean): void;
   pick(
     scene: Scene,
     point: ScreenPoint,

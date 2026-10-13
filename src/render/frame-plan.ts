@@ -350,11 +350,11 @@ export function buildFramePlan(scene: Scene, options: FramePlanOptions): FramePl
   const key = `${scene.id}:${scene.revision}:${scene.rasterEpoch}:${transform.zoom}:${transform.width}x${transform.height}:${options.deviceWidth}x${options.deviceHeight}@${options.dpr}:${transform.centerWorld.x},${transform.centerWorld.y}`;
   const cached = plans.get(scene);
   if (cached?.key === key) {
-    return cached.plan;
+    return scene.transformFramePlan?.(cached.plan) ?? cached.plan;
   }
   const plan = computePlan(scene, options);
   plans.set(scene, { key, plan });
-  return plan;
+  return scene.transformFramePlan?.(plan) ?? plan;
 }
 
 export function invalidateFramePlanCache(): void {

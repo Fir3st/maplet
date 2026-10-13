@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add plain-function plugins via `map.use()` and initial `plugins`, with typed
+  APIs, DOM access, cancellation and reverse-order cleanup. Add shared render-plan
+  transforms, after-frame drawing and removable custom renderers with picking.
 - License original Maplet material under Apache-2.0, preserving third-party
   license terms and attribution.
 - Add an opt-in, reproducible 500,000-point Leaflet comparison with recorded

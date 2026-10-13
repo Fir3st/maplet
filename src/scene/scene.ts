@@ -58,6 +58,9 @@ import {
 import type { RasterTilesOptions, WmsOptions } from '../formats/raster.ts';
 import type { Clock, ViewImpl, ViewSnapshot } from '../view/view.ts';
 import type { FeatureRef, MapFeatureEvent, MapPointerEvent } from '../api/types.ts';
+import type { ScreenPoint } from '../api/types.ts';
+import type { FramePlan } from '../render/frame-plan.ts';
+import type { PickResult } from '../render/picking.ts';
 
 export interface SceneEventMap {
   commit: { readonly revision: number };
@@ -78,6 +81,7 @@ export interface SceneEventMap {
     readonly message: string;
   };
   destroy: Record<string, never>;
+  rendererror: { readonly error: unknown };
 }
 
 export interface FrameDriver {
@@ -104,6 +108,10 @@ export class Scene {
   readonly state: StateStore;
   readonly selection: SelectionStore;
   readonly layers: LayerRegistry;
+  transformFramePlan: ((plan: FramePlan) => FramePlan) | null = null;
+  afterFrame: ((plan?: FramePlan) => void) | null = null;
+  overrideFrameDriver: FrameDriver | null = null;
+  overridePick: ((point: ScreenPoint, options: { readonly limit: number }) => Promise<readonly PickResult[]>) | null = null;
 
   private publishedRevision = 0;
   /** Broad render invalidation; view and local source edits do not bump it. */
@@ -132,6 +140,7 @@ export class Scene {
     onAbort: (() => void) | null;
   }[] = [];
   private frameRequested = false;
+  private frameRequestSequence = 0;
   private frameDriver: FrameDriver | null = null;
   private view: ViewImpl | null = null;
   private finishing = false;
@@ -327,19 +336,25 @@ export class Scene {
     for (const source of this.sources.values()) source.onFrameRequest();
     if (this.frameRequested) return;
     this.frameRequested = true;
-    if (this.frameDriver) {
-      this.frameDriver.requestFrame(this);
+    const sequence = ++this.frameRequestSequence;
+    const driver = this.overrideFrameDriver ?? this.frameDriver;
+    if (driver) {
+      driver.requestFrame(this);
     } else {
-      queueMicrotask(() => this.completeFrame());
+      queueMicrotask(() => {
+        if (!this.overrideFrameDriver && sequence === this.frameRequestSequence) this.completeFrame();
+      });
     }
   }
 
   /** Called by the frame driver (or the microtask fallback) when a frame is done. */
-  completeFrame(): void {
+  completeFrame(revision = this.publishedRevision, plan?: FramePlan): void {
+    if (this.destroyedValue) return;
+    try { this.afterFrame?.(plan); } catch (error) { this.failFrame(error); return; }
     if (this.destroyedValue) return;
     this.frameRequested = false;
     this.framesValue++;
-    this.renderedRevisionValue = Math.max(this.renderedRevisionValue, this.publishedRevision);
+    this.renderedRevisionValue = Math.max(this.renderedRevisionValue, revision);
     for (let i = this.renderWaiters.length - 1; i >= 0; i--) {
       const waiter = this.renderWaiters[i]!;
       if (waiter.revision <= this.renderedRevisionValue) {
@@ -348,6 +363,21 @@ export class Scene {
         waiter.resolve();
       }
     }
+    if (this.publishedRevision > revision) this.requestFrame();
+  }
+
+  resetFrameRequest(): void {
+    this.frameRequested = false;
+    this.frameRequestSequence++;
+  }
+
+  failFrame(error: unknown): void {
+    this.frameRequested = false;
+    for (const waiter of this.renderWaiters.splice(0)) {
+      if (waiter.onAbort) waiter.signal?.removeEventListener('abort', waiter.onAbort);
+      waiter.reject(error);
+    }
+    this.emitter.emit('rendererror', { error });
   }
 
   whenRendered(revision: number, signal?: AbortSignal): Promise<void> {

@@ -600,7 +600,7 @@ export class WebGpuBackend implements MapBackend {
     const run = (): void => {
       this.rafHandle = null;
       if (this.destroyed || this.lost) return;
-      this.renderNow(scene);
+      try { this.renderNow(scene); } catch (error) { scene.failFrame(error); }
     };
     if (raf) {
       this.rafHandle = raf(run);
@@ -613,10 +613,14 @@ export class WebGpuBackend implements MapBackend {
     this.destroy();
   }
 
+  setVisible(visible: boolean): void {
+    this.canvas.style.visibility = visible ? '' : 'hidden';
+  }
+
   /* ------------------------------ frame path ------------------------------ */
 
   private renderNow(scene: Scene): void {
-    if (this.destroyed || this.lost) return;
+    if (this.destroyed || this.lost || scene.overrideFrameDriver) return;
     this.frameCounter++;
     const deviceWidth = this.canvas.width;
     const deviceHeight = this.canvas.height;
@@ -650,7 +654,7 @@ export class WebGpuBackend implements MapBackend {
       drawCalls: this.frameDrawCalls,
       gpuBytes: this.estimateGpuBytes(),
     });
-    scene.completeFrame();
+    scene.completeFrame(this.plan.revision, this.plan);
   }
 
   private estimateGpuBytes(): number {

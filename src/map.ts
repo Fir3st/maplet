@@ -75,8 +75,10 @@ import {
 } from './render/frame-plan.ts';
 import { compileFilter } from './scene/expression.ts';
 import type { PickResult } from './render/picking.ts';
+import { PluginHost, type Plugin, type PluginHandle } from './plugins.ts';
+import { RenderExtensions, type RenderHandle } from './render/extensions.ts';
 export interface RendererOptions {
-  /** Primary backend; `'none'` creates a DOM-free logic scene (tests, SSR math). */
+  /** Primary backend; `'none'` skips GPU initialization for logic-only or custom rendering. */
   readonly primary?: BackendKind;
   /** Fallback backend when the primary fails; `false` disables fallback. */
   readonly fallback?: BackendKind | false;
@@ -97,6 +99,8 @@ export interface MapOptions {
   readonly interactive?: boolean;
   /** Per-gesture interaction options. */
   readonly interaction?: InteractionOptions;
+  /** Setup functions installed in order; a failure destroys the partially created map. */
+  readonly plugins?: readonly Plugin<unknown>[];
 }
 
 export interface InteractionHandle {
@@ -368,6 +372,10 @@ export type {
 
 export interface MapHandle {
   readonly id: string;
+  use<T>(plugin: Plugin<T>): PluginHandle<T>;
+  readonly render: RenderHandle;
+  /** Direct DOM access for extensions; null for DOM-free maps. */
+  readonly container: HTMLElement | null;
   readonly view: ViewHandle;
   readonly assets: AssetsHandle;
   readonly sources: SourcesHandle;
@@ -378,7 +386,7 @@ export interface MapHandle {
   readonly relations: RelationsHandle;
   readonly bindings: BindingsHandle;
   readonly query: QueryHandle;
-  /** Gesture configuration; `null` when the map is headless or non-interactive. */
+  /** Gesture configuration; `null` without a container or when non-interactive. */
   readonly interaction: InteractionHandle | null;
   /** Opt-in HTML controls; `null` when the map has no container (headless). */
   readonly controls: ControlsHandle | null;
@@ -417,6 +425,7 @@ class SwappableBackend implements MapBackend {
   private inner: MapBackend;
   private failure: string | null = null;
   private lossListener: ((message: string) => void) | null = null;
+  private visible = true;
 
   constructor(inner: MapBackend) {
     this.inner = inner;
@@ -437,6 +446,7 @@ class SwappableBackend implements MapBackend {
   /** Replaces the lost backend; the listener keeps following the new one. */
   swap(next: MapBackend): void {
     this.inner = next;
+    next.setVisible(this.visible);
     this.failure = null;
     this.watch(next);
   }
@@ -455,6 +465,11 @@ class SwappableBackend implements MapBackend {
     if (!this.failure) this.inner.resize(width, height);
   }
 
+  setVisible(visible: boolean): void {
+    this.visible = visible;
+    this.inner.setVisible(visible);
+  }
+
   requestFrame(scene: Scene): void {
     if (!this.failure) this.inner.requestFrame(scene);
   }
@@ -464,6 +479,7 @@ class SwappableBackend implements MapBackend {
     point: ScreenPoint,
     options: { readonly limit: number },
   ): Promise<readonly PickResult[]> {
+    if (scene.overridePick) return scene.overridePick(point, options);
     if (this.failure) {
       fail('gpu-unavailable', this.failure, {});
     }
@@ -559,6 +575,14 @@ export async function createMap(options: MapOptions): Promise<MapHandle> {
   } else {
     width = sizeOption.width;
     height = sizeOption.height;
+    if (options.container !== undefined) {
+      if (typeof document === 'undefined') fail('environment', 'a map container requires a browser environment');
+      container = resolveContainer(options.container);
+      const rect = container.getBoundingClientRect();
+      width = rect.width > 0 ? rect.width : sizeOption.width;
+      height = rect.height > 0 ? rect.height : sizeOption.height;
+      dpr = typeof window !== 'undefined' && window.devicePixelRatio ? window.devicePixelRatio : 1;
+    }
   }
 
   const view = new ViewImpl(
@@ -696,14 +720,18 @@ export async function createMap(options: MapOptions): Promise<MapHandle> {
       backend: 'none',
       requestedPrimary: 'none',
       requestedFallback: false,
-      notes: Object.freeze(['headless scene: no pixels are produced']),
+      notes: Object.freeze(['no built-in GPU renderer']),
     });
     scene.setFrameDriver(null);
   }
 
   let controller: InteractionController | null = null;
-  if (!headless && options.interactive !== false && container) {
-    controller = new InteractionController(container, scene, view, backendProxy!, options.interaction ?? {});
+  if (options.interactive !== false && container) {
+    const picker = {
+      pick: (target: Scene, point: ScreenPoint, pickOptions: { readonly limit: number }) =>
+        target.overridePick?.(point, pickOptions) ?? backendProxy?.pick(target, point, pickOptions) ?? Promise.resolve([]),
+    };
+    controller = new InteractionController(container, scene, view, picker, options.interaction ?? {});
   }
 
   let resizeObserver: ResizeObserver | null = null;
@@ -717,10 +745,18 @@ export async function createMap(options: MapOptions): Promise<MapHandle> {
     resizeObserver.observe(container);
   }
 
-  const map = buildHandle(scene, view, backendProxy, controller, container, () => {
+  const map = buildHandle(scene, view, backendProxy, controller, container, dpr, () => {
     resizeObserver?.disconnect();
     controller?.destroy();
   });
+  try {
+    for (const plugin of options.plugins ?? []) map.use(plugin);
+  } catch (error) {
+    try { map.destroy(); } catch (cleanupError) {
+      throw new AggregateError([error, cleanupError], 'map plugin setup and cleanup failed');
+    }
+    throw error;
+  }
   return map;
 }
 
@@ -757,8 +793,11 @@ function buildHandle(
   backend: MapBackend | null,
   controller: InteractionController | null,
   container: HTMLElement | null,
+  dpr: number,
   onDestroy: () => void,
 ): MapHandle {
+  const renderExtensions = new RenderExtensions(scene, () => map, (visible) => backend?.setVisible(visible), dpr);
+  const plugins = new PluginHost(() => map, container, renderExtensions.handle);
   const worldScale = (): number => Math.pow(2, view.zoom);
   const currentPlanOptions = (): { deviceWidth: number; deviceHeight: number; dpr: number } => {
     const size = view.size;
@@ -1255,6 +1294,7 @@ function buildHandle(
     },
     async rendered(point, options = {}) {
       scene.assertAlive('query.rendered');
+      if (renderExtensions.active) return renderExtensions.pick(point, { limit: options.limit ?? 1 });
       if (!backend) {
         fail('unsupported-capability', 'rendered queries require a GPU backend', {});
       }
@@ -1374,6 +1414,7 @@ function buildHandle(
       return scene.importPipeline.debug();
     },
     async samplePixel(point) {
+      if (renderExtensions.active) fail('unsupported-capability', 'samplePixel is only available for the built-in GPU renderer');
       scene.assertAlive('debug.samplePixel');
       if (!backend) {
         fail('unsupported-capability', 'pixel sampling requires a GPU backend', {});
@@ -1583,6 +1624,9 @@ function buildHandle(
 
   const map: MapHandle = {
     id: scene.id,
+    use: (plugin) => plugins.use(plugin),
+    render: renderExtensions.handle,
+    container,
     view: viewHandle,
     assets,
     sources,
@@ -1620,7 +1664,8 @@ function buildHandle(
       return scene.whenRendered(revision ?? scene.revision, options?.signal);
     },
     capabilities() {
-      return scene.capabilities();
+      const capabilities = scene.capabilities();
+      return renderExtensions.active ? { ...capabilities, backend: 'custom' } : capabilities;
     },
     stats() {
       const stats = scene.stats();
@@ -1638,6 +1683,10 @@ function buildHandle(
     destroy() {
       if (destroyed) return;
       destroyed = true;
+      const errors: unknown[] = [];
+      // Plugins remove their resources while public scene handles are still alive.
+      try { plugins.destroy(); } catch (error) { errors.push(error); }
+      try { renderExtensions.destroy(); } catch (error) { errors.push(error); }
       // Watches stop before the scene dies so no update can arrive afterwards.
       for (const watch of [...activeWatches]) watch.cancel();
       detailController?.destroy();
@@ -1645,6 +1694,7 @@ function buildHandle(
       onDestroy();
       backend?.destroy();
       scene.destroy();
+      if (errors.length) throw new AggregateError(errors, 'map plugin cleanup failed');
     },
     get destroyed() {
       return scene.destroyed;

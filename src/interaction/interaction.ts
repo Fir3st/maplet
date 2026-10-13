@@ -59,7 +59,7 @@ export class InteractionController {
   private readonly element: HTMLElement;
   private readonly scene: Scene;
   private readonly view: ViewImpl;
-  private readonly backend: MapBackend;
+  private readonly backend: Pick<MapBackend, 'pick'>;
   private readonly options: InteractionOptions;
   private readonly listeners: { target: EventTarget; type: string; fn: EventListener; options?: AddEventListenerOptions }[] = [];
   private gesture: ActiveGesture | null = null;
@@ -78,7 +78,7 @@ export class InteractionController {
     element: HTMLElement,
     scene: Scene,
     view: ViewImpl,
-    backend: MapBackend,
+    backend: Pick<MapBackend, 'pick'>,
     options: InteractionOptions = {},
   ) {
     this.element = element;
