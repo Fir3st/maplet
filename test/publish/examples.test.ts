@@ -4,7 +4,7 @@ import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 // @ts-expect-error Build tooling is a JavaScript module, not part of the library API.
-import { buildExamples } from '../../scripts/build-examples.mjs';
+import { buildExamples, highlightJavaScript } from '../../scripts/build-examples.mjs';
 // @ts-expect-error Publication tooling is tested with fake GitHub responses only.
 import { publishGists } from '../../scripts/publish-gists.mjs';
 
@@ -15,12 +15,17 @@ test('all eight examples build under a Pages subdirectory, with honest Gist link
     assert.equal(plan.gists.length, 8);
     const gallery = readFileSync(join(site, 'index.html'), 'utf8');
     assert.match(gallery, /Schematic preview/);
+    assert.match(gallery, /Maplet examples/);
+    assert.ok(!gallery.includes('Small examples.'));
+    assert.ok(!gallery.includes('Learning examples, not performance benchmarks.'));
+    assert.match(gallery, /class="syntax-keyword"/);
     assert.deepEqual(JSON.parse(readFileSync(join(site, 'gists.json'), 'utf8')), {});
     assert.ok(readFileSync(join(site, 'dist', 'workers', 'import.worker.js'), 'utf8').length > 0);
     for (const gist of plan.gists) {
       assert.ok(gallery.includes(`href="./examples/${gist.id}/"`));
       const html = readFileSync(join(site, 'examples', gist.id, 'index.html'), 'utf8');
       assert.match(html, /id="map"/);
+      assert.match(html, /class="syntax-string"/);
       assert.match(html, /Gist not published yet/);
       assert.match(html, /src="\.\/example\.js"/);
       assert.match(gist.files['shared.js'], /from 'https:\/\/example.github.io\/project\/dist\/index.js'/);
@@ -32,6 +37,18 @@ test('all eight examples build under a Pages subdirectory, with honest Gist link
     assert.throws(() => buildExamples({ output: directory, baseUrl: 'file:///local/' }), /Pages base URL/);
     assert.throws(() => buildExamples({ output: directory, baseUrl: 'https://user:example@example.com/' }), /Pages base URL/);
   } finally { rmSync(directory, { recursive: true, force: true }); }
+});
+
+test('syntax highlighting preserves JavaScript text and escapes HTML', () => {
+  const source = '// comment\nconst value = `hello ${Math.round(2.5)} <script>`;\n/* end */\n';
+  const html = highlightJavaScript(source);
+  assert.match(html, /class="syntax-comment"/);
+  assert.match(html, /class="syntax-number"/);
+  assert.match(html, /class="syntax-function"/);
+  assert.ok(!html.includes('<script>'));
+  const text = html.replace(/<span class="syntax-[a-z]+">|<\/span>/g, '')
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+  assert.equal(text, source);
 });
 
 function fakeGitHub(seed: any[] = []) {

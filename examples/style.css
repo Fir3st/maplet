@@ -58,6 +58,11 @@ h3 a:hover { text-decoration: underline; }
 .getting-started p { color: var(--muted); font-size: 14px; max-width: 450px; }
 .getting-started code { font-size: 12px; }
 pre { margin: 0; font: 12px/1.8 ui-monospace, SFMono-Regular, Consolas, monospace; tab-size: 2; }
+.syntax-keyword { color: #7135a0; }
+.syntax-string { color: #176442; }
+.syntax-number { color: #974218; }
+.syntax-function { color: #175c91; }
+.syntax-comment { color: #59675d; font-style: italic; }
 .install-code { background: #edf2eb; border: 1px solid var(--line); border-radius: 6px; padding: 22px; overflow-x: auto; }
 .site-footer { border-top: 1px solid var(--line); max-width: 1176px; margin: 0 auto; padding: 22px 0 30px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px; color: var(--muted); font-size: 12px; }
 .example-page { max-width: 1440px; margin: auto; padding: 18px 40px 48px; }

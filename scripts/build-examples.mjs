@@ -1,12 +1,49 @@
 import { readFileSync, readdirSync, mkdirSync, writeFileSync, copyFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import ts from 'typescript';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 const read = file => readFileSync(join(root, file), 'utf8');
 const logo = '<svg viewBox="0 0 28 28" fill="none" aria-hidden="true"><path d="M3 7l7-3 8 3 7-3v19l-7 3-8-3-7 3V7z" stroke="currentColor" stroke-width="1.7"/><path d="M10 4v19M18 7v19" stroke="currentColor" stroke-width="1.7"/></svg>';
 const repository = 'Fir3st/maplet';
+
+export function highlightJavaScript(source) {
+  const file = ts.createSourceFile('example.js', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
+  const spans = [];
+  function visit(node) {
+    if (node.kind >= ts.SyntaxKind.FirstJSDocNode && node.kind <= ts.SyntaxKind.LastJSDocNode) return;
+    const children = node.getChildren(file);
+    if (children.length) { children.forEach(visit); return; }
+    const kind = node.kind;
+    let style;
+    if (kind >= ts.SyntaxKind.FirstKeyword && kind <= ts.SyntaxKind.LastKeyword) style = 'keyword';
+    else if (kind === ts.SyntaxKind.StringLiteral || kind === ts.SyntaxKind.RegularExpressionLiteral ||
+      kind === ts.SyntaxKind.NoSubstitutionTemplateLiteral ||
+      kind >= ts.SyntaxKind.TemplateHead && kind <= ts.SyntaxKind.TemplateTail) style = 'string';
+    else if (kind === ts.SyntaxKind.NumericLiteral || kind === ts.SyntaxKind.BigIntLiteral) style = 'number';
+    else if (kind === ts.SyntaxKind.Identifier &&
+      (ts.isCallExpression(node.parent) && node.parent.expression === node ||
+       ts.isPropertyAccessExpression(node.parent) && node.parent.name === node &&
+       ts.isCallExpression(node.parent.parent) && node.parent.parent.expression === node.parent)) style = 'function';
+    if (style) spans.push({ start: node.getStart(file), end: node.getEnd(), style });
+    const start = node.getStart(file);
+    for (const comment of [...ts.getLeadingCommentRanges(source, node.pos) ?? [], ...ts.getTrailingCommentRanges(source, node.pos) ?? []]) {
+      if (comment.end <= start) spans.push({ start: comment.pos, end: comment.end, style: 'comment' });
+    }
+  }
+  visit(file);
+  spans.sort((a, b) => a.start - b.start);
+  let html = '', position = 0;
+  for (const span of spans) {
+    if (span.start < position) continue;
+    html += escapeHtml(source.slice(position, span.start));
+    html += `<span class="syntax-${span.style}">${escapeHtml(source.slice(span.start, span.end))}</span>`;
+    position = span.end;
+  }
+  return html + escapeHtml(source.slice(position));
+}
 
 // These are schematic illustrations, explicitly labeled on the gallery, not
 // screenshots or claimed geographic/benchmark evidence.
@@ -28,7 +65,7 @@ function illustration(kind) {
 function header(version, home) {
   return `<a class="skip" href="#main">Skip to content</a><header class="site-header"><a class="brand" href="${home}">${logo}Maplet <span class="version">${escapeHtml(version)}</span></a><nav class="header-links" aria-label="Main"><a href="${home}">Examples</a><a href="https://github.com/${repository}#readme">Documentation ↗</a><a href="https://github.com/${repository}">GitHub ↗</a></nav></header>`;
 }
-const footer = '<footer class="site-footer"><span>Maplet · independent GPU mapping library · Apache-2.0</span><span>Learning examples, not performance benchmarks.</span></footer>';
+const footer = '<footer class="site-footer"><span>Maplet · Apache-2.0</span></footer>';
 function documentHtml(title, body, script, attributes = '') {
   return `<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Practical Maplet examples with live maps and source code."><title>${escapeHtml(title)} · Maplet examples</title><link rel="stylesheet" href="./style.css"></head><body ${attributes}>${body}<script type="module" src="./${script}"></script></body></html>\n`;
 }
@@ -49,15 +86,14 @@ function galleryHtml(catalog, version) {
         <a class="gist-pending" data-gist="${entry.id}" aria-disabled="true">Gist not published yet</a>
       </div>
     </article>`).join('\n');
-  return documentHtml('Explore the API', `
+  return documentHtml('Maplet examples', `
 ${header(version, './')}
 <main id="main" class="gallery">
   <section class="hero" aria-labelledby="hero-title">
     <div class="hero-copy">
-      <span class="eyebrow">The example collection</span>
-      <h1 id="hero-title">Small examples.<br>Real maps.</h1>
-      <p>Get a feel for Maplet, one idea at a time. Run a map, change its data, then take the source into your own project.</p>
-      <a class="primary-link" href="./examples/basics/">Build your first map <span aria-hidden="true">→</span></a>
+      <h1 id="hero-title">Maplet examples</h1>
+      <p>Interactive examples of maps, layers, data editing, GeoJSON and plugins. Each example includes its JavaScript source.</p>
+      <a class="primary-link" href="./examples/basics/">Open basic example <span aria-hidden="true">→</span></a>
       <span class="hero-note">WebGL 1 by default · WebGPU available · TypeScript library</span>
     </div>
     <div class="featured">
@@ -67,7 +103,7 @@ ${header(version, './')}
   </section>
   <section aria-labelledby="collection-title">
     <div class="section-heading">
-      <div><h2 id="collection-title">Pick something to explore</h2><p>Each example includes a live map, controls and its source.</p></div>
+      <div><h2 id="collection-title">Examples by topic</h2><p>Filter by topic or search the examples.</p></div>
       <span class="eyebrow" id="result-count" aria-live="polite">${catalog.length} examples</span>
     </div>
     <div class="catalog-tools">
@@ -80,14 +116,13 @@ ${header(version, './')}
   </section>
   <section class="getting-started" aria-labelledby="start-title">
     <div>
-      <span class="eyebrow">From example to project</span>
-      <h2 id="start-title" style="margin-top:12px">Use the same public API</h2>
+      <h2 id="start-title" style="margin-top:12px">Installation</h2>
       <p>These examples load the library built from this repository. In your application, install <code>@fir3st/maplet</code> from GitHub Packages or a release archive.</p>
       <p>The GitHub npm registry requires authentication. <a href="https://github.com/${repository}#builds-and-releases">Installation instructions ↗</a></p>
       <p>Original diagnostic pages and stress tests remain in <a href="https://github.com/${repository}/tree/main/demo">demo/</a>.</p>
       <p><a class="gist-pending" data-gist="index" aria-disabled="true">Collection Gist not published yet</a></p>
     </div>
-    <pre class="install-code"><code>import { createMap } from '@fir3st/maplet';
+    <pre class="install-code"><code>${highlightJavaScript(`import { createMap } from '@fir3st/maplet';
 
 const map = await createMap({
   container: 'map',
@@ -97,7 +132,7 @@ const map = await createMap({
   },
 });
 
-// Give #map a height, then add sources and layers.</code></pre>
+// Give #map a height, then add sources and layers.`)}</code></pre>
   </section>
 </main>
 ${footer}`, 'gallery.js');
@@ -128,22 +163,21 @@ ${header(version, gallery)}
       <div class="map-foot"><span>${escapeHtml(entry.hint)}</span><output id="map-stats">Initializing renderer…</output></div>
     </div>
     <aside class="example-aside">
-      <span class="eyebrow">Try it yourself</span><h2 style="margin-top:10px">Change the example</h2>
-      <p>Use these controls or interact with the map directly.</p>
+      <h2>Controls</h2>
       <div id="example-extra"></div><div id="example-tools"></div>
       <output id="status" aria-live="polite">Starting the map…</output>
       <p class="data-note">${escapeHtml(entry.note)}</p>
     </aside>
   </section>
   <details class="source" open>
-    <summary>Read the example source</summary>
+    <summary>JavaScript source</summary>
     <div class="source-toolbar">
       <button type="button" id="copy-source">Copy source</button>
       <a href="./example.js">Download JavaScript</a>
       <a id="gist-link" aria-disabled="true">Gist not published yet</a>
       <a href="https://github.com/${repository}/blob/main/${entry.origin}">Original demo ↗</a>
     </div>
-    <pre tabindex="0" aria-label="JavaScript source"><code id="source-code">${escapeHtml(source)}</code></pre>
+    <pre tabindex="0" aria-label="JavaScript source"><code id="source-code">${highlightJavaScript(source)}</code></pre>
     <p class="source-note">The shared <a href="./shared.js">page setup</a> creates the map and controls. For an application, import Maplet from <code>@fir3st/maplet</code> instead of the hosted build.</p>
   </details>
   <nav class="example-nav" aria-label="Other examples">
