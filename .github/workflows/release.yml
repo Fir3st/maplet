@@ -50,12 +50,50 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: package
-          path: maplet-*.tgz
+          path: fir3st-maplet-*.tgz
           if-no-files-found: error
           retention-days: 14
 
-  release:
+  publish:
     needs: build
+    if: needs.build.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          registry-url: https://npm.pkg.github.com
+          scope: '@fir3st'
+      - uses: actions/download-artifact@v4
+        with:
+          name: package
+      - name: Publish to GitHub Packages
+        env:
+          NODE_AUTH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.build.outputs.version }}
+          PRERELEASE: ${{ needs.build.outputs.prerelease }}
+        run: |
+          # Registry failures must not be mistaken for an unpublished version.
+          if npm view "@fir3st/maplet@$VERSION" version --json \
+            --registry=https://npm.pkg.github.com > published-version.json; then
+            jq -e --arg version "$VERSION" '. == $version' published-version.json
+            echo "Package version $VERSION already exists; nothing to publish."
+          else
+            jq -e '.error.code == "E404"' published-version.json
+            dist_tag=latest
+            if [ "$PRERELEASE" = true ]; then
+              dist_tag=next
+            fi
+            npm publish fir3st-maplet-*.tgz --ignore-scripts --tag "$dist_tag" \
+              --registry=https://npm.pkg.github.com
+          fi
+
+  release:
+    needs: [build, publish]
     if: needs.build.outputs.changed == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -83,7 +121,7 @@ jobs:
           }
           if grep -q 'HTTP.* 200' <<< "$status"; then
             complete=$(gh api "repos/$GH_REPO/releases/tags/$TAG" \
-              --jq '(.draft == false) and any(.assets[]; .name == "maplet-'"${TAG#v}"'.tgz")')
+              --jq '(.draft == false) and any(.assets[]; .name == "fir3st-maplet-'"${TAG#v}"'.tgz")')
             if [ "$complete" != true ]; then
               echo "Release $TAG is incomplete. Remove its draft/incomplete release in GitHub, then rerun this workflow." >&2
               exit 1
@@ -95,5 +133,5 @@ jobs:
           if [ "$PRERELEASE" = true ]; then
             flags+=(--prerelease --latest=false)
           fi
-          gh release create "$TAG" maplet-*.tgz \
+          gh release create "$TAG" fir3st-maplet-*.tgz \
             --target "$COMMIT" --title "$TAG" --generate-notes "${flags[@]}"

@@ -1,4 +1,4 @@
-import { createMap, type Plugin, type PluginContext, type FramePlan, type CustomRenderer } from 'maplet';
+import { createMap, type Plugin, type PluginContext, type FramePlan, type CustomRenderer } from '@fir3st/maplet';
 
 const plugin: Plugin<{ setLabel(label: string): void }> = ({ container, signal, onCleanup, render }: PluginContext) => {
   const element = container?.ownerDocument.createElement('span');

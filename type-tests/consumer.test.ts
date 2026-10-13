@@ -20,9 +20,9 @@ import {
   type PointGeometry,
   type Position,
   type VectorSourceHandle,
-} from 'maplet';
-import { boundsFromPositions, crs, type Bounds } from 'maplet/math';
-import { parseGeoJson, type GeoJsonFeatureCollection } from 'maplet/formats';
+} from '@fir3st/maplet';
+import { boundsFromPositions, crs, type Bounds } from '@fir3st/maplet/math';
+import { parseGeoJson, type GeoJsonFeatureCollection } from '@fir3st/maplet/formats';
 
 interface StationProperties extends Record<string, unknown> {
   readonly name: string;

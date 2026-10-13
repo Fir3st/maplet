@@ -34,7 +34,8 @@ function distModules(): string[] {
 
 test('npm pack includes the runtime assets and no development files', () => {
   const output = execFileSync('npm', ['pack', '--dry-run', '--json'], { cwd: root, encoding: 'utf8' });
-  const [report] = JSON.parse(output) as [{ files: { path: string }[] }];
+  const [report] = JSON.parse(output) as [{ filename: string; files: { path: string }[] }];
+  assert.match(report.filename, /^fir3st-maplet-.*\.tgz$/, 'archive must use the GitHub Packages scope');
   const files = report.files.map((entry) => entry.path);
   for (const required of [
     'package.json',
@@ -55,6 +56,14 @@ test('npm pack includes the runtime assets and no development files', () => {
       assert.ok(!file.startsWith(prefix), `development file packed: ${file}`);
     }
   }
+});
+
+test('package targets the repository-linked GitHub npm registry', () => {
+  const manifest = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
+  assert.equal(manifest.name, '@fir3st/maplet');
+  assert.notEqual(manifest.private, true, 'private packages cannot be published');
+  assert.equal(manifest.publishConfig.registry, 'https://npm.pkg.github.com');
+  assert.equal(manifest.repository.url, 'git+https://github.com/Fir3st/maplet.git');
 });
 
 test('every exports subpath resolves to a packed file', () => {

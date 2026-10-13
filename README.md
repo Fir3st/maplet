@@ -13,7 +13,7 @@ Maplet is not a Leaflet plugin or a drop-in replacement, and has no runtime
 dependency on Leaflet. Some coordinate calculations derive from Leaflet;
 their attribution and license are included in [NOTICE](NOTICE).
 
-> **Alpha: `0.1.0-alpha.2`.** The API is still evolving. See
+> **Alpha: `0.1.0-alpha.3`.** The API is still evolving. See
 > [implementation status](docs/status.md) for known limitations and the scope of
 > testing. Development-machine timings are not reference benchmarks.
 
@@ -221,7 +221,7 @@ Give the map container a height before creating the map:
 ```
 
 ```ts
-import { createMap, crs, expr } from 'maplet';
+import { createMap, crs, expr } from '@fir3st/maplet';
 
 const map = await createMap({
   container: 'map',
@@ -272,19 +272,22 @@ map.controls.add({ kind: 'attribution' });
 ```
 
 The package specifier above is for a packaged or locally linked build; the
-repository demos import `../dist/index.js` directly. This checkout is marked
-`private` in `package.json` to prevent accidental npm publication. Public Git
-hosting does not require removing that safeguard.
+repository demos import `../dist/index.js` directly. The package is published as
+`@fir3st/maplet` to GitHub Packages, not npmjs.com; `publishConfig.registry` selects
+the GitHub npm registry.
 
 ### Builds and releases
 
 Every push to `main` runs the build, type checks and unit tests in GitHub Actions
 and stores an installable `.tgz` package as a workflow artifact for 14 days.
 If `package.json`'s version differs from the version before the push, the workflow
-also creates a tag `v<version>` at the tested commit and a GitHub Release with the
-package attached and automatically generated release notes. The initial push of
+publishes the tested archive to GitHub Packages, then creates a tag `v<version>`
+at the tested commit and a GitHub Release with the same package attached and
+automatically generated release notes. The initial push of
 a new `main` branch also releases its version. Existing releases are not overwritten
-on reruns. Alpha, beta and RC versions are marked as prereleases.
+on reruns. Alpha, beta and RC versions are marked as prereleases and published
+with the npm dist-tag `next`; stable versions use `latest`. Registry errors fail
+the workflow rather than silently skipping publication.
 
 To publish the next alpha:
 
@@ -305,12 +308,27 @@ Download the `.tgz` asset from [GitHub Releases](https://github.com/Fir3st/maple
 and install it in a consuming project:
 
 ```bash
-npm install ./maplet-0.1.0-alpha.2.tgz
+npm install ./fir3st-maplet-0.1.0-alpha.3.tgz
 ```
 
-No npm registry or custom credentials are needed. Enable GitHub Actions in the
-repository; the release job uses GitHub's built-in authentication with
-`contents: write` permission. Registry publication remains disabled by `private: true`.
+Alternatively, install from GitHub Packages after authenticating npm with GitHub
+and granting package-read access:
+
+```bash
+npm install @fir3st/maplet@next --registry=https://npm.pkg.github.com
+```
+
+GitHub's npm registry requires authentication even for public packages. For
+applications with dependencies from multiple registries, configure only the
+`@fir3st` scope to use GitHub Packages rather than changing the default registry.
+See [GitHub's installation guide](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-npm-registry#installing-a-package).
+The release archive can still be downloaded and installed without npm registry
+authentication.
+
+No custom publishing credentials are needed: the workflow uses GitHub's built-in
+authentication with `packages: write` for publishing and `contents: write` for
+releases. New GitHub Packages are private by default; the owner can change the
+package's visibility in its GitHub settings if public access is desired.
 
 Follow each tile provider's usage policy and display its required attribution.
 The OpenStreetMap standard layer is used live, not cached by the demo scripts.

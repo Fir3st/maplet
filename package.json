@@ -1,6 +1,6 @@
 {
-  "name": "maplet",
-  "version": "0.1.0-alpha.2",
+  "name": "@fir3st/maplet",
+  "version": "0.1.0-alpha.3",
   "description": "Standalone GPU map library for WebGPU and WebGL 1 - sources, stable feature references, relations, bindings, raster and vector layers",
   "type": "module",
   "license": "Apache-2.0",
@@ -12,7 +12,9 @@
   "bugs": {
     "url": "https://github.com/Fir3st/maplet/issues"
   },
-  "private": true,
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

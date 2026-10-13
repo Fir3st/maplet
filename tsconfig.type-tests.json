@@ -4,9 +4,9 @@
     "noEmit": true,
     "rootDir": ".",
     "paths": {
-      "maplet": ["./dist/index.d.ts"],
-      "maplet/math": ["./dist/math/index.d.ts"],
-      "maplet/formats": ["./dist/formats/geojson.d.ts"]
+      "@fir3st/maplet": ["./dist/index.d.ts"],
+      "@fir3st/maplet/math": ["./dist/math/index.d.ts"],
+      "@fir3st/maplet/formats": ["./dist/formats/geojson.d.ts"]
     }
   },
   "include": ["src/**/*.ts", "type-tests/**/*.ts"]

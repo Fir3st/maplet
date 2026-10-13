@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.1.0-alpha.3
+
+- Publish `@fir3st/maplet` to the GitHub Packages npm registry on version changes,
+  using the same tested archive as the GitHub Release. Prereleases use the `next`
+  dist-tag, stable versions use `latest`. Update consumer imports to the scoped name.
+
 ## 0.1.0-alpha.2
 
 - Add automated builds and version-triggered GitHub Releases with installable
