@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { crs, isMapletError } from '../../src/index.ts';
+import { crs, isMapletError, type Position } from '../../src/index.ts';
 import { Scene } from '../../src/scene/scene.ts';
+import { ChangeJournal } from '../../src/scene/change-journal.ts';
 import { makeMap, manualClock } from '../helpers/fixture.ts';
 
 function pointBatch(count: number, startLng = 14): {
@@ -286,6 +287,242 @@ test('insertion returns the stored slot identity without a second ID lookup', ()
     assert.equal(source.features.count(), 2);
   } finally {
     store.get = originalGet;
+    scene.destroy();
+  }
+});
+
+test('fresh point imports build the store in one batch without per-feature CRUD or undo', async () => {
+  const scene = new Scene(crs.webMercator(), manualClock());
+  const source = scene.createVectorSource('s');
+  const impl = scene.getSourceImpl('s')!;
+  const store = impl.store;
+  const originalAdd = impl.addOne;
+  const originalUndo = scene.recordUndo;
+  let undoEntries = 0;
+  let event: ReturnType<typeof source.snapshot> & { change?: { addedCount: number; added: readonly unknown[] } | null };
+  source.on('change', value => { event = value; });
+  impl.addOne = () => { throw new Error('bulk initialization must not run per-feature CRUD'); };
+  scene.recordUndo = function (undo) { undoEntries++; originalUndo.call(this, undo); };
+  try {
+    await source.importColumnar(pointBatch(5000));
+    assert.equal(impl.store, store, 'the renderer/query store identity stays stable');
+    assert.equal(undoEntries, 1, 'one atomic store adoption, not 5000 undo closures');
+    assert.equal(source.features.count(), 5000);
+    assert.equal(event!.change!.addedCount, 5000);
+    assert.equal(event!.change!.added.length, 4096, 'event samples remain bounded');
+    assert.equal(store.indexStatistics().entries, 5000);
+    assert.equal(source.features.ref('p4999').generation, 1);
+    const found: string[] = [];
+    store.queryRect(0, 0, 256, 256, record => found.push(record.id as string));
+    assert.equal(new Set(found).size, 5000);
+    store.forEachLive(record => {
+      const i = record.slot;
+      const expected = crs.webMercator().toWorld({ lng: 14 + (i % 100) * 0.001, lat: 50 + Math.floor(i / 100) * 0.001 });
+      assert.equal(record.id, `p${i}`);
+      assert.deepEqual(record.properties, { index: i });
+      assert.ok(Math.abs(record.wx - expected.x) < 1e-9 && Math.abs(record.wy - expected.y) < 1e-9);
+    });
+  } finally {
+    impl.addOne = originalAdd;
+    scene.recordUndo = originalUndo;
+    scene.destroy();
+  }
+});
+
+test('bulk initialization rolls back as a unit and cannot revive a captured generation', async () => {
+  const scene = new Scene(crs.webMercator(), manualClock());
+  const source = scene.createVectorSource('s');
+  const store = scene.getSourceImpl('s')!.store;
+  const originalCommit = scene.finishImplicitCommit;
+  const beforeEpoch = store.changes.epoch;
+  let captured: ReturnType<typeof source.features.ref> | undefined;
+  let events = 0;
+  source.on('change', () => { events++; });
+  scene.finishImplicitCommit = () => {
+    captured = source.features.ref('p0');
+    assert.equal(source.features.count(), 12, 'the transaction can read staged records');
+    throw new Error('commit failure');
+  };
+  try {
+    await assert.rejects(source.importColumnar(pointBatch(12)), /commit failure/);
+    assert.equal(source.features.count(), 0);
+    assert.equal(scene.revision, 0);
+    assert.equal(events, 0);
+    assert.deepEqual(store.indexStatistics(), { buckets: 0, entries: 0, oversized: 0 });
+    assert.equal(store.boundsNow(), null);
+    assert.equal(store.changes.since(beforeEpoch), null, 'rollback invalidates any staged plan');
+    scene.finishImplicitCommit = originalCommit;
+    await source.importColumnar(pointBatch(1));
+    assert.ok(source.features.ref('p0').generation > captured!.generation);
+    assert.throws(() => source.features.update(captured!, { properties: { leaked: true } }),
+      (error: unknown) => isMapletError(error) && error.code === 'stale-reference');
+  } finally {
+    scene.finishImplicitCommit = originalCommit;
+    scene.destroy();
+  }
+});
+
+test('bulk initialization validates the complete CRS domain before adopting data', async () => {
+  const projection = { ...crs.simple(), code: 'bulk-domain', toWorld(position: Position) {
+    const point = position as { x: number; y: number };
+    return point.x === 9 ? { x: Infinity, y: 0 } : crs.simple().toWorld(position);
+  } };
+  const { map } = await makeMap({ projection, view: { center: { x: 0, y: 0 }, zoom: 1 } });
+  const source = map.sources.vector({ id: 's' });
+  const revision = map.stats().revision;
+  await assert.rejects(source.importColumnar({ kind: 'point', positions: Float64Array.of(1, 2, 9, 4), ids: ['a', 'b'] }),
+    (error: unknown) => isMapletError(error) && error.code === 'invalid-argument' && error.message.includes('CRS domain'));
+  assert.equal(source.features.count(), 0);
+  assert.equal(map.stats().revision, revision);
+  assert.equal(source.getBounds(), null);
+  await source.importColumnar({ kind: 'point', positions: Float64Array.of(5, 6), ids: ['c'] });
+  assert.deepEqual(source.features.get('c')!.geometry, { type: 'point', position: { x: 5, y: 6 } });
+  map.destroy();
+});
+
+test('bulk journal invalidation rejects older plans and retains subsequent local changes', () => {
+  const journal = new ChangeJournal<number>();
+  journal.note(7);
+  const prior = journal.epoch;
+  journal.invalidate();
+  const current = journal.epoch;
+  assert.ok(current > prior);
+  assert.equal(journal.since(prior), null);
+  assert.deepEqual(journal.since(current), []);
+  journal.note(9);
+  assert.equal(journal.since(prior), null);
+  assert.deepEqual(journal.since(current), [9]);
+});
+
+test('bulk columns match ordinary CRUD across CRS, wrapping, generated IDs and altitude', async () => {
+  for (const projection of [crs.webMercator(), crs.epsg4326(), crs.epsg3395(), crs.simple()]) {
+    const { map } = await makeMap({ projection, view: {
+      center: projection.positionKind === 'geographic' ? { lat: 0, lng: 0 } : { x: 0, y: 0 }, zoom: 1,
+    } });
+    const bulk = map.sources.vector({ id: 'bulk' });
+    const direct = map.sources.vector({ id: 'direct' });
+    const coordinates = projection.positionKind === 'geographic' ? [540, 90, -721, -90, 14, 50, 0, 0] : [-500, 20, 0, 0, 256, -256, 800, 800];
+    const ids = [42, '42', 'auto:1', 'last'];
+    const properties = [{ nested: { value: 1 } }, {}, { nested: { value: 3 } }, {}];
+    const altitudes = [Infinity, 0, NaN, -20];
+    await bulk.importColumnar({ kind: 'point', positions: Float64Array.from(coordinates), ids: [42, '42', undefined, 'last'], properties,
+      ...(projection.positionKind === 'geographic' ? { altitudes: Float64Array.from(altitudes) } : {}) });
+    direct.features.add(ids.map((id, i) => ({ id, properties: structuredClone(properties[i]!), geometry: { type: 'point', position:
+      projection.positionKind === 'planar' ? { x: coordinates[i * 2]!, y: coordinates[i * 2 + 1]! } : {
+        lng: coordinates[i * 2]!, lat: coordinates[i * 2 + 1]!,
+        ...(Number.isNaN(altitudes[i]) ? {} : { altitude: altitudes[i]! }),
+      } } })) as never[]);
+    assert.deepEqual(bulk.features.ids(), ids);
+    for (const id of ids) {
+      assert.deepEqual(bulk.features.get(id)!.geometry, direct.features.get(id)!.geometry);
+      assert.deepEqual(bulk.features.get(id)!.properties, direct.features.get(id)!.properties);
+      assert.equal(bulk.features.ref(id).generation, 1);
+    }
+    assert.deepEqual(bulk.getBounds(), direct.getBounds());
+    properties[0]!.nested!.value = 99;
+    assert.equal((bulk.features.get(42)!.properties.nested as { value: number }).value, 1);
+    map.destroy();
+  }
+});
+
+test('an abort during bulk CRS conversion never publishes even the final row', async () => {
+  const controller = new AbortController();
+  let conversions = 0;
+  let importing = false;
+  const base = crs.webMercator();
+  const projection = { ...base, toWorld(position: Position) {
+    if (importing && ++conversions === 2) controller.abort();
+    return base.toWorld(position);
+  } };
+  const { map } = await makeMap({ projection });
+  const source = map.sources.vector({ id: 's' });
+  conversions = 0;
+  importing = true;
+  const revision = map.stats().revision;
+  await assert.rejects(source.importColumnar(pointBatch(2), { signal: controller.signal }),
+    (error: unknown) => isMapletError(error) && error.code === 'aborted');
+  assert.equal(conversions, 2, 'the abort happens during the final CRS conversion');
+  assert.equal(source.features.count(), 0);
+  assert.equal(source.getBounds(), null);
+  assert.equal(map.stats().revision, revision);
+  map.destroy();
+});
+
+test('recycled stores keep generations and existing imports enforce binding ownership', async () => {
+  const { map } = await makeMap();
+  const source = map.sources.vector({ id: 's' });
+  const target = map.sources.vector({ id: 'target' });
+  source.features.add({ id: 42, geometry: { type: 'point', position: { lat: 50, lng: 14 } } });
+  const stale = source.features.ref(42);
+  source.features.remove(42);
+  await source.importColumnar({ kind: 'point', positions: Float64Array.of(15, 51), ids: [42], properties: [{ value: 1 }] });
+  const current = source.features.ref(42);
+  assert.equal(current.generation, stale.generation + 1);
+  target.features.add({ id: 't', geometry: { type: 'point', position: { lat: 0, lng: 0 } }, properties: { value: 2 } });
+  map.bindings.add({ id: 'owner', target: current, properties: { kind: 'copyProperty', from: target.features.ref('t'), field: 'value' } });
+  const before = source.features.get(42);
+  const revision = map.stats().revision;
+  await assert.rejects(source.importColumnar({ kind: 'point', positions: Float64Array.of(16, 52), ids: [42], properties: [{ value: 3 }] }),
+    (error: unknown) => isMapletError(error) && error.code === 'ownership-conflict');
+  assert.deepEqual(source.features.get(42), before);
+  assert.equal(map.stats().revision, revision);
+  assert.deepEqual(source.features.ref(42), current);
+  map.destroy();
+});
+
+test('bulk adoption and subsequent staged edits roll back in reverse order', () => {
+  const scene = new Scene(crs.webMercator(), manualClock());
+  const source = scene.createVectorSource('s');
+  const impl = scene.getSourceImpl('s')!;
+  let captured: ReturnType<typeof source.features.ref> | undefined;
+  try {
+    assert.throws(() => scene.batch(() => {
+      impl.mutate(change => { assert.equal(impl.initializePointImport(change, pointBatch(4)), true); });
+      captured = source.features.ref('p0');
+      source.features.update('p0', { geometry: { type: 'lineString', positions: [{ lng: 0, lat: 0 }, { lng: 1, lat: 1 }] } });
+      source.features.remove('p1');
+      source.features.add({ id: 'extra', geometry: { type: 'point', position: { lng: 14, lat: 50 } } });
+      source.features.add({ id: 'overflow', geometry: { type: 'point', position: { lng: 15, lat: 51 } } });
+      throw new Error('cancel staged batch');
+    }), /cancel staged batch/);
+    assert.equal(source.features.count(), 0);
+    assert.equal(impl.store.slotCapacity, 0);
+    assert.equal(impl.store.pointOnly, true);
+    assert.deepEqual(impl.store.indexStatistics(), { buckets: 0, entries: 0, oversized: 0 });
+    const added = source.features.add({ id: 'p0', geometry: { type: 'point', position: { lng: 14, lat: 50 } } });
+    assert.ok(added.refs[0]!.generation > captured!.generation);
+    assert.equal(impl.store.slotCapacity, 1, 'a stale free slot cannot leak from the discarded store');
+    assert.equal(impl.store.getBySlot(0)!.id, 'p0');
+  } finally {
+    scene.destroy();
+  }
+});
+
+test('writes during point preparation are retained by append, not replaced by initialization', async () => {
+  const { map } = await makeMap();
+  const source = map.sources.vector({ id: 's' });
+  const pending = source.importColumnar(pointBatch(3), { mode: 'append' });
+  source.features.add({ id: 'during', geometry: { type: 'point', position: { lng: 14, lat: 50 } } });
+  const ref = source.features.ref('during');
+  await pending;
+  assert.equal(source.features.count(), 4);
+  assert.deepEqual(source.features.ref('during'), ref);
+  map.destroy();
+});
+
+test('bulk initialization preserves the binding touched-reference overflow contract', async () => {
+  const scene = new Scene(crs.webMercator(), manualClock());
+  const control = scene.createVectorSource('control');
+  control.features.add(['a', 't'].map(id => ({ id, geometry: { type: 'point' as const, position: { lng: 14, lat: 50 } }, properties: { value: id === 'a' ? 1 : 0 } })));
+  scene.bindings.add({ id: 'copy', target: control.features.ref('t'), properties: { kind: 'copyProperty', from: control.features.ref('a'), field: 'value' } });
+  try {
+    const before = scene.bindings.evaluatedCount;
+    await scene.createVectorSource('small').importColumnar(pointBatch(2));
+    assert.equal(scene.bindings.evaluatedCount, before, 'unrelated small imports do not reevaluate the binding');
+    await scene.createVectorSource('large').importColumnar(pointBatch(5000));
+    assert.equal(scene.bindings.evaluatedCount, before + 1, 'overflow safely reevaluates all bindings once');
+    assert.equal(control.features.get('t')!.properties.value, 1);
+  } finally {
     scene.destroy();
   }
 });

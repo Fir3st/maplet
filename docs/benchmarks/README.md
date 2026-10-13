@@ -2,9 +2,16 @@
 
 ## Environment and records
 
-Measured October 11–12, 2026, on an Apple M5 Pro with 64 GiB RAM, using headless
+Measured October 11–13, 2026, on an Apple M5 Pro with 64 GiB RAM, using headless
 Chromium 153.0.0.0 (installed `chromium-1243` build), DPR 1. Leaflet is the
 vendored, unmodified 1.9.4 ESM build. Maplet is the locally built alpha package.
+
+- [Bulk-initialization A/B setup and pan](points-500k-bulk-initialization-ab.json):
+  October 13, three fresh processes per version/backend against `40e22ed`, with
+  alternating before/after order, plus three Canvas controls.
+- [Bulk-initialization updates](points-500k-updates-bulk-initialization.json):
+  final-build WebGL 1, WebGPU and Canvas, three fresh processes each; all
+  **180 pixel/data-retention checks pass**.
 
 - [Initialization A/B setup and pan](points-500k-initialization-ab.json): October
   12, three fresh processes per version/backend against an isolated build of
@@ -33,7 +40,46 @@ These expensive scenarios are opt-in, not added to the default E2E suite.
 
 ## Results
 
-### Initialization follow-up
+### Bulk initialization
+
+| Measurement after bulk initialization | Maplet WebGL 1 | Maplet WebGPU | Leaflet Canvas |
+| --- | ---: | ---: | ---: |
+| Setup to paint opportunity, median | 449 ms | 444 ms | 282 ms |
+| Data loading, median | 366 ms | 363 ms | 215 ms |
+| Main-thread JS heap increase after GC | 138.7 MiB | 138.7 MiB | 207.1 MiB |
+| Warm pan interval p50, median across runs | 16.7 ms | 16.7 ms | 140.8 ms |
+| Warm pan interval p95, median across runs | 18.3 ms | 18.4 ms | 151.5 ms |
+
+| Alternating A/B: `40e22ed` → bulk initialization | Maplet WebGL 1 | Maplet WebGPU |
+| --- | ---: | ---: |
+| Setup to paint opportunity, median | 606 → 449 ms (25.9% shorter) | 598 → 444 ms (25.8% shorter) |
+| Data loading, median | 518 → 366 ms (29.3% shorter) | 516 → 363 ms (29.7% shorter) |
+| Main-thread JS heap increase after GC | 139.1 → 138.7 MiB | 139.0 → 138.7 MiB |
+| Warm pan p50 | 16.7 → 16.7 ms | 16.7 → 16.7 ms |
+
+Both builds use the same endpoint/browser/fixture/evaluator, and version order
+reverses in repetition two. All **15 setup/pan runs** pass full-count, projection
+and pixel checks. Every paired after-run has lower setup and loading times than
+its before-run. The percentages use this fresh baseline, not the older record
+below; no build or other benchmark runs concurrently. Three-run medians are
+not statistical confidence bounds or a guarantee on other workloads/devices.
+
+This is a bulk path for a **pristine source**, not a fully columnar replacement
+of the live store. It builds normal individually editable records and the
+spatial index from owned, validated columns, then adopts them with one undo
+entry and one full-set invalidation. Existing/recycled stores keep the ordinary
+replace/append path, including generation history and binding ownership checks.
+CRS normalization and validation remain enabled. No points, metadata or
+interactions are removed to obtain these results.
+
+Warm Maplet runs still contain roughly one-second maximum intervals, as does
+Canvas. Pan p50 stays at 16.7 ms; this work does not establish hitch-free
+playback. Canvas setup remains faster at 282 ms. The final mutation comparison
+passes **180/180 checks**, retaining all 500,000 records; paint-fence p50 is
+20.7–29.5 ms for Maplet and 33.2–33.4 ms for Canvas. These fences remain near
+the animation-frame floor and do not isolate GPU execution time.
+
+### Direct point ingestion (preceding initialization stage)
 
 | Measurement after direct point ingest | Maplet WebGL 1 | Maplet WebGPU | Leaflet Canvas |
 | --- | ---: | ---: | ---: |
@@ -259,6 +305,25 @@ opened and inspected; coordinate and pixel probes are retained in the records.
   check rejects the original ingest path. Final Maplet/Canvas screenshots were
   opened and inspected; pixel and projection probes remain unchanged.
 
+### Bulk-initialization regression checks
+
+The final check passes **219 unit tests**, build/source/test/consumer type and
+distribution checks, plus **35 browser scenarios/batteries per profile** on
+WebGL 1, WebGPU and basic WebGL 1. The bulk path is tested against ordinary CRUD
+across CRS, wrapping, generated IDs, numeric/string identities, altitude and
+metadata ownership. All 5,000 rows of a separate structural fixture are checked
+for identity, properties and canonical position; it rejects the original
+per-row CRUD path and asserts a single undo entry.
+
+Tests also cover full-domain validation before adoption, cancellation during
+the final CRS conversion, late writes during preparation, unchanged binding
+ownership/overflow behavior, whole-set cache invalidation followed by local
+uploads, and rollback after later staged edits. Consumed generations remain
+invalid after rollback, and discarded free slots cannot leak into subsequent
+writes. Final setup and mutation screenshots for both Maplet and Canvas were
+opened and inspected. The unchanged evaluator's SHA-256 is stored in the A/B
+record; the historical records remain intact.
+
 ## Canvas, PixiJS and dynamic maps
 
 Canvas is not inherently noninteractive or CPU-only. Leaflet supplies hit
@@ -320,7 +385,9 @@ budget. `--output` chooses the record destination; without it the original
 `points-500k.json` / `points-500k-updates.json` is replaced. Screenshots go to
 Git-ignored `demo/checks/` and are not part of the public result records.
 
-For an initialization A/B check, also build `f656c7f` in an isolated directory.
+For an initialization A/B check, also build the applicable baseline in an
+isolated directory: `40e22ed` for bulk initialization, or `f656c7f` for the
+preceding direct-ingestion stage.
 Serve the unchanged current demo while selecting that build's `dist/` or the
 current `dist/` at the same URL. Run the Maplet scenario below in fresh processes,
 alternating version order over three repetitions on each backend, with a Canvas

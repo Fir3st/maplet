@@ -312,6 +312,23 @@ export class SourceImpl {
     return `auto:${this.autoIdCounter}`;
   }
 
+  /** Fresh point imports use one atomic store adoption, not per-row CRUD/undo. */
+  initializePointImport(change: PendingChange, batch: ColumnarPointBatch, signal?: AbortSignal): boolean {
+    if (!this.store.pristine) return false;
+    const result = this.store.initializePoints(batch, () => this.nextId(), signal);
+    this.scene.recordUndo(result.undo);
+    if (change.added.length === 0) change.added = result.ids;
+    else for (const id of result.ids) change.added.push(id);
+    if (this.scene.bindingsActive) {
+      const available = TOUCHED_LIMIT - change.touched.length;
+      for (let slot = 0; slot < Math.min(result.ids.length, available); slot++) {
+        this.noteTouched(change, this.refOf(this.store.getBySlot(slot)!));
+      }
+      if (result.ids.length > available) change.touchedOverflow = true;
+    }
+    return true;
+  }
+
   addOne(
     change: PendingChange,
     input: FeatureInput,
@@ -891,6 +908,7 @@ function replaceTransaction(
 
 /** Publish the validated columns directly, avoiding a second full feature-object tree. */
 function importPointTransaction(source: SourceImpl, change: PendingChange, batch: ColumnarPointBatch, mode: 'replace' | 'append', signal: AbortSignal | undefined): void {
+  if (source.initializePointImport(change, batch, signal)) return;
   const count = batch.positions.length / 2;
   const ids: FeatureId[] = new Array(count);
   const seen = new Set<string>();

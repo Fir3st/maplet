@@ -48,6 +48,14 @@ validation failures and spatial-index boundaries, and verify insertion slot
 identity without a second ID lookup. A fresh 500,000-point mutation comparison
 passes **180/180 pixel/data-retention checks** on the final build.
 
+The bulk-initialization follow-up checked on October 13 passes **219 unit tests**,
+all build/type/distribution checks, **35 E2E scenarios/batteries on each of all
+three profiles**, and a fresh **180/180 mutation checks**. New tests cover a
+single batch undo, whole-set invalidation, staged rollback/generation safety,
+CRS-domain failure, cancellation during the last conversion, generated IDs,
+binding ownership/overflow and writes during preparation. Initial datasets use
+atomic off-store construction; existing or recycled stores keep the normal path.
+
 The recorded browser environment was headless Chromium on an Apple M5 Pro,
 using ANGLE Metal for WebGL and `apple metal-3` for WebGPU. Pixel comparisons
 against decoded source bitmaps and between backends found zero differences at
@@ -100,6 +108,15 @@ controls give setup medians of **743 → 685 ms (WebGL 1, 7.8% shorter)** and
 **674 → 571 ms**, respectively. Heap deltas stay at 139 MiB and warm pan p50
 stays at 16.7 ms; Canvas setup is still faster at 288 ms. Some individual runs
 are slower after the change, and roughly one-second pan outliers remain.
+
+The October 13 [bulk-initialization A/B record](benchmarks/points-500k-bulk-initialization-ab.json)
+compares against `40e22ed` with the same unchanged workload/evaluator. Setup
+medians are **606 → 449 ms (WebGL 1, 25.9% shorter)** and **598 → 444 ms (WebGPU,
+25.8% shorter)**; imports are **518 → 366 ms** and **516 → 363 ms**, respectively
+(29.3% and 29.7% shorter). All six paired runs improve. These percentages use
+the freshly measured baseline, not the older initialization record. Main-thread
+heap deltas are 138.7 MiB after the change and warm pan p50 remains 16.7 ms;
+Canvas setup is still faster at 282 ms. One-second warm-pan outliers persist.
 
 ## Known limitations
 

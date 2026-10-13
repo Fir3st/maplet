@@ -44,6 +44,31 @@ function visibleRows(plan: FramePlan) {
   return rows;
 }
 
+test('retained empty point plans rebuild after bulk initialization, then retain local edits', async () => {
+  const clock = manualClock();
+  const scene = new Scene(crs.webMercator(), clock);
+  const view = new ViewImpl(scene.crs, scene, { width: 720, height: 520, minZoom: 0, maxZoom: 24, maxBounds: null }, { lat: 50, lng: 14 }, 10, clock);
+  scene.attachView(view);
+  const source = scene.createVectorSource('s');
+  scene.layers.add({ id: 'points', type: 'points', source, style: { radiusPx: 5, color: '#2563eb' } });
+  const plan = () => buildFramePlan(scene, { deviceWidth: 720, deviceHeight: 520, dpr: 1 });
+  try {
+    assert.deepEqual(visibleRows(plan()), []);
+    await source.importColumnar({ kind: 'point', positions: Float64Array.of(14, 50, 14.001, 50.001), ids: ['a', 'b'] });
+    assert.deepEqual(visibleRows(plan()).map(row => row.id), ['a', 'b']);
+    const initial = batch(plan());
+    source.features.update('b', { geometry: { type: 'point', position: { lng: 14.002, lat: 50.002 } } });
+    const changed = batch(plan());
+    assert.equal(changed.data, initial.data);
+    assert.deepEqual(changed.upload!.ranges, [{ start: 16, end: 32 }]);
+    const rows = visibleRows(plan());
+    invalidateFramePlanCache();
+    assert.deepEqual(rows, visibleRows(plan()), 'a local edit matches a completely rebuilt plan');
+  } finally {
+    scene.destroy();
+  }
+});
+
 test('retained points: pan and one-record edits never revisit the resident collection', () => {
   const f = fixture(50000);
   let evaluations = 0;

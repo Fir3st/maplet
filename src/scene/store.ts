@@ -17,6 +17,7 @@ import type { FeatureId, Position } from '../api/types.ts';
 import { featureIdKey } from '../api/types.ts';
 import { ChangeJournal } from './change-journal.ts';
 import type { Crs } from '../math/crs.ts';
+import type { ColumnarPointBatch } from '../io/columnar.ts';
 import {
   GEOMETRY_KIND,
   prepareGeometry,
@@ -197,15 +198,15 @@ export class SpatialIndex {
 export class FeatureStore {
   readonly changes = new ChangeJournal<number>();
   private complexCount = 0;
-  private readonly byKey = new Map<string, number>();
+  private byKey = new Map<string, number>();
   /** Generation counter per identity; kept for the store's whole lifetime. */
-  private readonly generationCounters = new Map<string, number>();
-  private readonly slots: (SlotRecord | null)[] = [];
+  private generationCounters = new Map<string, number>();
+  private slots: (SlotRecord | null)[] = [];
   private readonly freeSlots: number[] = [];
   private liveCount = 0;
   private bounds: Float64Array | null = null;
   private boundsDirty = false;
-  private readonly index = new SpatialIndex();
+  private index = new SpatialIndex();
   private visitStamp: Uint32Array = new Uint32Array(0);
   private visitEpoch = 0;
   private readonly crs: Crs;
@@ -220,6 +221,85 @@ export class FeatureStore {
 
   get pointOnly(): boolean { return this.complexCount === 0; }
   get slotCapacity(): number { return this.slots.length; }
+  get pristine(): boolean { return this.slots.length === 0 && this.generationCounters.size === 0; }
+
+  /**
+   * Build an initial point dataset off-store, then adopt it atomically. The
+   * caller supplies validated, owned columns from the import pipeline. Existing
+   * datasets keep the ordinary path (generation history and ownership checks).
+   */
+  initializePoints(batch: ColumnarPointBatch, nextId: () => FeatureId, signal?: AbortSignal): {
+    ids: FeatureId[]; undo: () => void;
+  } {
+    if (!this.pristine) fail('invalid-state', 'point initialization requires a pristine store');
+    const count = batch.positions.length / 2;
+    const ids: FeatureId[] = new Array(count);
+    const byKey = new Map<string, number>();
+    for (let slot = 0; slot < count; slot++) {
+      const id = batch.ids?.[slot] ?? nextId();
+      const key = featureIdKey(id);
+      if (byKey.has(key)) fail('duplicate-id', `columnar import: duplicate id in input: ${String(id)}`, { id });
+      byKey.set(key, slot);
+      ids[slot] = id;
+    }
+    const slots: SlotRecord[] = new Array(count);
+    const generations = new Map<string, number>();
+    const index = new SpatialIndex();
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    // Iterate the resolved identity map so its keys are not constructed twice.
+    for (const [key, slot] of byKey) {
+      if (signal?.aborted) fail('aborted', 'operation aborted', {});
+      const x = batch.positions[slot * 2]!;
+      const y = batch.positions[slot * 2 + 1]!;
+      const altitude = batch.altitudes?.[slot];
+      const position: Position = this.crs.positionKind === 'planar' ? { x, y } :
+        altitude === undefined || Number.isNaN(altitude) ? { lng: x, lat: y } : { lng: x, lat: y, altitude };
+      const point = positionToWorldChecked(this.crs, position, 'geometry.position');
+      slots[slot] = {
+        slot, key, id: ids[slot]!, namespace: undefined, generation: 1,
+        kind: GEOMETRY_KIND.point, wx: point.wx, wy: point.wy, alt: point.alt,
+        geometry: null, properties: batch.properties?.[slot] ?? EMPTY_PROPERTIES,
+      };
+      generations.set(key, 1);
+      index.addPoint(slot, point.wx, point.wy);
+      minX = Math.min(minX, point.wx);
+      minY = Math.min(minY, point.wy);
+      maxX = Math.max(maxX, point.wx);
+      maxY = Math.max(maxY, point.wy);
+    }
+    if (signal?.aborted) fail('aborted', 'operation aborted', {});
+    const previousSlots = this.slots;
+    const previousKeys = this.byKey;
+    const previousIndex = this.index;
+    this.slots = slots;
+    this.byKey = byKey;
+    this.generationCounters = generations;
+    this.index = index;
+    this.liveCount = count;
+    this.bounds = count === 0 ? null : Float64Array.of(minX, minY, maxX, maxY);
+    this.boundsDirty = false;
+    this.changes.invalidate();
+    return {
+      ids,
+      undo: () => {
+        this.slots = previousSlots;
+        this.byKey = previousKeys;
+        this.index = previousIndex;
+        this.freeSlots.length = 0;
+        this.liveCount = 0;
+        this.complexCount = 0;
+        this.bounds = null;
+        this.boundsDirty = false;
+        this.visitStamp = new Uint32Array(0);
+        this.visitEpoch = 0;
+        // Keep consumed generations: a ref captured in staged state stays stale.
+        this.changes.invalidate();
+      },
+    };
+  }
 
   keyOf(id: FeatureId, namespace?: string): string {
     return featureIdKey(id, namespace);

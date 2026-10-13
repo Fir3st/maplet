@@ -119,12 +119,15 @@ pan measured **16.7 ms versus Leaflet Canvas's 137.1 ms**—an **8.2× shorter
 interval**. Visibility/color/position paint fences fell from 162.5–178.8 ms to
 23.5–30.4 ms, versus Canvas's 33.2–33.3 ms; all 180 mutation checks passed.
 
-An initialization follow-up measured **743 → 685 ms for WebGL 1** and
-**756 → 654 ms for WebGPU** in a fresh, alternating three-run A/B comparison:
-**7.8% and 13.5% shorter setup**, respectively. Import alone fell from
-659 → 598 ms and 674 → 571 ms. These are median reductions; individual runs vary.
-Setup remains slower than Canvas's 288 ms. Maplet's
-main-thread JS heap increase after GC is 139 MiB versus Canvas's 207 MiB, about 33% less,
+Fresh columnar point imports now build the initial store off-scene and adopt it
+atomically, without per-feature CRUD/undo. An alternating three-run A/B check
+against `40e22ed` measured **606 → 449 ms for WebGL 1** and **598 → 444 ms for
+WebGPU**: **25.9% and 25.8% shorter setup**. Import alone fell from 518 → 366 ms
+and 516 → 363 ms, about **30% shorter**. Every paired run improved, but these
+are local medians, not universal guarantees. Existing datasets retain their
+normal mutation path and identity/ownership checks.
+Setup remains slower than Canvas's 282 ms. Maplet's
+main-thread JS heap increase after GC is 138.7 MiB versus Canvas's 207 MiB, about 33% less,
 but 9% above pre-retention Maplet. Headless scheduling still produced occasional
 one-second pan intervals. These are local measurements, not smooth-playback or
 all-workload guarantees; icons/complex geometry retain the existing planner.
