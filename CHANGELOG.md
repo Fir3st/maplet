@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.1.0-alpha.2
+
+- Add automated builds and version-triggered GitHub Releases with installable
+  package archives. Pin the TypeScript compiler and fix test discovery in Node.js 22 CI.
 - Add plain-function plugins via `map.use()` and initial `plugins`, with typed
   APIs, DOM access, cancellation and reverse-order cleanup. Add shared render-plan
   transforms, after-frame drawing and removable custom renderers with picking.

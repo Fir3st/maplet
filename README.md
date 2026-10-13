@@ -13,7 +13,7 @@ Maplet is not a Leaflet plugin or a drop-in replacement, and has no runtime
 dependency on Leaflet. Some coordinate calculations derive from Leaflet;
 their attribution and license are included in [NOTICE](NOTICE).
 
-> **Alpha: `0.1.0-alpha.1`.** The API is still evolving. See
+> **Alpha: `0.1.0-alpha.2`.** The API is still evolving. See
 > [implementation status](docs/status.md) for known limitations and the scope of
 > testing. Development-machine timings are not reference benchmarks.
 
