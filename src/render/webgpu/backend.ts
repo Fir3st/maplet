@@ -22,18 +22,17 @@ import type { Scene } from './../../scene/scene.ts';
 import type { MediaElement, MediaSourceImpl } from './../../scene/media-source.ts';
 import {
   buildFramePlan,
+  releaseFramePlan,
   FILL_STRIDE,
   LINE_STRIDE,
   POINT_STRIDE,
   type FramePlan,
-  type LabelPlacement,
   type MediaPlacement,
-  type SpritePlacement,
   type TilePlacement,
   type PlanBatch,
 } from './../frame-plan.ts';
 import { monotonicNow, PickStallRecorder, type PickResult } from './../picking.ts';
-import { QUAD_UVS, quadBounds, quadVertices } from './../quad.ts';
+import { Symbols, type AtlasPage, type SymbolMesh } from './../symbols.ts';
 import type { BackendInitOptions, MapBackend } from './../backends.ts';
 
 /* ------------------------------- WGSL common ----------------------------- */
@@ -110,10 +109,6 @@ fn shapeDistance(p: vec2f, shape: f32) -> f32 {
 
 @fragment
 fn fs_main(in: VSOut) -> @location(0) vec4f {
-  if (u.pickMode > 0.5) {
-    if ((in.pickMeta.w % 2.0) < 0.5) { discard; }
-    return pickEncode(in.pickMeta.z);
-  }
   let shape = in.pickMeta.x;
   let strokeWidth = in.pickMeta.y;
   let d = shapeDistance(in.localPos, shape);
@@ -130,6 +125,10 @@ fn fs_main(in: VSOut) -> @location(0) vec4f {
     color.a = max(color.a, strokeColor.a);
   }
   if (color.a <= 0.001) { discard; }
+  if (u.pickMode > 0.5) {
+    if ((in.pickMeta.w % 2.0) < 0.5) { discard; }
+    return pickEncode(in.pickMeta.z);
+  }
   return color;
 }
 `;
@@ -157,10 +156,11 @@ fn vs_main(
   @location(1) aSeg: vec4f,
   @location(2) aLine: vec4f,
   @location(3) aFill: vec4f,
+  @location(4) aArc: vec4f,
 ) -> VSOut {
   var out: VSOut;
-  let p0 = aSeg.xy;
-  let p1 = aSeg.zw;
+  let p0 = aSeg.xy + u.offset;
+  let p1 = aSeg.zw + u.offset;
   let delta = p1 - p0;
   var segLen = length(delta);
   var dir: vec2f;
@@ -178,11 +178,12 @@ fn vs_main(
   let along = aCorner.x * total;
   let cssPos = base + dir * along + normal * ((aCorner.y * 2.0 - 1.0) * halfWidth);
   out.pos = clipFromCss(cssPos);
+  if (aLine.w >= 2.0) { out.pos = vec4f(2.0, 2.0, 0.0, 1.0); }
   out.cssPos = cssPos;
-  out.seg = aSeg;
-  out.line = aLine;
+  out.seg = vec4f(p0, p1);
+  out.line = vec4f(aLine.xy, aLine.z + u.pickBase, aLine.w);
   out.fill = aFill;
-  out.arc = aSeg.w + clamp(along - extend, 0.0, segLen);
+  out.arc = aArc.x + clamp(along - extend, 0.0, segLen);
   return out;
 }
 
@@ -211,11 +212,6 @@ fn dashAlpha(arc: f32) -> f32 {
 
 @fragment
 fn fs_main(in: VSOut) -> @location(0) vec4f {
-  if (u.pickMode > 0.5) {
-    if ((in.line.w % 2.0) < 0.5) { discard; }
-    if (u.dashCount > 0.5 && dashAlpha(in.arc) < 0.5) { discard; }
-    return pickEncode(in.line.z);
-  }
   let p0 = in.seg.xy;
   let p1 = in.seg.zw;
   var edgeLen = length(p1 - p0);
@@ -249,6 +245,10 @@ fn fs_main(in: VSOut) -> @location(0) vec4f {
   let dash = select(1.0, dashAlpha(in.arc), u.dashCount > 0.5);
   alpha = alpha * dash;
   if (alpha <= 0.001) { discard; }
+  if (u.pickMode > 0.5) {
+    if ((in.line.w % 2.0) < 0.5 || in.fill.a <= 0.001) { discard; }
+    return pickEncode(in.line.z);
+  }
   return vec4f(in.fill.rgb, in.fill.a * alpha);
 }
 `;
@@ -268,16 +268,17 @@ fn vs_main(
   @location(2) aMeta: vec4f,
 ) -> VSOut {
   var out: VSOut;
-  out.pos = clipFromCss(aPos.xy);
+  out.pos = clipFromCss(aPos.xy + u.offset);
+  if (aMeta.y >= 2.0) { out.pos = vec4f(2.0, 2.0, 0.0, 1.0); }
   out.fill = aFill;
-  out.pickMeta = aMeta;
+  out.pickMeta = vec4f(aMeta.x + u.pickBase, aMeta.yzw);
   return out;
 }
 
 @fragment
 fn fs_main(in: VSOut) -> @location(0) vec4f {
   if (u.pickMode > 0.5) {
-    if ((in.pickMeta.y % 2.0) < 0.5) { discard; }
+    if ((in.pickMeta.y % 2.0) < 0.5 || in.fill.a <= 0.001) { discard; }
     return pickEncode(in.pickMeta.x);
   }
   return in.fill;
@@ -341,10 +342,10 @@ fn vs_main(
   @location(3) aMeta: vec4f,
 ) -> VSOut {
   var out: VSOut;
-  out.pos = clipFromCss(aPos.xy);
+  out.pos = clipFromCss(aPos.xy + aPos.zw + u.offset);
   out.uv = aUV.xy;
   out.fill = aFill;
-  out.pickMeta = aMeta;
+  out.pickMeta = vec4f(aMeta.x + u.pickBase, aMeta.yzw);
   return out;
 }
 
@@ -352,7 +353,7 @@ fn vs_main(
 fn fs_main(in: VSOut) -> @location(0) vec4f {
   let texel = textureSample(texture0, sampler0, in.uv);
   if (u.pickMode > 0.5) {
-    if (texel.a < u.pickThreshold || in.pickMeta.y < 0.5) { discard; }
+    if (texel.a < u.pickThreshold || in.pickMeta.y < 0.5 || in.fill.a <= 0.001) { discard; }
     return pickEncode(in.pickMeta.x);
   }
   let alpha = texel.a * in.fill.a;
@@ -377,22 +378,6 @@ interface TileEntry {
   lastUsed: number;
 }
 
-interface LabelEntry {
-  canvas: HTMLCanvasElement;
-  texture: GPUTexture | null;
-  cssWidth: number;
-  cssHeight: number;
-  lastUsed: number;
-}
-
-interface SpriteEntry {
-  assetVersion: number;
-  texture: GPUTexture;
-  width: number;
-  height: number;
-  lastUsed: number;
-}
-
 /**
  * GPU copy of a media source (image/video). `element` is the uploaded bitmap
  * identity; `pixelVersion` guards partial `writeTexture` uploads so consecutive
@@ -407,7 +392,6 @@ interface MediaEntry {
   lastUsed: number;
 }
 
-const MAX_LABELS = 256;
 const MAX_TILES = 256;
 const MAX_MEDIA = 16;
 /** Raster quad vertex stride: aPos(4) + aUV(4) + aPick(4). */
@@ -469,13 +453,16 @@ export class WebGpuBackend implements MapBackend {
   private readonly pipelines = new Map<string, PipelineBundle>();
   private readonly staticBuffers = new Map<string, GPUBuffer>();
   private readonly batchBuffers = new Map<Float32Array, { buffer: GPUBuffer; version: number }>();
+  private readonly indexBuffers = new Map<Uint32Array, GPUBuffer>();
   private readonly vertexPages = new Map<
     string,
     { buffer: GPUBuffer; capacity: number; used: number }[]
   >();
   private readonly tileCache = new Map<string, TileEntry>();
-  private readonly labelCache = new Map<string, LabelEntry>();
-  private readonly spriteCache = new Map<string, SpriteEntry>();
+  private readonly symbols: Symbols;
+  private readonly atlasTextures = new Map<AtlasPage, { texture: GPUTexture; revision: number }>();
+  private readonly symbolBuffers = new Map<Float32Array, { buffer: GPUBuffer; version: number }>();
+  private readonly usedSymbols = new Set<Float32Array>();
   private readonly mediaTextures = new Map<string, MediaEntry>();
   private readonly heldTiles = new Map<string, Map<string, string>>();
   private uniforms: GPUBuffer | null = null;
@@ -518,6 +505,7 @@ export class WebGpuBackend implements MapBackend {
     }
     this.context = context;
     this.device = init.device;
+    this.symbols = new Symbols(init.device.limits.maxTextureDimension2D, this.dpr);
     this.format = init.format;
     context.configure({
       device: this.device,
@@ -638,8 +626,7 @@ export class WebGpuBackend implements MapBackend {
     }
     this.plan = buildFramePlan(scene, { deviceWidth, deviceHeight, dpr: this.dpr });
     this.evictTiles();
-    this.evictLabels();
-    this.evictSprites();
+    this.evictSymbols();
     this.evictMedia();
     this.frameDrawCalls = 0;
     this.beginUniformFrame(this.plan);
@@ -674,17 +661,14 @@ export class WebGpuBackend implements MapBackend {
     for (const entry of this.mediaTextures.values()) {
       if (entry.texture) bytes += entry.width * entry.height * 4;
     }
-    for (const entry of this.labelCache.values()) {
-      bytes += entry.canvas.width * entry.canvas.height * 4;
-    }
-    for (const entry of this.spriteCache.values()) {
-      bytes += Math.round(entry.width * this.dpr) * Math.round(entry.height * this.dpr) * 4;
-    }
+    for (const page of this.atlasTextures.keys()) bytes += page.canvas.width * page.canvas.height * 4;
+    for (const data of this.symbolBuffers.keys()) bytes += data.byteLength;
     if (this.plan) {
       for (const draw of this.plan.draws) {
         if (draw.type === 'batch') bytes += draw.batch.data.byteLength;
       }
     }
+    for (const indices of this.indexBuffers.keys()) bytes += indices.byteLength;
     return bytes;
   }
 
@@ -695,6 +679,10 @@ export class WebGpuBackend implements MapBackend {
   private beginUniformFrame(plan: FramePlan, passes = 1): void {
     this.resetVertexPages();
     const live = new Set(plan.draws.flatMap((draw) => draw.type === 'batch' ? [draw.batch.data] : []));
+    const liveIndices = new Set(plan.draws.flatMap((draw) => draw.type === 'batch' && draw.batch.indices ? [draw.batch.indices] : []));
+    for (const [indices, buffer] of this.indexBuffers) if (!liveIndices.has(indices)) {
+      this.retiredBuffers.push(buffer); this.indexBuffers.delete(indices);
+    }
     for (const [data, entry] of this.batchBuffers) {
       if (live.has(data)) continue;
       this.retiredBuffers.push(entry.buffer);
@@ -727,7 +715,7 @@ export class WebGpuBackend implements MapBackend {
     pickMode: boolean,
     dash: readonly number[] | null,
     pickThreshold: number,
-    batch?: PlanBatch,
+    batch?: Pick<PlanBatch, 'offsetX' | 'offsetY' | 'pickBase'>,
   ): number {
     const offset = this.uniformOffset * UNIFORM_SLOT;
     this.uniformOffset++;
@@ -797,6 +785,7 @@ export class WebGpuBackend implements MapBackend {
               { shaderLocation: 1, offset: 0, format: 'float32x4' as GPUVertexFormat },
               { shaderLocation: 2, offset: 16, format: 'float32x4' as GPUVertexFormat },
               { shaderLocation: 3, offset: 32, format: 'float32x4' as GPUVertexFormat },
+              { shaderLocation: 4, offset: 48, format: 'float32x4' as GPUVertexFormat },
             ],
           },
         ],
@@ -1024,6 +1013,7 @@ export class WebGpuBackend implements MapBackend {
   /* -------------------------------- draws ---------------------------------- */
 
   private drawPlan(pass: GPURenderPassEncoder, plan: FramePlan, pickMode: boolean): void {
+    this.usedSymbols.clear();
     for (const draw of plan.draws) {
       if (draw.type === 'tiles') {
         this.drawTiles(pass, draw.tiles, pickMode);
@@ -1034,11 +1024,11 @@ export class WebGpuBackend implements MapBackend {
         continue;
       }
       if (draw.type === 'labels') {
-        this.drawLabels(pass, draw.labels, pickMode);
+        this.drawSymbols(pass, this.symbols.labels(draw.labels, (family) => this.scene?.fontSignature(family) ?? 'system', this.frameCounter, draw.appearance), pickMode, 0.02, draw);
         continue;
       }
       if (draw.type === 'sprites') {
-        this.drawSprites(pass, draw.sprites, pickMode);
+        this.drawSymbols(pass, this.symbols.sprites(draw.sprites, (id) => this.scene?.assets.get(id), this.frameCounter, draw.appearance), pickMode, 0.5, draw);
         continue;
       }
       const batch = draw.batch;
@@ -1048,6 +1038,9 @@ export class WebGpuBackend implements MapBackend {
       } else {
         this.drawFills(pass, batch, pickMode);
       }
+    }
+    for (const [data, entry] of this.symbolBuffers) if (!this.usedSymbols.has(data)) {
+      this.retiredBuffers.push(entry.buffer); this.symbolBuffers.delete(data);
     }
   }
 
@@ -1073,7 +1066,7 @@ export class WebGpuBackend implements MapBackend {
     if (count === 0) return;
     const bundle = this.program('lines');
     pass.setPipeline(pickMode ? bundle.pickPipeline : bundle.pipeline);
-    pass.setBindGroup(0, bundle.uniformGroup, [this.allocUniform(pickMode, dash, 0)]);
+    pass.setBindGroup(0, bundle.uniformGroup, [this.allocUniform(pickMode, dash, 0, batch)]);
     pass.setVertexBuffer(0, this.staticBuffer('tri', CORNERS_TRI));
     pass.setVertexBuffer(1, this.uploadBatch(batch));
     this.frameDrawCalls++;
@@ -1085,10 +1078,17 @@ export class WebGpuBackend implements MapBackend {
     if (vertexCount === 0) return;
     const bundle = this.program('fills');
     pass.setPipeline(pickMode ? bundle.pickPipeline : bundle.pipeline);
-    pass.setBindGroup(0, bundle.uniformGroup, [this.allocUniform(pickMode, null, 0)]);
+    pass.setBindGroup(0, bundle.uniformGroup, [this.allocUniform(pickMode, null, 0, batch)]);
     pass.setVertexBuffer(0, this.uploadBatch(batch));
     this.frameDrawCalls++;
-    pass.draw(vertexCount);
+    if (batch.indices) {
+      let buffer = this.indexBuffers.get(batch.indices);
+      if (!buffer) {
+        buffer = this.device.createBuffer({ size: Math.max(4, batch.indices.byteLength), usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST });
+        this.device.queue.writeBuffer(buffer, 0, batch.indices); this.indexBuffers.set(batch.indices, buffer);
+      }
+      pass.setIndexBuffer(buffer, 'uint32'); pass.drawIndexed(vertexCount);
+    } else pass.draw(vertexCount);
   }
 
   /* -------------------------------- tiles ---------------------------------- */
@@ -1430,248 +1430,49 @@ export class WebGpuBackend implements MapBackend {
 
   /* -------------------------------- labels --------------------------------- */
 
-  private labelEntry(
-    text: string,
-    sizePx: number,
-    fontFamily: string,
-    direction: 'ltr' | 'rtl' | 'auto',
-  ): LabelEntry {
-    // The font signature is part of the key: when a registered font becomes
-    // ready (or fails), the entry is recreated instead of reusing a stale
-    // rasterization from the fallback face (TEXT-05).
-    const fontSignature = this.scene?.fontSignature(fontFamily) ?? 'system';
-    const key = `${text}|${sizePx}|${fontFamily}|${direction}|${fontSignature}`;
-    const existing = this.labelCache.get(key);
-    if (existing) return existing;
-    const scale = this.dpr;
-    const deviceSize = Math.max(1, sizePx * scale);
-    const font = `${deviceSize}px ${fontFamily}`;
-    const canvas = document.createElement('canvas');
-    if (direction === 'auto') canvas.dir = 'auto';
-    const context = canvas.getContext('2d');
-    let width = Math.max(1, Math.ceil(deviceSize * text.length * 0.6) + 4);
-    let height = Math.max(1, Math.ceil(deviceSize * 1.35));
-    if (context) {
-      context.font = font;
-      context.direction = direction === 'rtl' ? 'rtl' : direction === 'auto' ? 'inherit' : 'ltr';
-      context.textAlign = 'left';
-      if ('fontKerning' in context) context.fontKerning = 'normal';
-      width = Math.max(1, Math.ceil(context.measureText(text).width) + Math.ceil(2 * scale));
+  private atlasTexture(page: AtlasPage): GPUTexture {
+    let entry = this.atlasTextures.get(page);
+    if (!entry) {
+      const texture = this.device.createTexture({ size: [page.canvas.width, page.canvas.height], format: 'rgba8unorm',
+        usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT });
+      entry = { texture, revision: -1 }; this.atlasTextures.set(page, entry);
     }
-    canvas.width = width;
-    canvas.height = height;
-    if (context) {
-      context.font = font;
-      context.direction = direction === 'rtl' ? 'rtl' : direction === 'auto' ? 'inherit' : 'ltr';
-      context.textAlign = 'left';
-      if ('fontKerning' in context) context.fontKerning = 'normal';
-      context.textBaseline = 'middle';
-      context.fillStyle = '#ffffff';
-      context.fillText(text, Math.ceil(scale), Math.round(height / 2));
+    if (entry.revision !== page.revision) {
+      this.device.queue.copyExternalImageToTexture({ source: page.canvas }, { texture: entry.texture, premultipliedAlpha: false }, [page.canvas.width, page.canvas.height]);
+      entry.revision = page.revision;
     }
-    const entry: LabelEntry = {
-      canvas,
-      texture: null,
-      cssWidth: width / scale,
-      cssHeight: height / scale,
-      lastUsed: this.frameCounter,
-    };
-    this.labelCache.set(key, entry);
-    return entry;
+    return entry.texture;
   }
 
-  private bindLabelTexture(entry: LabelEntry): boolean {
-    if (entry.texture) return true;
-    const texture = this.device.createTexture({
-      size: [entry.canvas.width, entry.canvas.height],
-      format: 'rgba8unorm',
-      usage:
-        GPUTextureUsage.TEXTURE_BINDING |
-        GPUTextureUsage.COPY_DST |
-        GPUTextureUsage.RENDER_ATTACHMENT,
-    });
-    this.device.queue.copyExternalImageToTexture(
-      { source: entry.canvas },
-      { texture, premultipliedAlpha: false },
-      [entry.canvas.width, entry.canvas.height],
-    );
-    entry.texture = texture;
-    return true;
-  }
-
-  private drawLabels(
-    pass: GPURenderPassEncoder,
-    labels: readonly LabelPlacement[],
-    pickMode: boolean,
-  ): void {
-    if (labels.length === 0) return;
+  private drawSymbols(pass: GPURenderPassEncoder, mesh: SymbolMesh, pickMode: boolean, threshold: number,
+    transform: Pick<PlanBatch, 'offsetX' | 'offsetY' | 'pickBase'>): void {
+    if (!mesh.data.length) return;
     const bundle = this.program('labels');
-    const data: number[] = [];
-    const batch: { entry: LabelEntry; run: number }[] = [];
-    const drawnRects: { x0: number; y0: number; x1: number; y1: number }[] = [];
-    for (const label of labels) {
-      const entry = this.labelEntry(label.text, label.sizePx, label.fontFamily, label.direction);
-      entry.lastUsed = this.frameCounter;
-      const width = entry.cssWidth;
-      const height = entry.cssHeight;
-      const vertices = quadVertices(
-        label.sx + label.offsetX,
-        label.sy + label.offsetY,
-        width,
-        height,
-        label.rotate,
-      );
-      if (label.collision && !pickMode) {
-        const rect = quadBounds(vertices);
-        const overlaps = drawnRects.some(
-          (other) =>
-            !(rect.x1 <= other.x0 || rect.x0 >= other.x1 || rect.y1 <= other.y0 || rect.y0 >= other.y1),
-        );
-        if (overlaps) continue;
-        drawnRects.push(rect);
-      }
-      const opacity = label.color[3];
-      const push = (px: number, py: number, u: number, v: number): void => {
-        data.push(
-          px, py, 0, 0, u, v, 0, 0,
-          label.color[0], label.color[1], label.color[2], opacity,
-          label.pickIndex, label.interactive ? 1 : 0, 0, 0,
-        );
-      };
-      for (let index = 0; index < 6; index++) {
-        push(vertices[index * 2]!, vertices[index * 2 + 1]!, QUAD_UVS[index]![0], QUAD_UVS[index]![1]);
-      }
-      const last = batch[batch.length - 1];
-      if (last && last.entry === entry) last.run++;
-      else batch.push({ entry, run: 1 });
+    let entry = this.symbolBuffers.get(mesh.data);
+    if (!entry) {
+      const buffer = this.device.createBuffer({ size: mesh.data.byteLength, usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST });
+      this.device.queue.writeBuffer(buffer, 0, mesh.data);
+      entry = { buffer, version: mesh.upload.version }; this.symbolBuffers.set(mesh.data, entry);
+    } else if (entry.version !== mesh.upload.version) {
+      if (entry.version === mesh.upload.previousVersion) {
+        for (const { start, end } of mesh.upload.ranges) this.device.queue.writeBuffer(entry.buffer, start * 4, mesh.data.subarray(start, end));
+      } else this.device.queue.writeBuffer(entry.buffer, 0, mesh.data);
+      entry.version = mesh.upload.version;
     }
-    if (data.length === 0) return;
-    for (const { entry } of batch) this.bindLabelTexture(entry);
-    const buffer = this.uploadBuffer('labels', Float32Array.from(data));
-    const uniform = this.allocUniform(pickMode, null, 0.02);
+    this.usedSymbols.add(mesh.data);
     pass.setPipeline(pickMode ? bundle.pickPipeline : bundle.pipeline);
-    pass.setVertexBuffer(0, buffer.buffer, buffer.offset, buffer.size);
+    pass.setVertexBuffer(0, entry.buffer);
+    pass.setBindGroup(0, bundle.uniformGroup, [this.allocUniform(pickMode, null, threshold, transform)]);
     let offset = 0;
-    for (const { entry, run } of batch) {
-      if (!entry.texture) {
-        offset += run * 6;
-        continue;
-      }
-      pass.setBindGroup(1, this.textureGroup(bundle, entry.texture));
-      pass.setBindGroup(0, bundle.uniformGroup, [uniform]);
-      this.frameDrawCalls++;
-      pass.draw(run * 6, 1, offset, 0);
-      offset += run * 6;
+    for (const run of mesh.runs) {
+      pass.setBindGroup(1, this.textureGroup(bundle, this.atlasTexture(run.page)));
+      this.frameDrawCalls++; pass.draw(run.count, 1, offset, 0); offset += run.count;
     }
   }
 
-  private evictLabels(): void {
-    if (this.labelCache.size <= MAX_LABELS) return;
-    const entries = Array.from(this.labelCache.entries()).sort((a, b) => a[1].lastUsed - b[1].lastUsed);
-    const removeCount = this.labelCache.size - MAX_LABELS;
-    for (let i = 0; i < removeCount; i++) {
-      const [key, entry] = entries[i]!;
-      if (key === undefined || !entry) continue;
-      entry.texture?.destroy();
-      this.labelCache.delete(key);
-    }
-  }
-
-  /* -------------------------------- sprites -------------------------------- */
-
-  private spriteEntry(assetId: string): SpriteEntry | null {
-    const asset = this.scene?.assets.get(assetId);
-    if (!asset || asset.state !== 'ready' || !asset.image) return null;
-    const existing = this.spriteCache.get(assetId);
-    if (existing && existing.assetVersion === asset.version) return existing;
-    existing?.texture.destroy();
-    const width = asset.image.naturalWidth;
-    const height = asset.image.naturalHeight;
-    const texture = this.device.createTexture({
-      size: [width, height],
-      format: 'rgba8unorm',
-      usage:
-        GPUTextureUsage.TEXTURE_BINDING |
-        GPUTextureUsage.COPY_DST |
-        GPUTextureUsage.RENDER_ATTACHMENT,
-    });
-    this.device.queue.copyExternalImageToTexture(
-      { source: asset.image },
-      { texture, premultipliedAlpha: false },
-      [width, height],
-    );
-    const entry: SpriteEntry = {
-      assetVersion: asset.version,
-      texture,
-      width: width / this.dpr,
-      height: height / this.dpr,
-      lastUsed: this.frameCounter,
-    };
-    this.spriteCache.set(assetId, entry);
-    return entry;
-  }
-
-  private drawSprites(
-    pass: GPURenderPassEncoder,
-    sprites: readonly SpritePlacement[],
-    pickMode: boolean,
-  ): void {
-    if (sprites.length === 0) return;
-    const bundle = this.program('labels');
-    const data: number[] = [];
-    const batch: { entry: SpriteEntry; run: number }[] = [];
-    for (const sprite of sprites) {
-      const entry = this.spriteEntry(sprite.assetId);
-      if (!entry) continue;
-      entry.lastUsed = this.frameCounter;
-      const width = sprite.sizePx > 0 ? sprite.sizePx : entry.width;
-      const height = sprite.sizePx > 0 ? sprite.sizePx : entry.height;
-      const vertices = quadVertices(
-        sprite.sx + sprite.offsetX,
-        sprite.sy + sprite.offsetY,
-        width,
-        height,
-        sprite.rotate,
-        sprite.sx,
-        sprite.sy,
-      );
-      const opacity = sprite.opacity;
-      const push = (px: number, py: number, u: number, v: number): void => {
-        data.push(
-          px, py, 0, 0, u, v, 0, 0,
-          1, 1, 1, opacity,
-          sprite.pickIndex, sprite.interactive ? 1 : 0, 0, 0,
-        );
-      };
-      for (let index = 0; index < 6; index++) {
-        push(vertices[index * 2]!, vertices[index * 2 + 1]!, QUAD_UVS[index]![0], QUAD_UVS[index]![1]);
-      }
-      const last = batch[batch.length - 1];
-      if (last && last.entry === entry) last.run++;
-      else batch.push({ entry, run: 1 });
-    }
-    if (data.length === 0) return;
-    const buffer = this.uploadBuffer('sprites', Float32Array.from(data));
-    const uniform = this.allocUniform(pickMode, null, 0.5);
-    pass.setPipeline(pickMode ? bundle.pickPipeline : bundle.pipeline);
-    pass.setVertexBuffer(0, buffer.buffer, buffer.offset, buffer.size);
-    let offset = 0;
-    for (const { entry, run } of batch) {
-      pass.setBindGroup(1, this.textureGroup(bundle, entry.texture));
-      pass.setBindGroup(0, bundle.uniformGroup, [uniform]);
-      this.frameDrawCalls++;
-      pass.draw(run * 6, 1, offset, 0);
-      offset += run * 6;
-    }
-  }
-
-  private evictSprites(): void {
-    for (const [assetId, entry] of this.spriteCache) {
-      const asset = this.scene?.assets.get(assetId);
-      if (!asset || asset.state !== 'ready') {
-        entry.texture.destroy();
-        this.spriteCache.delete(assetId);
-      }
+  private evictSymbols(): void {
+    for (const page of this.symbols.evict()) {
+      this.atlasTextures.get(page)?.texture.destroy(); this.atlasTextures.delete(page);
     }
   }
 
@@ -1895,6 +1696,8 @@ export class WebGpuBackend implements MapBackend {
   }
 
   destroy(): void {
+    if (this.scene) releaseFramePlan(this.scene);
+    this.plan = null;
     if (this.destroyed) return;
     this.destroyed = true;
     this.lostListener = null;
@@ -1907,6 +1710,8 @@ export class WebGpuBackend implements MapBackend {
     for (const buffer of this.staticBuffers.values()) buffer.destroy();
     for (const entry of this.batchBuffers.values()) entry.buffer.destroy();
     this.batchBuffers.clear();
+    for (const buffer of this.indexBuffers.values()) buffer.destroy();
+    this.indexBuffers.clear();
     this.staticBuffers.clear();
     for (const pages of this.vertexPages.values()) {
       for (const page of pages) page.buffer.destroy();
@@ -1917,10 +1722,10 @@ export class WebGpuBackend implements MapBackend {
     for (const entry of this.tileCache.values()) entry.texture?.destroy();
     this.tileCache.clear();
     this.heldTiles.clear();
-    for (const entry of this.labelCache.values()) entry.texture?.destroy();
-    this.labelCache.clear();
-    for (const entry of this.spriteCache.values()) entry.texture.destroy();
-    this.spriteCache.clear();
+    for (const entry of this.atlasTextures.values()) entry.texture.destroy();
+    this.atlasTextures.clear(); this.symbols.clear();
+    for (const entry of this.symbolBuffers.values()) entry.buffer.destroy();
+    this.symbolBuffers.clear();
     for (const entry of this.mediaTextures.values()) entry.texture?.destroy();
     this.mediaTextures.clear();
     this.offscreen?.texture.destroy();

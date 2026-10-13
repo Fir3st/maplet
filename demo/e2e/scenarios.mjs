@@ -10,6 +10,9 @@
  */
 import { compareUpdates } from './compare-updates.mjs';
 import { retainedPoints } from './retained-points.mjs';
+import { complexScene } from './complex-scene.mjs';
+import { retainedScene } from './retained-scene.mjs';
+import { denseGeometry } from './dense-geometry.mjs';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -74,6 +77,9 @@ async function emptyScreen(session, from) {
 /* -------------------------------- scenarios ------------------------------- */
 
 export const scenarios = [
+  { name: 'dense-geometry-performance', page: 'e2e/scene.html', manual: true, run: denseGeometry },
+  { name: 'retained-mixed-scene', page: 'e2e/scene.html', run: retainedScene },
+  { name: 'complex-scene-performance', page: 'e2e/scene.html', manual: true, run: complexScene },
   { name: 'retained-point-buffers', page: 'e2e/scene.html', run: retainedPoints },
   { name: 'comparison-updates:maplet', page: 'compare.html', query: 'engine=maplet',
     ready: '!!window.__comparison', manual: true, run: compareUpdates },

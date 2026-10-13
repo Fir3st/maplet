@@ -12,7 +12,7 @@
  * - lines need at least two distinct positions, polygons at least three;
  * - polygon rings are auto-closed;
  * - ring winding is normalized (outer rings positive area, holes negative);
- * - self-intersecting polygon rings are rejected up to 1024 vertices.
+ * - self-intersecting polygon rings are rejected at every size.
  */
 
 import { fail } from '../api/errors.ts';
@@ -20,6 +20,7 @@ import type { GeoPosition, Position } from '../api/types.ts';
 import type { Crs } from '../math/crs.ts';
 import { EARTH_RADIUS_METERS } from '../math/crs.ts';
 import { isGeoPosition, isPlanarPosition } from '../api/types.ts';
+import { BoundsTree } from './bounds-tree.ts';
 
 export const GEOMETRY_KIND = {
   point: 0,
@@ -111,8 +112,6 @@ export interface PreparedFeatureGeometry {
   readonly anchorY: number;
 }
 
-const MAX_SELF_INTERSECTION_RING = 1024;
-
 /** Validates a position and converts it to canonical world coordinates. */
 export function positionToWorldChecked(
   crs: Crs,
@@ -185,7 +184,22 @@ function cross(ax: number, ay: number, bx: number, by: number, px: number, py: n
 
 function ringSelfIntersects(points: Float64Array): boolean {
   const n = points.length / 2 - 1; // last vertex repeats the first after closing
-  if (n > MAX_SELF_INTERSECTION_RING) return false;
+  if (n > 128) {
+    const boxes = new Float64Array(n * 4);
+    for (let i = 0; i < n; i++) {
+      const x0 = points[i * 2]!, y0 = points[i * 2 + 1]!, x1 = points[(i + 1) * 2]!, y1 = points[(i + 1) * 2 + 1]!;
+      boxes.set([Math.min(x0, x1), Math.min(y0, y1), Math.max(x0, x1), Math.max(y0, y1)], i * 4);
+    }
+    const tree = new BoundsTree(boxes);
+    for (let i = 0; i < n; i++) {
+      if (!tree.query(boxes[i * 4]!, boxes[i * 4 + 1]!, boxes[i * 4 + 2]!, boxes[i * 4 + 3]!, (j) => {
+        if (j <= i + 1 || i === 0 && j === n - 1) return;
+        if (segmentsProperlyIntersect(points[i * 2]!, points[i * 2 + 1]!, points[(i + 1) * 2]!, points[(i + 1) * 2 + 1]!,
+          points[j * 2]!, points[j * 2 + 1]!, points[(j + 1) * 2]!, points[(j + 1) * 2 + 1]!)) return false;
+      })) return true;
+    }
+    return false;
+  }
   for (let i = 0; i < n; i++) {
     for (let j = i + 1; j < n; j++) {
       if (j === i || j === i + 1) continue;
@@ -487,11 +501,15 @@ function prepareLineParts(
   context: string,
 ): { vertices: Float64Array; parts: Uint32Array } {
   const { readList } = preparePositions(crs);
+  return prepareWorldLineParts(lines.map((line, i) => readList(line, `${context}.lines[${i}]`)), context);
+}
+
+function prepareWorldLineParts(lines: readonly Float64Array[], context: string): { vertices: Float64Array; parts: Uint32Array } {
   const chunks: Float64Array[] = [];
   const parts: number[] = [];
   let start = 0;
   for (let i = 0; i < lines.length; i++) {
-    const raw = readList(lines[i]!, `${context}.lines[${i}]`);
+    const raw = lines[i]!;
     const collapsed = collapseConsecutive(raw);
     const count = collapsed.length / 2;
     if (count < 2) continue;
@@ -517,6 +535,15 @@ function preparePolygonRings(
   context: string,
 ): { ringVertices: Float64Array; rings: Uint32Array; ringOuter: Uint8Array } {
   const { readList } = preparePositions(crs);
+  return prepareWorldPolygonRings(polygons.map((polygon, p) => {
+    if (!Array.isArray(polygon) || polygon.length === 0) fail('invalid-argument', `${context}: polygon ${p} needs at least one ring`, {});
+    return polygon.map((ring, r) => readList(ring, `${context}.polygons[${p}].rings[${r}]`));
+  }), context);
+}
+
+function prepareWorldPolygonRings(polygons: readonly (readonly Float64Array[])[], context: string): {
+  ringVertices: Float64Array; rings: Uint32Array; ringOuter: Uint8Array;
+} {
   const ringChunks: Float64Array[] = [];
   const ringOffsets: number[] = [];
   const outerFlags: number[] = [];
@@ -527,7 +554,7 @@ function preparePolygonRings(
       fail('invalid-argument', `${context}: polygon ${p} needs at least one ring`, {});
     }
     for (let r = 0; r < polygon.length; r++) {
-      const raw = readList(polygon[r]!, `${context}.polygons[${p}].rings[${r}]`);
+      const raw = polygon[r]!;
       const outer = r === 0;
       const ring = normalizeRing(raw, outer, `${context}.polygons[${p}].rings[${r}]`);
       ringChunks.push(ring);
@@ -547,6 +574,17 @@ function preparePolygonRings(
     rings: Uint32Array.from(ringOffsets),
     ringOuter: Uint8Array.from(outerFlags),
   };
+}
+
+/** Internal binary ingest shares the public normalization/topology kernel. */
+export function prepareWorldParts(kind: 'lineString' | 'polygon', parts: readonly Float64Array[], context: string): PreparedFeatureGeometry {
+  const payload: LinePayload | PolygonPayload = kind === 'polygon'
+    ? { kind: GEOMETRY_KIND.polygon, ...prepareWorldPolygonRings([parts], context) }
+    : { kind: parts.length === 1 ? GEOMETRY_KIND.lineString : GEOMETRY_KIND.multiLineString,
+        ...prepareWorldLineParts(parts, context) };
+  const vertices = 'vertices' in payload ? payload.vertices : payload.ringVertices;
+  const bbox = bboxOf(vertices);
+  return { kind: payload.kind, payload, bbox, anchorX: (bbox[0]! + bbox[2]!) / 2, anchorY: (bbox[1]! + bbox[3]!) / 2 };
 }
 
 /** Reconstructs the CRS positions of a prepared geometry; used by get/export. */

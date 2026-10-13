@@ -13,7 +13,7 @@ to use this repository.
 | Data | Stable identities/generations, CRUD, transactions/rollback, snapshots, state, selection, queries, GeoJSON and columnar imports; `test/scene/`, `test/io/` |
 | Layers and styles | Groups, ordering, filters, overrides, expressions, points, lines and polygon holes; scene/render tests |
 | Relations and bindings | Endpoint policies, traversal, dependency DAGs, field ownership, `lineBetween`, `anchorOnLine`, `copyProperty`; relation and data tests |
-| Rendering | WebGPU and WebGL 1, retained plain-point buffers with local uploads, CPU expansion without instancing, shared frame plan, pixel/pick parity and loss recovery; `test/render/`, `demo/parity.html`, `demo/loss.html`, `retained-point-buffers` E2E scenario |
+| Rendering | WebGPU and WebGL 1, retained mixed-vector buffers with local uploads, indexed polygon meshes and spatial geometry blocks, expansion without instancing/wide indices, shared frame plan and loss recovery; `test/render/`, parity/loss batteries, `retained-point-buffers` and `retained-mixed-scene` E2E |
 | Raster | XYZ/TMS/retina, decoded parent/child fallback, previous-bitmap retention, WMS axis/CRS semantics; raster tests, `demo/tiles.html`, `demo/wms.html` |
 | MVT | Decoder, source-layer namespaces, exact large IDs, fragments, unload/reload, overzoom and attribution; vector-tile tests, `demo/mvt.html` |
 | Interaction | Pan, zoom, hover/click/drag, pinch, keyboard, selection, bubbling; `demo/interaction.html` and real-input E2E scenarios |
@@ -21,7 +21,7 @@ to use this repository.
 | Text and fonts | Labels, collisions, rotation, atlas eviction, font loading/fallback, platform shaping, bidi; `demo/labels.html`, `demo/fonts.html` |
 | Media | Sprites, anchor rotation, image/video bounds, partial uploads and cleanup; `demo/icons.html`, `demo/media.html` |
 | HTML UI | Optional controls, scale, attribution, geolocation, feature detail and bounded accessible lists; `test/ui/`, `demo/ui.html`, `demo/detail.html` |
-| Worker imports | Compact point columns across the worker boundary, validation, copy/move, cancellation, bounded queue, crash/CSP fallback; import tests, `demo/import.html`, `demo/csp.html?csp=worker-none` |
+| Worker imports | Compact columns/canonical line and polygon pools, owned metadata on the publishing thread, validation, copy/move, cancellation, bounded queue, crash/CSP fallback; import tests, `demo/import.html`, `demo/csp.html?csp=worker-none` |
 | Distribution | ESM/declaration/subpath/worker assets, archive audit and consumer types; `test/publish/`, `type-tests/` |
 | Lifecycle and scale | Repeated create/destroy, GC-stabilized memory checks, cancellation and 500,000-point example; `demo/soak.html`, `demo/scale.html` |
 
@@ -55,6 +55,35 @@ single batch undo, whole-set invalidation, staged rollback/generation safety,
 CRS-domain failure, cancellation during the last conversion, generated IDs,
 binding ownership/overflow and writes during preparation. Initial datasets use
 atomic off-store construction; existing or recycled stores keep the normal path.
+
+The retained-scene rewrite checked on October 13 passes **248 unit tests**, all
+build/type/distribution checks, **36 E2E scenarios/batteries on each of all three
+GPU profiles**, and **180/180 pixel/data-retention mutation samples** (three fresh
+processes per profile). Its mixed-scene GPU instrumentation verifies no vector,
+sprite or label upload on a resident pan; a fill-color edit reuses tessellation;
+text/icon appearance edits upload only their affected quads without atlas upload.
+The same scenario renders/picks a 70,000-vertex polygon even on uint-index-free
+basic WebGL. Independent geometry tests cover concavity, holes, non-overlap,
+large-ring self-intersections and Float64 clipping, alongside storage, ownership,
+custom-CRS, cancellation, rollback and generation regressions. Heavy-map destruction
+leaves 0.9–1.0 MiB of GC-stabilized residual main-thread heap in the soak fixture.
+Hidden-group cache cleanup also has a regression test that rejected the faulty
+candidate before the repair. The final [retained-scene A/B record](benchmarks/retained-scene-ab.json)
+matches that recorded rewrite build: point setup medians are **465 → 405 ms** and
+**458 → 326 ms** (WebGL 1/WebGPU); mixed geometry/sprite/text pan is approximately
+**57 → 17 ms**, with draw calls **2070 → 5**. Point heap rises **3.3 MiB**; mixed
+heap and GPU allocation decrease. Vertex-heavy candidates pass on all profiles,
+but both bounded baseline attempts time out, so no dense-baseline timing ratio
+is claimed. Point warm-pan maxima remain approximately one second.
+
+The Canvas-target follow-up passes **253 unit tests**, **36 browser scenarios per
+GPU profile**, mixed/dense fixtures on all three profiles and **180/180 final
+mutation samples**, retaining all 500,000 records. The archived final build and
+unchanged evaluator hashes match. Complete initialization medians are **315 ms
+WebGL 1 / 275 ms WebGPU versus 287 ms Canvas**: comparable for this fixture,
+but WebGL is still 9.8% slower, and one WebGPU run also exceeds Canvas. Immediate
+baseline medians were 367 / 336 ms. Main-thread heap falls from 142 MiB to
+127.3–127.4 MiB. See the [final comparison](benchmarks/points-500k-canvas-target-ab.json).
 
 The recorded browser environment was headless Chromium on an Apple M5 Pro,
 using ANGLE Metal for WebGL and `apple metal-3` for WebGPU. Pixel comparisons
@@ -121,13 +150,14 @@ Canvas setup is still faster at 282 ms. One-second warm-pan outliers persist.
 ## Known limitations
 
 - **Performance:** reference hardware and the reference benchmark suite have
-  not been established. Plain-point layers without icons retain instance data:
-  pan within a 32-CSS-pixel resident margin changes uniforms, and local edits
-  upload changed rows. Zoom, resident-set/order changes and invalidation-journal
-  overflow rebuild safely. Icons, labels and complex geometry still use the
-  existing planner; results for plain circles do not establish their performance.
-- **Memory:** point positions use columnar storage, but properties and composite
-  geometry remain objects. Columnar input does not mean a fully columnar store.
+  not been established. Points, lines, fills, sprites and labels retain GPU data:
+  pan within a 32-CSS-pixel resident margin changes uniforms, and compatible
+  appearance edits upload changed ranges. Zoom, resident-set/order changes and
+  invalidation-journal overflow rebuild safely. Text/size/priority changes rerun
+  collision layout; geometry size changes can rebuild a layer's derived buffers.
+- **Memory:** canonical anchors/coordinates and part offsets use paged/typed
+  storage; properties, IDs and geometry descriptors remain JS objects. This is
+  not a fully binary scene, and retained data has a working-set cost.
 - **Text:** platform Canvas2D supplies shaping and metrics; no custom font
   parser or GSUB/GPOS shaper. Labels are single-line, use bounding-box collision
   without a halo margin, and do not promise identical pixels across browsers/OSes.

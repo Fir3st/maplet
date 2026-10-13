@@ -198,3 +198,16 @@ test('retained points: different identities reusing a slot do not alias equal ge
   assert.deepEqual(visibleRows(f.plan()).map((row) => row.id).sort(), [7, 'seven']);
   f.scene.destroy();
 });
+
+test('retained point pick identities stay generation-bound after reuse and destruction', () => {
+  const f = fixture();
+  const oldPlan = f.plan();
+  const original = f.source.features.ref(4);
+  f.source.features.remove(4);
+  f.source.features.add({ id: 'recycled', geometry: { type: 'point', position: { lat: 50, lng: 14 } }, properties: { visible: true } });
+  assert.deepEqual(oldPlan.pickTable.get(4)!.feature, original, 'lazy reads use captured columns, not the current physical row');
+  const current = f.plan();
+  assert.equal(current.pickTable.get(4)!.feature.id, 'recycled');
+  f.scene.destroy();
+  assert.deepEqual(oldPlan.pickTable.get(4)!.feature, original, 'a pending old GPU pick cannot acquire a new identity');
+});

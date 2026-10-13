@@ -27,8 +27,10 @@ import type { SlotRecord } from '../scene/store.ts';
 import { GEOMETRY_KIND } from '../geometry/geometry.ts';
 import { formatTileUrl, tileZoomForView, tilesForWorldRect, wmsGetMapUrl } from '../formats/raster.ts';
 import { parseColor, type Rgba } from './color.ts';
-import { triangulatePolygonWithHoles } from './triangulate.ts';
+import { polygonMesh, visiblePolygon } from './polygon-mesh.ts';
+import { lineMesh, visitLineSegments } from './line-mesh.ts';
 import { PointCache } from './point-cache.ts';
+import { VectorCache, type VectorCompiler } from './vector-cache.ts';
 import type {
   FeatureOverride,
   FillsLayerStyle,
@@ -58,6 +60,8 @@ export interface PlanBatch {
   readonly layerId: string;
   readonly kind: 'points' | 'lines' | 'fills';
   readonly data: Float32Array;
+  /** Fills keep canonical vertex sharing; backends without uint indices expand once. */
+  readonly indices?: Uint32Array;
   /** Instances for points/lines; vertices for fills. */
   readonly count: number;
   /** Dash pattern for line batches (null = solid). GEOM-07. */
@@ -173,11 +177,25 @@ export interface MediaPlacement {
   readonly pickIndex?: number;
 }
 
+export interface SymbolTransform {
+  readonly offsetX?: number;
+  readonly offsetY?: number;
+  readonly pickBase?: number;
+  readonly appearance?: SymbolAppearance;
+}
+
+/** Placement indices, not glyph/vertex indices; layout identity stays unchanged. */
+export interface SymbolAppearance {
+  readonly version: number;
+  readonly previousVersion: number;
+  readonly indices: readonly number[];
+}
+
 export type DrawItem =
   | { readonly type: 'batch'; readonly batch: PlanBatch }
   | { readonly type: 'tiles'; readonly tiles: readonly TilePlacement[] }
-  | { readonly type: 'labels'; readonly labels: readonly LabelPlacement[] }
-  | { readonly type: 'sprites'; readonly sprites: readonly SpritePlacement[] }
+  | ({ readonly type: 'labels'; readonly labels: readonly LabelPlacement[] } & SymbolTransform)
+  | ({ readonly type: 'sprites'; readonly sprites: readonly SpritePlacement[] } & SymbolTransform)
   | { readonly type: 'media'; readonly media: readonly MediaPlacement[] };
 
 export interface PickEntry {
@@ -185,9 +203,14 @@ export interface PickEntry {
   readonly layerId: string;
 }
 
+export interface PickEntries {
+  readonly length: number;
+  get(index: number): PickEntry | undefined;
+}
+
 /** Segments share retained identities without copying hundreds of thousands of refs. */
 export class PlanPickTable {
-  private readonly segments: { start: number; entries: readonly PickEntry[] }[] = [];
+  private readonly segments: { start: number; entries: readonly PickEntry[] | PickEntries }[] = [];
   private pending: PickEntry[] = [];
   length = 0;
 
@@ -197,7 +220,7 @@ export class PlanPickTable {
     this.length++;
   }
 
-  append(entries: readonly PickEntry[]): number {
+  append(entries: readonly PickEntry[] | PickEntries): number {
     const start = this.length;
     if (entries.length > 0) this.segments.push({ start, entries });
     this.length += entries.length;
@@ -213,7 +236,7 @@ export class PlanPickTable {
       const segment = this.segments[mid]!;
       if (index < segment.start) hi = mid - 1;
       else if (index >= segment.start + segment.entries.length) lo = mid + 1;
-      else return segment.entries[index - segment.start];
+      else return 'get' in segment.entries ? segment.entries.get(index - segment.start) : segment.entries[index - segment.start];
     }
     return undefined;
   }
@@ -251,6 +274,21 @@ const TRANSPARENT: Rgba = [0, 0, 0, 0];
 
 let plans = new WeakMap<Scene, { key: string; plan: FramePlan }>();
 let pointCaches = new WeakMap<LayerImpl, PointCache>();
+let vectorCaches = new WeakMap<LayerImpl, VectorCache>();
+interface SymbolCache {
+  source: SourceImpl;
+  sourceEpoch: number;
+  overrideEpoch: number;
+  layoutRevision: number;
+  renderEpoch: number;
+  view: ViewTransform;
+  rect: WorldRect;
+  draws: readonly DrawItem[];
+  picks: readonly PickEntry[];
+  features: ReadonlyMap<number, { index: number; order: number }>;
+  appearance: SymbolAppearance;
+}
+let symbolCaches = new WeakMap<LayerImpl, SymbolCache>();
 
 /* -------------------------------------------------------------------------- */
 /* Tile fallback chains                                                        */
@@ -322,6 +360,18 @@ export function buildFramePlan(scene: Scene, options: FramePlanOptions): FramePl
 export function invalidateFramePlanCache(): void {
   plans = new WeakMap();
   pointCaches = new WeakMap();
+  vectorCaches = new WeakMap();
+  symbolCaches = new WeakMap();
+}
+
+/** A live public map handle must not keep destroyed renderer data resident. */
+export function releaseFramePlan(scene: Scene): void {
+  plans.delete(scene);
+  for (const layer of scene.layers.flattenAll()) {
+    pointCaches.delete(layer);
+    vectorCaches.delete(layer);
+    symbolCaches.delete(layer);
+  }
 }
 
 let planBuildCount = 0;
@@ -369,64 +419,57 @@ function computePlan(scene: Scene, options: FramePlanOptions): FramePlan {
     }
     const source = scene.getSourceImpl(layer.sourceId);
     if (!source) continue;
-    if (layer.kind === 'labels') {
-      const labels = collectLabels(scene, layer, source, rect, origin, scale, pickTable);
-      if (labels) {
-        draws.push({ type: 'labels', labels });
-        instances += labels.length;
-        drawCalls += labels.length;
+    if (layer.kind === 'labels' || layer.kind === 'points' && (layer.style as PointsLayerStyle).icon !== undefined) {
+      pointCaches.delete(layer); vectorCaches.delete(layer);
+      const symbols = collectSymbols(scene, layer, source, transform, rect, origin, scale, pickTable);
+      for (const draw of symbols) {
+        draws.push(draw);
+        if (draw.type === 'batch') { instances += draw.batch.count; drawCalls++; }
+        else if (draw.type === 'labels') { instances += draw.labels.length; drawCalls += draw.labels.length; }
+        else if (draw.type === 'sprites') { instances += draw.sprites.length; drawCalls += draw.sprites.length; }
       }
       continue;
     }
-    if (layer.kind === 'points') {
-      const style = layer.style as PointsLayerStyle;
-      if (source.store.pointOnly && style.icon === undefined) {
-        if (transform.zoom < (style.minZoom ?? 0) || transform.zoom > (style.maxZoom ?? 24)) continue;
-        let cached = pointCaches.get(layer);
-        if (!cached || cached.source !== source || !cached.update(transform)) {
-          cached = new PointCache(scene, layer, source, transform);
-          pointCaches.set(layer, cached);
+    if (layer.kind === 'lines' || layer.kind === 'fills' || layer.kind === 'points' &&
+      !source.store.pointOnly && (layer.style as PointsLayerStyle).icon === undefined) {
+      pointCaches.delete(layer); symbolCaches.delete(layer);
+      const compile: VectorCompiler = (resident, anchor, localScale, picks, records) => {
+        if (layer.kind === 'lines') {
+          const batch = collectLines(scene, layer, source, resident, anchor, localScale, picks, records);
+          return batch ? [batch] : [];
         }
-        const batch = cached.batch(transform, pickTable.append(cached.entries));
-        if (batch.count > 0) {
-          draws.push({ type: 'batch', batch });
-          instances += batch.visibleCount!;
-          drawCalls++;
+        if (layer.kind === 'fills') {
+          const { fill, stroke } = collectFills(scene, layer, source, resident, anchor, localScale, picks, records);
+          return [fill, stroke].filter((batch): batch is PlanBatch => batch !== null);
         }
-        continue;
+        const batch = collectPoints(scene, layer, source, resident, anchor, localScale, picks, [], records);
+        return batch ? [batch] : [];
+      };
+      let cached = vectorCaches.get(layer);
+      if (!cached || cached.source !== source || !cached.update(transform)) {
+        cached = new VectorCache(scene, layer, source, transform, compile);
+        vectorCaches.set(layer, cached);
       }
-      pointCaches.delete(layer);
-      const sprites: SpritePlacement[] = [];
-      const batch = collectPoints(scene, layer, source, rect, origin, scale, pickTable, sprites);
-      if (batch) {
+      for (const batch of cached.draws(transform, pickTable.append(cached.entries))) {
         draws.push({ type: 'batch', batch });
-        instances += batch.count;
+        instances += batch.visibleCount!;
         drawCalls++;
       }
-      if (sprites.length > 0) {
-        draws.push({ type: 'sprites', sprites });
-        instances += sprites.length;
-        drawCalls += sprites.length;
-      }
-    } else if (layer.kind === 'lines') {
-      const batch = collectLines(scene, layer, source, rect, origin, scale, pickTable);
-      if (batch) {
-        draws.push({ type: 'batch', batch });
-        instances += batch.count;
-        drawCalls++;
-      }
-    } else if (layer.kind === 'fills') {
-      const { fill, stroke } = collectFills(scene, layer, source, rect, origin, scale, pickTable);
-      if (fill) {
-        draws.push({ type: 'batch', batch: fill });
-        instances += fill.count / 3;
-        drawCalls++;
-      }
-      if (stroke) {
-        draws.push({ type: 'batch', batch: stroke });
-        instances += stroke.count;
-        drawCalls++;
-      }
+      continue;
+    }
+    symbolCaches.delete(layer); vectorCaches.delete(layer);
+    const style = layer.style as PointsLayerStyle;
+    if (transform.zoom < (style.minZoom ?? 0) || transform.zoom > (style.maxZoom ?? 24)) continue;
+    let cached = pointCaches.get(layer);
+    if (!cached || cached.source !== source || !cached.update(transform)) {
+      cached = new PointCache(scene, layer, source, transform);
+      pointCaches.set(layer, cached);
+    }
+    const batch = cached.batch(transform, pickTable.append(cached.entries));
+    if (batch.count > 0) {
+      draws.push({ type: 'batch', batch });
+      instances += batch.visibleCount!;
+      drawCalls++;
     }
   }
 
@@ -451,6 +494,106 @@ interface LayerContext {
   readonly layer: LayerImpl;
   readonly source: SourceImpl;
   readonly zoom: number;
+}
+
+function visitRecords(source: SourceImpl, rect: WorldRect, records: readonly SlotRecord[] | undefined,
+  visit: (record: SlotRecord) => void): void {
+  if (records) { for (const record of records) visit(record); }
+  else source.store.queryRect(rect.minX, rect.minY, rect.maxX, rect.maxY, visit);
+}
+
+/** Camera-only updates keep placement identity, atlas layout and GPU data resident. */
+function collectSymbols(scene: Scene, layer: LayerImpl, source: SourceImpl, view: ViewTransform, rect: WorldRect,
+  origin: { x: number; y: number }, scale: number, pickTable: PlanPickTable): readonly DrawItem[] {
+  let cache = symbolCaches.get(layer);
+  if (!cache || cache.source !== source || cache.layoutRevision !== layer.layoutRevision ||
+    cache.renderEpoch !== scene.renderEpoch || cache.view.zoom !== view.zoom ||
+    origin.x < cache.rect.minX || origin.y < cache.rect.minY ||
+    origin.x + view.width / scale > cache.rect.maxX || origin.y + view.height / scale > cache.rect.maxY ||
+    !patchSymbolAppearance(scene, layer, cache, scale)) {
+    const picks = new PlanPickTable(), draws: DrawItem[] = [];
+    if (layer.kind === 'labels') {
+      const labels = collectLabels(scene, layer, source, rect, origin, scale, picks);
+      if (labels) draws.push({ type: 'labels', labels });
+    } else {
+      const sprites: SpritePlacement[] = [];
+      const batch = collectPoints(scene, layer, source, rect, origin, scale, picks, sprites);
+      if (batch) draws.push({ type: 'batch', batch });
+      if (sprites.length) draws.push({ type: 'sprites', sprites });
+    }
+    const features = new Map<number, { index: number; order: number }>();
+    if (draws.length === 1) {
+      const draw = draws[0]!;
+      const placements = draw.type === 'labels' ? draw.labels : draw.type === 'sprites' ? draw.sprites : [];
+      placements.forEach((placement, index) => {
+        const record = source.store.get(placement.feature.id, placement.feature.namespace)!;
+        features.set(record.slot, { index, order: symbolOrder(scene, layer, source, record) });
+      });
+    }
+    cache = { source, sourceEpoch: source.store.changes.epoch, overrideEpoch: layer.overrideChanges.epoch,
+      layoutRevision: layer.layoutRevision, renderEpoch: scene.renderEpoch, view, rect, draws, features,
+      appearance: { version: 0, previousVersion: -1, indices: [] },
+      picks: Array.from({ length: picks.length }, (_, i) => picks.get(i)!) };
+    symbolCaches.set(layer, cache);
+  }
+  const baseOrigin = transformOrigin(cache.view), pickBase = pickTable.append(cache.picks);
+  const offsetX = (baseOrigin.x - origin.x) * scale, offsetY = (baseOrigin.y - origin.y) * scale;
+  return cache.draws.map((draw) => draw.type === 'batch' ? { type: 'batch', batch: { ...draw.batch, offsetX, offsetY, pickBase } } :
+    draw.type === 'labels' || draw.type === 'sprites' ? { ...draw, offsetX, offsetY, pickBase, appearance: cache!.appearance } : draw);
+}
+
+function symbolOrder(scene: Scene, layer: LayerImpl, source: SourceImpl, record: SlotRecord): number {
+  const context: ExpressionContext = { properties: record.properties, state: scene.state.stateOf(source, record), zoom: scene.attachedView.zoom };
+  return layer.kind === 'labels'
+    ? (layer.style as LabelsLayerStyle).collision ? evaluateStyleValue((layer.style as LabelsLayerStyle).priority, 0, context) : 0
+    : evaluateStyleValue((layer.style as PointsLayerStyle).zIndex, 0, context) + (layer.overrides.get(layer.overrideKey(source.refOf(record)))?.zIndex ?? 0);
+}
+
+function sameSymbolLayout(a: LabelPlacement | SpritePlacement, b: LabelPlacement | SpritePlacement): boolean {
+  if (a.sx !== b.sx || a.sy !== b.sy || a.sizePx !== b.sizePx || a.offsetX !== b.offsetX || a.offsetY !== b.offsetY || a.rotate !== b.rotate) return false;
+  if ('text' in a && 'text' in b) return a.text === b.text && a.fontFamily === b.fontFamily && a.direction === b.direction && a.collision === b.collision;
+  return 'assetId' in a && 'assetId' in b && a.assetId === b.assetId;
+}
+
+/** Patch only appearance; text, geometry, visibility and priority changes rerun layout. */
+function patchSymbolAppearance(scene: Scene, layer: LayerImpl, cache: SymbolCache, scale: number): boolean {
+  const changes = cache.source.store.changes.since(cache.sourceEpoch), overrides = layer.overrideChanges.since(cache.overrideEpoch);
+  if (!changes || !overrides) return false;
+  if (changes.length === 0 && overrides.length === 0) return true;
+  const draw = cache.draws[0];
+  if (cache.draws.length !== 1 || !draw || draw.type !== 'labels' && draw.type !== 'sprites') return false;
+  const slots = new Set(changes);
+  for (const target of overrides) {
+    const ref = typeof target === 'object' ? target : { id: target, namespace: undefined };
+    const record = cache.source.store.get(ref.id, ref.namespace);
+    if (record) slots.add(record.slot);
+  }
+  const origin = transformOrigin(cache.view), patches: { index: number; placement: LabelPlacement | SpritePlacement }[] = [];
+  for (const slot of slots) {
+    const record = cache.source.store.getBySlot(slot), feature = cache.features.get(slot);
+    if (!record || !feature) return false;
+    const old = draw.type === 'labels' ? draw.labels[feature.index]! : draw.sprites[feature.index]!;
+    if (record.id !== old.feature.id || record.namespace !== old.feature.namespace || record.generation !== old.feature.generation ||
+      symbolOrder(scene, layer, cache.source, record) !== feature.order) return false;
+    const picks = new PlanPickTable();
+    let placement: LabelPlacement | SpritePlacement | undefined;
+    if (draw.type === 'labels') placement = collectLabels(scene, layer, cache.source, cache.rect, origin, scale, picks, [record])?.[0];
+    else {
+      const sprites: SpritePlacement[] = [];
+      if (collectPoints(scene, layer, cache.source, cache.rect, origin, scale, picks, sprites, [record])) return false;
+      placement = sprites[0];
+    }
+    if (!placement || !sameSymbolLayout(old, placement)) return false;
+    patches.push({ index: feature.index, placement: { ...placement, pickIndex: old.pickIndex } });
+  }
+  // Arrays are owned by this cache; readers retain their identity, never caller arrays.
+  for (const { index, placement } of patches) {
+    if (draw.type === 'labels') (draw.labels as LabelPlacement[])[index] = placement as LabelPlacement;
+    else (draw.sprites as SpritePlacement[])[index] = placement as SpritePlacement;
+  }
+  if (patches.length) cache.appearance = { version: cache.appearance.version + 1, previousVersion: cache.appearance.version, indices: patches.map((patch) => patch.index) };
+  cache.sourceEpoch = cache.source.store.changes.epoch; cache.overrideEpoch = layer.overrideChanges.epoch;
+  return true;
 }
 
 function recordRef(ctx: LayerContext, record: SlotRecord): FeatureRef {
@@ -509,6 +652,7 @@ function collectPoints(
   scale: number,
   pickTable: PlanPickTable,
   sprites: SpritePlacement[],
+  records?: readonly SlotRecord[],
 ): PlanBatch | null {
   const style = layer.style as PointsLayerStyle;
   const filter = compileFilter(layer.filter);
@@ -522,7 +666,7 @@ function collectPoints(
     needsSort = !(style.zIndex === undefined || typeof style.zIndex === 'object' && style.zIndex.constant);
   }
   const candidates: { record: SlotRecord; z: number; passed: NonNullable<ReturnType<typeof passRecord>> }[] = [];
-  source.store.queryRect(rect.minX, rect.minY, rect.maxX, rect.maxY, (record) => {
+  visitRecords(source, rect, records, (record) => {
     if (!cullRecord(record, rect)) return;
     const passed = passRecord(ctx, record, filter, zoomRange);
     if (!passed) return;
@@ -535,7 +679,7 @@ function collectPoints(
     candidates.push({ record, z, passed });
   });
   if (candidates.length === 0) return null;
-  if (needsSort) candidates.sort((a, b) => a.z - b.z);
+  candidates.sort((a, b) => (needsSort ? a.z - b.z : 0) || a.record.slot - b.record.slot);
 
   for (const { record, passed } of candidates) {
     const expressionContext: ExpressionContext = {
@@ -657,6 +801,7 @@ function collectLabels(
   origin: { x: number; y: number },
   scale: number,
   pickTable: PlanPickTable,
+  records?: readonly SlotRecord[],
 ): LabelPlacement[] | null {
   const style = layer.style as LabelsLayerStyle;
   const filter = compileFilter(layer.filter);
@@ -667,7 +812,7 @@ function collectLabels(
     priority: number;
     passed: NonNullable<ReturnType<typeof passRecord>>;
   }[] = [];
-  source.store.queryRect(rect.minX, rect.minY, rect.maxX, rect.maxY, (record) => {
+  visitRecords(source, rect, records, (record) => {
     if (!cullRecord(record, rect, 64)) return;
     const passed = passRecord(ctx, record, filter, zoomRange);
     if (!passed) return;
@@ -682,10 +827,7 @@ function collectLabels(
     });
   });
   if (candidates.length === 0) return null;
-  if (style.collision) {
-    // Stable sort: equal priorities keep the slot order (STYLE-08/TEXT-07).
-    candidates.sort((a, b) => b.priority - a.priority);
-  }
+  candidates.sort((a, b) => (style.collision ? b.priority - a.priority : 0) || a.record.slot - b.record.slot);
   const placements: LabelPlacement[] = [];
   for (const { record, passed } of candidates) {
     const expressionContext: ExpressionContext = {
@@ -739,6 +881,17 @@ function collectLabels(
 /* Lines                                                                       */
 /* -------------------------------------------------------------------------- */
 
+function lineRect(rect: WorldRect, width: number, scale: number): WorldRect {
+  const gutter = (Math.max(0, width) + 2) / scale;
+  return { minX: rect.minX - gutter, minY: rect.minY - gutter, maxX: rect.maxX + gutter, maxY: rect.maxY + gutter };
+}
+
+/** Phase, not the possibly enormous total, crosses the Float32 boundary. */
+function dashArc(arc: number, dash: readonly number[] | undefined): number {
+  const period = dash?.slice(0, 8).reduce((sum, step) => sum + step, 0) ?? 0;
+  return period > 0 ? arc % period : 0;
+}
+
 function collectLines(
   scene: Scene,
   layer: LayerImpl,
@@ -747,6 +900,7 @@ function collectLines(
   origin: { x: number; y: number },
   scale: number,
   pickTable: PlanPickTable,
+  records?: readonly SlotRecord[],
 ): PlanBatch | null {
   const style = layer.style as LinesLayerStyle;
   const filter = compileFilter(layer.filter);
@@ -755,7 +909,7 @@ function collectLines(
   const data: number[] = [];
   let needsSort = layer.overrides.size > 0;
   const candidates: { record: SlotRecord; z: number; passed: NonNullable<ReturnType<typeof passRecord>> }[] = [];
-  source.store.queryRect(rect.minX, rect.minY, rect.maxX, rect.maxY, (record) => {
+  visitRecords(source, rect, records, (record) => {
     if (!cullRecord(record, rect, 64)) return;
     const passed = passRecord(ctx, record, filter, zoomRange);
     if (!passed) return;
@@ -768,7 +922,7 @@ function collectLines(
     candidates.push({ record, z, passed });
   });
   if (candidates.length === 0) return null;
-  if (needsSort) candidates.sort((a, b) => a.z - b.z);
+  candidates.sort((a, b) => (needsSort ? a.z - b.z : 0) || a.record.slot - b.record.slot);
 
   for (const { record, passed } of candidates) {
     const expressionContext: ExpressionContext = {
@@ -799,42 +953,15 @@ function collectLines(
 
     const payload = record.geometry?.payload;
     if (!payload) continue;
-    const emitLine = (vertices: Float64Array, start: number, count: number, close: boolean): void => {
-      let arc = 0;
-      for (let i = 0; i < count - 1; i++) {
-        const a = (start + i) * 2;
-        const b = (start + i + 1) * 2;
-        const x0 = (vertices[a]! - origin.x) * scale;
-        const y0 = (vertices[a + 1]! - origin.y) * scale;
-        const x1 = (vertices[b]! - origin.x) * scale;
-        const y1 = (vertices[b + 1]! - origin.y) * scale;
-        const len = Math.hypot(x1 - x0, y1 - y0);
-        pushSegment(x0, y0, x1, y1, arc, len);
-        arc += len;
-      }
-      if (close && count > 2) {
-        const a = (start + count - 1) * 2;
-        const b = start * 2;
-        const x0 = (vertices[a]! - origin.x) * scale;
-        const y0 = (vertices[a + 1]! - origin.y) * scale;
-        const x1 = (vertices[b]! - origin.x) * scale;
-        const y1 = (vertices[b + 1]! - origin.y) * scale;
-        pushSegment(x0, y0, x1, y1, arc, Math.hypot(x1 - x0, y1 - y0));
-      }
-    };
-
     switch (payload.kind) {
       case GEOMETRY_KIND.lineString:
       case GEOMETRY_KIND.multiLineString:
-        for (let p = 0; p < payload.parts.length; p += 2) {
-          emitLine(payload.vertices, payload.parts[p]!, payload.parts[p + 1]!, false);
-        }
-        break;
       case GEOMETRY_KIND.polygon:
       case GEOMETRY_KIND.multiPolygon:
-        for (let r = 0; r < payload.rings.length; r += 2) {
-          emitLine(payload.ringVertices, payload.rings[r]!, payload.rings[r + 1]!, true);
-        }
+        visitLineSegments(lineMesh(payload), lineRect(rect, width, scale), (x0, y0, x1, y1, arc, length) => {
+          pushSegment((x0 - origin.x) * scale, (y0 - origin.y) * scale, (x1 - origin.x) * scale, (y1 - origin.y) * scale,
+            dashArc(arc * scale, style.dash), length * scale);
+        });
         break;
       case GEOMETRY_KIND.rectangle: {
         const x0 = (payload.minX - origin.x) * scale;
@@ -842,9 +969,9 @@ function collectLines(
         const x1 = (payload.maxX - origin.x) * scale;
         const y1 = (payload.maxY - origin.y) * scale;
         pushSegment(x0, y0, x1, y0, 0, Math.abs(x1 - x0));
-        pushSegment(x1, y0, x1, y1, 0, Math.abs(y1 - y0));
-        pushSegment(x1, y1, x0, y1, 0, Math.abs(x1 - x0));
-        pushSegment(x0, y1, x0, y0, 0, Math.abs(y1 - y0));
+        pushSegment(x1, y0, x1, y1, dashArc(Math.abs(x1 - x0), style.dash), Math.abs(y1 - y0));
+        pushSegment(x1, y1, x0, y1, dashArc(Math.abs(x1 - x0) + Math.abs(y1 - y0), style.dash), Math.abs(x1 - x0));
+        pushSegment(x0, y1, x0, y0, dashArc(2 * Math.abs(x1 - x0) + Math.abs(y1 - y0), style.dash), Math.abs(y1 - y0));
         break;
       }
       case GEOMETRY_KIND.circle: {
@@ -853,6 +980,7 @@ function collectLines(
         const cx = (payload.wx - origin.x) * scale;
         const cy = (payload.wy - origin.y) * scale;
         const steps = 32;
+        let arc = 0;
         for (let i = 0; i < steps; i++) {
           const a0 = (i / steps) * Math.PI * 2;
           const a1 = ((i + 1) / steps) * Math.PI * 2;
@@ -860,7 +988,9 @@ function collectLines(
           const y0 = cy + Math.sin(a0) * ry;
           const x1 = cx + Math.cos(a1) * rx;
           const y1 = cy + Math.sin(a1) * ry;
-          pushSegment(x0, y0, x1, y1, 0, Math.hypot(x1 - x0, y1 - y0));
+          const length = Math.hypot(x1 - x0, y1 - y0);
+          pushSegment(x0, y0, x1, y1, dashArc(arc, style.dash), length);
+          arc += length;
         }
         break;
       }
@@ -890,6 +1020,7 @@ function collectFills(
   origin: { x: number; y: number },
   scale: number,
   pickTable: PlanPickTable,
+  records?: readonly SlotRecord[],
 ): { fill: PlanBatch | null; stroke: PlanBatch | null } {
   const style = layer.style as FillsLayerStyle;
   if (style.visible === false) return { fill: null, stroke: null };
@@ -898,10 +1029,11 @@ function collectFills(
   const zoomRange = { min: style.minZoom ?? 0, max: style.maxZoom ?? 24 };
   const ctx: LayerContext = { scene, layer, source, zoom: scene.attachedView.zoom };
   const fillData: number[] = [];
+  const fillIndices: number[] = [];
   const strokeData: number[] = [];
   let needsSort = layer.overrides.size > 0;
   const candidates: { record: SlotRecord; z: number; passed: NonNullable<ReturnType<typeof passRecord>> }[] = [];
-  source.store.queryRect(rect.minX, rect.minY, rect.maxX, rect.maxY, (record) => {
+  visitRecords(source, rect, records, (record) => {
     if (!cullRecord(record, rect, 128)) return;
     const passed = passRecord(ctx, record, filter, zoomRange);
     if (!passed) return;
@@ -914,7 +1046,7 @@ function collectFills(
     candidates.push({ record, z, passed });
   });
   if (candidates.length === 0) return { fill: null, stroke: null };
-  if (needsSort) candidates.sort((a, b) => a.z - b.z);
+  candidates.sort((a, b) => (needsSort ? a.z - b.z : 0) || a.record.slot - b.record.slot);
 
   for (const { record, passed } of candidates) {
     const expressionContext: ExpressionContext = {
@@ -941,6 +1073,8 @@ function collectFills(
       (y - origin.y) * scale,
     ];
     const pushTriangle = (ax: number, ay: number, bx: number, by: number, cx: number, cy: number): void => {
+      const first = fillData.length / FILL_STRIDE;
+      fillIndices.push(first, first + 1, first + 2);
       fillData.push(
         ax, ay, 0, 0,
         fillColor[0], fillColor[1], fillColor[2], fillColor[3] * fillOpacity,
@@ -954,17 +1088,21 @@ function collectFills(
       );
     };
     const pushRingStroke = (vertices: Float64Array, start: number, count: number): void => {
+      let arc = 0;
       for (let i = 0; i < count; i++) {
         const a = (start + i) * 2;
         const b = (start + ((i + 1) % count)) * 2;
         const [x0, y0] = toScreen(vertices[a]!, vertices[a + 1]!);
         const [x1, y1] = toScreen(vertices[b]!, vertices[b + 1]!);
+        const length = Math.hypot(x1 - x0, y1 - y0);
+        if (length === 0) continue;
         strokeData.push(
           x0, y0, x1, y1,
           strokeWidth, 1, pickIndex, flags,
           strokeColor[0], strokeColor[1], strokeColor[2], strokeColor[3],
-          0, Math.hypot(x1 - x0, y1 - y0), 0, 0,
+          dashArc(arc, style.dash), length, 0, 0,
         );
+        arc += length;
       }
     };
 
@@ -974,18 +1112,19 @@ function collectFills(
       case GEOMETRY_KIND.polygon:
       case GEOMETRY_KIND.multiPolygon: {
         if (drawFill) {
-          const triangles = triangulatePolygonWithHoles(payload.ringVertices, payload.rings, payload.ringOuter);
-          for (let i = 0; i < triangles.length; i += 6) {
-            const [ax, ay] = toScreen(triangles[i]!, triangles[i + 1]!);
-            const [bx, by] = toScreen(triangles[i + 2]!, triangles[i + 3]!);
-            const [cx, cy] = toScreen(triangles[i + 4]!, triangles[i + 5]!);
-            pushTriangle(ax, ay, bx, by, cx, cy);
+          const { vertices, indices } = visiblePolygon(polygonMesh(payload), rect, scale);
+          const first = fillData.length / FILL_STRIDE;
+          for (let at = 0; at < vertices.length; at += 2) {
+            const [x, y] = toScreen(vertices[at]!, vertices[at + 1]!);
+            fillData.push(x, y, 0, 0, fillColor[0], fillColor[1], fillColor[2], fillColor[3] * fillOpacity, pickIndex, flags, 0, 0);
           }
+          for (const index of indices) fillIndices.push(first + index);
         }
         if (strokeWidth > 0) {
-          for (let r = 0; r < payload.rings.length; r += 2) {
-            pushRingStroke(payload.ringVertices, payload.rings[r]!, payload.rings[r + 1]!);
-          }
+          visitLineSegments(lineMesh(payload), lineRect(rect, strokeWidth, scale), (x0, y0, x1, y1, arc, length) => {
+            strokeData.push((x0 - origin.x) * scale, (y0 - origin.y) * scale, (x1 - origin.x) * scale, (y1 - origin.y) * scale,
+              strokeWidth, 1, pickIndex, flags, strokeColor[0], strokeColor[1], strokeColor[2], strokeColor[3], dashArc(arc * scale, style.dash), length * scale, 0, 0);
+          });
         }
         break;
       }
@@ -1034,7 +1173,7 @@ function collectFills(
   return {
     fill:
       fillData.length > 0
-        ? { layerId: layer.id, kind: 'fills', data: Float32Array.from(fillData), count: fillData.length / FILL_STRIDE }
+        ? { layerId: layer.id, kind: 'fills', data: Float32Array.from(fillData), indices: Uint32Array.from(fillIndices), count: fillIndices.length }
         : null,
     stroke:
       strokeData.length > 0

@@ -32,6 +32,7 @@ declare global {
   }
 
   interface GPUDevice {
+    readonly limits: { readonly maxTextureDimension2D: number };
     readonly queue: GPUQueue;
     readonly lost: Promise<GPUDeviceLostInfo>;
     onuncapturederror: ((event: unknown) => void) | null;
@@ -271,6 +272,8 @@ declare global {
       size?: number,
     ): void;
     draw(vertexCount: number, instanceCount?: number, firstVertex?: number, firstInstance?: number): void;
+    setIndexBuffer(buffer: GPUBuffer, indexFormat: 'uint16' | 'uint32', offset?: number, size?: number): void;
+    drawIndexed(indexCount: number, instanceCount?: number, firstIndex?: number, baseVertex?: number, firstInstance?: number): void;
     end(): void;
   }
 
@@ -280,6 +283,7 @@ declare global {
     readonly COMPUTE: number;
   };
   const GPUBufferUsage: {
+    readonly INDEX: number;
     readonly MAP_READ: number;
     readonly COPY_DST: number;
     readonly UNIFORM: number;

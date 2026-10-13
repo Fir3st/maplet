@@ -169,6 +169,12 @@ function readProperties(
   return value as readonly (FeatureProperties | undefined)[];
 }
 
+/** Metadata is validated/owned on the publishing thread, not round-tripped. */
+export function validateColumnarMetadata(batch: ColumnarBatch, count: number, context = 'columnar'): void {
+  readIds(batch.ids, count, context);
+  readProperties(batch.properties, count, context);
+}
+
 /** Validate a point batch without expanding it into hundreds of thousands of objects. */
 export function validatePointBatch(batch: ColumnarPointBatch, options: ColumnarToFeaturesOptions): ColumnarPointBatch {
   const context = options.context ?? 'columnar';
@@ -185,6 +191,19 @@ export function validatePointBatch(batch: ColumnarPointBatch, options: ColumnarT
     }
   }
   return batch;
+}
+
+/** Validate flat structure before projection; never materialize Position objects. */
+export function validatePartsBatch(batch: ColumnarPartsBatch, options: ColumnarToFeaturesOptions): number {
+  const context = options.context ?? 'columnar';
+  if (typeof batch !== 'object' || batch === null || (batch.kind !== 'lineString' && batch.kind !== 'polygon')) invalid(`${context}: expected a parts batch`);
+  const positions = readPositions(batch.positions, context), vertices = positions.length / 2;
+  readAltitudes(batch.altitudes, vertices, options.positionKind, context);
+  const parts = readIndexArray(batch.partOffsets, vertices, `${context}.partOffsets`).length - 1;
+  const count = batch.featurePartOffsets === undefined ? parts : readIndexArray(batch.featurePartOffsets, parts, `${context}.featurePartOffsets`).length - 1;
+  validateColumnarMetadata(batch, count, context);
+  for (let at = 0; at < positions.length; at++) if (!Number.isFinite(positions[at])) invalid(`${context}.positions[${Math.floor(at / 2)}] must be finite numbers`);
+  return count;
 }
 
 /** Converts a validated columnar batch into feature inputs (IO-05, IO-06). */

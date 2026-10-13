@@ -22,6 +22,8 @@ import type {
 } from '../api/types.ts';
 import { featureIdKey } from '../api/types.ts';
 import type { Crs, Position } from '../math/index.ts';
+import { nativeProjectionCode } from '../math/crs.ts';
+import { prepareParts, type PreparedPartsImport } from '../io/parts.ts';
 import { boundsFromPositions, type Bounds } from '../math/bounds.ts';
 import { geometryPositions, type PreparedFeatureGeometry } from '../geometry/geometry.ts';
 import { EMPTY_PROPERTIES, FeatureStore, type GeometryState, type SlotRecord } from './store.ts';
@@ -345,6 +347,11 @@ export class SourceImpl {
       },
       options.upsert === true,
     );
+    return this.finishInsert(change, id, namespace, result);
+  }
+
+  private finishInsert(change: PendingChange, id: FeatureId, namespace: string | undefined,
+    result: import('./store.ts').AddRecordResult): { ref: FeatureRef; slot: number } {
     const undoStore = this.store;
     if (result.previous) {
       const previousRecord = result.previous;
@@ -370,6 +377,48 @@ export class SourceImpl {
     const ref = this.refOf(record);
     this.noteTouched(change, ref);
     return { ref, slot: record.slot };
+  }
+
+  importPreparedParts(change: PendingChange, batch: PreparedPartsImport, mode: 'replace' | 'append', signal?: AbortSignal): void {
+    const ids = batch.geometries.map((_, i) => batch.ids?.[i] ?? this.nextId());
+    const seen = new Set<string>();
+    for (const id of ids) {
+      const key = featureIdKey(id);
+      if (seen.has(key)) fail('duplicate-id', `columnar import: duplicate id in input: ${String(id)}`, { id });
+      seen.add(key);
+    }
+    if (this.store.pristine) {
+      this.scene.recordUndo(this.store.initializePrepared(batch, ids, signal));
+      for (const id of ids) change.added.push(id);
+      if (this.scene.bindingsActive) {
+        const available = TOUCHED_LIMIT - change.touched.length;
+        for (let slot = 0; slot < Math.min(ids.length, available); slot++) this.noteTouched(change, this.refOf(this.store.getBySlot(slot)!));
+        if (ids.length > available) change.touchedOverflow = true;
+      }
+      return;
+    }
+    if (mode === 'replace') {
+      const removed: FeatureRef[] = [];
+      this.store.forEachLive((record) => { if (!seen.has(record.key)) removed.push(this.refOf(record)); });
+      for (const ref of removed) { throwIfAborted(signal); this.removeOne(change, ref, 'importColumnar'); }
+    }
+    for (let i = 0; i < ids.length; i++) {
+      throwIfAborted(signal);
+      const id = ids[i]!, prepared = batch.geometries[i]!, properties = batch.properties?.[i] ?? EMPTY_PROPERTIES;
+      const record = this.store.get(id);
+      if (mode === 'replace' && record) {
+        const ref = this.refOf(record);
+        this.scene.checkGeometryUpdate(ref);
+        this.scene.checkPropertyUpdate(ref, Array.from(new Set([...Object.keys(record.properties), ...Object.keys(properties)])));
+        this.applyPreparedGeometry(record, prepared);
+        const previous = this.store.setProperties(record.slot, properties);
+        this.scene.recordUndo(() => { this.store.setProperties(record.slot, previous); });
+        change.updated.push(id); this.noteTouched(change, ref);
+      } else {
+        const result = this.store.addPrepared({ id, namespace: undefined, prepared, properties });
+        this.finishInsert(change, id, undefined, result);
+      }
+    }
   }
 
   updateOne(
@@ -490,6 +539,7 @@ export class SourceImpl {
 
   destroyStore(): void {
     this.destroyed = true;
+    this.store.dispose();
     this.changeEmitter.clear();
   }
 }
@@ -781,20 +831,26 @@ export function createSourceHandle(source: SourceImpl, scene: SourceHandleContex
         const prepared = await scene.importPipeline.submit({
           kind: 'columnar-points', sourceId: source.id, batch, positionKind: source.crs.positionKind,
         }, pipelineOptions(options));
+        await cancellationCheckpoint(options.signal);
         throwIfAborted(options.signal);
         source.mutate((change) => importPointTransaction(source, change, prepared, options.mode ?? 'replace', options.signal));
         return { revision: scene.revision };
       }
-      const items = await scene.importPipeline.submit(
+      const projectionCode = nativeProjectionCode(source.crs);
+      const parts = await scene.importPipeline.submit(
         {
-          kind: 'columnar',
+          kind: 'columnar-parts',
           sourceId: source.id,
           batch,
           positionKind: source.crs.positionKind,
+          ...(projectionCode === undefined ? {} : { projectionCode }),
         },
         pipelineOptions(options),
       );
-      await applyPrepared(items, options.mode ?? 'replace', options.signal);
+      throwIfAborted(options.signal);
+      await cancellationCheckpoint(options.signal);
+      const prepared = parts.kind === 'raw-parts' ? prepareParts(parts.batch, source.crs, `columnar(${source.id})`) : parts;
+      source.mutate((change) => source.importPreparedParts(change, prepared, options.mode ?? 'replace', options.signal));
       return { revision: scene.revision };
     },
     exportGeoJson(options = {}) {
@@ -859,6 +915,15 @@ function resolveInput(
 function throwIfAborted(signal: AbortSignal | undefined): void {
   if (signal?.aborted) {
     fail('aborted', 'operation aborted', {});
+  }
+}
+
+/** Let queued abort tasks run after preparation before atomic, synchronous publication. */
+async function cancellationCheckpoint(signal: AbortSignal | undefined): Promise<void> {
+  if (signal) {
+    throwIfAborted(signal);
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    throwIfAborted(signal);
   }
 }
 

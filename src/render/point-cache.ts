@@ -6,7 +6,7 @@ import type { SlotRecord } from '../scene/store.ts';
 import type { LayerImpl, PointsLayerStyle, PointShape } from '../scene/layers.ts';
 import { compileFilter, evaluateStyleValue, type ExpressionContext, type ExpressionInput, type ColorValue } from '../scene/expression.ts';
 import { transformOrigin, worldScaleAt, type ViewTransform } from '../math/transform.ts';
-import { POINT_STRIDE, POINT_SHAPES, FLAG_INTERACTIVE, FLAG_HIDDEN, type PickEntry, type PlanBatch, type BufferUpload } from './frame-plan.ts';
+import { POINT_STRIDE, POINT_SHAPES, FLAG_INTERACTIVE, FLAG_HIDDEN, type PickEntry, type PickEntries, type PlanBatch, type BufferUpload } from './frame-plan.ts';
 import { parseColor, type Rgba } from './color.ts';
 
 interface Rect { minX: number; minY: number; maxX: number; maxY: number }
@@ -38,7 +38,10 @@ export class PointCache {
   private readonly scene: Scene;
   readonly source: SourceImpl;
   readonly layer: LayerImpl;
-  readonly entries: PickEntry[] = [];
+  readonly entries: PickEntries;
+  private readonly pickIds: FeatureId[];
+  private readonly pickNamespaces: (string | undefined)[];
+  private readonly pickGenerations: Float64Array;
   readonly data: Float32Array;
   private readonly slotToInstance: Int32Array;
   private readonly zValues: Float64Array;
@@ -96,15 +99,31 @@ export class PointCache {
     this.data = new Float32Array(candidates.length * POINT_STRIDE);
     this.zValues = new Float64Array(candidates.length);
     this.visible = new Uint8Array(candidates.length);
+    this.pickIds = new Array(candidates.length);
+    this.pickNamespaces = new Array(candidates.length);
+    this.pickGenerations = new Float64Array(candidates.length);
+    this.entries = { length: candidates.length, get: (index) => this.pickEntry(index) };
     this.slotToInstance = new Int32Array(source.store.slotCapacity);
     this.slotToInstance.fill(-1);
     for (let i = 0; i < candidates.length; i++) {
       const { record, z } = candidates[i]!;
       this.slotToInstance[record.slot] = i;
       this.zValues[i] = z;
-      this.entries.push({ feature: source.refOf(record), layerId: layer.id });
+      this.pickIds[i] = record.id;
+      this.pickNamespaces[i] = record.namespace;
+      this.pickGenerations[i] = record.generation;
       this.write(record, i);
     }
+  }
+
+  /** Snapshot identity columns, never a live/recyclable SlotView, back each pick. */
+  private pickEntry(index: number): PickEntry | undefined {
+    if (index < 0 || index >= this.entries.length) return undefined;
+    const namespace = this.pickNamespaces[index];
+    return { layerId: this.layer.id, feature: {
+      sceneId: this.scene.id, sourceId: this.source.id, id: this.pickIds[index]!,
+      generation: this.pickGenerations[index]!, ...(namespace === undefined ? {} : { namespace }),
+    } };
   }
 
   private contains(record: SlotRecord): boolean {
@@ -128,7 +147,7 @@ export class PointCache {
     const state = record ? this.scene.state.stateOf(this.source, record) : undefined;
     const visible = record !== undefined && this.contains(record) && override?.visible !== false &&
       this.filter({ id: record.id, state: state! }, record.properties) &&
-      !this.scene.bindings.isTargetHidden(this.entries[instance]!.feature);
+      (!this.scene.bindingsActive || !this.scene.bindings.isTargetHidden(this.entries.get(instance)!.feature));
     if (wasVisible) this.visibleCount--;
     if (!visible) {
       this.visible[instance] = 0;
@@ -142,13 +161,17 @@ export class PointCache {
     const stroke = this.strokeColor(ctx);
     const width = this.strokeWidth(ctx);
     const radius = override?.radiusPx ?? this.radius(ctx);
-    this.data.set([
-      (record.wx - this.origin.x) * this.scale, (record.wy - this.origin.y) * this.scale, radius, radius,
-      color[0], color[1], color[2], color[3] * (override?.opacity ?? this.opacity(ctx)),
-      stroke[0], stroke[1], stroke[2], width > 0 ? stroke[3] || 1 : 0,
-      POINT_SHAPES[this.shape(ctx)] ?? 0, width, instance,
-      this.layer.interactionEnabled && (override?.interactive ?? true) ? FLAG_INTERACTIVE : 0,
-    ], at);
+    const data = this.data;
+    data[at] = (record.wx - this.origin.x) * this.scale;
+    data[at + 1] = (record.wy - this.origin.y) * this.scale;
+    data[at + 2] = radius; data[at + 3] = radius;
+    data[at + 4] = color[0]; data[at + 5] = color[1]; data[at + 6] = color[2];
+    data[at + 7] = color[3] * (override?.opacity ?? this.opacity(ctx));
+    data[at + 8] = stroke[0]; data[at + 9] = stroke[1]; data[at + 10] = stroke[2];
+    data[at + 11] = width > 0 ? stroke[3] || 1 : 0;
+    data[at + 12] = POINT_SHAPES[this.shape(ctx)] ?? 0;
+    data[at + 13] = width; data[at + 14] = instance;
+    data[at + 15] = this.layer.interactionEnabled && (override?.interactive ?? true) ? FLAG_INTERACTIVE : 0;
   }
 
   /** false requests a fresh resident set/order, never a silently stale buffer. */
@@ -174,13 +197,13 @@ export class PointCache {
         if (record && this.contains(record) && (this.layer.namespace === undefined || record.namespace === this.layer.namespace)) return false;
         continue;
       }
-      const ref = this.entries[instance]!.feature;
+      const ref = this.entries.get(instance)!.feature;
       if (record && (record.id !== ref.id || record.namespace !== ref.namespace || record.generation !== ref.generation || this.recordZ(record) !== this.zValues[instance])) return false;
       changed.push(instance);
     }
     for (const instance of changed) {
       // entries retain immutable generation-bound references; removal only hides a row.
-      const ref = this.entries[instance]!.feature;
+      const ref = this.entries.get(instance)!.feature;
       this.write(this.source.store.get(ref.id, ref.namespace), instance);
     }
     this.sourceEpoch = this.source.store.changes.epoch;

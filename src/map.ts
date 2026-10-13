@@ -1321,10 +1321,11 @@ function buildHandle(
         if (draw.type !== 'batch' || draw.batch.layerId !== layerId) continue;
         const stride = draw.batch.kind === 'fills' ? 12 : draw.batch.kind === 'lines' ? 16 : 16;
         const pickOffset = draw.batch.kind === 'fills' ? 8 : draw.batch.kind === 'lines' ? 6 : 14;
-        const count = draw.batch.kind === 'fills' ? draw.batch.count / 3 : draw.batch.count;
+        const count = draw.batch.indices ? draw.batch.indices.length / 3 : draw.batch.kind === 'fills' ? draw.batch.count / 3 : draw.batch.count;
         for (let i = 0; i < count; i++) {
-          const pickIndex = draw.batch.data[i * stride + pickOffset]!;
-          if (draw.batch.kind === 'points' && draw.batch.data[i * stride + 15]! >= FLAG_HIDDEN) continue;
+          const row = draw.batch.indices ? draw.batch.indices[i * 3]! : i;
+          const pickIndex = draw.batch.data[row * stride + pickOffset]!;
+          if (draw.batch.data[row * stride + pickOffset + 1]! >= FLAG_HIDDEN) continue;
           const entry = plan.pickTable.get(pickIndex + (draw.batch.pickBase ?? 0));
           if (!entry) continue;
           order.push(entry.feature.id);

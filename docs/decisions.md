@@ -44,9 +44,11 @@ matching test changes; tests must not establish defaults accidentally.
   transaction. A write outside a batch is its own implicit transaction.
 - Each successful commit increments the scene revision. Rendered revision never
   exceeds logical revision; `whenRendered(r)` resolves when `rendered ≥ r`.
-- User geometry always goes through `prepareGeometry`. Prepared geometry enters
-  the store only through the internal binding path, never by detecting object
-  keys such as `bbox` or `payload`.
+- User geometry always goes through the canonical validation/normalization
+  kernel: object CRUD uses `prepareGeometry`; columnar imports share that kernel
+  over projected Float64 pools. Prepared geometry enters only through internal
+  bindings, tiles or validated import jobs, never by detecting public object keys
+  such as `bbox` or `payload`.
 
 ## Missing inputs, deletion and ownership
 
@@ -75,7 +77,8 @@ matching test changes; tests must not establish defaults accidentally.
   order for ties. Atlas pages use LRU eviction and can be reconstructed (limit 256).
 - Image assets have `loading`, `ready` and `error` states. A point icon uses its
   ready asset or the declared shape fallback, never a silent empty symbol.
-- Instances share one texture per image asset. Icon size is `iconSize` (square,
+- Instances share one atlas region per image asset/version; multiple regions can
+  share a texture page without changing painter order. Icon size is `iconSize` (square,
   CSS pixels), or natural size divided by DPR; center is offset by `iconAnchor`.
   Picking uses an alpha threshold of `0.5`.
 - `stats().drawCalls` counts actual GPU submissions, not planned placements.

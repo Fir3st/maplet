@@ -40,6 +40,120 @@ These expensive scenarios are opt-in, not added to the default E2E suite.
 
 ## Results
 
+### Canvas-target initialization follow-up
+
+The [final alternating A/B record](points-500k-canvas-target-ab.json) compares
+the immediate retained-scene rewrite with this follow-up. Three fresh processes
+per version/backend and three interleaved Canvas controls use the unchanged
+`demo/compare.js` fixture/evaluator; only the isolated `dist/` root changes.
+Version order reverses in repetition two. All 15 setup/pan processes pass count,
+projection and pixel checks. No benchmark, profiling or build runs concurrently.
+
+| Three-run median | Maplet WebGL 1 | Maplet WebGPU | Leaflet Canvas |
+| --- | ---: | ---: | ---: |
+| Complete setup to paint opportunity | 315 ms | 275 ms | 287 ms |
+| Import / layer installation | 243 ms | 206 ms | 221 ms |
+| GC-stabilized main-thread heap increase | 127.4 MiB | 127.3 MiB | 207.1 MiB |
+
+Immediate baseline setup medians are 367 ms / 336 ms: reductions of 14.2% / 18.2%,
+with all six paired runs improving. Final WebGL is **28 ms (9.8%) slower than
+Canvas**; WebGPU's median is **12 ms (4.2%) faster**. This is comparable roughly
+0.3-second initialization on this fixture, not exact parity or a guarantee:
+WebGPU's individual runs are 274, 311 and 275 ms, and one exceeds Canvas.
+WebGL runs are 305, 315 and 323 ms. No confidence interval is inferred from three
+processes. The fence includes map creation, generation, loading and the unchanged
+two-rAF-plus-20-ms paint opportunity; it is not time-to-photon or GPU execution time.
+
+The implementation copies validated primitive IDs directly, retains native
+property-graph cloning, uses one identity lookup with separate live-slot and
+generation columns, and adopts owned projected Float64 pools into canonical
+pages. Point culling precedes object-view allocation; compact immutable pick
+identity columns avoid eager ref objects, without reading recycled live rows.
+Custom CRS callbacks, altitudes, full validation, ordering, transactions and
+individual edits remain enabled. All 500,000 records remain present; rendered
+counts remain 258,420 for Maplet and 231,240 for Canvas under their existing
+culling conventions. No LOD, clustering or whole-scene raster replacement is used.
+
+Build/source/test/consumer/distribution checks pass 253 tests; the full browser
+suite passes 36/36 scenarios on WebGL 1, WebGPU and forced basic WebGL, with the
+mixed and dense opt-in fixtures also passing on all three profiles. All
+[180/180 final mutation checks](points-500k-canvas-target-updates.json) pass and
+retain all 500,000 records; archived build/evaluator integrity checks pass. Warm pan
+still has roughly one-second maximum intervals; this initialization change does
+not establish hitch-free playback. The earlier
+[initial controls](points-500k-canvas-target-before.json) and
+[intermediate candidate](points-500k-canvas-target-candidate.json) are exploratory
+records, not additional final repetitions.
+
+### Retained-scene rewrite
+
+The rewrite is compared against an isolated build of `315c5c8`, not the historical
+timings below. Three fresh browser processes per version/workload/backend use
+the same endpoint and evaluator; only the served `dist/` root changes, and
+version order reverses in repetition two. No benchmark or build runs concurrently.
+The [raw final record](retained-scene-ab.json) includes evaluator/build hashes,
+individual measurements, tail intervals, functional checks and explicit timeouts.
+
+| Alternating A/B: `315c5c8` → retained scene | WebGL 1 | WebGPU |
+| --- | ---: | ---: |
+| 500k points: setup to paint opportunity, median | 465 → 405 ms | 458 → 326 ms |
+| 500k points: data loading, median | 380 → 313 ms | 378 → 242 ms |
+| 500k points: GC-stabilized JS heap increase | 138.7 → 142.0 MiB | 138.7 → 142.0 MiB |
+| 500k points: warm pan p50 | 16.7 → 16.7 ms | 16.7 → 16.7 ms |
+| Mixed vectors/symbols: warm pan p50 | 56.8 → 16.7 ms | 57.3 → 16.7 ms |
+| Mixed vectors/symbols: appearance edit p50 | 57.7 → 16.9 ms | 57.6 → 16.6 ms |
+| Mixed vectors/symbols: draw calls | 2070 → 5 | 2070 → 5 |
+| Mixed vectors/symbols: GC-stabilized JS heap increase | 20.1 → 7.5 MiB | 20.1 → 7.5 MiB |
+| Mixed vectors/symbols: GPU allocation | 17.37 → 4.44 MiB | 17.37 → 4.49 MiB |
+
+The point evaluator (`demo/compare.js`) is unchanged. The complementary mixed
+fixture (`demo/e2e/complex-scene.mjs`) uses 96 × 256-vertex lines, 64 polygons
+with 128 exterior vertices and two eight-vertex holes each, and 2,048 individually
+interactive sprites plus collision-managed labels (16 image assets and 256
+strings). Counts, exported geometry, actual worker use, polygon pixels and
+individual picking are checked independently of timings. No LOD, clustering,
+reduced count or replacement with a whole-scene image is used.
+
+The mixed-scene improvement is approximately **3.4× shorter warm pan intervals**;
+point setup is **12.9%/28.8% shorter**, with all six paired setup runs improving.
+WebGL's first baseline setup run is a 925 ms outlier; its three-run median is
+465 ms, not that outlier. Point heap is **3.3 MiB higher**, not an
+improvement; mixed-scene heap and GPU storage are lower. Point warm runs still
+contain roughly one-second maximum intervals. Three-run medians, main-thread
+heap and paint fences are not confidence bounds, total browser memory or isolated
+GPU execution times. There is no new Canvas/PixiJS comparison in this record.
+
+To run the new opt-in fixtures against the current build:
+
+```bash
+npm run build
+node demo/e2e/runner.mjs --scenario complex-scene-performance --verbose
+node demo/e2e/runner.mjs --scenario dense-geometry-performance --verbose
+```
+
+Add `--webgpu` or `--basic` for the other profiles. The dense fixture has a
+100,000-vertex line and an 8,192-vertex concave polygon with six 64-vertex holes.
+Both single baseline attempts exceeded the **120-second whole-process budget**;
+no baseline app-stage time, median or speedup ratio is inferred. The candidate
+passes three fresh processes on each main backend and one basic-profile run,
+with complete exported geometry and actual line/fill/hole pixels and picking.
+
+| Vertex-heavy candidate only, three-run medians | WebGL 1 | WebGPU |
+| --- | ---: | ---: |
+| Import | 21.1 ms | 20.9 ms |
+| Import to first paint fence | 1070.9 ms | 1101.3 ms |
+| Warm pan p50 / p95 | 16.7 / 18.3 ms | 16.7 / 18.4 ms |
+| Appearance edit p50 / p95 | 16.6 / 31.4 ms | 16.2 / 32.0 ms |
+| Main-thread JS heap increase after GC | 11.12 MiB | 11.08 MiB |
+| GPU allocation / draw calls | 7.07 MiB / 3 | 7.12 MiB / 3 |
+
+This record has **31 completed passing processes and two baseline timeouts**:
+24 alternating point/mixed-scene runs and seven completed dense-candidate runs.
+It is not a 33/33 passing comparison. The final functional validation separately
+passes 248 unit tests, 36 default browser scenarios on each of WebGL 1/WebGPU/basic,
+and all 180 mutation samples in the 500,000-point scene. Three short dense pan
+runs establish this fixture's behavior, not universal sustained-frame guarantees.
+
 ### Bulk initialization
 
 | Measurement after bulk initialization | Maplet WebGL 1 | Maplet WebGPU | Leaflet Canvas |

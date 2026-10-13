@@ -49,9 +49,20 @@ scope.onmessage = (event: MessageEvent) => {
     const transfer: Transferable[] = [];
     if (!Array.isArray(features)) {
       const buffers = new Set<ArrayBuffer>();
-      if (features.positions.buffer instanceof ArrayBuffer) buffers.add(features.positions.buffer);
-      if (features.altitudes?.buffer instanceof ArrayBuffer) buffers.add(features.altitudes.buffer);
-      transfer.push(...buffers);
+      const add = (view: ArrayBufferView | undefined): void => { if (view?.buffer instanceof ArrayBuffer) buffers.add(view.buffer); };
+      if (features.kind === 'prepared-parts') {
+        for (const geometry of features.geometries) {
+          add(geometry.bbox);
+          const payload = geometry.payload;
+          if ('vertices' in payload) { add(payload.vertices); add(payload.parts); }
+          if ('ringVertices' in payload) { add(payload.ringVertices); add(payload.rings); add(payload.ringOuter); }
+        }
+      } else {
+        const batch = features.kind === 'raw-parts' ? features.batch : features;
+        add(batch.positions); add(batch.altitudes);
+        if (batch.kind !== 'point') { add(batch.partOffsets); add(batch.featurePartOffsets); }
+      }
+      for (const buffer of buffers) transfer.push(buffer);
     }
     scope.postMessage({ requestId, ok: true, features }, transfer);
   } catch (error) {

@@ -130,9 +130,31 @@ Setup remains slower than Canvas's 282 ms. Maplet's
 main-thread JS heap increase after GC is 138.7 MiB versus Canvas's 207 MiB, about 33% less,
 but 9% above pre-retention Maplet. Headless scheduling still produced occasional
 one-second pan intervals. These are local measurements, not smooth-playback or
-all-workload guarantees; icons/complex geometry retain the existing planner.
+all-workload guarantees; that revision did not yet retain icons/complex geometry.
 See [methodology, before/after records and limitations](docs/benchmarks/README.md).
 PixiJS itself has not been benchmarked.
+
+The subsequent retained-scene rebuild extends retained GPU data to mixed vector
+sources, indexed polygon meshes, sprites and shaped text. Columnar lines and
+polygons prepare canonical Float64 pools without per-vertex object expansion;
+shared image/text atlas pages preserve individual identity, ordering and picking.
+See the [implementation and proof ledger](docs/benchmarks/retained-scene-plan.md)
+for verified paths and deliberate limits. Geometry edits, collision-layout changes
+and required validation still have costs.
+Its [final A/B record](docs/benchmarks/retained-scene-ab.json) shows point setup
+medians of **465 → 405 ms / 458 → 326 ms** (WebGL 1/WebGPU) against `315c5c8`, and
+mixed-scene pan of approximately **57 → 17 ms**, with draw calls **2070 → 5**.
+Point heap rises 3.3 MiB; the mixed scene uses less heap/GPU storage. The final
+checks pass 248 unit tests, 36 browser scenarios per GPU profile and 180 mutation
+samples. This does not establish hitch-free point pan or universal device support.
+
+The latest [Canvas-target follow-up](docs/benchmarks/README.md#canvas-target-initialization-follow-up)
+measures complete 500,000-point initialization at **315 ms WebGL 1 / 275 ms
+WebGPU versus 287 ms Leaflet Canvas**, using three fresh runs and the unchanged
+fixture. WebGL is still 9.8% slower; WebGPU's median is 4.2% faster, with one
+slower individual run. Initialization is comparable on this workload, not proven
+identical or universally faster. Main-thread heap deltas fall from 142 MiB to
+127.3–127.4 MiB; all records and individual interactions remain present.
 
 Reproduce the existing measurements with an installed Chromium browser:
 

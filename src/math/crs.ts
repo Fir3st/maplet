@@ -334,6 +334,44 @@ register(createEpsg4326());
 register(createEpsg3395());
 register(createSimple());
 
+const nativeProjections = new Map(Array.from(registry.values(), (projection) => [projection, {
+  code: projection.code, kind: projection.positionKind, normalize: projection.normalize, toWorld: projection.toWorld,
+}]));
+
+/** A matching code alone does not make a user-supplied CRS safe to serialize. */
+export function nativeProjectionCode(projection: Crs): string | undefined {
+  const native = nativeProjections.get(projection);
+  return native && native.normalize === projection.normalize && native.toWorld === projection.toWorld &&
+    native.code === projection.code && native.kind === projection.positionKind ? native.code : undefined;
+}
+
+/** Flat projection; custom callbacks keep the same normalize -> toWorld contract. */
+export function projectColumns(projection: Crs, input: Float32Array | Float64Array, altitudes?: Float32Array | Float64Array): Float64Array {
+  const code = nativeProjectionCode(projection);
+  const result = new Float64Array(input.length);
+  for (let at = 0; at < input.length; at += 2) {
+    const x = input[at]!, y = input[at + 1]!;
+    let wx: number, wy: number;
+    if (code === 'SIMPLE') { wx = x * WORLD_SCALE; wy = -y * WORLD_SCALE; }
+    else if (code) {
+      wx = lngToUnitX(wrapLongitude(x)) * WORLD_SCALE;
+      if (code === 'EPSG:3857') wy = latToUnitY(wrapLatitude(y)) * WORLD_SCALE;
+      else if (code === 'EPSG:4326') wy = (0.5 - wrapLatitude(y, 90) / 360) * WORLD_SCALE;
+      else wy = (0.5 - ellipsoidalMercatorY(wrapLatitude(y, MAX_ELLIPSOIDAL_LATITUDE)) / (2 * Math.PI)) * WORLD_SCALE;
+    } else {
+      const altitude = altitudes?.[at / 2] ?? NaN;
+      const position: Position = projection.positionKind === 'geographic'
+        ? Number.isNaN(altitude) ? { lng: x, lat: y } : { lng: x, lat: y, altitude }
+        : { x, y };
+      const world = projection.toWorld(projection.normalize(position));
+      wx = world.x; wy = world.y;
+    }
+    if (!Number.isFinite(wx) || !Number.isFinite(wy)) fail('invalid-argument', 'geometry: position is outside the CRS domain');
+    result[at] = wx; result[at + 1] = wy;
+  }
+  return result;
+}
+
 export const crs = {
   /** Spherical Web Mercator (EPSG:3857). */
   webMercator(): Crs {

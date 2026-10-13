@@ -5,6 +5,8 @@ import { isMapletError, MapletError } from '../../src/index.ts';
 import type { FeatureInput, ImportWorkerLike } from '../../src/index.ts';
 import { ImportPipeline } from '../../src/io/import-pipeline.ts';
 import type { ImportJobRequest, PointImportJobRequest, WorkerImportRequest } from '../../src/io/prepare.ts';
+import { prepareParts } from '../../src/io/parts.ts';
+import { crs } from '../../src/math/crs.ts';
 
 /* ------------------------------- fake worker ------------------------------ */
 
@@ -110,6 +112,100 @@ test('compact point worker replies stay columnar and malformed columns fail clos
   await assert.rejects(malformed, (error: unknown) => isMapletError(error) && error.code === 'worker-failed');
   assert.equal(worker.terminated, true);
   pipeline.destroy();
+});
+
+test('compact point metadata is owned once and never sent through the geometry worker', async () => {
+  const { pipeline, worker } = pipelineWithWorker();
+  const nested = { value: 1 };
+  const batch = { kind: 'point' as const, positions: Float64Array.of(14, 50), ids: ['a'], properties: [{ nested }] };
+  const pending = pipeline.submit({ kind: 'columnar-points', sourceId: 's', positionKind: 'geographic', batch });
+  const posted = worker.posted[0]!;
+  assert.notEqual(posted.request.kind, 'geojson');
+  const columns = (posted.request as PointImportJobRequest).batch;
+  assert.equal(columns.ids, undefined);
+  assert.equal(columns.properties, undefined);
+  nested.value = 99;
+  batch.ids[0] = 'changed';
+  worker.reply({ requestId: posted.requestId, ok: true, features: columns });
+  const prepared = await pending;
+  assert.deepEqual(prepared.ids, ['a']);
+  assert.deepEqual(prepared.properties, [{ nested: { value: 1 } }]);
+  assert.notEqual(prepared.properties![0], batch.properties[0]);
+  assert.equal(prepared.positions, columns.positions);
+  pipeline.destroy();
+});
+
+test('compact worker replies cannot silently change the owned metadata row count', async () => {
+  const { pipeline, worker } = pipelineWithWorker();
+  const pending = pipeline.submit({ kind: 'columnar-points', sourceId: 's', positionKind: 'geographic',
+    batch: { kind: 'point', positions: Float64Array.of(14, 50), ids: ['a'] } });
+  worker.reply({ requestId: worker.posted[0]!.requestId, ok: true, features: { kind: 'point', positions: new Float64Array(0) } });
+  await assert.rejects(pending, (error: unknown) => isMapletError(error) && error.code === 'worker-failed');
+  assert.equal(worker.terminated, true);
+  pipeline.destroy();
+});
+
+test('local metadata copies preserve property graph aliases, cycles and native values', async () => {
+  const { pipeline, worker } = pipelineWithWorker();
+  const ids = [42, '42', undefined];
+  const shared: Record<string, unknown> = { date: new Date(123), bytes: Uint8Array.of(1, 2), ids };
+  shared.self = shared;
+  shared.map = new Map([['shared', shared]]);
+  const properties = [shared, { shared }, undefined];
+  const pending = pipeline.submit({ kind: 'columnar-points', sourceId: 's', positionKind: 'geographic',
+    batch: { kind: 'point', positions: new Float64Array(6), ids, properties } });
+  ids[0] = 'changed'; (shared.bytes as Uint8Array)[0] = 9;
+  worker.reply({ requestId: worker.posted[0]!.requestId, ok: true,
+    features: { kind: 'point', positions: new Float64Array(6) } });
+  const owned = await pending;
+  assert.deepEqual(owned.ids, [42, '42', undefined]);
+  const first = owned.properties![0]!;
+  assert.notEqual(first, shared);
+  assert.equal(first.self, first);
+  assert.equal(owned.properties![1]!.shared, first);
+  assert.equal((first.map as Map<string, unknown>).get('shared'), first);
+  assert.deepEqual(first.date, new Date(123));
+  assert.deepEqual(first.bytes, Uint8Array.of(1, 2));
+  assert.deepEqual(first.ids, [42, '42', undefined]);
+  pipeline.destroy();
+});
+
+test('binary parts keep owned metadata local and adopt the actual worker coordinate pools', async () => {
+  const { pipeline, worker } = pipelineWithWorker();
+  const batch = { kind: 'lineString' as const, positions: Float64Array.of(0, 0, 1, 1), partOffsets: Uint32Array.of(0, 2), ids: ['a'], properties: [{ nested: { value: 1 } }] };
+  const pending = pipeline.submit({ kind: 'columnar-parts', sourceId: 's', batch, positionKind: 'planar', projectionCode: 'SIMPLE' });
+  const request = worker.posted[0]!.request;
+  assert.equal(request.kind, 'columnar-parts');
+  if (request.kind !== 'columnar-parts') throw new Error('unexpected test request');
+  assert.equal(request.batch.ids, undefined);
+  assert.equal(request.batch.properties, undefined);
+  batch.ids[0] = 'changed'; batch.properties[0]!.nested.value = 9;
+  const reply = prepareParts(request.batch, crs.simple());
+  worker.reply({ requestId: worker.posted[0]!.requestId, ok: true, features: reply });
+  const prepared = await pending;
+  assert.equal(prepared.kind, 'prepared-parts');
+  if (prepared.kind !== 'prepared-parts') throw new Error('unexpected test reply');
+  assert.deepEqual(prepared.ids, ['a']);
+  assert.deepEqual(prepared.properties, [{ nested: { value: 1 } }]);
+  assert.equal(prepared.geometries, reply.geometries);
+  pipeline.destroy();
+});
+
+test('binary workers fail closed on changed counts, kinds or malformed pools', async () => {
+  for (const fault of ['count', 'kind', 'offset'] as const) {
+    const { pipeline, worker } = pipelineWithWorker();
+    const batch = { kind: 'polygon' as const, positions: Float64Array.of(0, 0, 1, 0, 1, 1, 0, 1), partOffsets: Uint32Array.of(0, 4) };
+    const pending = pipeline.submit({ kind: 'columnar-parts', sourceId: 's', batch, positionKind: 'planar', projectionCode: 'SIMPLE' });
+    const reply = prepareParts(fault === 'kind' ? { ...batch, kind: 'lineString' } : batch, crs.simple());
+    if (fault === 'count') worker.reply({ requestId: worker.posted[0]!.requestId, ok: true, features: { ...reply, geometries: [] } });
+    else {
+      if (fault === 'offset') (reply.geometries[0]!.payload as { rings: Uint32Array }).rings[1] = 0xffffffff;
+      worker.reply({ requestId: worker.posted[0]!.requestId, ok: true, features: reply });
+    }
+    await assert.rejects(pending, (error: unknown) => isMapletError(error) && error.code === 'worker-failed');
+    assert.equal(worker.terminated, true);
+    pipeline.destroy();
+  }
 });
 
 test('IO-06/IO-07: copy transfers nothing; move transfers the batch buffers', async () => {

@@ -82,6 +82,7 @@ test('WebGL pruning disables stale attribute pointers before deleting batch buff
   const retained = new Float32Array(16);
   const backend = Object.create(WebGl1Backend.prototype) as {
     gl: unknown; batchBuffers: Map<Float32Array, unknown>;
+    indexBuffers: Map<Uint32Array, unknown>; expandedFills: WeakMap<Float32Array, unknown>;
     pruneBatchBuffers(plan: { draws: unknown[] }): void;
   };
   backend.batchBuffers = new Map([
@@ -89,6 +90,8 @@ test('WebGL pruning disables stale attribute pointers before deleting batch buff
     [new Float32Array(16), { buffer: 'old-points' }],
     [new Float32Array(12), { buffer: 'old-fills' }],
   ]);
+  backend.indexBuffers = new Map();
+  backend.expandedFills = new WeakMap();
   backend.gl = {
     getParameter: () => 5,
     disableVertexAttribArray: (index: number) => calls.push(`disable:${index}`),

@@ -32,8 +32,11 @@
 
 import { isMapletError, isMapletErrorCode, MapletError, type MapletErrorCode, type MapletErrorDetail } from '../api/errors.ts';
 import type { FeatureInput } from '../scene/source.ts';
-import { prepareImport, type ImportJobRequest, type PointImportJobRequest, type WorkerImportRequest, type PreparedImport } from './prepare.ts';
-import { validatePointBatch, type ColumnarBatch, type ColumnarPointBatch } from './columnar.ts';
+import { prepareImport, type ImportJobRequest, type PointImportJobRequest, type PartsImportJobRequest, type PartsImport, type WorkerImportRequest, type PreparedImport } from './prepare.ts';
+import { validateColumnarMetadata, validatePointBatch, validatePartsBatch, type ColumnarBatch, type ColumnarPointBatch } from './columnar.ts';
+import { validPreparedParts } from './parts.ts';
+import { GEOMETRY_KIND } from '../geometry/geometry.ts';
+import type { FeatureId } from '../api/types.ts';
 
 /** Minimal worker surface; `Worker` satisfies it structurally. */
 export interface ImportWorkerLike {
@@ -77,6 +80,8 @@ interface PendingJob {
   aborted: boolean;
   /** Worker request id; `0` until the job is posted. */
   requestId: number;
+  metadata: Pick<ColumnarPointBatch, 'ids' | 'properties'> | null;
+  featureCount: number | null;
 }
 
 interface WorkerReply {
@@ -98,6 +103,18 @@ function parseReply(data: unknown, request: WorkerImportRequest, requestId: numb
     if (request.kind === 'columnar-points') {
       try { validatePointBatch(reply.features as ColumnarPointBatch, { positionKind: request.positionKind }); }
       catch { return null; }
+    } else if (request.kind === 'columnar-parts') {
+      const parts = reply.features as PartsImport;
+      if (request.projectionCode !== undefined) {
+        if (!validPreparedParts(parts)) return null;
+        if (parts.geometries.some((geometry) => request.batch.kind === 'polygon'
+          ? geometry.kind !== GEOMETRY_KIND.polygon
+          : geometry.kind !== GEOMETRY_KIND.lineString && geometry.kind !== GEOMETRY_KIND.multiLineString)) return null;
+      } else {
+        if (!parts || parts.kind !== 'raw-parts') return null;
+        if (parts.batch?.kind !== request.batch.kind) return null;
+        try { validatePartsBatch(parts.batch, { positionKind: request.positionKind }); } catch { return null; }
+      }
     } else if (!Array.isArray(reply.features)) return null;
   }
   if (!reply.ok && (typeof reply.error !== 'object' || reply.error === null)) return null;
@@ -175,6 +192,7 @@ export class ImportPipeline {
 
   /** Prepares an import; the caller applies the returned features transactionally. */
   submit(request: PointImportJobRequest, options?: ImportSubmitOptions): Promise<ColumnarPointBatch>;
+  submit(request: PartsImportJobRequest, options?: ImportSubmitOptions): Promise<PartsImport>;
   submit(request: ImportJobRequest, options?: ImportSubmitOptions): Promise<FeatureInput[]>;
   submit(request: WorkerImportRequest, options: ImportSubmitOptions = {}): Promise<PreparedImport> {
     return new Promise<PreparedImport>((resolve, reject) => {
@@ -201,6 +219,8 @@ export class ImportPipeline {
         onAbort: null,
         aborted: false,
         requestId: 0,
+        metadata: null,
+        featureCount: null,
       };
       const signal = options.signal;
       if (signal) {
@@ -266,9 +286,9 @@ export class ImportPipeline {
     this.detachAbort(job);
     try {
       // Compact columns stay compact; inline still owns its input like a worker does.
-      const request = job.request.kind === 'columnar-points'
+      const request = (job.request.kind === 'columnar-points' || job.request.kind === 'columnar-parts'
         ? { ...job.request, batch: structuredClone(job.request.batch) }
-        : job.request;
+        : job.request) as WorkerImportRequest;
       const features = prepareImport(request);
       this.used.inline++;
       job.resolve(features);
@@ -291,9 +311,25 @@ export class ImportPipeline {
 
   private postJob(worker: ImportWorkerLike, job: PendingJob): void {
     job.requestId = this.nextRequestId++;
-    const transfer = job.options.copy === false ? transferablesOf(job.request) : [];
     try {
-      worker.postMessage({ requestId: job.requestId, request: job.request }, transfer);
+      let request = job.request;
+      if (request.kind === 'columnar-points' || request.kind === 'columnar-parts') {
+        const { ids, properties, ...columns } = request.batch;
+        const count = request.kind === 'columnar-points' ? columns.positions.length / 2 :
+          validatePartsBatch(request.batch, { positionKind: request.positionKind, context: `columnar(${request.sourceId})` });
+        validateColumnarMetadata(request.batch, count, `columnar(${request.sourceId})`);
+        // Validated IDs are primitives: copy their array without serializing half
+        // a million strings. Property graphs still use the native clone, including
+        // cycles, aliases and platform objects; they never round-trip to the worker.
+        const ownedIds = ids === undefined ? undefined : new Array<FeatureId | undefined>(count);
+        if (ownedIds) for (let i = 0; i < count; i++) ownedIds[i] = ids![i];
+        job.metadata = { ...(ownedIds === undefined ? {} : { ids: ownedIds }),
+          ...(properties === undefined ? {} : { properties: structuredClone(properties) }) };
+        job.featureCount = count;
+        request = { ...request, batch: columns } as WorkerImportRequest;
+      }
+      const transfer = job.options.copy === false ? transferablesOf(request) : [];
+      worker.postMessage({ requestId: job.requestId, request }, transfer);
     } catch (error) {
       this.releaseActive();
       this.detachAbort(job);
@@ -358,10 +394,27 @@ export class ImportPipeline {
       // Stale/foreign reply (e.g. for an already aborted request): ignored.
       return;
     }
+    if (reply.ok && job.featureCount !== null) {
+      const result = reply.features as ColumnarPointBatch | PartsImport;
+      const count = result.kind === 'prepared-parts' ? result.geometries.length : result.kind === 'raw-parts' ?
+        validatePartsBatch(result.batch, { positionKind: job.request.kind === 'geojson' ? 'geographic' : job.request.positionKind }) : result.positions.length / 2;
+      if (count !== job.featureCount) {
+        this.failWorker(job, 'the import worker changed the feature count');
+        return;
+      }
+    }
     this.releaseActive();
     if (reply.ok) {
       this.used.worker++;
-      job.resolve(reply.features as PreparedImport);
+      const result = reply.features as PreparedImport;
+      if (job.metadata === null || Array.isArray(result)) job.resolve(result);
+      else if (result.kind === 'raw-parts') {
+        const { ids: _ids, properties: _properties, ...batch } = result.batch;
+        job.resolve({ kind: 'raw-parts', batch: { ...batch, ...job.metadata } });
+      } else {
+        const { ids: _ids, properties: _properties, ...columns } = result;
+        job.resolve({ ...columns, ...job.metadata });
+      }
     } else {
       job.reject(tagRevision(replyError(reply.error), job.options.revision));
     }

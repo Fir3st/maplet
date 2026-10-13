@@ -1,0 +1,6789 @@
+{
+  "measuredAtUtc": "2026-10-13T08:50:26.444643+00:00",
+  "baseline": "immediate retained-scene rewrite before Canvas-target changes",
+  "buildSha256": {
+    "before": "2541c789cb009a3f624ac7f8cf0d6ef76cd0943330599841cc9947eb1038980c",
+    "after": "d0029776340e57cc3971e27ad7600f9f1b4633434cca5cb6a45d5623d5455aed"
+  },
+  "evaluatorSha256": {
+    "demo/compare.js": "c57b21e50609b574aec3673d7d8f022b8987cf0a2cd603a652b7282597310362",
+    "demo/e2e/runner.mjs": "03b0b51fc4128f67a364af84b1ee88b17887fb2203c17a5ed24acc1e54526e8a",
+    "demo/e2e/compare-updates.mjs": "8da6a73b00a94451336d2b5dc31319db0eeecf0e508b61b73d2a536c828d7b93"
+  },
+  "repetitions": 3,
+  "processBudgetSeconds": 120,
+  "workload": {
+    "points": 500000,
+    "viewportCssPx": [
+      720,
+      520
+    ],
+    "zoom": 10,
+    "interactive": true
+  },
+  "runs": [
+    {
+      "name": "ab-webgl1-before-1",
+      "status": "pass",
+      "elapsedSeconds": 19.27,
+      "measurements": [
+        {
+          "engine": "maplet",
+          "backend": "webgl1",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+          "dpr": 1,
+          "count": 500000,
+          "renderedPointsOrDomMarkers": 258420,
+          "markerDomElements": 0,
+          "mapCreateMs": 5,
+          "generateMs": 15,
+          "loadMs": 278,
+          "paintWaitMs": 68,
+          "setupToPaintMs": 366,
+          "gcAvailable": true,
+          "heapDeltaMiB": 142,
+          "drawCalls": 1,
+          "gpuMiB": 15.8,
+          "output": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ],
+          "projections": [
+            {
+              "expected": {
+                "x": 360,
+                "y": 260
+              },
+              "actual": {
+                "x": 360.0000000000291,
+                "y": 260
+              },
+              "pass": true
+            },
+            {
+              "expected": {
+                "x": 505.635555555555,
+                "y": 429.66218561920687
+              },
+              "actual": {
+                "x": 505.6355555555783,
+                "y": 429.6621856191923
+              },
+              "pass": true
+            }
+          ]
+        },
+        {
+          "coldPan": {
+            "samples": 5,
+            "renderUpdates": 5,
+            "elapsedMs": 3052,
+            "p50Ms": 1016.6,
+            "p95Ms": 1017.7,
+            "maxMs": 1017.7
+          },
+          "warmupMs": 5000,
+          "warmPan": {
+            "samples": 520,
+            "renderUpdates": 520,
+            "elapsedMs": 10016,
+            "p50Ms": 16.7,
+            "p95Ms": 17.5,
+            "maxMs": 1016.6
+          },
+          "afterPan": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ]
+        }
+      ],
+      "log": "/private/var/folders/7s/v15d0wv93w58mbg5sdfdjkk40000gn/T/opencode/maplet-canvas-target-ab-webgl1-before-1.log",
+      "profile": "webgl1",
+      "variant": "before",
+      "repetition": 1
+    },
+    {
+      "name": "ab-webgl1-after-1",
+      "status": "pass",
+      "elapsedSeconds": 19.16,
+      "measurements": [
+        {
+          "engine": "maplet",
+          "backend": "webgl1",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+          "dpr": 1,
+          "count": 500000,
+          "renderedPointsOrDomMarkers": 258420,
+          "markerDomElements": 0,
+          "mapCreateMs": 5,
+          "generateMs": 15,
+          "loadMs": 233,
+          "paintWaitMs": 52,
+          "setupToPaintMs": 305,
+          "gcAvailable": true,
+          "heapDeltaMiB": 127.4,
+          "drawCalls": 1,
+          "gpuMiB": 15.8,
+          "output": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ],
+          "projections": [
+            {
+              "expected": {
+                "x": 360,
+                "y": 260
+              },
+              "actual": {
+                "x": 360.0000000000291,
+                "y": 260
+              },
+              "pass": true
+            },
+            {
+              "expected": {
+                "x": 505.635555555555,
+                "y": 429.66218561920687
+              },
+              "actual": {
+                "x": 505.6355555555783,
+                "y": 429.6621856191923
+              },
+              "pass": true
+            }
+          ]
+        },
+        {
+          "coldPan": {
+            "samples": 5,
+            "renderUpdates": 5,
+            "elapsedMs": 3038,
+            "p50Ms": 1004.3,
+            "p95Ms": 1016.9,
+            "maxMs": 1016.9
+          },
+          "warmupMs": 5000,
+          "warmPan": {
+            "samples": 515,
+            "renderUpdates": 515,
+            "elapsedMs": 10016,
+            "p50Ms": 16.7,
+            "p95Ms": 17.4,
+            "maxMs": 1016.1
+          },
+          "afterPan": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ]
+        }
+      ],
+      "log": "/private/var/folders/7s/v15d0wv93w58mbg5sdfdjkk40000gn/T/opencode/maplet-canvas-target-ab-webgl1-after-1.log",
+      "profile": "webgl1",
+      "variant": "after",
+      "repetition": 1
+    },
+    {
+      "name": "ab-canvas-1",
+      "status": "pass",
+      "elapsedSeconds": 19.84,
+      "measurements": [
+        {
+          "engine": "leaflet-canvas",
+          "backend": "1.9.4",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+          "dpr": 1,
+          "count": 500000,
+          "renderedPointsOrDomMarkers": 231240,
+          "markerDomElements": 0,
+          "mapCreateMs": 1,
+          "generateMs": 15,
+          "loadMs": 221,
+          "paintWaitMs": 50,
+          "setupToPaintMs": 287,
+          "gcAvailable": true,
+          "heapDeltaMiB": 207.1,
+          "drawCalls": null,
+          "gpuMiB": null,
+          "output": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 235,
+                "a": 255
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 235,
+                "a": 255
+              }
+            }
+          ],
+          "projections": [
+            {
+              "expected": {
+                "x": 360,
+                "y": 260
+              },
+              "actual": {
+                "x": 360,
+                "y": 260
+              },
+              "pass": true
+            },
+            {
+              "expected": {
+                "x": 505.635555555555,
+                "y": 429.66218561920687
+              },
+              "actual": {
+                "x": 506,
+                "y": 429
+              },
+              "pass": true
+            }
+          ]
+        },
+        {
+          "coldPan": {
+            "samples": 6,
+            "renderUpdates": 6,
+            "elapsedMs": 3413,
+            "p50Ms": 995.9,
+            "p95Ms": 1017.1,
+            "maxMs": 1017.1
+          },
+          "warmupMs": 5000,
+          "warmPan": {
+            "samples": 68,
+            "renderUpdates": 68,
+            "elapsedMs": 10146,
+            "p50Ms": 130.6,
+            "p95Ms": 152.2,
+            "maxMs": 1016.5
+          },
+          "afterPan": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 98,
+                "b": 235,
+                "a": 255
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 35,
+                "g": 98,
+                "b": 235,
+                "a": 255
+              }
+            }
+          ]
+        }
+      ],
+      "log": "/private/var/folders/7s/v15d0wv93w58mbg5sdfdjkk40000gn/T/opencode/maplet-canvas-target-ab-canvas-1.log",
+      "profile": "leaflet-canvas",
+      "variant": "control",
+      "repetition": 1
+    },
+    {
+      "name": "ab-webgpu-before-1",
+      "status": "pass",
+      "elapsedSeconds": 19.19,
+      "measurements": [
+        {
+          "engine": "maplet",
+          "backend": "webgpu",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+          "dpr": 1,
+          "count": 500000,
+          "renderedPointsOrDomMarkers": 258420,
+          "markerDomElements": 0,
+          "mapCreateMs": 3,
+          "generateMs": 15,
+          "loadMs": 250,
+          "paintWaitMs": 66,
+          "setupToPaintMs": 334,
+          "gcAvailable": true,
+          "heapDeltaMiB": 142,
+          "drawCalls": 1,
+          "gpuMiB": 15.8,
+          "output": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ],
+          "projections": [
+            {
+              "expected": {
+                "x": 360,
+                "y": 260
+              },
+              "actual": {
+                "x": 360.0000000000291,
+                "y": 260
+              },
+              "pass": true
+            },
+            {
+              "expected": {
+                "x": 505.635555555555,
+                "y": 429.66218561920687
+              },
+              "actual": {
+                "x": 505.6355555555783,
+                "y": 429.6621856191923
+              },
+              "pass": true
+            }
+          ]
+        },
+        {
+          "coldPan": {
+            "samples": 3,
+            "renderUpdates": 3,
+            "elapsedMs": 3013,
+            "p50Ms": 1016.4,
+            "p95Ms": 1017.5,
+            "maxMs": 1017.5
+          },
+          "warmupMs": 5000,
+          "warmPan": {
+            "samples": 516,
+            "renderUpdates": 516,
+            "elapsedMs": 10015,
+            "p50Ms": 16.7,
+            "p95Ms": 17.5,
+            "maxMs": 1016.4
+          },
+          "afterPan": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ]
+        }
+      ],
+      "log": "/private/var/folders/7s/v15d0wv93w58mbg5sdfdjkk40000gn/T/opencode/maplet-canvas-target-ab-webgpu-before-1.log",
+      "profile": "webgpu",
+      "variant": "before",
+      "repetition": 1
+    },
+    {
+      "name": "ab-webgpu-after-1",
+      "status": "pass",
+      "elapsedSeconds": 19.17,
+      "measurements": [
+        {
+          "engine": "maplet",
+          "backend": "webgpu",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+          "dpr": 1,
+          "count": 500000,
+          "renderedPointsOrDomMarkers": 258420,
+          "markerDomElements": 0,
+          "mapCreateMs": 3,
+          "generateMs": 15,
+          "loadMs": 206,
+          "paintWaitMs": 50,
+          "setupToPaintMs": 274,
+          "gcAvailable": true,
+          "heapDeltaMiB": 127.3,
+          "drawCalls": 1,
+          "gpuMiB": 15.8,
+          "output": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ],
+          "projections": [
+            {
+              "expected": {
+                "x": 360,
+                "y": 260
+              },
+              "actual": {
+                "x": 360.0000000000291,
+                "y": 260
+              },
+              "pass": true
+            },
+            {
+              "expected": {
+                "x": 505.635555555555,
+                "y": 429.66218561920687
+              },
+              "actual": {
+                "x": 505.6355555555783,
+                "y": 429.6621856191923
+              },
+              "pass": true
+            }
+          ]
+        },
+        {
+          "coldPan": {
+            "samples": 3,
+            "renderUpdates": 3,
+            "elapsedMs": 3021,
+            "p50Ms": 1016.5,
+            "p95Ms": 1016.9,
+            "maxMs": 1016.9
+          },
+          "warmupMs": 5000,
+          "warmPan": {
+            "samples": 512,
+            "renderUpdates": 512,
+            "elapsedMs": 10000,
+            "p50Ms": 16.7,
+            "p95Ms": 17.5,
+            "maxMs": 1017.2
+          },
+          "afterPan": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ]
+        }
+      ],
+      "log": "/private/var/folders/7s/v15d0wv93w58mbg5sdfdjkk40000gn/T/opencode/maplet-canvas-target-ab-webgpu-after-1.log",
+      "profile": "webgpu",
+      "variant": "after",
+      "repetition": 1
+    },
+    {
+      "name": "ab-webgl1-after-2",
+      "status": "pass",
+      "elapsedSeconds": 19.22,
+      "measurements": [
+        {
+          "engine": "maplet",
+          "backend": "webgl1",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+          "dpr": 1,
+          "count": 500000,
+          "renderedPointsOrDomMarkers": 258420,
+          "markerDomElements": 0,
+          "mapCreateMs": 5,
+          "generateMs": 15,
+          "loadMs": 243,
+          "paintWaitMs": 53,
+          "setupToPaintMs": 315,
+          "gcAvailable": true,
+          "heapDeltaMiB": 127.4,
+          "drawCalls": 1,
+          "gpuMiB": 15.8,
+          "output": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ],
+          "projections": [
+            {
+              "expected": {
+                "x": 360,
+                "y": 260
+              },
+              "actual": {
+                "x": 360.0000000000291,
+                "y": 260
+              },
+              "pass": true
+            },
+            {
+              "expected": {
+                "x": 505.635555555555,
+                "y": 429.66218561920687
+              },
+              "actual": {
+                "x": 505.6355555555783,
+                "y": 429.6621856191923
+              },
+              "pass": true
+            }
+          ]
+        },
+        {
+          "coldPan": {
+            "samples": 5,
+            "renderUpdates": 5,
+            "elapsedMs": 3036,
+            "p50Ms": 1001.8,
+            "p95Ms": 1017.7,
+            "maxMs": 1017.7
+          },
+          "warmupMs": 5000,
+          "warmPan": {
+            "samples": 517,
+            "renderUpdates": 517,
+            "elapsedMs": 10017,
+            "p50Ms": 16.7,
+            "p95Ms": 17.5,
+            "maxMs": 1017.1
+          },
+          "afterPan": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ]
+        }
+      ],
+      "log": "/private/var/folders/7s/v15d0wv93w58mbg5sdfdjkk40000gn/T/opencode/maplet-canvas-target-ab-webgl1-after-2.log",
+      "profile": "webgl1",
+      "variant": "after",
+      "repetition": 2
+    },
+    {
+      "name": "ab-webgl1-before-2",
+      "status": "pass",
+      "elapsedSeconds": 19.25,
+      "measurements": [
+        {
+          "engine": "maplet",
+          "backend": "webgl1",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+          "dpr": 1,
+          "count": 500000,
+          "renderedPointsOrDomMarkers": 258420,
+          "markerDomElements": 0,
+          "mapCreateMs": 5,
+          "generateMs": 15,
+          "loadMs": 278,
+          "paintWaitMs": 69,
+          "setupToPaintMs": 367,
+          "gcAvailable": true,
+          "heapDeltaMiB": 142,
+          "drawCalls": 1,
+          "gpuMiB": 15.8,
+          "output": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ],
+          "projections": [
+            {
+              "expected": {
+                "x": 360,
+                "y": 260
+              },
+              "actual": {
+                "x": 360.0000000000291,
+                "y": 260
+              },
+              "pass": true
+            },
+            {
+              "expected": {
+                "x": 505.635555555555,
+                "y": 429.66218561920687
+              },
+              "actual": {
+                "x": 505.6355555555783,
+                "y": 429.6621856191923
+              },
+              "pass": true
+            }
+          ]
+        },
+        {
+          "coldPan": {
+            "samples": 4,
+            "renderUpdates": 4,
+            "elapsedMs": 3045,
+            "p50Ms": 1016.3,
+            "p95Ms": 1016.7,
+            "maxMs": 1016.7
+          },
+          "warmupMs": 5000,
+          "warmPan": {
+            "samples": 520,
+            "renderUpdates": 520,
+            "elapsedMs": 10016,
+            "p50Ms": 16.7,
+            "p95Ms": 17.5,
+            "maxMs": 1015.9
+          },
+          "afterPan": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ]
+        }
+      ],
+      "log": "/private/var/folders/7s/v15d0wv93w58mbg5sdfdjkk40000gn/T/opencode/maplet-canvas-target-ab-webgl1-before-2.log",
+      "profile": "webgl1",
+      "variant": "before",
+      "repetition": 2
+    },
+    {
+      "name": "ab-canvas-2",
+      "status": "pass",
+      "elapsedSeconds": 19.68,
+      "measurements": [
+        {
+          "engine": "leaflet-canvas",
+          "backend": "1.9.4",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+          "dpr": 1,
+          "count": 500000,
+          "renderedPointsOrDomMarkers": 231240,
+          "markerDomElements": 0,
+          "mapCreateMs": 1,
+          "generateMs": 15,
+          "loadMs": 219,
+          "paintWaitMs": 51,
+          "setupToPaintMs": 287,
+          "gcAvailable": true,
+          "heapDeltaMiB": 207.1,
+          "drawCalls": null,
+          "gpuMiB": null,
+          "output": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 235,
+                "a": 255
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 235,
+                "a": 255
+              }
+            }
+          ],
+          "projections": [
+            {
+              "expected": {
+                "x": 360,
+                "y": 260
+              },
+              "actual": {
+                "x": 360,
+                "y": 260
+              },
+              "pass": true
+            },
+            {
+              "expected": {
+                "x": 505.635555555555,
+                "y": 429.66218561920687
+              },
+              "actual": {
+                "x": 506,
+                "y": 429
+              },
+              "pass": true
+            }
+          ]
+        },
+        {
+          "coldPan": {
+            "samples": 6,
+            "renderUpdates": 6,
+            "elapsedMs": 3416,
+            "p50Ms": 998,
+            "p95Ms": 1017,
+            "maxMs": 1017
+          },
+          "warmupMs": 5000,
+          "warmPan": {
+            "samples": 64,
+            "renderUpdates": 64,
+            "elapsedMs": 10006,
+            "p50Ms": 145.5,
+            "p95Ms": 173.4,
+            "maxMs": 1016.4
+          },
+          "afterPan": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 98,
+                "b": 235,
+                "a": 255
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 35,
+                "g": 98,
+                "b": 235,
+                "a": 255
+              }
+            }
+          ]
+        }
+      ],
+      "log": "/private/var/folders/7s/v15d0wv93w58mbg5sdfdjkk40000gn/T/opencode/maplet-canvas-target-ab-canvas-2.log",
+      "profile": "leaflet-canvas",
+      "variant": "control",
+      "repetition": 2
+    },
+    {
+      "name": "ab-webgpu-after-2",
+      "status": "pass",
+      "elapsedSeconds": 19.23,
+      "measurements": [
+        {
+          "engine": "maplet",
+          "backend": "webgpu",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+          "dpr": 1,
+          "count": 500000,
+          "renderedPointsOrDomMarkers": 258420,
+          "markerDomElements": 0,
+          "mapCreateMs": 4,
+          "generateMs": 17,
+          "loadMs": 238,
+          "paintWaitMs": 52,
+          "setupToPaintMs": 311,
+          "gcAvailable": true,
+          "heapDeltaMiB": 127.3,
+          "drawCalls": 1,
+          "gpuMiB": 15.8,
+          "output": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ],
+          "projections": [
+            {
+              "expected": {
+                "x": 360,
+                "y": 260
+              },
+              "actual": {
+                "x": 360.0000000000291,
+                "y": 260
+              },
+              "pass": true
+            },
+            {
+              "expected": {
+                "x": 505.635555555555,
+                "y": 429.66218561920687
+              },
+              "actual": {
+                "x": 505.6355555555783,
+                "y": 429.6621856191923
+              },
+              "pass": true
+            }
+          ]
+        },
+        {
+          "coldPan": {
+            "samples": 3,
+            "renderUpdates": 3,
+            "elapsedMs": 3019,
+            "p50Ms": 1016.1,
+            "p95Ms": 1016.9,
+            "maxMs": 1016.9
+          },
+          "warmupMs": 5000,
+          "warmPan": {
+            "samples": 516,
+            "renderUpdates": 516,
+            "elapsedMs": 10016,
+            "p50Ms": 16.7,
+            "p95Ms": 17.6,
+            "maxMs": 1017
+          },
+          "afterPan": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ]
+        }
+      ],
+      "log": "/private/var/folders/7s/v15d0wv93w58mbg5sdfdjkk40000gn/T/opencode/maplet-canvas-target-ab-webgpu-after-2.log",
+      "profile": "webgpu",
+      "variant": "after",
+      "repetition": 2
+    },
+    {
+      "name": "ab-webgpu-before-2",
+      "status": "pass",
+      "elapsedSeconds": 19.19,
+      "measurements": [
+        {
+          "engine": "maplet",
+          "backend": "webgpu",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+          "dpr": 1,
+          "count": 500000,
+          "renderedPointsOrDomMarkers": 258420,
+          "markerDomElements": 0,
+          "mapCreateMs": 3,
+          "generateMs": 15,
+          "loadMs": 252,
+          "paintWaitMs": 67,
+          "setupToPaintMs": 336,
+          "gcAvailable": true,
+          "heapDeltaMiB": 142,
+          "drawCalls": 1,
+          "gpuMiB": 15.8,
+          "output": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ],
+          "projections": [
+            {
+              "expected": {
+                "x": 360,
+                "y": 260
+              },
+              "actual": {
+                "x": 360.0000000000291,
+                "y": 260
+              },
+              "pass": true
+            },
+            {
+              "expected": {
+                "x": 505.635555555555,
+                "y": 429.66218561920687
+              },
+              "actual": {
+                "x": 505.6355555555783,
+                "y": 429.6621856191923
+              },
+              "pass": true
+            }
+          ]
+        },
+        {
+          "coldPan": {
+            "samples": 3,
+            "renderUpdates": 3,
+            "elapsedMs": 3016,
+            "p50Ms": 1015.5,
+            "p95Ms": 1017.1,
+            "maxMs": 1017.1
+          },
+          "warmupMs": 5000,
+          "warmPan": {
+            "samples": 517,
+            "renderUpdates": 517,
+            "elapsedMs": 10017,
+            "p50Ms": 16.6,
+            "p95Ms": 17.4,
+            "maxMs": 1017.6
+          },
+          "afterPan": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ]
+        }
+      ],
+      "log": "/private/var/folders/7s/v15d0wv93w58mbg5sdfdjkk40000gn/T/opencode/maplet-canvas-target-ab-webgpu-before-2.log",
+      "profile": "webgpu",
+      "variant": "before",
+      "repetition": 2
+    },
+    {
+      "name": "ab-webgl1-before-3",
+      "status": "pass",
+      "elapsedSeconds": 19.24,
+      "measurements": [
+        {
+          "engine": "maplet",
+          "backend": "webgl1",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+          "dpr": 1,
+          "count": 500000,
+          "renderedPointsOrDomMarkers": 258420,
+          "markerDomElements": 0,
+          "mapCreateMs": 5,
+          "generateMs": 15,
+          "loadMs": 288,
+          "paintWaitMs": 68,
+          "setupToPaintMs": 376,
+          "gcAvailable": true,
+          "heapDeltaMiB": 142,
+          "drawCalls": 1,
+          "gpuMiB": 15.8,
+          "output": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ],
+          "projections": [
+            {
+              "expected": {
+                "x": 360,
+                "y": 260
+              },
+              "actual": {
+                "x": 360.0000000000291,
+                "y": 260
+              },
+              "pass": true
+            },
+            {
+              "expected": {
+                "x": 505.635555555555,
+                "y": 429.66218561920687
+              },
+              "actual": {
+                "x": 505.6355555555783,
+                "y": 429.6621856191923
+              },
+              "pass": true
+            }
+          ]
+        },
+        {
+          "coldPan": {
+            "samples": 5,
+            "renderUpdates": 5,
+            "elapsedMs": 3036,
+            "p50Ms": 1001.9,
+            "p95Ms": 1017.2,
+            "maxMs": 1017.2
+          },
+          "warmupMs": 5000,
+          "warmPan": {
+            "samples": 520,
+            "renderUpdates": 520,
+            "elapsedMs": 10016,
+            "p50Ms": 16.7,
+            "p95Ms": 17.6,
+            "maxMs": 1015.9
+          },
+          "afterPan": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ]
+        }
+      ],
+      "log": "/private/var/folders/7s/v15d0wv93w58mbg5sdfdjkk40000gn/T/opencode/maplet-canvas-target-ab-webgl1-before-3.log",
+      "profile": "webgl1",
+      "variant": "before",
+      "repetition": 3
+    },
+    {
+      "name": "ab-webgl1-after-3",
+      "status": "pass",
+      "elapsedSeconds": 19.2,
+      "measurements": [
+        {
+          "engine": "maplet",
+          "backend": "webgl1",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+          "dpr": 1,
+          "count": 500000,
+          "renderedPointsOrDomMarkers": 258420,
+          "markerDomElements": 0,
+          "mapCreateMs": 5,
+          "generateMs": 15,
+          "loadMs": 250,
+          "paintWaitMs": 53,
+          "setupToPaintMs": 323,
+          "gcAvailable": true,
+          "heapDeltaMiB": 127.4,
+          "drawCalls": 1,
+          "gpuMiB": 15.8,
+          "output": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ],
+          "projections": [
+            {
+              "expected": {
+                "x": 360,
+                "y": 260
+              },
+              "actual": {
+                "x": 360.0000000000291,
+                "y": 260
+              },
+              "pass": true
+            },
+            {
+              "expected": {
+                "x": 505.635555555555,
+                "y": 429.66218561920687
+              },
+              "actual": {
+                "x": 505.6355555555783,
+                "y": 429.6621856191923
+              },
+              "pass": true
+            }
+          ]
+        },
+        {
+          "coldPan": {
+            "samples": 5,
+            "renderUpdates": 5,
+            "elapsedMs": 3040,
+            "p50Ms": 1005.5,
+            "p95Ms": 1016.8,
+            "maxMs": 1016.8
+          },
+          "warmupMs": 5000,
+          "warmPan": {
+            "samples": 517,
+            "renderUpdates": 517,
+            "elapsedMs": 10015,
+            "p50Ms": 16.7,
+            "p95Ms": 17.6,
+            "maxMs": 1016.6
+          },
+          "afterPan": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ]
+        }
+      ],
+      "log": "/private/var/folders/7s/v15d0wv93w58mbg5sdfdjkk40000gn/T/opencode/maplet-canvas-target-ab-webgl1-after-3.log",
+      "profile": "webgl1",
+      "variant": "after",
+      "repetition": 3
+    },
+    {
+      "name": "ab-canvas-3",
+      "status": "pass",
+      "elapsedSeconds": 19.78,
+      "measurements": [
+        {
+          "engine": "leaflet-canvas",
+          "backend": "1.9.4",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+          "dpr": 1,
+          "count": 500000,
+          "renderedPointsOrDomMarkers": 231240,
+          "markerDomElements": 0,
+          "mapCreateMs": 1,
+          "generateMs": 15,
+          "loadMs": 221,
+          "paintWaitMs": 51,
+          "setupToPaintMs": 287,
+          "gcAvailable": true,
+          "heapDeltaMiB": 207.1,
+          "drawCalls": null,
+          "gpuMiB": null,
+          "output": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 235,
+                "a": 255
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 235,
+                "a": 255
+              }
+            }
+          ],
+          "projections": [
+            {
+              "expected": {
+                "x": 360,
+                "y": 260
+              },
+              "actual": {
+                "x": 360,
+                "y": 260
+              },
+              "pass": true
+            },
+            {
+              "expected": {
+                "x": 505.635555555555,
+                "y": 429.66218561920687
+              },
+              "actual": {
+                "x": 506,
+                "y": 429
+              },
+              "pass": true
+            }
+          ]
+        },
+        {
+          "coldPan": {
+            "samples": 6,
+            "renderUpdates": 6,
+            "elapsedMs": 3467,
+            "p50Ms": 1008.3,
+            "p95Ms": 1017.3,
+            "maxMs": 1017.3
+          },
+          "warmupMs": 5000,
+          "warmPan": {
+            "samples": 66,
+            "renderUpdates": 66,
+            "elapsedMs": 10036,
+            "p50Ms": 132.5,
+            "p95Ms": 154.4,
+            "maxMs": 982.5
+          },
+          "afterPan": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 98,
+                "b": 235,
+                "a": 255
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 35,
+                "g": 98,
+                "b": 235,
+                "a": 255
+              }
+            }
+          ]
+        }
+      ],
+      "log": "/private/var/folders/7s/v15d0wv93w58mbg5sdfdjkk40000gn/T/opencode/maplet-canvas-target-ab-canvas-3.log",
+      "profile": "leaflet-canvas",
+      "variant": "control",
+      "repetition": 3
+    },
+    {
+      "name": "ab-webgpu-before-3",
+      "status": "pass",
+      "elapsedSeconds": 19.2,
+      "measurements": [
+        {
+          "engine": "maplet",
+          "backend": "webgpu",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+          "dpr": 1,
+          "count": 500000,
+          "renderedPointsOrDomMarkers": 258420,
+          "markerDomElements": 0,
+          "mapCreateMs": 3,
+          "generateMs": 15,
+          "loadMs": 253,
+          "paintWaitMs": 67,
+          "setupToPaintMs": 338,
+          "gcAvailable": true,
+          "heapDeltaMiB": 142,
+          "drawCalls": 1,
+          "gpuMiB": 15.8,
+          "output": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ],
+          "projections": [
+            {
+              "expected": {
+                "x": 360,
+                "y": 260
+              },
+              "actual": {
+                "x": 360.0000000000291,
+                "y": 260
+              },
+              "pass": true
+            },
+            {
+              "expected": {
+                "x": 505.635555555555,
+                "y": 429.66218561920687
+              },
+              "actual": {
+                "x": 505.6355555555783,
+                "y": 429.6621856191923
+              },
+              "pass": true
+            }
+          ]
+        },
+        {
+          "coldPan": {
+            "samples": 4,
+            "renderUpdates": 4,
+            "elapsedMs": 3042,
+            "p50Ms": 1016.6,
+            "p95Ms": 1017,
+            "maxMs": 1017
+          },
+          "warmupMs": 5000,
+          "warmPan": {
+            "samples": 518,
+            "renderUpdates": 518,
+            "elapsedMs": 10016,
+            "p50Ms": 16.7,
+            "p95Ms": 17.4,
+            "maxMs": 1016.7
+          },
+          "afterPan": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ]
+        }
+      ],
+      "log": "/private/var/folders/7s/v15d0wv93w58mbg5sdfdjkk40000gn/T/opencode/maplet-canvas-target-ab-webgpu-before-3.log",
+      "profile": "webgpu",
+      "variant": "before",
+      "repetition": 3
+    },
+    {
+      "name": "ab-webgpu-after-3",
+      "status": "pass",
+      "elapsedSeconds": 19.15,
+      "measurements": [
+        {
+          "engine": "maplet",
+          "backend": "webgpu",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+          "dpr": 1,
+          "count": 500000,
+          "renderedPointsOrDomMarkers": 258420,
+          "markerDomElements": 0,
+          "mapCreateMs": 3,
+          "generateMs": 15,
+          "loadMs": 206,
+          "paintWaitMs": 50,
+          "setupToPaintMs": 275,
+          "gcAvailable": true,
+          "heapDeltaMiB": 127.3,
+          "drawCalls": 1,
+          "gpuMiB": 15.8,
+          "output": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ],
+          "projections": [
+            {
+              "expected": {
+                "x": 360,
+                "y": 260
+              },
+              "actual": {
+                "x": 360.0000000000291,
+                "y": 260
+              },
+              "pass": true
+            },
+            {
+              "expected": {
+                "x": 505.635555555555,
+                "y": 429.66218561920687
+              },
+              "actual": {
+                "x": 505.6355555555783,
+                "y": 429.6621856191923
+              },
+              "pass": true
+            }
+          ]
+        },
+        {
+          "coldPan": {
+            "samples": 3,
+            "renderUpdates": 3,
+            "elapsedMs": 3022,
+            "p50Ms": 1016.8,
+            "p95Ms": 1017.6,
+            "maxMs": 1017.6
+          },
+          "warmupMs": 5000,
+          "warmPan": {
+            "samples": 513,
+            "renderUpdates": 513,
+            "elapsedMs": 10016,
+            "p50Ms": 16.7,
+            "p95Ms": 17.4,
+            "maxMs": 1017
+          },
+          "afterPan": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ]
+        }
+      ],
+      "log": "/private/var/folders/7s/v15d0wv93w58mbg5sdfdjkk40000gn/T/opencode/maplet-canvas-target-ab-webgpu-after-3.log",
+      "profile": "webgpu",
+      "variant": "after",
+      "repetition": 3
+    }
+  ],
+  "validation": [
+    {
+      "name": "final-webgl1-functional",
+      "status": "pass",
+      "elapsedSeconds": 70.46,
+      "measurements": [
+        {
+          "order": [
+            "layer:click",
+            "leaf:click",
+            "root:click",
+            "map:click"
+          ]
+        },
+        {
+          "order": [
+            "layer:click",
+            "stop"
+          ]
+        },
+        {
+          "hovered": true,
+          "sawOver": true,
+          "pixelHover": [
+            255,
+            0,
+            0
+          ],
+          "cursorHover": "move",
+          "hoveredAfter": false,
+          "sawOut": true,
+          "pixelAway": [
+            22,
+            163,
+            74
+          ],
+          "cursorAway": "grab"
+        },
+        {
+          "aHovered": false,
+          "bHovered": true
+        },
+        {
+          "before": [
+            22,
+            163,
+            74,
+            255
+          ],
+          "hidden": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "hitsHidden": 0,
+          "back": [
+            22,
+            163,
+            74,
+            255
+          ],
+          "hitsBack": [
+            "a"
+          ],
+          "dataCount": 2
+        },
+        {
+          "selectedState": true,
+          "selectedPixel": [
+            245,
+            158,
+            11
+          ],
+          "clearedPixel": [
+            22,
+            163,
+            74
+          ]
+        },
+        {
+          "lng": [
+            14.100000000000005,
+            14.182397460937505
+          ],
+          "zoom": [
+            10,
+            10,
+            10.5
+          ],
+          "formGuard": true
+        },
+        {
+          "zoom0": 10,
+          "zoomEarly": 11,
+          "zoom1": 11,
+          "zoom2": 12,
+          "zoomAfterLift": 12,
+          "zoomWhilePan": 12
+        },
+        {
+          "before": [
+            49.999999999999986,
+            13.99999999999999
+          ],
+          "after": [
+            49.98234206933653,
+            14.05493164062499
+          ],
+          "midErrorM": 0,
+          "endErrorM": 0,
+          "viewMoved": false,
+          "dragEvents": [
+            "layer:dragstart",
+            "leaf:dragstart",
+            "root:dragstart",
+            "map:dragstart",
+            "layer:drag",
+            "leaf:drag",
+            "root:drag",
+            "map:drag",
+            "layer:drag",
+            "leaf:drag",
+            "root:drag",
+            "map:drag",
+            "layer:dragend",
+            "leaf:dragend",
+            "root:dragend",
+            "map:dragend"
+          ]
+        },
+        {
+          "full": [
+            "b",
+            "a"
+          ],
+          "limitedTo2": [
+            "b",
+            "a"
+          ],
+          "limitedTo1": [
+            "b"
+          ],
+          "empty": [],
+          "isolated": [
+            "a"
+          ]
+        },
+        {
+          "syncSpanMs": 1,
+          "recordedMs": 1,
+          "recordedReadMs": 1,
+          "readback": "blocking",
+          "hits": [
+            "b",
+            "a"
+          ]
+        },
+        {
+          "burst": 40,
+          "burstSpanMs": 21.7,
+          "recordedTotalMs": 21.6,
+          "heartbeatGapMs": 21.9,
+          "readback": "blocking"
+        },
+        {
+          "loaded": true,
+          "samples": [
+            {
+              "point": {
+                "x": 80,
+                "y": 80
+              },
+              "pixel": [
+                40,
+                215,
+                0,
+                255
+              ],
+              "expected": [
+                40,
+                215,
+                0
+              ],
+              "delta": 0
+            },
+            {
+              "point": {
+                "x": 432,
+                "y": 80
+              },
+              "pixel": [
+                215,
+                215,
+                0,
+                255
+              ],
+              "expected": [
+                215,
+                215,
+                0
+              ],
+              "delta": 0
+            },
+            {
+              "point": {
+                "x": 80,
+                "y": 432
+              },
+              "pixel": [
+                40,
+                40,
+                0,
+                255
+              ],
+              "expected": [
+                40,
+                40,
+                0
+              ],
+              "delta": 0
+            },
+            {
+              "point": {
+                "x": 432,
+                "y": 432
+              },
+              "pixel": [
+                215,
+                40,
+                0,
+                255
+              ],
+              "expected": [
+                215,
+                40,
+                0
+              ],
+              "delta": 0
+            }
+          ],
+          "marker": [
+            255,
+            0,
+            255,
+            255
+          ],
+          "off": [
+            152,
+            127,
+            0,
+            255
+          ]
+        },
+        {
+          "swapped": true,
+          "epsg4326": true,
+          "crs84": true,
+          "crs84Geography": true,
+          "marker": [
+            255,
+            0,
+            255,
+            255
+          ],
+          "offMarker": [
+            152,
+            127,
+            32,
+            255
+          ]
+        },
+        {
+          "modern": true,
+          "legacy": true,
+          "modernSamples": [
+            {
+              "point": {
+                "x": 80,
+                "y": 80
+              },
+              "pixel": [
+                40,
+                215,
+                96,
+                255
+              ],
+              "expected": [
+                40,
+                215,
+                96
+              ],
+              "delta": 0
+            },
+            {
+              "point": {
+                "x": 432,
+                "y": 80
+              },
+              "pixel": [
+                215,
+                215,
+                96,
+                255
+              ],
+              "expected": [
+                215,
+                215,
+                96
+              ],
+              "delta": 0
+            },
+            {
+              "point": {
+                "x": 80,
+                "y": 432
+              },
+              "pixel": [
+                40,
+                40,
+                96,
+                255
+              ],
+              "expected": [
+                40,
+                40,
+                96
+              ],
+              "delta": 0
+            },
+            {
+              "point": {
+                "x": 432,
+                "y": 432
+              },
+              "pixel": [
+                215,
+                40,
+                96,
+                255
+              ],
+              "expected": [
+                215,
+                40,
+                96
+              ],
+              "delta": 0
+            }
+          ],
+          "legacyMarker": [
+            255,
+            0,
+            255,
+            255
+          ]
+        },
+        {
+          "decoded": {
+            "layers": "roads & rails/1",
+            "styles": "bold red",
+            "time": "2026-10-10",
+            "srs": "EPSG:4326",
+            "version": "1.1.1"
+          },
+          "status": 200,
+          "png": true,
+          "geography": true
+        },
+        {
+          "held": [
+            152,
+            127,
+            0,
+            255
+          ],
+          "baseline": [
+            151,
+            128,
+            0
+          ],
+          "swapMs": 239,
+          "late": [
+            152,
+            127,
+            255,
+            255
+          ]
+        },
+        {
+          "rasterHits": [
+            "wms:wms"
+          ],
+          "nearHotspotHits": [
+            "wms:wms"
+          ],
+          "hotspotHits": [
+            "hotspots:hotspot-a"
+          ],
+          "clicks": [
+            {
+              "sourceId": "wms",
+              "id": "wms",
+              "layerId": "wms-layer"
+            }
+          ]
+        },
+        {
+          "inkAbove": 76,
+          "inkBelow": 0,
+          "text": "P\u0159\u00edli\u0161 \u017elu\u0165ou\u010dk\u00fd k\u016f\u0148"
+        },
+        {
+          "changed": "Nov\u00fd n\u00e1zev",
+          "restored": "P\u0159\u00edli\u0161 \u017elu\u0165ou\u010dk\u00fd k\u016f\u0148"
+        },
+        {
+          "withCollision": 0,
+          "withoutCollision": 16,
+          "order": [
+            "ALFA-ALFA",
+            "BETA-BETA"
+          ]
+        },
+        {
+          "hovered": true,
+          "cursor": "pointer",
+          "events": [
+            "mouseover:dia",
+            "click:dia"
+          ]
+        },
+        {
+          "turned": {
+            "ink": 136,
+            "width": 8,
+            "height": 104,
+            "cx": 327.81777777778916,
+            "cy": 391.98365986865247
+          },
+          "flat": {
+            "ink": 87,
+            "width": 103,
+            "height": 8,
+            "cx": 342.8813333333237,
+            "cy": 459.94367056695046
+          },
+          "probes": [
+            {
+              "dy": -36,
+              "rotated": true
+            },
+            {
+              "dy": -24,
+              "rotated": true
+            },
+            {
+              "dy": -12,
+              "rotated": true
+            },
+            {
+              "dy": 12,
+              "rotated": true
+            },
+            {
+              "dy": 24,
+              "rotated": true
+            },
+            {
+              "dy": 36,
+              "rotated": true
+            }
+          ],
+          "sideHits": [
+            false,
+            false,
+            false,
+            false
+          ]
+        },
+        {
+          "inkBefore": 214,
+          "inkAfterPressure": 214,
+          "offscreenInk": 0
+        },
+        {
+          "canvases": 1,
+          "children": 1
+        },
+        {
+          "brokenState": {
+            "id": "broken-pin",
+            "src": "./definitely-missing.png",
+            "state": "error",
+            "width": 0,
+            "height": 0,
+            "error": "failed to load ./definitely-missing.png"
+          },
+          "fallbackPixel": [
+            22,
+            163,
+            74,
+            255
+          ],
+          "spritesForBroken": 0
+        },
+        {
+          "state": "ready",
+          "width": 32,
+          "height": 40,
+          "planSprites": 501,
+          "drawCalls": 5,
+          "white": [
+            255,
+            253,
+            253,
+            255
+          ],
+          "red": [
+            225,
+            29,
+            72,
+            255
+          ]
+        },
+        {
+          "corner": [],
+          "middle": [
+            "center"
+          ]
+        },
+        {
+          "atAnchor": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "above": [
+            255,
+            255,
+            255,
+            255
+          ]
+        },
+        {
+          "grid": 49,
+          "pixelMatches": 49,
+          "pickMatches": 49,
+          "maxPixelDelta": 0,
+          "flat": {
+            "x": -0.5,
+            "y": -3,
+            "count": 40
+          },
+          "turned": {
+            "x": 2,
+            "y": -0.5,
+            "count": 40
+          }
+        },
+        {
+          "anchor": [
+            406,
+            316
+          ],
+          "body": [
+            225,
+            29,
+            72,
+            255
+          ],
+          "left": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "top": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "box": {
+            "minX": 0,
+            "maxX": 22,
+            "minY": -12,
+            "maxY": 10
+          }
+        },
+        {
+          "states": [
+            "loading",
+            "ready"
+          ],
+          "snapshot": "ready",
+          "frames": [
+            2,
+            3
+          ],
+          "latencyMs": 102
+        },
+        {
+          "count": 9,
+          "polygonType": "multiPolygon",
+          "polygons": 2,
+          "lineType": "multiLineString",
+          "lines": 2,
+          "halfA": [
+            233,
+            150,
+            10,
+            242
+          ],
+          "halfB": [
+            233,
+            150,
+            10,
+            242
+          ],
+          "selectedOnce": 1
+        },
+        {
+          "roadType": "lineString",
+          "buildingType": "polygon",
+          "visible": [
+            233,
+            150,
+            10,
+            242
+          ],
+          "hidden": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "ids": [
+            "8",
+            "1",
+            "2",
+            "9007199254740993",
+            "tl:1/1/0:3#0"
+          ]
+        },
+        {
+          "fill": [
+            233,
+            150,
+            10,
+            242
+          ],
+          "hole": [
+            220,
+            38,
+            38,
+            255
+          ],
+          "road": [
+            37,
+            99,
+            235,
+            255
+          ],
+          "bigRoad": [
+            37,
+            99,
+            235,
+            255
+          ],
+          "poi": [
+            220,
+            38,
+            38,
+            255
+          ],
+          "labels": [
+            "Praha",
+            "Bez ID"
+          ],
+          "ink": 241,
+          "fillHit": {
+            "sceneId": "scene-1",
+            "sourceId": "vt",
+            "namespace": "buildings",
+            "id": 1,
+            "generation": 1
+          }
+        },
+        {
+          "unloaded": {
+            "count": 2,
+            "roadGone": true,
+            "multiPresent": true
+          },
+          "restored": true,
+          "localBefore": "tl:1/1/0:1#1",
+          "localAfter": "tl:1/1/0:1#3"
+        },
+        {
+          "brokenStats": {
+            "loaded": [],
+            "loading": 0,
+            "failed": 1,
+            "deferred": 0,
+            "fragments": 0
+          },
+          "brokenFeatures": 0,
+          "fill": [
+            233,
+            150,
+            10,
+            242
+          ]
+        },
+        {
+          "hovered": true,
+          "events": [
+            "mouseover:vt-pois:10:pois",
+            "click:vt-pois:10:pois"
+          ]
+        },
+        {
+          "loaded": [
+            {
+              "z": 1,
+              "x": 1,
+              "y": 0
+            }
+          ],
+          "failedBefore": 0,
+          "failedAfter": 0,
+          "distance12": 128.0000000000582,
+          "distance13": 256.0000000001164,
+          "poiPixel": [
+            220,
+            38,
+            38,
+            255
+          ],
+          "roadPixel": [
+            37,
+            99,
+            235,
+            255
+          ]
+        },
+        {
+          "settled": 12,
+          "stillSettled": 12,
+          "afterChange": 13,
+          "settledAgain": 13
+        },
+        {
+          "initial": "\u00a9 Maplet MVT fixtures",
+          "cleared": "",
+          "restored": "\u00a9 Maplet MVT fixtures"
+        },
+        {
+          "webgl1": {
+            "backend": "webgl1",
+            "requestedPrimary": "webgl1",
+            "requestedFallback": false,
+            "notes": []
+          },
+          "webgpu": {
+            "backend": "webgpu",
+            "requestedPrimary": "webgpu",
+            "requestedFallback": false,
+            "notes": [
+              "webgpu bgra8unorm",
+              "apple metal-3"
+            ]
+          }
+        },
+        {
+          "probe": {
+            "label": "glyph",
+            "at": [
+              376,
+              396
+            ],
+            "webgl1": [
+              16,
+              16,
+              16,
+              255
+            ],
+            "webgpu": [
+              16,
+              16,
+              16,
+              255
+            ],
+            "delta": 0,
+            "pass": true
+          },
+          "inkGl": 1953,
+          "inkGpu": 1953,
+          "inkRelative": 0
+        },
+        {
+          "webgl1": {
+            "instances": 23,
+            "drawCalls": 16
+          },
+          "webgpu": {
+            "instances": 23,
+            "drawCalls": 16
+          }
+        },
+        {
+          "backend": "webgl1",
+          "requestedPrimary": "webgpu",
+          "requestedFallback": "webgl1",
+          "notes": [
+            "webgpu unavailable (gpu-unavailable: navigator.gpu is not available)"
+          ]
+        },
+        {
+          "capabilities": {
+            "backend": "webgpu",
+            "requestedPrimary": "webgpu",
+            "requestedFallback": "webgl1",
+            "notes": [
+              "webgpu bgra8unorm",
+              "apple metal-3"
+            ]
+          },
+          "pixel": true,
+          "state": {
+            "selection": [
+              "dot"
+            ],
+            "hovered": true,
+            "generation": 1,
+            "bindingType": "lineString",
+            "bindingPoints": 2,
+            "center": {
+              "lng": -45,
+              "lat": 40.97989806962013
+            },
+            "zoom": 2
+          }
+        },
+        {
+          "canvasCount": 1
+        },
+        {
+          "newEvents": [
+            {
+              "backend": "webgpu",
+              "message": "recovered after loss: device lost: Device was destroyed."
+            }
+          ],
+          "state": {
+            "selection": [
+              "dot"
+            ],
+            "hovered": true,
+            "generation": 1,
+            "bindingType": "lineString",
+            "bindingPoints": 2,
+            "center": {
+              "lng": -45,
+              "lat": 40.97989806962013
+            },
+            "zoom": 2
+          },
+          "pixel": true,
+          "canvasCount": 1,
+          "expectedGen": 1
+        },
+        {
+          "hits": [
+            "dot"
+          ],
+          "viewOk": true,
+          "state": {
+            "selection": [
+              "dot"
+            ],
+            "hovered": true,
+            "generation": 1,
+            "bindingType": "lineString",
+            "bindingPoints": 2,
+            "center": {
+              "lng": -45,
+              "lat": 40.97989806962013
+            },
+            "zoom": 2
+          }
+        },
+        {
+          "newEvents": [
+            {
+              "backend": "webgl1",
+              "message": "recovered after loss: device lost: Device was destroyed."
+            }
+          ],
+          "state": {
+            "selection": [
+              "dot"
+            ],
+            "hovered": true,
+            "generation": 1,
+            "bindingType": "lineString",
+            "bindingPoints": 2,
+            "center": {
+              "lng": -45,
+              "lat": 40.97989806962013
+            },
+            "zoom": 2
+          },
+          "pixel": true,
+          "hits": [
+            "dot"
+          ]
+        },
+        {
+          "wasWebgl1": true,
+          "state": {
+            "selection": [
+              "dot"
+            ],
+            "hovered": true,
+            "generation": 1,
+            "bindingType": "lineString",
+            "bindingPoints": 2,
+            "center": {
+              "lng": -45,
+              "lat": 40.97989806962013
+            },
+            "zoom": 2
+          },
+          "pixel": true,
+          "events": [
+            {
+              "backend": "webgl1",
+              "message": "recovered after loss: webgl context lost"
+            }
+          ]
+        },
+        {
+          "settled": [
+            {
+              "status": "rejected",
+              "code": "gpu-unavailable"
+            },
+            {
+              "status": "rejected",
+              "code": "gpu-unavailable"
+            }
+          ],
+          "recovered": true
+        },
+        {
+          "capabilities": {
+            "backend": "unavailable",
+            "requestedPrimary": "webgpu",
+            "requestedFallback": "webgl1",
+            "notes": [
+              "webgpu lost (device lost: Device was destroyed.)",
+              "webgpu recovery failed (gpu-unavailable: navigator.gpu is not available)",
+              "webgl1 recovery failed (gpu-unavailable: a WebGL 1 context could not be created)"
+            ]
+          },
+          "noRetries": true,
+          "pickError": "gpu-unavailable",
+          "sampleError": "gpu-unavailable",
+          "canvasCount": 0
+        },
+        {
+          "atMax": {
+            "inDisabled": true,
+            "outDisabled": false
+          },
+          "afterOut": 3,
+          "atMin": {
+            "zoom": 1,
+            "outDisabled": true
+          },
+          "stuck": 1,
+          "afterIn": 2
+        },
+        {
+          "before": {
+            "visible": true,
+            "checked": true
+          },
+          "afterClick": {
+            "visible": false,
+            "checked": false
+          },
+          "afterApi": {
+            "visible": true,
+            "checked": true
+          },
+          "listed": [
+            "grp",
+            "layer-a",
+            "layer-b"
+          ]
+        },
+        {
+          "afterClick": {
+            "visible": false,
+            "checked": false
+          },
+          "afterApi": {
+            "visible": true,
+            "checked": true
+          }
+        },
+        {
+          "seen": [
+            "\u00a9 A | \u00a9 B",
+            "\u00a9 A | \u00a9 B",
+            "\u00a9 B | \u00a9 A",
+            "\u00a9 B",
+            ""
+          ]
+        },
+        {
+          "atThree": {
+            "expected": {
+              "step": 1000000,
+              "label": "1000 km",
+              "widthPx": 67.69303269525051
+            },
+            "label": "1000 km",
+            "widthPx": 67.69
+          },
+          "atFour": {
+            "expected": {
+              "step": 500000,
+              "label": "500 km",
+              "widthPx": 67.69303269525051
+            },
+            "label": "500 km",
+            "widthPx": 67.69
+          }
+        },
+        {
+          "atThree": {
+            "label": "10 u",
+            "widthPx": 80
+          },
+          "atFour": {
+            "label": "5 u",
+            "widthPx": 80
+          }
+        },
+        {
+          "success": {
+            "ok": true,
+            "position": {
+              "lat": 50.5,
+              "lng": 15.5,
+              "accuracy": 8
+            }
+          },
+          "setViewOk": true,
+          "optionsForwarded": {
+            "timeout": 2000
+          },
+          "deniedResult": {
+            "ok": false,
+            "code": "permission",
+            "message": "denied"
+          },
+          "timeoutResult": {
+            "ok": false,
+            "code": "timeout",
+            "message": "geolocation error 3"
+          },
+          "unsupported": {
+            "ok": false,
+            "code": "unsupported",
+            "message": "geolocation is not available in this environment"
+          }
+        },
+        {
+          "beforeCancel": 2,
+          "updates": 2,
+          "cleared": [
+            1
+          ],
+          "stopped": true
+        },
+        {
+          "hitTargets": [
+            {
+              "tag": "BUTTON",
+              "data": null,
+              "ok": true
+            },
+            {
+              "tag": "BUTTON",
+              "data": null,
+              "ok": true
+            },
+            {
+              "tag": "INPUT",
+              "data": null,
+              "ok": true
+            }
+          ],
+          "blocked": true,
+          "panWorks": true,
+          "wheelBlocked": true,
+          "wheelWorks": true
+        },
+        {
+          "stopped": true,
+          "domGone": true,
+          "planarDomGone": true,
+          "locateAfterDestroy": "destroyed",
+          "destroyed": true
+        },
+        {
+          "opened": true,
+          "nearAnchor": true,
+          "afterUpdate": "A:A1:busy",
+          "moved": true,
+          "role": "dialog"
+        },
+        {
+          "open": false,
+          "element": false
+        },
+        {
+          "opened": true,
+          "retained": true,
+          "marker": true,
+          "frozen": true,
+          "stillFrozen": true
+        },
+        {
+          "isText": true,
+          "noExecution": true
+        },
+        {
+          "domOk": true,
+          "errorShown": true,
+          "mapAlive": true
+        },
+        {
+          "bounded": true,
+          "clickedSelects": true,
+          "pressed": [
+            "false",
+            "true",
+            "false"
+          ],
+          "live": "1 selected: D"
+        },
+        {
+          "focused": true,
+          "hitOk": true,
+          "detailButton": {
+            "exists": true,
+            "hitOk": true
+          },
+          "containerFocusable": true,
+          "cleanedUp": true
+        },
+        {
+          "snapshot": {
+            "id": "fixture",
+            "family": "Maplet Fixture",
+            "src": "./fonts/maplet-subset.woff2?delay=3500&r=1791881761267",
+            "state": "loading",
+            "error": null
+          },
+          "faces": 0
+        },
+        {
+          "ink": 88,
+          "width": 144,
+          "state": "loading"
+        },
+        {
+          "ready": "ready",
+          "faces": 1,
+          "preWidth": 144,
+          "postWidth": 150,
+          "oracleWidth": 151,
+          "widthDelta": 1,
+          "builds": [
+            2,
+            3
+          ]
+        },
+        {
+          "snapshot": {
+            "id": "missing",
+            "family": "Maplet Missing Font",
+            "src": "./fonts/does-not-exist.woff2",
+            "state": "error",
+            "error": "failed to load font ./fonts/does-not-exist.woff2: NetworkError: A network error occurred."
+          },
+          "ink": 50
+        },
+        {
+          "ltr": {
+            "width": 70,
+            "oracle": 72
+          },
+          "rtl": {
+            "width": 70,
+            "oracle": 72
+          },
+          "profileDiff": 72
+        },
+        {
+          "acute": {
+            "width": 7,
+            "oracle": 8,
+            "ink": 26
+          },
+          "precomposed": {
+            "width": 7,
+            "oracle": 8,
+            "ink": 26
+          }
+        },
+        {
+          "ligature": {
+            "width": 35,
+            "ink": 277,
+            "oracle": 36
+          },
+          "control": {
+            "width": 40,
+            "ink": 292,
+            "oracle": 41
+          }
+        },
+        {
+          "width": 59,
+          "ink": 299,
+          "kernedOracle": 61,
+          "unkernedOracle": 67
+        },
+        {
+          "shareA": 63,
+          "shareB": 63,
+          "labels": 2,
+          "faces": 1,
+          "afterRemove": 63
+        },
+        {
+          "faces": 0,
+          "fallbackWidth": 144,
+          "preReadyWidth": 144,
+          "delta": 0,
+          "afterDestroy": 0
+        },
+        {
+          "aTopLeft": "rgba(255,0,0,255)",
+          "aTopRight": "rgba(0,200,0,255)",
+          "aBottomLeft": "rgba(0,0,255,255)",
+          "aBottomRight": "rgba(255,255,255,255)",
+          "plate": "rgba(249,115,22,255)",
+          "bOverA": "rgba(255,255,128,255)",
+          "bOverPlate": "rgba(125,185,138,255)",
+          "bOverBackground": "rgba(128,0,128,128)"
+        },
+        {
+          "before": "rgba(255,0,0,255)",
+          "afterUrl": "rgba(255,255,0,255)",
+          "otherUnchanged": "rgba(125,185,138,255)",
+          "oldArea": "rgba(0,0,0,0)",
+          "newArea": "rgba(0,255,255,255)",
+          "revisions": {
+            "a": [
+              0,
+              2
+            ],
+            "b": [
+              0,
+              0
+            ]
+          }
+        },
+        {
+          "rendered": {
+            "sourceId": "image-a",
+            "id": "image-a",
+            "layerId": "media-a"
+          },
+          "clicks": 1,
+          "platePick": [
+            "plate:plate"
+          ]
+        },
+        {
+          "before": {
+            "one": "rgba(32,32,128,255)",
+            "three": "rgba(92,92,128,255)",
+            "five": "rgba(151,62,128,255)"
+          },
+          "after": {
+            "one": "rgba(31,32,128,255)",
+            "twoTwo": "rgba(0,255,0,255)",
+            "threeTwo": "rgba(6,245,7,255)",
+            "twoThree": "rgba(3,248,7,255)",
+            "threeThree": "rgba(10,240,13,255)",
+            "five": "rgba(151,62,128,255)"
+          },
+          "pixelVersion": [
+            0,
+            1
+          ]
+        },
+        {
+          "codes": [
+            "invalid-region",
+            "invalid-region",
+            "invalid-region"
+          ],
+          "pixelVersion": 1,
+          "before": "rgba(31,32,128,255)",
+          "after": "rgba(31,32,128,255)"
+        },
+        {
+          "first": "rgba(254,0,0,255)",
+          "second": "rgba(0,0,255,255)",
+          "settled": "rgba(0,0,255,255)",
+          "frames": [
+            6,
+            7
+          ],
+          "pixelVersion": [
+            3,
+            3
+          ],
+          "revision": [
+            0,
+            0
+          ]
+        },
+        {
+          "firstFrame": "rgba(254,0,0,255)",
+          "playingFrames": 1,
+          "idleFrames": 0,
+          "playError": null
+        },
+        {
+          "lateFrames": 0,
+          "removed": "rgba(0,0,0,0)",
+          "errors": 0
+        },
+        {
+          "count": 5000,
+          "imports": {
+            "backend": "worker",
+            "pending": 0,
+            "used": {
+              "worker": 1,
+              "inline": 0
+            }
+          },
+          "pixel": "rgba(37,99,235,255)",
+          "spotLat": 50.14599999999999
+        },
+        {
+          "outcomes": [
+            [
+              "odd positions",
+              "import-invalid",
+              "number"
+            ],
+            [
+              "plain array",
+              "import-invalid",
+              "number"
+            ],
+            [
+              "NaN coordinate",
+              "import-invalid",
+              "number"
+            ],
+            [
+              "ids length",
+              "import-invalid",
+              "number"
+            ],
+            [
+              "point with offsets",
+              "import-invalid",
+              "number"
+            ],
+            [
+              "offsets past the buffer",
+              "import-invalid",
+              "number"
+            ],
+            [
+              "feature offsets past the parts",
+              "import-invalid",
+              "number"
+            ],
+            [
+              "altitudes length",
+              "import-invalid",
+              "number"
+            ],
+            [
+              "unknown kind",
+              "import-invalid",
+              "number"
+            ]
+          ],
+          "before": 5000,
+          "after": 5000
+        },
+        {
+          "byteLengthAfter": 32,
+          "before": 13.99999999999999,
+          "after": 13.99999999999999,
+          "reimported": 14.999999999999986
+        },
+        {
+          "detached": true,
+          "polyDetached": true,
+          "count": 201,
+          "pixel": "rgba(37,99,235,255)"
+        },
+        {
+          "queuedResult": {
+            "code": "aborted",
+            "reason": "aborted",
+            "revision": 6
+          },
+          "flightResult": {
+            "code": "aborted",
+            "reason": "aborted",
+            "revision": 7
+          },
+          "countAfterBusy": 50000,
+          "countAfterWait": 50000,
+          "usedAfterAbort": 6,
+          "usedAfterWait": 6,
+          "events": 2,
+          "after": {
+            "backend": "worker",
+            "pending": 0,
+            "used": {
+              "worker": 7,
+              "inline": 0
+            }
+          }
+        },
+        {
+          "pendingWhileQueued": 5,
+          "overflow": {
+            "code": "aborted",
+            "reason": "queue-full",
+            "revision": 8
+          },
+          "drained": 0,
+          "count": 1000
+        },
+        {
+          "before": 12,
+          "usedWorker": 13,
+          "count": 2000,
+          "pixel": "rgba(37,99,235,255)",
+          "bad": {
+            "code": "import-invalid",
+            "reason": "Expected property name or '}' in JSON at position 2 (line 1 column 3)",
+            "revision": 14
+          },
+          "aborted": {
+            "code": "aborted",
+            "reason": "aborted",
+            "revision": 14
+          }
+        },
+        {
+          "name": "seven",
+          "hit": 7,
+          "exported": {
+            "type": "Feature",
+            "id": 7,
+            "geometry": {
+              "type": "Point",
+              "coordinates": [
+                14.020000000000001,
+                50.02000000000002
+              ]
+            },
+            "properties": {
+              "name": "seven"
+            }
+          },
+          "oldPixel": "rgba(0,0,0,0)",
+          "newPixel": "rgba(37,99,235,255)"
+        },
+        {
+          "blocked": true,
+          "hint": "open this battery as ?csp=worker-none (the dev server sends the header)"
+        },
+        {
+          "outcome": {
+            "ok": false,
+            "code": "worker-failed",
+            "reason": "the import worker crashed or failed to load"
+          },
+          "imports": {
+            "backend": "inline",
+            "pending": 0,
+            "used": {
+              "worker": 0,
+              "inline": 0
+            }
+          }
+        },
+        {
+          "count": 300,
+          "imports": {
+            "backend": "inline",
+            "pending": 0,
+            "used": {
+              "worker": 0,
+              "inline": 1
+            }
+          },
+          "pixel": "rgba(37,99,235,255)"
+        },
+        {
+          "imports": {
+            "backend": "inline",
+            "pending": 0,
+            "used": {
+              "worker": 0,
+              "inline": 2
+            }
+          },
+          "count": 120
+        },
+        {
+          "cycles": 12,
+          "blue": 12,
+          "canvasGone": 12
+        },
+        {
+          "fontState": "ready",
+          "fontBaseline": 0,
+          "fontAfter": 0
+        },
+        {
+          "growthMB": 0.7,
+          "boundMB": 8,
+          "gc": true,
+          "measured": true,
+          "note": "GC-stabilized"
+        },
+        {
+          "detached": true,
+          "imports": {
+            "backend": "worker",
+            "pending": 0,
+            "used": {
+              "worker": 1,
+              "inline": 0
+            }
+          },
+          "pixelsBlue": true,
+          "genMs": 22,
+          "importMs": 224,
+          "renderMs": 51,
+          "peakImportMB": 48.7,
+          "heapAfterImportMB": 88.7,
+          "stats": {
+            "drawCalls": 1,
+            "instances": 113040,
+            "gpuBytesMB": 6.9
+          }
+        },
+        {
+          "aborted": {
+            "ok": false,
+            "code": "aborted"
+          },
+          "countAfterAbort": 500000,
+          "pendingAfterAbort": 0,
+          "smallCount": 1
+        },
+        {
+          "residualMB": 1,
+          "residualImmediateMB": 1,
+          "heapAfterImportMB": 88.7,
+          "boundMB": 96,
+          "gc": true,
+          "measured": true,
+          "note": "GC-stabilized after destroy"
+        },
+        {
+          "rafFrames": 181,
+          "engineFrames": 181,
+          "p50Ms": 16.7,
+          "p95Ms": 17.5,
+          "maxMs": 17.7,
+          "pixel": "rgba(37,99,235)",
+          "updatedProperty": 176,
+          "lastUpdate": 176,
+          "bare": [
+            1,
+            11,
+            18
+          ],
+          "bareAfterMap": [
+            13,
+            16,
+            18
+          ],
+          "setTimes": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "waitTimes": [
+            15,
+            17,
+            16,
+            17,
+            17
+          ],
+          "visibility": "visible",
+          "heapStartMB": 1
+        },
+        {
+          "count": 500000,
+          "detached": true,
+          "genMs": 16,
+          "importMs": 229,
+          "peakImportMB": 46.2,
+          "heapAfterImportMB": 144.8,
+          "imports": {
+            "backend": "worker",
+            "pending": 0,
+            "used": {
+              "worker": 1,
+              "inline": 0
+            }
+          }
+        },
+        {
+          "firstRenderMs": 49,
+          "pixelCenter": "rgba(37,99,234)",
+          "pixelB": "rgba(37,99,234)",
+          "drawCalls": 1,
+          "instances": 258420,
+          "gpuBytesMB": 15.8
+        },
+        {
+          "frames": 153,
+          "engineFrames": 153,
+          "p50Ms": 16.7,
+          "p95Ms": 17.6,
+          "maxMs": 17.9,
+          "pixelAfter": "rgba(37,99,234)"
+        }
+      ],
+      "log": "/private/var/folders/7s/v15d0wv93w58mbg5sdfdjkk40000gn/T/opencode/maplet-canvas-target-final-webgl1-functional.log"
+    },
+    {
+      "name": "final-webgl1-mixed",
+      "status": "pass",
+      "elapsedSeconds": 11.47,
+      "measurements": [],
+      "log": "/private/var/folders/7s/v15d0wv93w58mbg5sdfdjkk40000gn/T/opencode/maplet-canvas-target-final-webgl1-mixed.log"
+    },
+    {
+      "name": "final-webgl1-dense",
+      "status": "pass",
+      "elapsedSeconds": 11.4,
+      "measurements": [],
+      "log": "/private/var/folders/7s/v15d0wv93w58mbg5sdfdjkk40000gn/T/opencode/maplet-canvas-target-final-webgl1-dense.log"
+    },
+    {
+      "name": "final-webgpu-functional",
+      "status": "pass",
+      "elapsedSeconds": 70.87,
+      "measurements": [
+        {
+          "order": [
+            "layer:click",
+            "leaf:click",
+            "root:click",
+            "map:click"
+          ]
+        },
+        {
+          "order": [
+            "layer:click",
+            "stop"
+          ]
+        },
+        {
+          "hovered": true,
+          "sawOver": true,
+          "pixelHover": [
+            255,
+            0,
+            0
+          ],
+          "cursorHover": "move",
+          "hoveredAfter": false,
+          "sawOut": true,
+          "pixelAway": [
+            22,
+            163,
+            74
+          ],
+          "cursorAway": "grab"
+        },
+        {
+          "aHovered": false,
+          "bHovered": true
+        },
+        {
+          "before": [
+            22,
+            163,
+            74,
+            255
+          ],
+          "hidden": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "hitsHidden": 0,
+          "back": [
+            22,
+            163,
+            74,
+            255
+          ],
+          "hitsBack": [
+            "a"
+          ],
+          "dataCount": 2
+        },
+        {
+          "selectedState": true,
+          "selectedPixel": [
+            245,
+            158,
+            11
+          ],
+          "clearedPixel": [
+            22,
+            163,
+            74
+          ]
+        },
+        {
+          "lng": [
+            14.100000000000005,
+            14.182397460937505
+          ],
+          "zoom": [
+            10,
+            10,
+            10.5
+          ],
+          "formGuard": true
+        },
+        {
+          "zoom0": 10,
+          "zoomEarly": 11,
+          "zoom1": 11,
+          "zoom2": 12,
+          "zoomAfterLift": 12,
+          "zoomWhilePan": 12
+        },
+        {
+          "before": [
+            49.999999999999986,
+            13.99999999999999
+          ],
+          "after": [
+            49.98234206933653,
+            14.05493164062499
+          ],
+          "midErrorM": 0,
+          "endErrorM": 0,
+          "viewMoved": false,
+          "dragEvents": [
+            "layer:dragstart",
+            "leaf:dragstart",
+            "root:dragstart",
+            "map:dragstart",
+            "layer:drag",
+            "leaf:drag",
+            "root:drag",
+            "map:drag",
+            "layer:drag",
+            "leaf:drag",
+            "root:drag",
+            "map:drag",
+            "layer:dragend",
+            "leaf:dragend",
+            "root:dragend",
+            "map:dragend"
+          ]
+        },
+        {
+          "full": [
+            "a",
+            "b"
+          ],
+          "limitedTo2": [
+            "a",
+            "b"
+          ],
+          "limitedTo1": [
+            "a"
+          ],
+          "empty": [],
+          "isolated": [
+            "a"
+          ]
+        },
+        {
+          "syncSpanMs": 0.1,
+          "recordedMs": 0.1,
+          "recordedReadMs": 0,
+          "readback": "async",
+          "hits": [
+            "a",
+            "b"
+          ]
+        },
+        {
+          "burst": 40,
+          "wallMs": 25.3,
+          "recordedTotalMs": 1.5,
+          "yieldMs": 23.8,
+          "heartbeatGapMs": 4.6,
+          "readback": "async"
+        },
+        {
+          "loaded": true,
+          "samples": [
+            {
+              "point": {
+                "x": 80,
+                "y": 80
+              },
+              "pixel": [
+                40,
+                215,
+                0,
+                255
+              ],
+              "expected": [
+                40,
+                215,
+                0
+              ],
+              "delta": 0
+            },
+            {
+              "point": {
+                "x": 432,
+                "y": 80
+              },
+              "pixel": [
+                215,
+                215,
+                0,
+                255
+              ],
+              "expected": [
+                215,
+                215,
+                0
+              ],
+              "delta": 0
+            },
+            {
+              "point": {
+                "x": 80,
+                "y": 432
+              },
+              "pixel": [
+                40,
+                40,
+                0,
+                255
+              ],
+              "expected": [
+                40,
+                40,
+                0
+              ],
+              "delta": 0
+            },
+            {
+              "point": {
+                "x": 432,
+                "y": 432
+              },
+              "pixel": [
+                215,
+                40,
+                0,
+                255
+              ],
+              "expected": [
+                215,
+                40,
+                0
+              ],
+              "delta": 0
+            }
+          ],
+          "marker": [
+            255,
+            0,
+            255,
+            255
+          ],
+          "off": [
+            152,
+            127,
+            0,
+            255
+          ]
+        },
+        {
+          "swapped": true,
+          "epsg4326": true,
+          "crs84": true,
+          "crs84Geography": true,
+          "marker": [
+            255,
+            0,
+            255,
+            255
+          ],
+          "offMarker": [
+            152,
+            127,
+            32,
+            255
+          ]
+        },
+        {
+          "modern": true,
+          "legacy": true,
+          "modernSamples": [
+            {
+              "point": {
+                "x": 80,
+                "y": 80
+              },
+              "pixel": [
+                40,
+                215,
+                96,
+                255
+              ],
+              "expected": [
+                40,
+                215,
+                96
+              ],
+              "delta": 0
+            },
+            {
+              "point": {
+                "x": 432,
+                "y": 80
+              },
+              "pixel": [
+                215,
+                215,
+                96,
+                255
+              ],
+              "expected": [
+                215,
+                215,
+                96
+              ],
+              "delta": 0
+            },
+            {
+              "point": {
+                "x": 80,
+                "y": 432
+              },
+              "pixel": [
+                40,
+                40,
+                96,
+                255
+              ],
+              "expected": [
+                40,
+                40,
+                96
+              ],
+              "delta": 0
+            },
+            {
+              "point": {
+                "x": 432,
+                "y": 432
+              },
+              "pixel": [
+                215,
+                40,
+                96,
+                255
+              ],
+              "expected": [
+                215,
+                40,
+                96
+              ],
+              "delta": 0
+            }
+          ],
+          "legacyMarker": [
+            255,
+            0,
+            255,
+            255
+          ]
+        },
+        {
+          "decoded": {
+            "layers": "roads & rails/1",
+            "styles": "bold red",
+            "time": "2026-10-10",
+            "srs": "EPSG:4326",
+            "version": "1.1.1"
+          },
+          "status": 200,
+          "png": true,
+          "geography": true
+        },
+        {
+          "held": [
+            152,
+            127,
+            0,
+            255
+          ],
+          "baseline": [
+            151,
+            128,
+            0
+          ],
+          "swapMs": 239,
+          "late": [
+            152,
+            127,
+            255,
+            255
+          ]
+        },
+        {
+          "rasterHits": [
+            "wms:wms"
+          ],
+          "nearHotspotHits": [
+            "wms:wms"
+          ],
+          "hotspotHits": [
+            "hotspots:hotspot-a"
+          ],
+          "clicks": [
+            {
+              "sourceId": "wms",
+              "id": "wms",
+              "layerId": "wms-layer"
+            }
+          ]
+        },
+        {
+          "inkAbove": 76,
+          "inkBelow": 0,
+          "text": "P\u0159\u00edli\u0161 \u017elu\u0165ou\u010dk\u00fd k\u016f\u0148"
+        },
+        {
+          "changed": "Nov\u00fd n\u00e1zev",
+          "restored": "P\u0159\u00edli\u0161 \u017elu\u0165ou\u010dk\u00fd k\u016f\u0148"
+        },
+        {
+          "withCollision": 0,
+          "withoutCollision": 16,
+          "order": [
+            "ALFA-ALFA",
+            "BETA-BETA"
+          ]
+        },
+        {
+          "hovered": true,
+          "cursor": "pointer",
+          "events": [
+            "mouseover:dia",
+            "click:dia"
+          ]
+        },
+        {
+          "turned": {
+            "ink": 136,
+            "width": 8,
+            "height": 104,
+            "cx": 327.81777777778916,
+            "cy": 391.98365986865247
+          },
+          "flat": {
+            "ink": 87,
+            "width": 103,
+            "height": 8,
+            "cx": 342.8813333333237,
+            "cy": 459.94367056695046
+          },
+          "probes": [
+            {
+              "dy": -36,
+              "rotated": true
+            },
+            {
+              "dy": -24,
+              "rotated": true
+            },
+            {
+              "dy": -12,
+              "rotated": true
+            },
+            {
+              "dy": 12,
+              "rotated": true
+            },
+            {
+              "dy": 24,
+              "rotated": true
+            },
+            {
+              "dy": 36,
+              "rotated": true
+            }
+          ],
+          "sideHits": [
+            false,
+            false,
+            false,
+            false
+          ]
+        },
+        {
+          "inkBefore": 214,
+          "inkAfterPressure": 214,
+          "offscreenInk": 0
+        },
+        {
+          "canvases": 1,
+          "children": 1
+        },
+        {
+          "brokenState": {
+            "id": "broken-pin",
+            "src": "./definitely-missing.png",
+            "state": "error",
+            "width": 0,
+            "height": 0,
+            "error": "failed to load ./definitely-missing.png"
+          },
+          "fallbackPixel": [
+            22,
+            163,
+            74,
+            255
+          ],
+          "spritesForBroken": 0
+        },
+        {
+          "state": "ready",
+          "width": 32,
+          "height": 40,
+          "planSprites": 501,
+          "drawCalls": 5,
+          "white": [
+            255,
+            253,
+            253,
+            255
+          ],
+          "red": [
+            225,
+            29,
+            72,
+            255
+          ]
+        },
+        {
+          "corner": [],
+          "middle": [
+            "center"
+          ]
+        },
+        {
+          "atAnchor": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "above": [
+            255,
+            255,
+            255,
+            255
+          ]
+        },
+        {
+          "grid": 49,
+          "pixelMatches": 49,
+          "pickMatches": 49,
+          "maxPixelDelta": 0,
+          "flat": {
+            "x": -0.5,
+            "y": -3,
+            "count": 40
+          },
+          "turned": {
+            "x": 2,
+            "y": -0.5,
+            "count": 40
+          }
+        },
+        {
+          "anchor": [
+            406,
+            316
+          ],
+          "body": [
+            225,
+            29,
+            72,
+            255
+          ],
+          "left": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "top": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "box": {
+            "minX": 0,
+            "maxX": 22,
+            "minY": -12,
+            "maxY": 10
+          }
+        },
+        {
+          "states": [
+            "loading",
+            "ready"
+          ],
+          "snapshot": "ready",
+          "frames": [
+            1,
+            2
+          ],
+          "latencyMs": 101
+        },
+        {
+          "count": 9,
+          "polygonType": "multiPolygon",
+          "polygons": 2,
+          "lineType": "multiLineString",
+          "lines": 2,
+          "halfA": [
+            233,
+            150,
+            10,
+            242
+          ],
+          "halfB": [
+            233,
+            150,
+            10,
+            242
+          ],
+          "selectedOnce": 1
+        },
+        {
+          "roadType": "lineString",
+          "buildingType": "polygon",
+          "visible": [
+            233,
+            150,
+            10,
+            242
+          ],
+          "hidden": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "ids": [
+            "1",
+            "2",
+            "9007199254740993",
+            "tl:1/1/0:3#0",
+            "8"
+          ]
+        },
+        {
+          "fill": [
+            233,
+            150,
+            10,
+            242
+          ],
+          "hole": [
+            220,
+            38,
+            38,
+            255
+          ],
+          "road": [
+            37,
+            99,
+            235,
+            255
+          ],
+          "bigRoad": [
+            37,
+            99,
+            235,
+            255
+          ],
+          "poi": [
+            220,
+            38,
+            38,
+            255
+          ],
+          "labels": [
+            "Praha",
+            "Bez ID"
+          ],
+          "ink": 241,
+          "fillHit": {
+            "sceneId": "scene-1",
+            "sourceId": "vt",
+            "namespace": "buildings",
+            "id": 1,
+            "generation": 1
+          }
+        },
+        {
+          "unloaded": {
+            "count": 2,
+            "roadGone": true,
+            "multiPresent": true
+          },
+          "restored": true,
+          "localBefore": "tl:1/1/0:1#1",
+          "localAfter": "tl:1/1/0:1#3"
+        },
+        {
+          "brokenStats": {
+            "loaded": [],
+            "loading": 0,
+            "failed": 1,
+            "deferred": 0,
+            "fragments": 0
+          },
+          "brokenFeatures": 0,
+          "fill": [
+            233,
+            150,
+            10,
+            242
+          ]
+        },
+        {
+          "hovered": true,
+          "events": [
+            "mouseover:vt-pois:10:pois",
+            "click:vt-pois:10:pois"
+          ]
+        },
+        {
+          "loaded": [
+            {
+              "z": 1,
+              "x": 1,
+              "y": 0
+            }
+          ],
+          "failedBefore": 0,
+          "failedAfter": 0,
+          "distance12": 128.0000000000582,
+          "distance13": 256.0000000001164,
+          "poiPixel": [
+            220,
+            38,
+            38,
+            255
+          ],
+          "roadPixel": [
+            37,
+            99,
+            235,
+            255
+          ]
+        },
+        {
+          "settled": 10,
+          "stillSettled": 10,
+          "afterChange": 11,
+          "settledAgain": 11
+        },
+        {
+          "initial": "\u00a9 Maplet MVT fixtures",
+          "cleared": "",
+          "restored": "\u00a9 Maplet MVT fixtures"
+        },
+        {
+          "webgl1": {
+            "backend": "webgl1",
+            "requestedPrimary": "webgl1",
+            "requestedFallback": false,
+            "notes": []
+          },
+          "webgpu": {
+            "backend": "webgpu",
+            "requestedPrimary": "webgpu",
+            "requestedFallback": false,
+            "notes": [
+              "webgpu bgra8unorm",
+              "apple metal-3"
+            ]
+          }
+        },
+        {
+          "probe": {
+            "label": "glyph",
+            "at": [
+              376,
+              396
+            ],
+            "webgl1": [
+              16,
+              16,
+              16,
+              255
+            ],
+            "webgpu": [
+              16,
+              16,
+              16,
+              255
+            ],
+            "delta": 0,
+            "pass": true
+          },
+          "inkGl": 1953,
+          "inkGpu": 1953,
+          "inkRelative": 0
+        },
+        {
+          "webgl1": {
+            "instances": 23,
+            "drawCalls": 16
+          },
+          "webgpu": {
+            "instances": 23,
+            "drawCalls": 16
+          }
+        },
+        {
+          "backend": "webgl1",
+          "requestedPrimary": "webgpu",
+          "requestedFallback": "webgl1",
+          "notes": [
+            "webgpu unavailable (gpu-unavailable: navigator.gpu is not available)"
+          ]
+        },
+        {
+          "capabilities": {
+            "backend": "webgpu",
+            "requestedPrimary": "webgpu",
+            "requestedFallback": "webgl1",
+            "notes": [
+              "webgpu bgra8unorm",
+              "apple metal-3"
+            ]
+          },
+          "pixel": true,
+          "state": {
+            "selection": [
+              "dot"
+            ],
+            "hovered": true,
+            "generation": 1,
+            "bindingType": "lineString",
+            "bindingPoints": 2,
+            "center": {
+              "lng": -45,
+              "lat": 40.97989806962013
+            },
+            "zoom": 2
+          }
+        },
+        {
+          "canvasCount": 1
+        },
+        {
+          "newEvents": [
+            {
+              "backend": "webgpu",
+              "message": "recovered after loss: device lost: Device was destroyed."
+            }
+          ],
+          "state": {
+            "selection": [
+              "dot"
+            ],
+            "hovered": true,
+            "generation": 1,
+            "bindingType": "lineString",
+            "bindingPoints": 2,
+            "center": {
+              "lng": -45,
+              "lat": 40.97989806962013
+            },
+            "zoom": 2
+          },
+          "pixel": true,
+          "canvasCount": 1,
+          "expectedGen": 1
+        },
+        {
+          "hits": [
+            "dot"
+          ],
+          "viewOk": true,
+          "state": {
+            "selection": [
+              "dot"
+            ],
+            "hovered": true,
+            "generation": 1,
+            "bindingType": "lineString",
+            "bindingPoints": 2,
+            "center": {
+              "lng": -45,
+              "lat": 40.97989806962013
+            },
+            "zoom": 2
+          }
+        },
+        {
+          "newEvents": [
+            {
+              "backend": "webgl1",
+              "message": "recovered after loss: device lost: Device was destroyed."
+            }
+          ],
+          "state": {
+            "selection": [
+              "dot"
+            ],
+            "hovered": true,
+            "generation": 1,
+            "bindingType": "lineString",
+            "bindingPoints": 2,
+            "center": {
+              "lng": -45,
+              "lat": 40.97989806962013
+            },
+            "zoom": 2
+          },
+          "pixel": true,
+          "hits": [
+            "dot"
+          ]
+        },
+        {
+          "wasWebgl1": true,
+          "state": {
+            "selection": [
+              "dot"
+            ],
+            "hovered": true,
+            "generation": 1,
+            "bindingType": "lineString",
+            "bindingPoints": 2,
+            "center": {
+              "lng": -45,
+              "lat": 40.97989806962013
+            },
+            "zoom": 2
+          },
+          "pixel": true,
+          "events": [
+            {
+              "backend": "webgl1",
+              "message": "recovered after loss: webgl context lost"
+            }
+          ]
+        },
+        {
+          "settled": [
+            {
+              "status": "rejected",
+              "code": "gpu-unavailable"
+            },
+            {
+              "status": "rejected",
+              "code": "gpu-unavailable"
+            }
+          ],
+          "recovered": true
+        },
+        {
+          "capabilities": {
+            "backend": "unavailable",
+            "requestedPrimary": "webgpu",
+            "requestedFallback": "webgl1",
+            "notes": [
+              "webgpu lost (device lost: Device was destroyed.)",
+              "webgpu recovery failed (gpu-unavailable: navigator.gpu is not available)",
+              "webgl1 recovery failed (gpu-unavailable: a WebGL 1 context could not be created)"
+            ]
+          },
+          "noRetries": true,
+          "pickError": "gpu-unavailable",
+          "sampleError": "gpu-unavailable",
+          "canvasCount": 0
+        },
+        {
+          "atMax": {
+            "inDisabled": true,
+            "outDisabled": false
+          },
+          "afterOut": 3,
+          "atMin": {
+            "zoom": 1,
+            "outDisabled": true
+          },
+          "stuck": 1,
+          "afterIn": 2
+        },
+        {
+          "before": {
+            "visible": true,
+            "checked": true
+          },
+          "afterClick": {
+            "visible": false,
+            "checked": false
+          },
+          "afterApi": {
+            "visible": true,
+            "checked": true
+          },
+          "listed": [
+            "grp",
+            "layer-a",
+            "layer-b"
+          ]
+        },
+        {
+          "afterClick": {
+            "visible": false,
+            "checked": false
+          },
+          "afterApi": {
+            "visible": true,
+            "checked": true
+          }
+        },
+        {
+          "seen": [
+            "\u00a9 A | \u00a9 B",
+            "\u00a9 A | \u00a9 B",
+            "\u00a9 B | \u00a9 A",
+            "\u00a9 B",
+            ""
+          ]
+        },
+        {
+          "atThree": {
+            "expected": {
+              "step": 1000000,
+              "label": "1000 km",
+              "widthPx": 67.69303269525051
+            },
+            "label": "1000 km",
+            "widthPx": 67.69
+          },
+          "atFour": {
+            "expected": {
+              "step": 500000,
+              "label": "500 km",
+              "widthPx": 67.69303269525051
+            },
+            "label": "500 km",
+            "widthPx": 67.69
+          }
+        },
+        {
+          "atThree": {
+            "label": "10 u",
+            "widthPx": 80
+          },
+          "atFour": {
+            "label": "5 u",
+            "widthPx": 80
+          }
+        },
+        {
+          "success": {
+            "ok": true,
+            "position": {
+              "lat": 50.5,
+              "lng": 15.5,
+              "accuracy": 8
+            }
+          },
+          "setViewOk": true,
+          "optionsForwarded": {
+            "timeout": 2000
+          },
+          "deniedResult": {
+            "ok": false,
+            "code": "permission",
+            "message": "denied"
+          },
+          "timeoutResult": {
+            "ok": false,
+            "code": "timeout",
+            "message": "geolocation error 3"
+          },
+          "unsupported": {
+            "ok": false,
+            "code": "unsupported",
+            "message": "geolocation is not available in this environment"
+          }
+        },
+        {
+          "beforeCancel": 2,
+          "updates": 2,
+          "cleared": [
+            1
+          ],
+          "stopped": true
+        },
+        {
+          "hitTargets": [
+            {
+              "tag": "BUTTON",
+              "data": null,
+              "ok": true
+            },
+            {
+              "tag": "BUTTON",
+              "data": null,
+              "ok": true
+            },
+            {
+              "tag": "INPUT",
+              "data": null,
+              "ok": true
+            }
+          ],
+          "blocked": true,
+          "panWorks": true,
+          "wheelBlocked": true,
+          "wheelWorks": true
+        },
+        {
+          "stopped": true,
+          "domGone": true,
+          "planarDomGone": true,
+          "locateAfterDestroy": "destroyed",
+          "destroyed": true
+        },
+        {
+          "opened": true,
+          "nearAnchor": true,
+          "afterUpdate": "A:A1:busy",
+          "moved": true,
+          "role": "dialog"
+        },
+        {
+          "open": false,
+          "element": false
+        },
+        {
+          "opened": true,
+          "retained": true,
+          "marker": true,
+          "frozen": true,
+          "stillFrozen": true
+        },
+        {
+          "isText": true,
+          "noExecution": true
+        },
+        {
+          "domOk": true,
+          "errorShown": true,
+          "mapAlive": true
+        },
+        {
+          "bounded": true,
+          "clickedSelects": true,
+          "pressed": [
+            "false",
+            "true",
+            "false"
+          ],
+          "live": "1 selected: D"
+        },
+        {
+          "focused": true,
+          "hitOk": true,
+          "detailButton": {
+            "exists": true,
+            "hitOk": true
+          },
+          "containerFocusable": true,
+          "cleanedUp": true
+        },
+        {
+          "snapshot": {
+            "id": "fixture",
+            "family": "Maplet Fixture",
+            "src": "./fonts/maplet-subset.woff2?delay=3500&r=1791881854819",
+            "state": "loading",
+            "error": null
+          },
+          "faces": 0
+        },
+        {
+          "ink": 88,
+          "width": 144,
+          "state": "loading"
+        },
+        {
+          "ready": "ready",
+          "faces": 1,
+          "preWidth": 144,
+          "postWidth": 150,
+          "oracleWidth": 151,
+          "widthDelta": 1,
+          "builds": [
+            1,
+            2
+          ]
+        },
+        {
+          "snapshot": {
+            "id": "missing",
+            "family": "Maplet Missing Font",
+            "src": "./fonts/does-not-exist.woff2",
+            "state": "error",
+            "error": "failed to load font ./fonts/does-not-exist.woff2: NetworkError: A network error occurred."
+          },
+          "ink": 50
+        },
+        {
+          "ltr": {
+            "width": 70,
+            "oracle": 72
+          },
+          "rtl": {
+            "width": 70,
+            "oracle": 72
+          },
+          "profileDiff": 72
+        },
+        {
+          "acute": {
+            "width": 7,
+            "oracle": 8,
+            "ink": 26
+          },
+          "precomposed": {
+            "width": 7,
+            "oracle": 8,
+            "ink": 26
+          }
+        },
+        {
+          "ligature": {
+            "width": 35,
+            "ink": 277,
+            "oracle": 36
+          },
+          "control": {
+            "width": 40,
+            "ink": 292,
+            "oracle": 41
+          }
+        },
+        {
+          "width": 59,
+          "ink": 299,
+          "kernedOracle": 61,
+          "unkernedOracle": 67
+        },
+        {
+          "shareA": 63,
+          "shareB": 63,
+          "labels": 2,
+          "faces": 1,
+          "afterRemove": 63
+        },
+        {
+          "faces": 0,
+          "fallbackWidth": 144,
+          "preReadyWidth": 144,
+          "delta": 0,
+          "afterDestroy": 0
+        },
+        {
+          "aTopLeft": "rgba(255,0,0,255)",
+          "aTopRight": "rgba(0,200,0,255)",
+          "aBottomLeft": "rgba(0,0,255,255)",
+          "aBottomRight": "rgba(255,255,255,255)",
+          "plate": "rgba(249,115,22,255)",
+          "bOverA": "rgba(255,255,128,255)",
+          "bOverPlate": "rgba(125,185,138,255)",
+          "bOverBackground": "rgba(128,0,128,128)"
+        },
+        {
+          "before": "rgba(255,0,0,255)",
+          "afterUrl": "rgba(255,255,0,255)",
+          "otherUnchanged": "rgba(125,185,138,255)",
+          "oldArea": "rgba(0,0,0,0)",
+          "newArea": "rgba(0,255,255,255)",
+          "revisions": {
+            "a": [
+              0,
+              2
+            ],
+            "b": [
+              0,
+              0
+            ]
+          }
+        },
+        {
+          "rendered": {
+            "sourceId": "image-a",
+            "id": "image-a",
+            "layerId": "media-a"
+          },
+          "clicks": 1,
+          "platePick": [
+            "plate:plate"
+          ]
+        },
+        {
+          "before": {
+            "one": "rgba(32,32,128,255)",
+            "three": "rgba(92,92,128,255)",
+            "five": "rgba(151,62,128,255)"
+          },
+          "after": {
+            "one": "rgba(31,32,128,255)",
+            "twoTwo": "rgba(0,255,0,255)",
+            "threeTwo": "rgba(6,245,7,255)",
+            "twoThree": "rgba(3,248,7,255)",
+            "threeThree": "rgba(10,240,13,255)",
+            "five": "rgba(151,62,128,255)"
+          },
+          "pixelVersion": [
+            0,
+            1
+          ]
+        },
+        {
+          "codes": [
+            "invalid-region",
+            "invalid-region",
+            "invalid-region"
+          ],
+          "pixelVersion": 1,
+          "before": "rgba(31,32,128,255)",
+          "after": "rgba(31,32,128,255)"
+        },
+        {
+          "first": "rgba(248,36,0,255)",
+          "second": "rgba(26,35,255,255)",
+          "settled": "rgba(26,35,255,255)",
+          "frames": [
+            6,
+            7
+          ],
+          "pixelVersion": [
+            3,
+            3
+          ],
+          "revision": [
+            0,
+            0
+          ]
+        },
+        {
+          "firstFrame": "rgba(248,36,0,255)",
+          "playingFrames": 1,
+          "idleFrames": 0,
+          "playError": null
+        },
+        {
+          "lateFrames": 0,
+          "removed": "rgba(0,0,0,0)",
+          "errors": 0
+        },
+        {
+          "count": 5000,
+          "imports": {
+            "backend": "worker",
+            "pending": 0,
+            "used": {
+              "worker": 1,
+              "inline": 0
+            }
+          },
+          "pixel": "rgba(37,99,235,255)",
+          "spotLat": 50.14599999999999
+        },
+        {
+          "outcomes": [
+            [
+              "odd positions",
+              "import-invalid",
+              "number"
+            ],
+            [
+              "plain array",
+              "import-invalid",
+              "number"
+            ],
+            [
+              "NaN coordinate",
+              "import-invalid",
+              "number"
+            ],
+            [
+              "ids length",
+              "import-invalid",
+              "number"
+            ],
+            [
+              "point with offsets",
+              "import-invalid",
+              "number"
+            ],
+            [
+              "offsets past the buffer",
+              "import-invalid",
+              "number"
+            ],
+            [
+              "feature offsets past the parts",
+              "import-invalid",
+              "number"
+            ],
+            [
+              "altitudes length",
+              "import-invalid",
+              "number"
+            ],
+            [
+              "unknown kind",
+              "import-invalid",
+              "number"
+            ]
+          ],
+          "before": 5000,
+          "after": 5000
+        },
+        {
+          "byteLengthAfter": 32,
+          "before": 13.99999999999999,
+          "after": 13.99999999999999,
+          "reimported": 14.999999999999986
+        },
+        {
+          "detached": true,
+          "polyDetached": true,
+          "count": 201,
+          "pixel": "rgba(37,99,235,255)"
+        },
+        {
+          "queuedResult": {
+            "code": "aborted",
+            "reason": "aborted",
+            "revision": 6
+          },
+          "flightResult": {
+            "code": "aborted",
+            "reason": "aborted",
+            "revision": 7
+          },
+          "countAfterBusy": 50000,
+          "countAfterWait": 50000,
+          "usedAfterAbort": 6,
+          "usedAfterWait": 6,
+          "events": 2,
+          "after": {
+            "backend": "worker",
+            "pending": 0,
+            "used": {
+              "worker": 7,
+              "inline": 0
+            }
+          }
+        },
+        {
+          "pendingWhileQueued": 5,
+          "overflow": {
+            "code": "aborted",
+            "reason": "queue-full",
+            "revision": 8
+          },
+          "drained": 0,
+          "count": 1000
+        },
+        {
+          "before": 12,
+          "usedWorker": 13,
+          "count": 2000,
+          "pixel": "rgba(37,99,235,255)",
+          "bad": {
+            "code": "import-invalid",
+            "reason": "Expected property name or '}' in JSON at position 2 (line 1 column 3)",
+            "revision": 14
+          },
+          "aborted": {
+            "code": "aborted",
+            "reason": "aborted",
+            "revision": 14
+          }
+        },
+        {
+          "name": "seven",
+          "hit": 7,
+          "exported": {
+            "type": "Feature",
+            "id": 7,
+            "geometry": {
+              "type": "Point",
+              "coordinates": [
+                14.020000000000001,
+                50.02000000000002
+              ]
+            },
+            "properties": {
+              "name": "seven"
+            }
+          },
+          "oldPixel": "rgba(0,0,0,0)",
+          "newPixel": "rgba(37,99,235,255)"
+        },
+        {
+          "blocked": true,
+          "hint": "open this battery as ?csp=worker-none (the dev server sends the header)"
+        },
+        {
+          "outcome": {
+            "ok": false,
+            "code": "worker-failed",
+            "reason": "the import worker crashed or failed to load"
+          },
+          "imports": {
+            "backend": "inline",
+            "pending": 0,
+            "used": {
+              "worker": 0,
+              "inline": 0
+            }
+          }
+        },
+        {
+          "count": 300,
+          "imports": {
+            "backend": "inline",
+            "pending": 0,
+            "used": {
+              "worker": 0,
+              "inline": 1
+            }
+          },
+          "pixel": "rgba(37,99,235,255)"
+        },
+        {
+          "imports": {
+            "backend": "inline",
+            "pending": 0,
+            "used": {
+              "worker": 0,
+              "inline": 2
+            }
+          },
+          "count": 120
+        },
+        {
+          "cycles": 12,
+          "blue": 12,
+          "canvasGone": 12
+        },
+        {
+          "fontState": "ready",
+          "fontBaseline": 0,
+          "fontAfter": 0
+        },
+        {
+          "growthMB": 0.7,
+          "boundMB": 8,
+          "gc": true,
+          "measured": true,
+          "note": "GC-stabilized"
+        },
+        {
+          "detached": true,
+          "imports": {
+            "backend": "worker",
+            "pending": 0,
+            "used": {
+              "worker": 1,
+              "inline": 0
+            }
+          },
+          "pixelsBlue": true,
+          "genMs": 27,
+          "importMs": 214,
+          "renderMs": 50,
+          "peakImportMB": 48.6,
+          "heapAfterImportMB": 88.7,
+          "stats": {
+            "drawCalls": 1,
+            "instances": 113040,
+            "gpuBytesMB": 6.9
+          }
+        },
+        {
+          "aborted": {
+            "ok": false,
+            "code": "aborted",
+            "reason": "aborted"
+          },
+          "countAfterAbort": 500000,
+          "pendingAfterAbort": 0,
+          "smallCount": 1
+        },
+        {
+          "residualMB": 1,
+          "residualImmediateMB": 1,
+          "heapAfterImportMB": 88.7,
+          "boundMB": 96,
+          "gc": true,
+          "measured": true,
+          "note": "GC-stabilized after destroy"
+        },
+        {
+          "rafFrames": 180,
+          "engineFrames": 180,
+          "p50Ms": 16.7,
+          "p95Ms": 17.6,
+          "maxMs": 17.8,
+          "pixel": "rgba(37,99,235)",
+          "updatedProperty": 176,
+          "lastUpdate": 176,
+          "bare": [
+            0,
+            9,
+            17
+          ],
+          "bareAfterMap": [
+            15,
+            16,
+            17
+          ],
+          "setTimes": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "waitTimes": [
+            16,
+            16,
+            17,
+            17,
+            17
+          ],
+          "visibility": "visible",
+          "heapStartMB": 1
+        },
+        {
+          "count": 500000,
+          "detached": true,
+          "genMs": 16,
+          "importMs": 215,
+          "peakImportMB": 46.3,
+          "heapAfterImportMB": 144.9,
+          "imports": {
+            "backend": "worker",
+            "pending": 0,
+            "used": {
+              "worker": 1,
+              "inline": 0
+            }
+          }
+        },
+        {
+          "firstRenderMs": 47,
+          "pixelCenter": "rgba(37,99,234)",
+          "pixelB": "rgba(37,99,234)",
+          "drawCalls": 1,
+          "instances": 258420,
+          "gpuBytesMB": 15.8
+        },
+        {
+          "frames": 151,
+          "engineFrames": 151,
+          "p50Ms": 16.7,
+          "p95Ms": 17.4,
+          "maxMs": 17.9,
+          "pixelAfter": "rgba(37,99,234)"
+        }
+      ],
+      "log": "/private/var/folders/7s/v15d0wv93w58mbg5sdfdjkk40000gn/T/opencode/maplet-canvas-target-final-webgpu-functional.log"
+    },
+    {
+      "name": "final-webgpu-mixed",
+      "status": "pass",
+      "elapsedSeconds": 11.43,
+      "measurements": [],
+      "log": "/private/var/folders/7s/v15d0wv93w58mbg5sdfdjkk40000gn/T/opencode/maplet-canvas-target-final-webgpu-mixed.log"
+    },
+    {
+      "name": "final-webgpu-dense",
+      "status": "pass",
+      "elapsedSeconds": 11.35,
+      "measurements": [],
+      "log": "/private/var/folders/7s/v15d0wv93w58mbg5sdfdjkk40000gn/T/opencode/maplet-canvas-target-final-webgpu-dense.log"
+    },
+    {
+      "name": "final-basic-functional",
+      "status": "pass",
+      "elapsedSeconds": 70.03,
+      "measurements": [
+        {
+          "order": [
+            "layer:click",
+            "leaf:click",
+            "root:click",
+            "map:click"
+          ]
+        },
+        {
+          "order": [
+            "layer:click",
+            "stop"
+          ]
+        },
+        {
+          "hovered": true,
+          "sawOver": true,
+          "pixelHover": [
+            255,
+            0,
+            0
+          ],
+          "cursorHover": "move",
+          "hoveredAfter": false,
+          "sawOut": true,
+          "pixelAway": [
+            22,
+            163,
+            74
+          ],
+          "cursorAway": "grab"
+        },
+        {
+          "aHovered": false,
+          "bHovered": true
+        },
+        {
+          "before": [
+            22,
+            163,
+            74,
+            255
+          ],
+          "hidden": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "hitsHidden": 0,
+          "back": [
+            22,
+            163,
+            74,
+            255
+          ],
+          "hitsBack": [
+            "a"
+          ],
+          "dataCount": 2
+        },
+        {
+          "selectedState": true,
+          "selectedPixel": [
+            245,
+            158,
+            11
+          ],
+          "clearedPixel": [
+            22,
+            163,
+            74
+          ]
+        },
+        {
+          "lng": [
+            14.100000000000005,
+            14.182397460937505
+          ],
+          "zoom": [
+            10,
+            10,
+            10.5
+          ],
+          "formGuard": true
+        },
+        {
+          "zoom0": 10,
+          "zoomEarly": 11,
+          "zoom1": 11,
+          "zoom2": 12,
+          "zoomAfterLift": 12,
+          "zoomWhilePan": 12
+        },
+        {
+          "before": [
+            49.999999999999986,
+            13.99999999999999
+          ],
+          "after": [
+            49.98234206933653,
+            14.05493164062499
+          ],
+          "midErrorM": 0,
+          "endErrorM": 0,
+          "viewMoved": false,
+          "dragEvents": [
+            "layer:dragstart",
+            "leaf:dragstart",
+            "root:dragstart",
+            "map:dragstart",
+            "layer:drag",
+            "leaf:drag",
+            "root:drag",
+            "map:drag",
+            "layer:drag",
+            "leaf:drag",
+            "root:drag",
+            "map:drag",
+            "layer:dragend",
+            "leaf:dragend",
+            "root:dragend",
+            "map:dragend"
+          ]
+        },
+        {
+          "full": [
+            "b",
+            "a"
+          ],
+          "limitedTo2": [
+            "b",
+            "a"
+          ],
+          "limitedTo1": [
+            "b"
+          ],
+          "empty": [],
+          "isolated": [
+            "a"
+          ]
+        },
+        {
+          "syncSpanMs": 0.7,
+          "recordedMs": 0.7,
+          "recordedReadMs": 0.7,
+          "readback": "blocking",
+          "hits": [
+            "b",
+            "a"
+          ]
+        },
+        {
+          "burst": 40,
+          "burstSpanMs": 25.7,
+          "recordedTotalMs": 25.5,
+          "heartbeatGapMs": 25.9,
+          "readback": "blocking"
+        },
+        {
+          "loaded": true,
+          "samples": [
+            {
+              "point": {
+                "x": 80,
+                "y": 80
+              },
+              "pixel": [
+                40,
+                215,
+                0,
+                255
+              ],
+              "expected": [
+                40,
+                215,
+                0
+              ],
+              "delta": 0
+            },
+            {
+              "point": {
+                "x": 432,
+                "y": 80
+              },
+              "pixel": [
+                215,
+                215,
+                0,
+                255
+              ],
+              "expected": [
+                215,
+                215,
+                0
+              ],
+              "delta": 0
+            },
+            {
+              "point": {
+                "x": 80,
+                "y": 432
+              },
+              "pixel": [
+                40,
+                40,
+                0,
+                255
+              ],
+              "expected": [
+                40,
+                40,
+                0
+              ],
+              "delta": 0
+            },
+            {
+              "point": {
+                "x": 432,
+                "y": 432
+              },
+              "pixel": [
+                215,
+                40,
+                0,
+                255
+              ],
+              "expected": [
+                215,
+                40,
+                0
+              ],
+              "delta": 0
+            }
+          ],
+          "marker": [
+            255,
+            0,
+            255,
+            255
+          ],
+          "off": [
+            152,
+            127,
+            0,
+            255
+          ]
+        },
+        {
+          "swapped": true,
+          "epsg4326": true,
+          "crs84": true,
+          "crs84Geography": true,
+          "marker": [
+            255,
+            0,
+            255,
+            255
+          ],
+          "offMarker": [
+            152,
+            127,
+            32,
+            255
+          ]
+        },
+        {
+          "modern": true,
+          "legacy": true,
+          "modernSamples": [
+            {
+              "point": {
+                "x": 80,
+                "y": 80
+              },
+              "pixel": [
+                40,
+                215,
+                96,
+                255
+              ],
+              "expected": [
+                40,
+                215,
+                96
+              ],
+              "delta": 0
+            },
+            {
+              "point": {
+                "x": 432,
+                "y": 80
+              },
+              "pixel": [
+                215,
+                215,
+                96,
+                255
+              ],
+              "expected": [
+                215,
+                215,
+                96
+              ],
+              "delta": 0
+            },
+            {
+              "point": {
+                "x": 80,
+                "y": 432
+              },
+              "pixel": [
+                40,
+                40,
+                96,
+                255
+              ],
+              "expected": [
+                40,
+                40,
+                96
+              ],
+              "delta": 0
+            },
+            {
+              "point": {
+                "x": 432,
+                "y": 432
+              },
+              "pixel": [
+                215,
+                40,
+                96,
+                255
+              ],
+              "expected": [
+                215,
+                40,
+                96
+              ],
+              "delta": 0
+            }
+          ],
+          "legacyMarker": [
+            255,
+            0,
+            255,
+            255
+          ]
+        },
+        {
+          "decoded": {
+            "layers": "roads & rails/1",
+            "styles": "bold red",
+            "time": "2026-10-10",
+            "srs": "EPSG:4326",
+            "version": "1.1.1"
+          },
+          "status": 200,
+          "png": true,
+          "geography": true
+        },
+        {
+          "held": [
+            152,
+            127,
+            0,
+            255
+          ],
+          "baseline": [
+            151,
+            128,
+            0
+          ],
+          "swapMs": 240,
+          "late": [
+            152,
+            127,
+            255,
+            255
+          ]
+        },
+        {
+          "rasterHits": [
+            "wms:wms"
+          ],
+          "nearHotspotHits": [
+            "wms:wms"
+          ],
+          "hotspotHits": [
+            "hotspots:hotspot-a"
+          ],
+          "clicks": [
+            {
+              "sourceId": "wms",
+              "id": "wms",
+              "layerId": "wms-layer"
+            }
+          ]
+        },
+        {
+          "inkAbove": 76,
+          "inkBelow": 0,
+          "text": "P\u0159\u00edli\u0161 \u017elu\u0165ou\u010dk\u00fd k\u016f\u0148"
+        },
+        {
+          "changed": "Nov\u00fd n\u00e1zev",
+          "restored": "P\u0159\u00edli\u0161 \u017elu\u0165ou\u010dk\u00fd k\u016f\u0148"
+        },
+        {
+          "withCollision": 0,
+          "withoutCollision": 16,
+          "order": [
+            "ALFA-ALFA",
+            "BETA-BETA"
+          ]
+        },
+        {
+          "hovered": true,
+          "cursor": "pointer",
+          "events": [
+            "mouseover:dia",
+            "click:dia"
+          ]
+        },
+        {
+          "turned": {
+            "ink": 136,
+            "width": 8,
+            "height": 104,
+            "cx": 327.81777777778916,
+            "cy": 391.98365986865247
+          },
+          "flat": {
+            "ink": 87,
+            "width": 103,
+            "height": 8,
+            "cx": 342.8813333333237,
+            "cy": 459.94367056695046
+          },
+          "probes": [
+            {
+              "dy": -36,
+              "rotated": true
+            },
+            {
+              "dy": -24,
+              "rotated": true
+            },
+            {
+              "dy": -12,
+              "rotated": true
+            },
+            {
+              "dy": 12,
+              "rotated": true
+            },
+            {
+              "dy": 24,
+              "rotated": true
+            },
+            {
+              "dy": 36,
+              "rotated": true
+            }
+          ],
+          "sideHits": [
+            false,
+            false,
+            false,
+            false
+          ]
+        },
+        {
+          "inkBefore": 214,
+          "inkAfterPressure": 214,
+          "offscreenInk": 0
+        },
+        {
+          "canvases": 1,
+          "children": 1
+        },
+        {
+          "brokenState": {
+            "id": "broken-pin",
+            "src": "./definitely-missing.png",
+            "state": "error",
+            "width": 0,
+            "height": 0,
+            "error": "failed to load ./definitely-missing.png"
+          },
+          "fallbackPixel": [
+            22,
+            163,
+            74,
+            255
+          ],
+          "spritesForBroken": 0
+        },
+        {
+          "state": "ready",
+          "width": 32,
+          "height": 40,
+          "planSprites": 501,
+          "drawCalls": 5,
+          "white": [
+            255,
+            253,
+            253,
+            255
+          ],
+          "red": [
+            225,
+            29,
+            72,
+            255
+          ]
+        },
+        {
+          "corner": [],
+          "middle": [
+            "center"
+          ]
+        },
+        {
+          "atAnchor": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "above": [
+            255,
+            255,
+            255,
+            255
+          ]
+        },
+        {
+          "grid": 49,
+          "pixelMatches": 49,
+          "pickMatches": 49,
+          "maxPixelDelta": 0,
+          "flat": {
+            "x": -0.5,
+            "y": -3,
+            "count": 40
+          },
+          "turned": {
+            "x": 2,
+            "y": -0.5,
+            "count": 40
+          }
+        },
+        {
+          "anchor": [
+            406,
+            316
+          ],
+          "body": [
+            225,
+            29,
+            72,
+            255
+          ],
+          "left": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "top": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "box": {
+            "minX": 0,
+            "maxX": 22,
+            "minY": -12,
+            "maxY": 10
+          }
+        },
+        {
+          "states": [
+            "loading",
+            "ready"
+          ],
+          "snapshot": "ready",
+          "frames": [
+            2,
+            3
+          ],
+          "latencyMs": 101
+        },
+        {
+          "count": 9,
+          "polygonType": "multiPolygon",
+          "polygons": 2,
+          "lineType": "multiLineString",
+          "lines": 2,
+          "halfA": [
+            233,
+            150,
+            10,
+            242
+          ],
+          "halfB": [
+            233,
+            150,
+            10,
+            242
+          ],
+          "selectedOnce": 1
+        },
+        {
+          "roadType": "lineString",
+          "buildingType": "polygon",
+          "visible": [
+            233,
+            150,
+            10,
+            242
+          ],
+          "hidden": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "ids": [
+            "8",
+            "1",
+            "2",
+            "9007199254740993",
+            "tl:1/1/0:3#0"
+          ]
+        },
+        {
+          "fill": [
+            233,
+            150,
+            10,
+            242
+          ],
+          "hole": [
+            220,
+            38,
+            38,
+            255
+          ],
+          "road": [
+            37,
+            99,
+            235,
+            255
+          ],
+          "bigRoad": [
+            37,
+            99,
+            235,
+            255
+          ],
+          "poi": [
+            220,
+            38,
+            38,
+            255
+          ],
+          "labels": [
+            "Praha",
+            "Bez ID"
+          ],
+          "ink": 241,
+          "fillHit": {
+            "sceneId": "scene-1",
+            "sourceId": "vt",
+            "namespace": "buildings",
+            "id": 1,
+            "generation": 1
+          }
+        },
+        {
+          "unloaded": {
+            "count": 2,
+            "roadGone": true,
+            "multiPresent": true
+          },
+          "restored": true,
+          "localBefore": "tl:1/1/0:1#1",
+          "localAfter": "tl:1/1/0:1#3"
+        },
+        {
+          "brokenStats": {
+            "loaded": [],
+            "loading": 0,
+            "failed": 1,
+            "deferred": 0,
+            "fragments": 0
+          },
+          "brokenFeatures": 0,
+          "fill": [
+            233,
+            150,
+            10,
+            242
+          ]
+        },
+        {
+          "hovered": true,
+          "events": [
+            "mouseover:vt-pois:10:pois",
+            "click:vt-pois:10:pois"
+          ]
+        },
+        {
+          "loaded": [
+            {
+              "z": 1,
+              "x": 1,
+              "y": 0
+            }
+          ],
+          "failedBefore": 0,
+          "failedAfter": 0,
+          "distance12": 128.0000000000582,
+          "distance13": 256.0000000001164,
+          "poiPixel": [
+            220,
+            38,
+            38,
+            255
+          ],
+          "roadPixel": [
+            37,
+            99,
+            235,
+            255
+          ]
+        },
+        {
+          "settled": 13,
+          "stillSettled": 13,
+          "afterChange": 14,
+          "settledAgain": 14
+        },
+        {
+          "initial": "\u00a9 Maplet MVT fixtures",
+          "cleared": "",
+          "restored": "\u00a9 Maplet MVT fixtures"
+        },
+        {
+          "webgl1": {
+            "backend": "webgl1",
+            "requestedPrimary": "webgl1",
+            "requestedFallback": false,
+            "notes": [
+              "fragment highp is unavailable; pick ids, dashes and shared uniforms fall back to mediump",
+              "ANGLE_instanced_arrays is unavailable; instances are expanded on the CPU"
+            ]
+          },
+          "webgpu": {
+            "backend": "webgpu",
+            "requestedPrimary": "webgpu",
+            "requestedFallback": false,
+            "notes": [
+              "webgpu bgra8unorm",
+              "apple metal-3"
+            ]
+          }
+        },
+        {
+          "backend": "webgl1",
+          "notes": [
+            "fragment highp is unavailable; pick ids, dashes and shared uniforms fall back to mediump",
+            "ANGLE_instanced_arrays is unavailable; instances are expanded on the CPU"
+          ]
+        },
+        {
+          "probe": {
+            "label": "glyph",
+            "at": [
+              376,
+              396
+            ],
+            "webgl1": [
+              16,
+              16,
+              16,
+              255
+            ],
+            "webgpu": [
+              16,
+              16,
+              16,
+              255
+            ],
+            "delta": 0,
+            "pass": true
+          },
+          "inkGl": 1953,
+          "inkGpu": 1953,
+          "inkRelative": 0
+        },
+        {
+          "webgl1": {
+            "instances": 23,
+            "drawCalls": 16
+          },
+          "webgpu": {
+            "instances": 23,
+            "drawCalls": 16
+          }
+        },
+        {
+          "backend": "webgl1",
+          "requestedPrimary": "webgpu",
+          "requestedFallback": "webgl1",
+          "notes": [
+            "webgpu unavailable (gpu-unavailable: navigator.gpu is not available)",
+            "fragment highp is unavailable; pick ids, dashes and shared uniforms fall back to mediump",
+            "ANGLE_instanced_arrays is unavailable; instances are expanded on the CPU"
+          ]
+        },
+        {
+          "capabilities": {
+            "backend": "webgpu",
+            "requestedPrimary": "webgpu",
+            "requestedFallback": "webgl1",
+            "notes": [
+              "webgpu bgra8unorm",
+              "apple metal-3"
+            ]
+          },
+          "pixel": true,
+          "state": {
+            "selection": [
+              "dot"
+            ],
+            "hovered": true,
+            "generation": 1,
+            "bindingType": "lineString",
+            "bindingPoints": 2,
+            "center": {
+              "lng": -45,
+              "lat": 40.97989806962013
+            },
+            "zoom": 2
+          }
+        },
+        {
+          "canvasCount": 1
+        },
+        {
+          "newEvents": [
+            {
+              "backend": "webgpu",
+              "message": "recovered after loss: device lost: Device was destroyed."
+            }
+          ],
+          "state": {
+            "selection": [
+              "dot"
+            ],
+            "hovered": true,
+            "generation": 1,
+            "bindingType": "lineString",
+            "bindingPoints": 2,
+            "center": {
+              "lng": -45,
+              "lat": 40.97989806962013
+            },
+            "zoom": 2
+          },
+          "pixel": true,
+          "canvasCount": 1,
+          "expectedGen": 1
+        },
+        {
+          "hits": [
+            "dot"
+          ],
+          "viewOk": true,
+          "state": {
+            "selection": [
+              "dot"
+            ],
+            "hovered": true,
+            "generation": 1,
+            "bindingType": "lineString",
+            "bindingPoints": 2,
+            "center": {
+              "lng": -45,
+              "lat": 40.97989806962013
+            },
+            "zoom": 2
+          }
+        },
+        {
+          "newEvents": [
+            {
+              "backend": "webgl1",
+              "message": "recovered after loss: device lost: Device was destroyed."
+            }
+          ],
+          "state": {
+            "selection": [
+              "dot"
+            ],
+            "hovered": true,
+            "generation": 1,
+            "bindingType": "lineString",
+            "bindingPoints": 2,
+            "center": {
+              "lng": -45,
+              "lat": 40.97989806962013
+            },
+            "zoom": 2
+          },
+          "pixel": true,
+          "hits": [
+            "dot"
+          ]
+        },
+        {
+          "wasWebgl1": true,
+          "state": {
+            "selection": [
+              "dot"
+            ],
+            "hovered": true,
+            "generation": 1,
+            "bindingType": "lineString",
+            "bindingPoints": 2,
+            "center": {
+              "lng": -45,
+              "lat": 40.97989806962013
+            },
+            "zoom": 2
+          },
+          "pixel": true,
+          "events": [
+            {
+              "backend": "webgl1",
+              "message": "recovered after loss: webgl context lost"
+            }
+          ]
+        },
+        {
+          "settled": [
+            {
+              "status": "rejected",
+              "code": "gpu-unavailable"
+            },
+            {
+              "status": "rejected",
+              "code": "gpu-unavailable"
+            }
+          ],
+          "recovered": true
+        },
+        {
+          "capabilities": {
+            "backend": "unavailable",
+            "requestedPrimary": "webgpu",
+            "requestedFallback": "webgl1",
+            "notes": [
+              "webgpu lost (device lost: Device was destroyed.)",
+              "webgpu recovery failed (gpu-unavailable: navigator.gpu is not available)",
+              "webgl1 recovery failed (gpu-unavailable: a WebGL 1 context could not be created)"
+            ]
+          },
+          "noRetries": true,
+          "pickError": "gpu-unavailable",
+          "sampleError": "gpu-unavailable",
+          "canvasCount": 0
+        },
+        {
+          "atMax": {
+            "inDisabled": true,
+            "outDisabled": false
+          },
+          "afterOut": 3,
+          "atMin": {
+            "zoom": 1,
+            "outDisabled": true
+          },
+          "stuck": 1,
+          "afterIn": 2
+        },
+        {
+          "before": {
+            "visible": true,
+            "checked": true
+          },
+          "afterClick": {
+            "visible": false,
+            "checked": false
+          },
+          "afterApi": {
+            "visible": true,
+            "checked": true
+          },
+          "listed": [
+            "grp",
+            "layer-a",
+            "layer-b"
+          ]
+        },
+        {
+          "afterClick": {
+            "visible": false,
+            "checked": false
+          },
+          "afterApi": {
+            "visible": true,
+            "checked": true
+          }
+        },
+        {
+          "seen": [
+            "\u00a9 A | \u00a9 B",
+            "\u00a9 A | \u00a9 B",
+            "\u00a9 B | \u00a9 A",
+            "\u00a9 B",
+            ""
+          ]
+        },
+        {
+          "atThree": {
+            "expected": {
+              "step": 1000000,
+              "label": "1000 km",
+              "widthPx": 67.69303269525051
+            },
+            "label": "1000 km",
+            "widthPx": 67.69
+          },
+          "atFour": {
+            "expected": {
+              "step": 500000,
+              "label": "500 km",
+              "widthPx": 67.69303269525051
+            },
+            "label": "500 km",
+            "widthPx": 67.69
+          }
+        },
+        {
+          "atThree": {
+            "label": "10 u",
+            "widthPx": 80
+          },
+          "atFour": {
+            "label": "5 u",
+            "widthPx": 80
+          }
+        },
+        {
+          "success": {
+            "ok": true,
+            "position": {
+              "lat": 50.5,
+              "lng": 15.5,
+              "accuracy": 8
+            }
+          },
+          "setViewOk": true,
+          "optionsForwarded": {
+            "timeout": 2000
+          },
+          "deniedResult": {
+            "ok": false,
+            "code": "permission",
+            "message": "denied"
+          },
+          "timeoutResult": {
+            "ok": false,
+            "code": "timeout",
+            "message": "geolocation error 3"
+          },
+          "unsupported": {
+            "ok": false,
+            "code": "unsupported",
+            "message": "geolocation is not available in this environment"
+          }
+        },
+        {
+          "beforeCancel": 2,
+          "updates": 2,
+          "cleared": [
+            1
+          ],
+          "stopped": true
+        },
+        {
+          "hitTargets": [
+            {
+              "tag": "BUTTON",
+              "data": null,
+              "ok": true
+            },
+            {
+              "tag": "BUTTON",
+              "data": null,
+              "ok": true
+            },
+            {
+              "tag": "INPUT",
+              "data": null,
+              "ok": true
+            }
+          ],
+          "blocked": true,
+          "panWorks": true,
+          "wheelBlocked": true,
+          "wheelWorks": true
+        },
+        {
+          "stopped": true,
+          "domGone": true,
+          "planarDomGone": true,
+          "locateAfterDestroy": "destroyed",
+          "destroyed": true
+        },
+        {
+          "opened": true,
+          "nearAnchor": true,
+          "afterUpdate": "A:A1:busy",
+          "moved": true,
+          "role": "dialog"
+        },
+        {
+          "open": false,
+          "element": false
+        },
+        {
+          "opened": true,
+          "retained": true,
+          "marker": true,
+          "frozen": true,
+          "stillFrozen": true
+        },
+        {
+          "isText": true,
+          "noExecution": true
+        },
+        {
+          "domOk": true,
+          "errorShown": true,
+          "mapAlive": true
+        },
+        {
+          "bounded": true,
+          "clickedSelects": true,
+          "pressed": [
+            "false",
+            "true",
+            "false"
+          ],
+          "live": "1 selected: D"
+        },
+        {
+          "focused": true,
+          "hitOk": true,
+          "detailButton": {
+            "exists": true,
+            "hitOk": true
+          },
+          "containerFocusable": true,
+          "cleanedUp": true
+        },
+        {
+          "snapshot": {
+            "id": "fixture",
+            "family": "Maplet Fixture",
+            "src": "./fonts/maplet-subset.woff2?delay=3500&r=1791881948038",
+            "state": "loading",
+            "error": null
+          },
+          "faces": 0
+        },
+        {
+          "ink": 88,
+          "width": 144,
+          "state": "loading"
+        },
+        {
+          "ready": "ready",
+          "faces": 1,
+          "preWidth": 144,
+          "postWidth": 150,
+          "oracleWidth": 151,
+          "widthDelta": 1,
+          "builds": [
+            2,
+            3
+          ]
+        },
+        {
+          "snapshot": {
+            "id": "missing",
+            "family": "Maplet Missing Font",
+            "src": "./fonts/does-not-exist.woff2",
+            "state": "error",
+            "error": "failed to load font ./fonts/does-not-exist.woff2: NetworkError: A network error occurred."
+          },
+          "ink": 50
+        },
+        {
+          "ltr": {
+            "width": 70,
+            "oracle": 72
+          },
+          "rtl": {
+            "width": 70,
+            "oracle": 72
+          },
+          "profileDiff": 72
+        },
+        {
+          "acute": {
+            "width": 7,
+            "oracle": 8,
+            "ink": 26
+          },
+          "precomposed": {
+            "width": 7,
+            "oracle": 8,
+            "ink": 26
+          }
+        },
+        {
+          "ligature": {
+            "width": 35,
+            "ink": 277,
+            "oracle": 36
+          },
+          "control": {
+            "width": 40,
+            "ink": 292,
+            "oracle": 41
+          }
+        },
+        {
+          "width": 59,
+          "ink": 299,
+          "kernedOracle": 61,
+          "unkernedOracle": 67
+        },
+        {
+          "shareA": 63,
+          "shareB": 63,
+          "labels": 2,
+          "faces": 1,
+          "afterRemove": 63
+        },
+        {
+          "faces": 0,
+          "fallbackWidth": 144,
+          "preReadyWidth": 144,
+          "delta": 0,
+          "afterDestroy": 0
+        },
+        {
+          "aTopLeft": "rgba(255,0,0,255)",
+          "aTopRight": "rgba(0,200,0,255)",
+          "aBottomLeft": "rgba(0,0,255,255)",
+          "aBottomRight": "rgba(255,255,255,255)",
+          "plate": "rgba(249,115,22,255)",
+          "bOverA": "rgba(255,255,128,255)",
+          "bOverPlate": "rgba(125,185,138,255)",
+          "bOverBackground": "rgba(128,0,128,128)"
+        },
+        {
+          "before": "rgba(255,0,0,255)",
+          "afterUrl": "rgba(255,255,0,255)",
+          "otherUnchanged": "rgba(125,185,138,255)",
+          "oldArea": "rgba(0,0,0,0)",
+          "newArea": "rgba(0,255,255,255)",
+          "revisions": {
+            "a": [
+              0,
+              2
+            ],
+            "b": [
+              0,
+              0
+            ]
+          }
+        },
+        {
+          "rendered": {
+            "sourceId": "image-a",
+            "id": "image-a",
+            "layerId": "media-a"
+          },
+          "clicks": 1,
+          "platePick": [
+            "plate:plate"
+          ]
+        },
+        {
+          "before": {
+            "one": "rgba(32,32,128,255)",
+            "three": "rgba(92,92,128,255)",
+            "five": "rgba(151,62,128,255)"
+          },
+          "after": {
+            "one": "rgba(31,32,128,255)",
+            "twoTwo": "rgba(0,255,0,255)",
+            "threeTwo": "rgba(6,245,7,255)",
+            "twoThree": "rgba(3,248,7,255)",
+            "threeThree": "rgba(10,240,13,255)",
+            "five": "rgba(151,62,128,255)"
+          },
+          "pixelVersion": [
+            0,
+            1
+          ]
+        },
+        {
+          "codes": [
+            "invalid-region",
+            "invalid-region",
+            "invalid-region"
+          ],
+          "pixelVersion": 1,
+          "before": "rgba(31,32,128,255)",
+          "after": "rgba(31,32,128,255)"
+        },
+        {
+          "first": "rgba(254,0,0,255)",
+          "second": "rgba(0,0,255,255)",
+          "settled": "rgba(0,0,255,255)",
+          "frames": [
+            6,
+            7
+          ],
+          "pixelVersion": [
+            3,
+            3
+          ],
+          "revision": [
+            0,
+            0
+          ]
+        },
+        {
+          "firstFrame": "rgba(254,0,0,255)",
+          "playingFrames": 1,
+          "idleFrames": 0,
+          "playError": null
+        },
+        {
+          "lateFrames": 0,
+          "removed": "rgba(0,0,0,0)",
+          "errors": 0
+        },
+        {
+          "count": 5000,
+          "imports": {
+            "backend": "worker",
+            "pending": 0,
+            "used": {
+              "worker": 1,
+              "inline": 0
+            }
+          },
+          "pixel": "rgba(37,99,235,255)",
+          "spotLat": 50.14599999999999
+        },
+        {
+          "outcomes": [
+            [
+              "odd positions",
+              "import-invalid",
+              "number"
+            ],
+            [
+              "plain array",
+              "import-invalid",
+              "number"
+            ],
+            [
+              "NaN coordinate",
+              "import-invalid",
+              "number"
+            ],
+            [
+              "ids length",
+              "import-invalid",
+              "number"
+            ],
+            [
+              "point with offsets",
+              "import-invalid",
+              "number"
+            ],
+            [
+              "offsets past the buffer",
+              "import-invalid",
+              "number"
+            ],
+            [
+              "feature offsets past the parts",
+              "import-invalid",
+              "number"
+            ],
+            [
+              "altitudes length",
+              "import-invalid",
+              "number"
+            ],
+            [
+              "unknown kind",
+              "import-invalid",
+              "number"
+            ]
+          ],
+          "before": 5000,
+          "after": 5000
+        },
+        {
+          "byteLengthAfter": 32,
+          "before": 13.99999999999999,
+          "after": 13.99999999999999,
+          "reimported": 14.999999999999986
+        },
+        {
+          "detached": true,
+          "polyDetached": true,
+          "count": 201,
+          "pixel": "rgba(37,99,235,255)"
+        },
+        {
+          "queuedResult": {
+            "code": "aborted",
+            "reason": "aborted",
+            "revision": 6
+          },
+          "flightResult": {
+            "code": "aborted",
+            "reason": "aborted",
+            "revision": 7
+          },
+          "countAfterBusy": 50000,
+          "countAfterWait": 50000,
+          "usedAfterAbort": 6,
+          "usedAfterWait": 6,
+          "events": 2,
+          "after": {
+            "backend": "worker",
+            "pending": 0,
+            "used": {
+              "worker": 7,
+              "inline": 0
+            }
+          }
+        },
+        {
+          "pendingWhileQueued": 5,
+          "overflow": {
+            "code": "aborted",
+            "reason": "queue-full",
+            "revision": 8
+          },
+          "drained": 0,
+          "count": 1000
+        },
+        {
+          "before": 12,
+          "usedWorker": 13,
+          "count": 2000,
+          "pixel": "rgba(37,99,235,255)",
+          "bad": {
+            "code": "import-invalid",
+            "reason": "Expected property name or '}' in JSON at position 2 (line 1 column 3)",
+            "revision": 14
+          },
+          "aborted": {
+            "code": "aborted",
+            "reason": "aborted",
+            "revision": 14
+          }
+        },
+        {
+          "name": "seven",
+          "hit": 7,
+          "exported": {
+            "type": "Feature",
+            "id": 7,
+            "geometry": {
+              "type": "Point",
+              "coordinates": [
+                14.020000000000001,
+                50.02000000000002
+              ]
+            },
+            "properties": {
+              "name": "seven"
+            }
+          },
+          "oldPixel": "rgba(0,0,0,0)",
+          "newPixel": "rgba(37,99,235,255)"
+        },
+        {
+          "blocked": true,
+          "hint": "open this battery as ?csp=worker-none (the dev server sends the header)"
+        },
+        {
+          "outcome": {
+            "ok": false,
+            "code": "worker-failed",
+            "reason": "the import worker crashed or failed to load"
+          },
+          "imports": {
+            "backend": "inline",
+            "pending": 0,
+            "used": {
+              "worker": 0,
+              "inline": 0
+            }
+          }
+        },
+        {
+          "count": 300,
+          "imports": {
+            "backend": "inline",
+            "pending": 0,
+            "used": {
+              "worker": 0,
+              "inline": 1
+            }
+          },
+          "pixel": "rgba(37,99,235,255)"
+        },
+        {
+          "imports": {
+            "backend": "inline",
+            "pending": 0,
+            "used": {
+              "worker": 0,
+              "inline": 2
+            }
+          },
+          "count": 120
+        },
+        {
+          "cycles": 12,
+          "blue": 12,
+          "canvasGone": 12
+        },
+        {
+          "fontState": "ready",
+          "fontBaseline": 0,
+          "fontAfter": 0
+        },
+        {
+          "growthMB": 0.7,
+          "boundMB": 8,
+          "gc": true,
+          "measured": true,
+          "note": "GC-stabilized"
+        },
+        {
+          "detached": true,
+          "imports": {
+            "backend": "worker",
+            "pending": 0,
+            "used": {
+              "worker": 1,
+              "inline": 0
+            }
+          },
+          "pixelsBlue": true,
+          "genMs": 23,
+          "importMs": 220,
+          "renderMs": 93,
+          "peakImportMB": 48.5,
+          "heapAfterImportMB": 88.7,
+          "stats": {
+            "drawCalls": 1,
+            "instances": 113040,
+            "gpuBytesMB": 46.6
+          }
+        },
+        {
+          "aborted": {
+            "ok": false,
+            "code": "aborted"
+          },
+          "countAfterAbort": 500000,
+          "pendingAfterAbort": 0,
+          "smallCount": 1
+        },
+        {
+          "residualMB": 1,
+          "residualImmediateMB": 1,
+          "heapAfterImportMB": 88.7,
+          "boundMB": 96,
+          "gc": true,
+          "measured": true,
+          "note": "GC-stabilized after destroy"
+        },
+        {
+          "rafFrames": 180,
+          "engineFrames": 180,
+          "p50Ms": 16.6,
+          "p95Ms": 17.4,
+          "maxMs": 17.6,
+          "pixel": "rgba(37,99,235)",
+          "updatedProperty": 176,
+          "lastUpdate": 176,
+          "bare": [
+            0,
+            14,
+            17
+          ],
+          "bareAfterMap": [
+            13,
+            17,
+            17
+          ],
+          "setTimes": [
+            1,
+            0,
+            0,
+            0,
+            0
+          ],
+          "waitTimes": [
+            17,
+            16,
+            16,
+            17,
+            17
+          ],
+          "visibility": "visible",
+          "heapStartMB": 0.9
+        },
+        {
+          "count": 500000,
+          "detached": true,
+          "genMs": 16,
+          "importMs": 223,
+          "peakImportMB": 46.2,
+          "heapAfterImportMB": 270.9,
+          "imports": {
+            "backend": "worker",
+            "pending": 0,
+            "used": {
+              "worker": 1,
+              "inline": 0
+            }
+          }
+        },
+        {
+          "firstRenderMs": 145,
+          "pixelCenter": "rgba(37,99,234)",
+          "pixelB": "rgba(37,99,234)",
+          "drawCalls": 1,
+          "instances": 258420,
+          "gpuBytesMB": 106.5
+        },
+        {
+          "frames": 151,
+          "engineFrames": 151,
+          "p50Ms": 16.7,
+          "p95Ms": 17.5,
+          "maxMs": 17.6,
+          "pixelAfter": "rgba(37,99,234)"
+        }
+      ],
+      "log": "/private/var/folders/7s/v15d0wv93w58mbg5sdfdjkk40000gn/T/opencode/maplet-canvas-target-final-basic-functional.log"
+    },
+    {
+      "name": "final-basic-mixed",
+      "status": "pass",
+      "elapsedSeconds": 11.48,
+      "measurements": [],
+      "log": "/private/var/folders/7s/v15d0wv93w58mbg5sdfdjkk40000gn/T/opencode/maplet-canvas-target-final-basic-mixed.log"
+    },
+    {
+      "name": "final-basic-dense",
+      "status": "pass",
+      "elapsedSeconds": 11.39,
+      "measurements": [],
+      "log": "/private/var/folders/7s/v15d0wv93w58mbg5sdfdjkk40000gn/T/opencode/maplet-canvas-target-final-basic-dense.log"
+    },
+    {
+      "name": "final-updates",
+      "status": "pass",
+      "elapsedSeconds": 181.41,
+      "measurements": [],
+      "log": "/private/var/folders/7s/v15d0wv93w58mbg5sdfdjkk40000gn/T/opencode/maplet-canvas-target-final-updates.log"
+    }
+  ],
+  "finalBuildMatches": true,
+  "evaluatorsUnchanged": true
+}

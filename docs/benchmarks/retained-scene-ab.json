@@ -1,0 +1,6961 @@
+{
+  "measuredAtUtc": "2026-10-13T07:32:11.557577+00:00",
+  "baseline": {
+    "revision": "315c5c8",
+    "build": {
+      "files": 48,
+      "sha256": "ed75c7e5c5743089e653ce483cd756ea17666b995237b27352ce24a0393bd5cd"
+    }
+  },
+  "candidate": {
+    "revision": "uncommitted retained-scene rewrite",
+    "build": {
+      "files": 58,
+      "sha256": "4d84519d19c8ecf3fa3a90c1720a6f6cd7043652c6ee1d17d3c9646360d822df"
+    }
+  },
+  "method": {
+    "repetitionsPerVersionWorkloadProfile": 3,
+    "order": [
+      [
+        "before",
+        "after"
+      ],
+      [
+        "after",
+        "before"
+      ],
+      [
+        "before",
+        "after"
+      ]
+    ],
+    "denseException": "One bounded baseline attempt per backend; three candidate runs per main backend and one basic-profile correctness run. Timeout is not a numerical baseline median.",
+    "processBudgetSeconds": 120,
+    "sameEndpoint": "http://localhost:8401/demo",
+    "onlyDistRootChanges": true,
+    "overlappingMeasurements": false,
+    "evaluatorSha256": {
+      "demo/compare.js": "c57b21e50609b574aec3673d7d8f022b8987cf0a2cd603a652b7282597310362",
+      "demo/compare.html": "537f536e181c5ec92976d91925636bc9f77aa771cce5f872a0a04f47fb1fa465",
+      "demo/e2e/runner.mjs": "03b0b51fc4128f67a364af84b1ee88b17887fb2203c17a5ed24acc1e54526e8a",
+      "demo/e2e/compare-updates.mjs": "8da6a73b00a94451336d2b5dc31319db0eeecf0e508b61b73d2a536c828d7b93",
+      "demo/e2e/complex-scene.mjs": "9ac91281523a8d352d34a87aebcfcf2c343e0ba520b9f686bfe71a9f484f2ca9",
+      "demo/e2e/dense-geometry.mjs": "7e990106fb7dfb7e999eabd4e99bd5e2e610c450d9b7efaa6a4f131f92d413de"
+    }
+  },
+  "workloads": {
+    "points": {
+      "features": 500000,
+      "viewportCssPx": [
+        720,
+        520
+      ],
+      "zoom": 10,
+      "interactive": true,
+      "fixture": "unchanged demo/compare.js",
+      "warmupMs": 5000,
+      "warmMeasurementMs": 10000
+    },
+    "complex": {
+      "lines": 96,
+      "lineVerticesPerFeature": 256,
+      "polygons": 64,
+      "ringsPerPolygon": 3,
+      "polygonVerticesBeforeClosure": [
+        128,
+        8,
+        8
+      ],
+      "symbols": 2048,
+      "labelStrings": 256,
+      "imageAssets": 16,
+      "viewportCssPx": [
+        720,
+        520
+      ],
+      "zoom": 0,
+      "panWarmupFrames": 12,
+      "measuredPanFrames": 36,
+      "measuredAppearanceFrames": 12,
+      "interactive": true,
+      "fixture": "demo/e2e/complex-scene.mjs; identical for both versions"
+    },
+    "dense": {
+      "features": 2,
+      "lineVertices": 100000,
+      "polygonExteriorVertices": 8192,
+      "polygonHoles": 6,
+      "verticesPerHole": 64,
+      "viewportCssPx": [
+        720,
+        520
+      ],
+      "zoom": 0,
+      "panWarmupFrames": 12,
+      "measuredPanFrames": 36,
+      "measuredAppearanceFrames": 12,
+      "interactive": true,
+      "fixture": "demo/e2e/dense-geometry.mjs; identical for both versions"
+    }
+  },
+  "runs": [
+    {
+      "workload": "points",
+      "profile": "webgl1",
+      "repetition": 1,
+      "variant": "before",
+      "elapsedSeconds": 20.180768916849047,
+      "status": "pass",
+      "logSha256": "d85747469c77deba18427edd51ee90da2f67d84162f9b161dfcd87a4f68b4990",
+      "measurements": [
+        {
+          "engine": "maplet",
+          "backend": "webgl1",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+          "dpr": 1,
+          "count": 500000,
+          "renderedPointsOrDomMarkers": 258420,
+          "markerDomElements": 0,
+          "mapCreateMs": 9,
+          "generateMs": 24,
+          "loadMs": 794,
+          "paintWaitMs": 98,
+          "setupToPaintMs": 925,
+          "gcAvailable": true,
+          "heapDeltaMiB": 138.7,
+          "drawCalls": 1,
+          "gpuMiB": 15.8,
+          "output": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ],
+          "projections": [
+            {
+              "expected": {
+                "x": 360,
+                "y": 260
+              },
+              "actual": {
+                "x": 360.0000000000291,
+                "y": 260
+              },
+              "pass": true
+            },
+            {
+              "expected": {
+                "x": 505.635555555555,
+                "y": 429.66218561920687
+              },
+              "actual": {
+                "x": 505.6355555555783,
+                "y": 429.6621856191923
+              },
+              "pass": true
+            }
+          ]
+        },
+        {
+          "coldPan": {
+            "samples": 5,
+            "renderUpdates": 5,
+            "elapsedMs": 3038,
+            "p50Ms": 1001.6,
+            "p95Ms": 1016.6,
+            "maxMs": 1016.6
+          },
+          "warmupMs": 5000,
+          "warmPan": {
+            "samples": 558,
+            "renderUpdates": 558,
+            "elapsedMs": 10016,
+            "p50Ms": 16.7,
+            "p95Ms": 17.4,
+            "maxMs": 733.2
+          },
+          "afterPan": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "workload": "points",
+      "profile": "webgl1",
+      "repetition": 1,
+      "variant": "after",
+      "elapsedSeconds": 19.315804499667138,
+      "status": "pass",
+      "logSha256": "a3dd446560ba058d060b9c4f907e5bd07e7e5dfa97b2fa7c3da258c785b2e99a",
+      "measurements": [
+        {
+          "engine": "maplet",
+          "backend": "webgl1",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+          "dpr": 1,
+          "count": 500000,
+          "renderedPointsOrDomMarkers": 258420,
+          "markerDomElements": 0,
+          "mapCreateMs": 5,
+          "generateMs": 17,
+          "loadMs": 313,
+          "paintWaitMs": 70,
+          "setupToPaintMs": 405,
+          "gcAvailable": true,
+          "heapDeltaMiB": 142,
+          "drawCalls": 1,
+          "gpuMiB": 15.8,
+          "output": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ],
+          "projections": [
+            {
+              "expected": {
+                "x": 360,
+                "y": 260
+              },
+              "actual": {
+                "x": 360.0000000000291,
+                "y": 260
+              },
+              "pass": true
+            },
+            {
+              "expected": {
+                "x": 505.635555555555,
+                "y": 429.66218561920687
+              },
+              "actual": {
+                "x": 505.6355555555783,
+                "y": 429.6621856191923
+              },
+              "pass": true
+            }
+          ]
+        },
+        {
+          "coldPan": {
+            "samples": 5,
+            "renderUpdates": 5,
+            "elapsedMs": 3039,
+            "p50Ms": 1006.1,
+            "p95Ms": 1016.4,
+            "maxMs": 1016.4
+          },
+          "warmupMs": 5000,
+          "warmPan": {
+            "samples": 522,
+            "renderUpdates": 522,
+            "elapsedMs": 10016,
+            "p50Ms": 16.7,
+            "p95Ms": 17.3,
+            "maxMs": 1016.5
+          },
+          "afterPan": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "workload": "points",
+      "profile": "webgl1",
+      "repetition": 2,
+      "variant": "after",
+      "elapsedSeconds": 19.29484950006008,
+      "status": "pass",
+      "logSha256": "55002dba5704b5463e276365a95c56f95fa7840451ca1afa9b4e82ad0d6daa57",
+      "measurements": [
+        {
+          "engine": "maplet",
+          "backend": "webgl1",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+          "dpr": 1,
+          "count": 500000,
+          "renderedPointsOrDomMarkers": 258420,
+          "markerDomElements": 0,
+          "mapCreateMs": 5,
+          "generateMs": 15,
+          "loadMs": 321,
+          "paintWaitMs": 70,
+          "setupToPaintMs": 410,
+          "gcAvailable": true,
+          "heapDeltaMiB": 142,
+          "drawCalls": 1,
+          "gpuMiB": 15.8,
+          "output": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ],
+          "projections": [
+            {
+              "expected": {
+                "x": 360,
+                "y": 260
+              },
+              "actual": {
+                "x": 360.0000000000291,
+                "y": 260
+              },
+              "pass": true
+            },
+            {
+              "expected": {
+                "x": 505.635555555555,
+                "y": 429.66218561920687
+              },
+              "actual": {
+                "x": 505.6355555555783,
+                "y": 429.6621856191923
+              },
+              "pass": true
+            }
+          ]
+        },
+        {
+          "coldPan": {
+            "samples": 5,
+            "renderUpdates": 5,
+            "elapsedMs": 3047,
+            "p50Ms": 1012.6,
+            "p95Ms": 1016.8,
+            "maxMs": 1016.8
+          },
+          "warmupMs": 5000,
+          "warmPan": {
+            "samples": 522,
+            "renderUpdates": 522,
+            "elapsedMs": 10000,
+            "p50Ms": 16.7,
+            "p95Ms": 17.5,
+            "maxMs": 1016.7
+          },
+          "afterPan": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "workload": "points",
+      "profile": "webgl1",
+      "repetition": 2,
+      "variant": "before",
+      "elapsedSeconds": 19.34788900008425,
+      "status": "pass",
+      "logSha256": "dfb75546a6eb16ea89d097f57922c0d47ba8290ace649cb352d604d6c09c09ab",
+      "measurements": [
+        {
+          "engine": "maplet",
+          "backend": "webgl1",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+          "dpr": 1,
+          "count": 500000,
+          "renderedPointsOrDomMarkers": 258420,
+          "markerDomElements": 0,
+          "mapCreateMs": 5,
+          "generateMs": 15,
+          "loadMs": 380,
+          "paintWaitMs": 65,
+          "setupToPaintMs": 465,
+          "gcAvailable": true,
+          "heapDeltaMiB": 138.7,
+          "drawCalls": 1,
+          "gpuMiB": 15.8,
+          "output": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ],
+          "projections": [
+            {
+              "expected": {
+                "x": 360,
+                "y": 260
+              },
+              "actual": {
+                "x": 360.0000000000291,
+                "y": 260
+              },
+              "pass": true
+            },
+            {
+              "expected": {
+                "x": 505.635555555555,
+                "y": 429.66218561920687
+              },
+              "actual": {
+                "x": 505.6355555555783,
+                "y": 429.6621856191923
+              },
+              "pass": true
+            }
+          ]
+        },
+        {
+          "coldPan": {
+            "samples": 5,
+            "renderUpdates": 5,
+            "elapsedMs": 3048,
+            "p50Ms": 1013.7,
+            "p95Ms": 1016.9,
+            "maxMs": 1016.9
+          },
+          "warmupMs": 5000,
+          "warmPan": {
+            "samples": 526,
+            "renderUpdates": 526,
+            "elapsedMs": 10017,
+            "p50Ms": 16.7,
+            "p95Ms": 17.4,
+            "maxMs": 1016.7
+          },
+          "afterPan": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "workload": "points",
+      "profile": "webgl1",
+      "repetition": 3,
+      "variant": "before",
+      "elapsedSeconds": 19.321100084111094,
+      "status": "pass",
+      "logSha256": "82c14a3c2e43612500525834c6fbfac9963a09207b82487a76f9a6e9d87a69b2",
+      "measurements": [
+        {
+          "engine": "maplet",
+          "backend": "webgl1",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+          "dpr": 1,
+          "count": 500000,
+          "renderedPointsOrDomMarkers": 258420,
+          "markerDomElements": 0,
+          "mapCreateMs": 5,
+          "generateMs": 15,
+          "loadMs": 378,
+          "paintWaitMs": 65,
+          "setupToPaintMs": 462,
+          "gcAvailable": true,
+          "heapDeltaMiB": 138.7,
+          "drawCalls": 1,
+          "gpuMiB": 15.8,
+          "output": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ],
+          "projections": [
+            {
+              "expected": {
+                "x": 360,
+                "y": 260
+              },
+              "actual": {
+                "x": 360.0000000000291,
+                "y": 260
+              },
+              "pass": true
+            },
+            {
+              "expected": {
+                "x": 505.635555555555,
+                "y": 429.66218561920687
+              },
+              "actual": {
+                "x": 505.6355555555783,
+                "y": 429.6621856191923
+              },
+              "pass": true
+            }
+          ]
+        },
+        {
+          "coldPan": {
+            "samples": 5,
+            "renderUpdates": 5,
+            "elapsedMs": 3045,
+            "p50Ms": 1011.9,
+            "p95Ms": 1016.5,
+            "maxMs": 1016.5
+          },
+          "warmupMs": 5000,
+          "warmPan": {
+            "samples": 526,
+            "renderUpdates": 526,
+            "elapsedMs": 10016,
+            "p50Ms": 16.7,
+            "p95Ms": 17.4,
+            "maxMs": 1016.6
+          },
+          "afterPan": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "workload": "points",
+      "profile": "webgl1",
+      "repetition": 3,
+      "variant": "after",
+      "elapsedSeconds": 19.226770624984056,
+      "status": "pass",
+      "logSha256": "ee1b0379b16da24cfdc967e3e3ccc7714d2f5d220618fdc4d875306212de6ee8",
+      "measurements": [
+        {
+          "engine": "maplet",
+          "backend": "webgl1",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+          "dpr": 1,
+          "count": 500000,
+          "renderedPointsOrDomMarkers": 258420,
+          "markerDomElements": 0,
+          "mapCreateMs": 5,
+          "generateMs": 15,
+          "loadMs": 280,
+          "paintWaitMs": 67,
+          "setupToPaintMs": 368,
+          "gcAvailable": true,
+          "heapDeltaMiB": 142,
+          "drawCalls": 1,
+          "gpuMiB": 15.8,
+          "output": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ],
+          "projections": [
+            {
+              "expected": {
+                "x": 360,
+                "y": 260
+              },
+              "actual": {
+                "x": 360.0000000000291,
+                "y": 260
+              },
+              "pass": true
+            },
+            {
+              "expected": {
+                "x": 505.635555555555,
+                "y": 429.66218561920687
+              },
+              "actual": {
+                "x": 505.6355555555783,
+                "y": 429.6621856191923
+              },
+              "pass": true
+            }
+          ]
+        },
+        {
+          "coldPan": {
+            "samples": 4,
+            "renderUpdates": 4,
+            "elapsedMs": 3042,
+            "p50Ms": 1016.4,
+            "p95Ms": 1017,
+            "maxMs": 1017
+          },
+          "warmupMs": 5000,
+          "warmPan": {
+            "samples": 520,
+            "renderUpdates": 520,
+            "elapsedMs": 10016,
+            "p50Ms": 16.7,
+            "p95Ms": 17.4,
+            "maxMs": 1016.4
+          },
+          "afterPan": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "workload": "points",
+      "profile": "webgpu",
+      "repetition": 1,
+      "variant": "before",
+      "elapsedSeconds": 19.326582207810134,
+      "status": "pass",
+      "logSha256": "1fb650c6ab5c7584e0e7cb21322c3e82b3312a81dbae7aa7e58931a7bc5cb864",
+      "measurements": [
+        {
+          "engine": "maplet",
+          "backend": "webgpu",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+          "dpr": 1,
+          "count": 500000,
+          "renderedPointsOrDomMarkers": 258420,
+          "markerDomElements": 0,
+          "mapCreateMs": 5,
+          "generateMs": 15,
+          "loadMs": 385,
+          "paintWaitMs": 64,
+          "setupToPaintMs": 468,
+          "gcAvailable": true,
+          "heapDeltaMiB": 138.7,
+          "drawCalls": 1,
+          "gpuMiB": 15.8,
+          "output": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ],
+          "projections": [
+            {
+              "expected": {
+                "x": 360,
+                "y": 260
+              },
+              "actual": {
+                "x": 360.0000000000291,
+                "y": 260
+              },
+              "pass": true
+            },
+            {
+              "expected": {
+                "x": 505.635555555555,
+                "y": 429.66218561920687
+              },
+              "actual": {
+                "x": 505.6355555555783,
+                "y": 429.6621856191923
+              },
+              "pass": true
+            }
+          ]
+        },
+        {
+          "coldPan": {
+            "samples": 3,
+            "renderUpdates": 3,
+            "elapsedMs": 3026,
+            "p50Ms": 1016.5,
+            "p95Ms": 1016.5,
+            "maxMs": 1016.5
+          },
+          "warmupMs": 5000,
+          "warmPan": {
+            "samples": 525,
+            "renderUpdates": 525,
+            "elapsedMs": 10016,
+            "p50Ms": 16.7,
+            "p95Ms": 17.6,
+            "maxMs": 1016.5
+          },
+          "afterPan": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "workload": "points",
+      "profile": "webgpu",
+      "repetition": 1,
+      "variant": "after",
+      "elapsedSeconds": 19.189712250139564,
+      "status": "pass",
+      "logSha256": "c4fedbc0f3cc8d6a7c2787a926a06293d09fbf410da1a773741596504088e9e0",
+      "measurements": [
+        {
+          "engine": "maplet",
+          "backend": "webgpu",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+          "dpr": 1,
+          "count": 500000,
+          "renderedPointsOrDomMarkers": 258420,
+          "markerDomElements": 0,
+          "mapCreateMs": 3,
+          "generateMs": 15,
+          "loadMs": 247,
+          "paintWaitMs": 66,
+          "setupToPaintMs": 331,
+          "gcAvailable": true,
+          "heapDeltaMiB": 142,
+          "drawCalls": 1,
+          "gpuMiB": 15.8,
+          "output": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ],
+          "projections": [
+            {
+              "expected": {
+                "x": 360,
+                "y": 260
+              },
+              "actual": {
+                "x": 360.0000000000291,
+                "y": 260
+              },
+              "pass": true
+            },
+            {
+              "expected": {
+                "x": 505.635555555555,
+                "y": 429.66218561920687
+              },
+              "actual": {
+                "x": 505.6355555555783,
+                "y": 429.6621856191923
+              },
+              "pass": true
+            }
+          ]
+        },
+        {
+          "coldPan": {
+            "samples": 3,
+            "renderUpdates": 3,
+            "elapsedMs": 3028,
+            "p50Ms": 1016.6,
+            "p95Ms": 1017.2,
+            "maxMs": 1017.2
+          },
+          "warmupMs": 5000,
+          "warmPan": {
+            "samples": 517,
+            "renderUpdates": 517,
+            "elapsedMs": 10016,
+            "p50Ms": 16.7,
+            "p95Ms": 17.4,
+            "maxMs": 1017
+          },
+          "afterPan": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "workload": "points",
+      "profile": "webgpu",
+      "repetition": 2,
+      "variant": "after",
+      "elapsedSeconds": 19.172939334064722,
+      "status": "pass",
+      "logSha256": "0b70251ddb1a09d2e5ac654028c50c21047962e74599852f0c1a7226ed0f785a",
+      "measurements": [
+        {
+          "engine": "maplet",
+          "backend": "webgpu",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+          "dpr": 1,
+          "count": 500000,
+          "renderedPointsOrDomMarkers": 258420,
+          "markerDomElements": 0,
+          "mapCreateMs": 3,
+          "generateMs": 15,
+          "loadMs": 242,
+          "paintWaitMs": 65,
+          "setupToPaintMs": 325,
+          "gcAvailable": true,
+          "heapDeltaMiB": 142,
+          "drawCalls": 1,
+          "gpuMiB": 15.8,
+          "output": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ],
+          "projections": [
+            {
+              "expected": {
+                "x": 360,
+                "y": 260
+              },
+              "actual": {
+                "x": 360.0000000000291,
+                "y": 260
+              },
+              "pass": true
+            },
+            {
+              "expected": {
+                "x": 505.635555555555,
+                "y": 429.66218561920687
+              },
+              "actual": {
+                "x": 505.6355555555783,
+                "y": 429.6621856191923
+              },
+              "pass": true
+            }
+          ]
+        },
+        {
+          "coldPan": {
+            "samples": 3,
+            "renderUpdates": 3,
+            "elapsedMs": 3015,
+            "p50Ms": 1016.5,
+            "p95Ms": 1016.8,
+            "maxMs": 1016.8
+          },
+          "warmupMs": 5000,
+          "warmPan": {
+            "samples": 515,
+            "renderUpdates": 515,
+            "elapsedMs": 10016,
+            "p50Ms": 16.7,
+            "p95Ms": 17.5,
+            "maxMs": 1015.8
+          },
+          "afterPan": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "workload": "points",
+      "profile": "webgpu",
+      "repetition": 2,
+      "variant": "before",
+      "elapsedSeconds": 19.342270167078823,
+      "status": "pass",
+      "logSha256": "9c49bff0af5b45391b0a848656ada23d7ec372ef5a005855b9262fe034bb0dff",
+      "measurements": [
+        {
+          "engine": "maplet",
+          "backend": "webgpu",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+          "dpr": 1,
+          "count": 500000,
+          "renderedPointsOrDomMarkers": 258420,
+          "markerDomElements": 0,
+          "mapCreateMs": 3,
+          "generateMs": 15,
+          "loadMs": 367,
+          "paintWaitMs": 62,
+          "setupToPaintMs": 447,
+          "gcAvailable": true,
+          "heapDeltaMiB": 138.7,
+          "drawCalls": 1,
+          "gpuMiB": 15.8,
+          "output": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ],
+          "projections": [
+            {
+              "expected": {
+                "x": 360,
+                "y": 260
+              },
+              "actual": {
+                "x": 360.0000000000291,
+                "y": 260
+              },
+              "pass": true
+            },
+            {
+              "expected": {
+                "x": 505.635555555555,
+                "y": 429.66218561920687
+              },
+              "actual": {
+                "x": 505.6355555555783,
+                "y": 429.6621856191923
+              },
+              "pass": true
+            }
+          ]
+        },
+        {
+          "coldPan": {
+            "samples": 3,
+            "renderUpdates": 3,
+            "elapsedMs": 3017,
+            "p50Ms": 1016.1,
+            "p95Ms": 1016.2,
+            "maxMs": 1016.2
+          },
+          "warmupMs": 5000,
+          "warmPan": {
+            "samples": 523,
+            "renderUpdates": 523,
+            "elapsedMs": 10016,
+            "p50Ms": 16.7,
+            "p95Ms": 17.5,
+            "maxMs": 1016.5
+          },
+          "afterPan": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "workload": "points",
+      "profile": "webgpu",
+      "repetition": 3,
+      "variant": "before",
+      "elapsedSeconds": 19.29596829134971,
+      "status": "pass",
+      "logSha256": "e3f9fd0cf5aeda65975f81247a8a39f0d3eab2c667d0323d39db1d773cd45c40",
+      "measurements": [
+        {
+          "engine": "maplet",
+          "backend": "webgpu",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+          "dpr": 1,
+          "count": 500000,
+          "renderedPointsOrDomMarkers": 258420,
+          "markerDomElements": 0,
+          "mapCreateMs": 3,
+          "generateMs": 15,
+          "loadMs": 378,
+          "paintWaitMs": 63,
+          "setupToPaintMs": 458,
+          "gcAvailable": true,
+          "heapDeltaMiB": 138.7,
+          "drawCalls": 1,
+          "gpuMiB": 15.8,
+          "output": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ],
+          "projections": [
+            {
+              "expected": {
+                "x": 360,
+                "y": 260
+              },
+              "actual": {
+                "x": 360.0000000000291,
+                "y": 260
+              },
+              "pass": true
+            },
+            {
+              "expected": {
+                "x": 505.635555555555,
+                "y": 429.66218561920687
+              },
+              "actual": {
+                "x": 505.6355555555783,
+                "y": 429.6621856191923
+              },
+              "pass": true
+            }
+          ]
+        },
+        {
+          "coldPan": {
+            "samples": 4,
+            "renderUpdates": 4,
+            "elapsedMs": 3040,
+            "p50Ms": 1016.6,
+            "p95Ms": 1017.4,
+            "maxMs": 1017.4
+          },
+          "warmupMs": 5000,
+          "warmPan": {
+            "samples": 525,
+            "renderUpdates": 525,
+            "elapsedMs": 10015,
+            "p50Ms": 16.7,
+            "p95Ms": 17.6,
+            "maxMs": 1016.7
+          },
+          "afterPan": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "workload": "points",
+      "profile": "webgpu",
+      "repetition": 3,
+      "variant": "after",
+      "elapsedSeconds": 19.20593558298424,
+      "status": "pass",
+      "logSha256": "7cd698c258ee206c78ed90a672328076ae547c9cf2e3620c8edbfde07fd231cf",
+      "measurements": [
+        {
+          "engine": "maplet",
+          "backend": "webgpu",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+          "dpr": 1,
+          "count": 500000,
+          "renderedPointsOrDomMarkers": 258420,
+          "markerDomElements": 0,
+          "mapCreateMs": 3,
+          "generateMs": 14,
+          "loadMs": 242,
+          "paintWaitMs": 67,
+          "setupToPaintMs": 326,
+          "gcAvailable": true,
+          "heapDeltaMiB": 142,
+          "drawCalls": 1,
+          "gpuMiB": 15.8,
+          "output": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ],
+          "projections": [
+            {
+              "expected": {
+                "x": 360,
+                "y": 260
+              },
+              "actual": {
+                "x": 360.0000000000291,
+                "y": 260
+              },
+              "pass": true
+            },
+            {
+              "expected": {
+                "x": 505.635555555555,
+                "y": 429.66218561920687
+              },
+              "actual": {
+                "x": 505.6355555555783,
+                "y": 429.6621856191923
+              },
+              "pass": true
+            }
+          ]
+        },
+        {
+          "coldPan": {
+            "samples": 3,
+            "renderUpdates": 3,
+            "elapsedMs": 3018,
+            "p50Ms": 1016.7,
+            "p95Ms": 1016.8,
+            "maxMs": 1016.8
+          },
+          "warmupMs": 5000,
+          "warmPan": {
+            "samples": 516,
+            "renderUpdates": 516,
+            "elapsedMs": 10016,
+            "p50Ms": 16.7,
+            "p95Ms": 17.6,
+            "maxMs": 1017.1
+          },
+          "afterPan": [
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "workload": "complex",
+      "profile": "webgl1",
+      "repetition": 1,
+      "variant": "before",
+      "elapsedSeconds": 13.574436499737203,
+      "status": "pass",
+      "logSha256": "fea42d38e63901906f329a791a4ff84b5a115de7ef71b5472f1e465dd2689853",
+      "measurements": [
+        {
+          "backend": "webgl1",
+          "importMs": 23.40000009536743,
+          "firstPaintMs": 1120.5,
+          "heapDeltaMiB": 20.108661651611328,
+          "gpuBytes": 18210504,
+          "drawCalls": 2070,
+          "panMs": {
+            "p50": 58.200000286102295,
+            "p95": 59.69999980926514,
+            "max": 60.799999713897705,
+            "samples": [
+              53.19999980926514,
+              59,
+              58.40000009536743,
+              54,
+              59.19999980926514,
+              58.40000009536743,
+              54,
+              58.69999980926514,
+              57.90000009536743,
+              53.5,
+              58.80000019073486,
+              57.799999713897705,
+              53.40000009536743,
+              58.700000286102295,
+              58.19999980926514,
+              54.09999990463257,
+              58.5,
+              58,
+              54,
+              59,
+              57.80000019073486,
+              54.40000009536743,
+              59.69999980926514,
+              58.5,
+              54.80000019073486,
+              60.799999713897705,
+              58.200000286102295,
+              53.69999980926514,
+              59.30000019073486,
+              58.799999713897705,
+              53.700000286102295,
+              59.299999713897705,
+              58,
+              54,
+              59.30000019073486,
+              58.299999713897705
+            ]
+          },
+          "editMs": {
+            "p50": 59.09999990463257,
+            "p95": 63.89999961853027,
+            "max": 63.89999961853027,
+            "samples": [
+              57.60000038146973,
+              63.89999961853027,
+              62.5,
+              55.5,
+              59.700000286102295,
+              60.19999980926514,
+              54.200000286102295,
+              60.09999990463257,
+              58.299999713897705,
+              54.40000009536743,
+              59.09999990463257,
+              58.60000038146973
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "workload": "complex",
+      "profile": "webgl1",
+      "repetition": 1,
+      "variant": "after",
+      "elapsedSeconds": 11.385419208090752,
+      "status": "pass",
+      "logSha256": "ac80218593891d93f24f41512d213c306ac36d8e64c89c56d0eb3c8e540d1f21",
+      "measurements": [
+        {
+          "backend": "webgl1",
+          "importMs": 18.699999809265137,
+          "firstPaintMs": 1087.5,
+          "heapDeltaMiB": 7.549190521240234,
+          "gpuBytes": 4652800,
+          "drawCalls": 5,
+          "panMs": {
+            "p50": 16.59999990463257,
+            "p95": 18.600000381469727,
+            "max": 18.700000286102295,
+            "samples": [
+              18.40000009536743,
+              15.699999809265137,
+              17.700000286102295,
+              15,
+              18.199999809265137,
+              16.800000190734863,
+              16.59999990463257,
+              16.59999990463257,
+              15.200000286102295,
+              18.299999713897705,
+              14.5,
+              18,
+              17.300000190734863,
+              15.5,
+              18.09999990463257,
+              14.699999809265137,
+              18.700000286102295,
+              14.799999713897705,
+              18.600000381469727,
+              16.5,
+              16.09999990463257,
+              15.900000095367432,
+              16.09999990463257,
+              17.199999809265137,
+              16.09999990463257,
+              18.200000286102295,
+              17,
+              16.40000009536743,
+              16.899999618530273,
+              16.300000190734863,
+              17,
+              15.199999809265137,
+              18.100000381469727,
+              16.59999990463257,
+              14.799999713897705,
+              18.40000009536743
+            ]
+          },
+          "editMs": {
+            "p50": 17.700000286102295,
+            "p95": 18.800000190734863,
+            "max": 18.800000190734863,
+            "samples": [
+              18.59999990463257,
+              14.200000286102295,
+              18.09999990463257,
+              15.699999809265137,
+              17.700000286102295,
+              14.5,
+              18.299999713897705,
+              14.5,
+              18.800000190734863,
+              16.800000190734863,
+              15.199999809265137,
+              18.199999809265137
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "workload": "complex",
+      "profile": "webgl1",
+      "repetition": 2,
+      "variant": "after",
+      "elapsedSeconds": 11.395259624812752,
+      "status": "pass",
+      "logSha256": "65a860da889991d901614b7481c224428e57e116d77966040a2654b974d7ef79",
+      "measurements": [
+        {
+          "backend": "webgl1",
+          "importMs": 17.799999713897705,
+          "firstPaintMs": 1075.7999997138977,
+          "heapDeltaMiB": 7.549022674560547,
+          "gpuBytes": 4652800,
+          "drawCalls": 5,
+          "panMs": {
+            "p50": 16.799999713897705,
+            "p95": 18.200000286102295,
+            "max": 18.399999618530273,
+            "samples": [
+              16.700000286102295,
+              18.399999618530273,
+              14.900000095367432,
+              18.200000286102295,
+              16.799999713897705,
+              15.900000095367432,
+              16.800000190734863,
+              16.399999618530273,
+              17.5,
+              16.5,
+              16.600000381469727,
+              15.199999809265137,
+              17,
+              17.40000009536743,
+              15.799999713897705,
+              18.100000381469727,
+              16.699999809265137,
+              15.900000095367432,
+              17.299999713897705,
+              15.700000286102295,
+              16.799999713897705,
+              17.800000190734863,
+              15,
+              17.300000190734863,
+              17.09999990463257,
+              17.09999990463257,
+              15.300000190734863,
+              17.5,
+              17.299999713897705,
+              15.900000095367432,
+              16.5,
+              17.800000190734863,
+              16.5,
+              16.5,
+              16.299999713897705,
+              17.300000190734863
+            ]
+          },
+          "editMs": {
+            "p50": 16.90000009536743,
+            "p95": 18.200000286102295,
+            "max": 18.200000286102295,
+            "samples": [
+              17.299999713897705,
+              16.600000381469727,
+              15.199999809265137,
+              16.90000009536743,
+              17.59999990463257,
+              15.400000095367432,
+              18,
+              15,
+              16.799999713897705,
+              18,
+              15,
+              18.200000286102295
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "workload": "complex",
+      "profile": "webgl1",
+      "repetition": 2,
+      "variant": "before",
+      "elapsedSeconds": 13.47960912482813,
+      "status": "pass",
+      "logSha256": "27828690071b0ef87fc362808f351c0b8783b32aa34c2d01bba939633f94d00b",
+      "measurements": [
+        {
+          "backend": "webgl1",
+          "importMs": 23,
+          "firstPaintMs": 1115.4000000953674,
+          "heapDeltaMiB": 20.10985565185547,
+          "gpuBytes": 18210504,
+          "drawCalls": 2070,
+          "panMs": {
+            "p50": 56.80000019073486,
+            "p95": 57.90000009536743,
+            "max": 57.90000009536743,
+            "samples": [
+              52.700000286102295,
+              57.5,
+              56.39999961853027,
+              52.5,
+              57.200000286102295,
+              56.90000009536743,
+              52.89999961853027,
+              57.90000009536743,
+              56.59999990463257,
+              52.60000038146973,
+              57.39999961853027,
+              57.5,
+              52.40000009536743,
+              57.5,
+              56.80000019073486,
+              52.299999713897705,
+              57.40000009536743,
+              56.700000286102295,
+              52.19999980926514,
+              57.19999980926514,
+              56.80000019073486,
+              52.59999990463257,
+              57.09999990463257,
+              56.30000019073486,
+              54,
+              57.90000009536743,
+              56.5,
+              53.09999990463257,
+              57.30000019073486,
+              56.59999990463257,
+              53,
+              57.40000009536743,
+              57.09999990463257,
+              52.90000009536743,
+              57.69999980926514,
+              56.80000019073486
+            ]
+          },
+          "editMs": {
+            "p50": 57.700000286102295,
+            "p95": 61.80000019073486,
+            "max": 61.80000019073486,
+            "samples": [
+              55.799999713897705,
+              61.80000019073486,
+              60.09999990463257,
+              54.09999990463257,
+              57.700000286102295,
+              57.09999990463257,
+              52.69999980926514,
+              58.40000009536743,
+              59.19999980926514,
+              52.90000009536743,
+              57.90000009536743,
+              57.09999990463257
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "workload": "complex",
+      "profile": "webgl1",
+      "repetition": 3,
+      "variant": "before",
+      "elapsedSeconds": 13.476639291737229,
+      "status": "pass",
+      "logSha256": "4166f745250d0163886cb1f6269b3af3f7e7ae5020edd324eb40b1f94b023b3d",
+      "measurements": [
+        {
+          "backend": "webgl1",
+          "importMs": 22.799999713897705,
+          "firstPaintMs": 1120.5999999046326,
+          "heapDeltaMiB": 20.10869598388672,
+          "gpuBytes": 18210504,
+          "drawCalls": 2070,
+          "panMs": {
+            "p50": 56.700000286102295,
+            "p95": 60.200000286102295,
+            "max": 61.30000019073486,
+            "samples": [
+              61.30000019073486,
+              57,
+              53,
+              57.69999980926514,
+              57,
+              52.700000286102295,
+              57.299999713897705,
+              56.700000286102295,
+              52.59999990463257,
+              57.299999713897705,
+              56.60000038146973,
+              52,
+              57.19999980926514,
+              58.80000019073486,
+              55.799999713897705,
+              60.200000286102295,
+              59,
+              52.89999961853027,
+              58.30000019073486,
+              57,
+              52.69999980926514,
+              57.5,
+              56.700000286102295,
+              52.69999980926514,
+              57.30000019073486,
+              56.59999990463257,
+              52.30000019073486,
+              57.39999961853027,
+              56.5,
+              52.700000286102295,
+              57.19999980926514,
+              56.700000286102295,
+              53,
+              57.5,
+              56.5,
+              52.69999980926514
+            ]
+          },
+          "editMs": {
+            "p50": 57,
+            "p95": 63,
+            "max": 63,
+            "samples": [
+              60.5,
+              63,
+              55.09999990463257,
+              58.5,
+              56.5,
+              53.09999990463257,
+              57.5,
+              56.5,
+              53.200000286102295,
+              57.69999980926514,
+              57,
+              53
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "workload": "complex",
+      "profile": "webgl1",
+      "repetition": 3,
+      "variant": "after",
+      "elapsedSeconds": 11.35955979116261,
+      "status": "pass",
+      "logSha256": "904a179fb000ca9de0543a0f07cf4cc02081746548a261289089c4d473c0db02",
+      "measurements": [
+        {
+          "backend": "webgl1",
+          "importMs": 17.90000009536743,
+          "firstPaintMs": 1080.5999999046326,
+          "heapDeltaMiB": 7.5488433837890625,
+          "gpuBytes": 4652800,
+          "drawCalls": 5,
+          "panMs": {
+            "p50": 16.699999809265137,
+            "p95": 18.299999713897705,
+            "max": 18.59999990463257,
+            "samples": [
+              16.799999713897705,
+              16.600000381469727,
+              16.699999809265137,
+              15.900000095367432,
+              17.5,
+              16.699999809265137,
+              16.5,
+              16.700000286102295,
+              16.699999809265137,
+              16.59999990463257,
+              16.300000190734863,
+              17.09999990463257,
+              15.900000095367432,
+              17.09999990463257,
+              17,
+              16.59999990463257,
+              14.800000190734863,
+              18.59999990463257,
+              16.40000009536743,
+              17.299999713897705,
+              15.800000190734863,
+              17.199999809265137,
+              16.600000381469727,
+              16.699999809265137,
+              16.59999990463257,
+              14.900000095367432,
+              17,
+              18.09999990463257,
+              16.200000286102295,
+              17.299999713897705,
+              16.5,
+              15.200000286102295,
+              18.299999713897705,
+              16.59999990463257,
+              16.700000286102295,
+              15.900000095367432
+            ]
+          },
+          "editMs": {
+            "p50": 16.600000381469727,
+            "p95": 19.299999713897705,
+            "max": 19.299999713897705,
+            "samples": [
+              19.299999713897705,
+              15.300000190734863,
+              16.5,
+              15.199999809265137,
+              16.700000286102295,
+              17.399999618530273,
+              16.600000381469727,
+              16.399999618530273,
+              17.800000190734863,
+              16.40000009536743,
+              16.799999713897705,
+              16.5
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "workload": "complex",
+      "profile": "webgpu",
+      "repetition": 1,
+      "variant": "before",
+      "elapsedSeconds": 13.521001124754548,
+      "status": "pass",
+      "logSha256": "63b52bd24f1ab65fa6033bb7527867fe43a2509521320b4abc8822cdc1a09e3a",
+      "measurements": [
+        {
+          "backend": "webgpu",
+          "importMs": 22,
+          "firstPaintMs": 1118.5999999046326,
+          "heapDeltaMiB": 20.122093200683594,
+          "gpuBytes": 18210504,
+          "drawCalls": 2070,
+          "panMs": {
+            "p50": 57.60000038146973,
+            "p95": 59.700000286102295,
+            "max": 61.299999713897705,
+            "samples": [
+              53,
+              57.69999980926514,
+              58,
+              53.5,
+              58,
+              57.60000038146973,
+              53.299999713897705,
+              57.80000019073486,
+              57.299999713897705,
+              53.30000019073486,
+              57.59999990463257,
+              57.90000009536743,
+              53.30000019073486,
+              61.299999713897705,
+              58.59999990463257,
+              54,
+              58.30000019073486,
+              57.90000009536743,
+              53.69999980926514,
+              58.09999990463257,
+              57.200000286102295,
+              54,
+              58.5,
+              57.40000009536743,
+              53.59999990463257,
+              57.90000009536743,
+              57.39999961853027,
+              53.700000286102295,
+              59.299999713897705,
+              59.700000286102295,
+              54.59999990463257,
+              58.90000009536743,
+              57.299999713897705,
+              54,
+              58.200000286102295,
+              57.69999980926514
+            ]
+          },
+          "editMs": {
+            "p50": 58.59999990463257,
+            "p95": 66.09999990463257,
+            "max": 66.09999990463257,
+            "samples": [
+              60,
+              66.09999990463257,
+              63.5,
+              55.700000286102295,
+              59.59999990463257,
+              57.80000019073486,
+              54,
+              58.59999990463257,
+              57.59999990463257,
+              54.40000009536743,
+              58.90000009536743,
+              57.799999713897705
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "workload": "complex",
+      "profile": "webgpu",
+      "repetition": 1,
+      "variant": "after",
+      "elapsedSeconds": 11.35677924985066,
+      "status": "pass",
+      "logSha256": "3c9e8d55fce8d181a831ef9dd24965125251b39335291b900e3e785238e0aba7",
+      "measurements": [
+        {
+          "backend": "webgpu",
+          "importMs": 18.199999809265137,
+          "firstPaintMs": 1069.5,
+          "heapDeltaMiB": 7.509810447692871,
+          "gpuBytes": 4708864,
+          "drawCalls": 5,
+          "panMs": {
+            "p50": 16.699999809265137,
+            "p95": 18.199999809265137,
+            "max": 18.699999809265137,
+            "samples": [
+              16.40000009536743,
+              15.400000095367432,
+              17.09999990463257,
+              17.90000009536743,
+              16.699999809265137,
+              16.600000381469727,
+              16.699999809265137,
+              16.699999809265137,
+              16.5,
+              16.800000190734863,
+              14.800000190734863,
+              17.699999809265137,
+              15.5,
+              18.699999809265137,
+              16.600000381469727,
+              16.59999990463257,
+              16.699999809265137,
+              16.59999990463257,
+              16.40000009536743,
+              17.200000286102295,
+              15.099999904632568,
+              18.199999809265137,
+              15.700000286102295,
+              17.5,
+              16.59999990463257,
+              15.299999713897705,
+              16.5,
+              17.100000381469727,
+              17.59999990463257,
+              17,
+              15.199999809265137,
+              16.90000009536743,
+              16.59999990463257,
+              17.800000190734863,
+              16.699999809265137,
+              16.800000190734863
+            ]
+          },
+          "editMs": {
+            "p50": 16.799999713897705,
+            "p95": 17.90000009536743,
+            "max": 17.90000009536743,
+            "samples": [
+              17.90000009536743,
+              15.899999618530273,
+              15.400000095367432,
+              17.90000009536743,
+              16.800000190734863,
+              15.5,
+              16.399999618530273,
+              17.800000190734863,
+              15.5,
+              17.800000190734863,
+              16.799999713897705,
+              16.59999990463257
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "workload": "complex",
+      "profile": "webgpu",
+      "repetition": 2,
+      "variant": "after",
+      "elapsedSeconds": 11.360539083369076,
+      "status": "pass",
+      "logSha256": "6d51e63d2e34a74357227a81287772adf74c209eb48fef10accf9ade743f5cbe",
+      "measurements": [
+        {
+          "backend": "webgpu",
+          "importMs": 18.09999990463257,
+          "firstPaintMs": 1084.2999997138977,
+          "heapDeltaMiB": 7.508845329284668,
+          "gpuBytes": 4708864,
+          "drawCalls": 5,
+          "panMs": {
+            "p50": 16.699999809265137,
+            "p95": 18.399999618530273,
+            "max": 18.59999990463257,
+            "samples": [
+              18.59999990463257,
+              14.900000095367432,
+              17.59999990463257,
+              15.599999904632568,
+              16.59999990463257,
+              16.700000286102295,
+              16.699999809265137,
+              16.699999809265137,
+              16.5,
+              18.399999618530273,
+              16.300000190734863,
+              17,
+              16.59999990463257,
+              16.700000286102295,
+              15.599999904632568,
+              17.40000009536743,
+              17.09999990463257,
+              15,
+              16.799999713897705,
+              16.600000381469727,
+              16.699999809265137,
+              16.59999990463257,
+              18.300000190734863,
+              15,
+              18.299999713897705,
+              15.800000190734863,
+              15.800000190734863,
+              17.299999713897705,
+              17.90000009536743,
+              16.199999809265137,
+              15.900000095367432,
+              18,
+              14.700000286102295,
+              16.5,
+              16.59999990463257,
+              16.799999713897705
+            ]
+          },
+          "editMs": {
+            "p50": 16.5,
+            "p95": 19.600000381469727,
+            "max": 19.600000381469727,
+            "samples": [
+              19.600000381469727,
+              15.399999618530273,
+              17.300000190734863,
+              16.40000009536743,
+              16,
+              15.599999904632568,
+              18.40000009536743,
+              16.5,
+              16.799999713897705,
+              16.100000381469727,
+              15.5,
+              18.59999990463257
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "workload": "complex",
+      "profile": "webgpu",
+      "repetition": 2,
+      "variant": "before",
+      "elapsedSeconds": 13.489067332819104,
+      "status": "pass",
+      "logSha256": "b79ee95e99c32e027f41c650f004c1a146486ab43336a412587f387970bdde76",
+      "measurements": [
+        {
+          "backend": "webgpu",
+          "importMs": 22.199999809265137,
+          "firstPaintMs": 1119.3000001907349,
+          "heapDeltaMiB": 20.121864318847656,
+          "gpuBytes": 18210504,
+          "drawCalls": 2070,
+          "panMs": {
+            "p50": 57.299999713897705,
+            "p95": 58.799999713897705,
+            "max": 59.10000038146973,
+            "samples": [
+              52.80000019073486,
+              57.299999713897705,
+              57.59999990463257,
+              52.700000286102295,
+              57.90000009536743,
+              57.299999713897705,
+              53.59999990463257,
+              57.80000019073486,
+              57.40000009536743,
+              53.299999713897705,
+              57.60000038146973,
+              57.39999961853027,
+              53.10000038146973,
+              57.39999961853027,
+              57.200000286102295,
+              53.5,
+              57.40000009536743,
+              57,
+              53.09999990463257,
+              57.40000009536743,
+              57,
+              53.299999713897705,
+              57.700000286102295,
+              57,
+              53.19999980926514,
+              57.90000009536743,
+              57.299999713897705,
+              53.200000286102295,
+              58.799999713897705,
+              59.10000038146973,
+              53.69999980926514,
+              58.09999990463257,
+              56.90000009536743,
+              53.90000009536743,
+              58.30000019073486,
+              58.59999990463257
+            ]
+          },
+          "editMs": {
+            "p50": 57.59999990463257,
+            "p95": 63.10000038146973,
+            "max": 63.10000038146973,
+            "samples": [
+              56.799999713897705,
+              63.10000038146973,
+              60.69999980926514,
+              54.09999990463257,
+              58.200000286102295,
+              57.39999961853027,
+              53.700000286102295,
+              58.5,
+              57.59999990463257,
+              54,
+              58.5,
+              57.30000019073486
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "workload": "complex",
+      "profile": "webgpu",
+      "repetition": 3,
+      "variant": "before",
+      "elapsedSeconds": 13.504707250278443,
+      "status": "pass",
+      "logSha256": "54d3f253c55e8d178f76633ea8f16440b1811abbd80aeb91550b1e347f652d63",
+      "measurements": [
+        {
+          "backend": "webgpu",
+          "importMs": 23.200000286102295,
+          "firstPaintMs": 1130.5999999046326,
+          "heapDeltaMiB": 20.12213134765625,
+          "gpuBytes": 18210504,
+          "drawCalls": 2070,
+          "panMs": {
+            "p50": 57.09999990463257,
+            "p95": 59.40000009536743,
+            "max": 61.299999713897705,
+            "samples": [
+              61.299999713897705,
+              57.39999961853027,
+              53,
+              57.60000038146973,
+              57.09999990463257,
+              52.69999980926514,
+              57.5,
+              57.700000286102295,
+              53.299999713897705,
+              57.59999990463257,
+              57.200000286102295,
+              53.90000009536743,
+              57.69999980926514,
+              57.5,
+              53,
+              57.69999980926514,
+              57,
+              53.200000286102295,
+              58,
+              57.09999990463257,
+              53.59999990463257,
+              57.30000019073486,
+              57.299999713897705,
+              53.5,
+              57.80000019073486,
+              56.5,
+              53.69999980926514,
+              58.10000038146973,
+              56.5,
+              53.19999980926514,
+              57.80000019073486,
+              56.59999990463257,
+              55.59999990463257,
+              59.40000009536743,
+              56.799999713897705,
+              53.5
+            ]
+          },
+          "editMs": {
+            "p50": 57.5,
+            "p95": 63.5,
+            "max": 63.5,
+            "samples": [
+              61.10000038146973,
+              63.5,
+              57.299999713897705,
+              59.59999990463257,
+              57.200000286102295,
+              53.69999980926514,
+              57.5,
+              56.80000019073486,
+              53.299999713897705,
+              59.10000038146973,
+              59.59999990463257,
+              55.90000009536743
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "workload": "complex",
+      "profile": "webgpu",
+      "repetition": 3,
+      "variant": "after",
+      "elapsedSeconds": 11.338834249880165,
+      "status": "pass",
+      "logSha256": "815b7cd5f05cdf8f9666ab2d7aa2fee59ffbacf85c4f30c45955ccf9b1d466db",
+      "measurements": [
+        {
+          "backend": "webgpu",
+          "importMs": 17.699999809265137,
+          "firstPaintMs": 1074,
+          "heapDeltaMiB": 7.507254600524902,
+          "gpuBytes": 4708864,
+          "drawCalls": 5,
+          "panMs": {
+            "p50": 17,
+            "p95": 18.40000009536743,
+            "max": 18.799999713897705,
+            "samples": [
+              18.799999713897705,
+              14.800000190734863,
+              17.699999809265137,
+              16,
+              17,
+              17.600000381469727,
+              16.299999713897705,
+              15.599999904632568,
+              17.700000286102295,
+              17.199999809265137,
+              14.800000190734863,
+              17.90000009536743,
+              17.299999713897705,
+              15,
+              18.200000286102295,
+              15,
+              18.299999713897705,
+              15.800000190734863,
+              17,
+              17.40000009536743,
+              15.099999904632568,
+              17.09999990463257,
+              15.599999904632568,
+              18.300000190734863,
+              17,
+              15.199999809265137,
+              18.300000190734863,
+              14.699999809265137,
+              18.40000009536743,
+              16.90000009536743,
+              16.699999809265137,
+              16.5,
+              16,
+              17,
+              15.400000095367432,
+              17.300000190734863
+            ]
+          },
+          "editMs": {
+            "p50": 16.59999990463257,
+            "p95": 19.5,
+            "max": 19.5,
+            "samples": [
+              19.5,
+              14,
+              18.09999990463257,
+              15.5,
+              17.90000009536743,
+              16.59999990463257,
+              15.799999713897705,
+              15.700000286102295,
+              18.199999809265137,
+              15.599999904632568,
+              17.700000286102295,
+              16.199999809265137
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "workload": "dense",
+      "profile": "webgl1",
+      "repetition": 1,
+      "variant": "before",
+      "status": "timeout",
+      "elapsedAtLeastSeconds": 120,
+      "logSha256": "f5ccbbf5503dcf2c41639cbae5a218b993b402f4a145c4cca8e3f0c807dbae9e",
+      "measurements": [],
+      "processBudgetSeconds": 120
+    },
+    {
+      "workload": "dense",
+      "profile": "webgpu",
+      "repetition": 1,
+      "variant": "before",
+      "status": "timeout",
+      "elapsedSeconds": 120.0169685841538,
+      "logSha256": "222057dc09d557423123d2c824ebe0732da0c07f1bd06547b102fecee53b3712",
+      "measurements": [],
+      "processBudgetSeconds": 120
+    },
+    {
+      "workload": "dense",
+      "profile": "webgl1",
+      "repetition": 1,
+      "variant": "after",
+      "elapsedSeconds": 11.414560915902257,
+      "status": "pass",
+      "logSha256": "857cf0f1f0d9424cd42ce56443b87e2ff87ef1e1856c4f1e8a214ac53c785bbf",
+      "measurements": [
+        {
+          "backend": "webgl1",
+          "importMs": 21.09999990463257,
+          "firstPaintMs": 1067.5,
+          "heapDeltaMiB": 11.12239933013916,
+          "gpuBytes": 7411964,
+          "drawCalls": 3,
+          "panMs": {
+            "p50": 16.699999809265137,
+            "p95": 18.299999713897705,
+            "max": 18.5,
+            "samples": [
+              16.40000009536743,
+              18.09999990463257,
+              16.700000286102295,
+              15.799999713897705,
+              16.200000286102295,
+              18.09999990463257,
+              16.5,
+              16.699999809265137,
+              15.300000190734863,
+              17.5,
+              15.900000095367432,
+              18.09999990463257,
+              16.59999990463257,
+              16.09999990463257,
+              15.800000190734863,
+              17.5,
+              17.299999713897705,
+              16.700000286102295,
+              16.59999990463257,
+              15.5,
+              17.800000190734863,
+              16.699999809265137,
+              14.800000190734863,
+              16.5,
+              18.299999713897705,
+              15.300000190734863,
+              17.699999809265137,
+              17.300000190734863,
+              16.699999809265137,
+              15.5,
+              17.5,
+              15.5,
+              16.40000009536743,
+              18.5,
+              16.699999809265137,
+              16.5
+            ]
+          },
+          "editMs": {
+            "p50": 16.199999809265137,
+            "p95": 29.600000381469727,
+            "max": 29.600000381469727,
+            "samples": [
+              29.600000381469727,
+              7.399999618530273,
+              15.400000095367432,
+              16.300000190734863,
+              15.599999904632568,
+              17.5,
+              15.199999809265137,
+              18,
+              15.700000286102295,
+              16.199999809265137,
+              18.5,
+              15.200000286102295
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "workload": "dense",
+      "profile": "webgl1",
+      "repetition": 2,
+      "variant": "after",
+      "elapsedSeconds": 11.428924624808133,
+      "status": "pass",
+      "logSha256": "e92c4c548ec704e3f66847080b3590940197e75dae231814bc9182a3fafb704a",
+      "measurements": [
+        {
+          "backend": "webgl1",
+          "importMs": 20.800000190734863,
+          "firstPaintMs": 1084.5,
+          "heapDeltaMiB": 11.122159004211426,
+          "gpuBytes": 7411964,
+          "drawCalls": 3,
+          "panMs": {
+            "p50": 16.699999809265137,
+            "p95": 18.299999713897705,
+            "max": 18.40000009536743,
+            "samples": [
+              18.40000009536743,
+              16.799999713897705,
+              16.700000286102295,
+              16,
+              17.299999713897705,
+              16.100000381469727,
+              15.599999904632568,
+              18.299999713897705,
+              16.700000286102295,
+              15.900000095367432,
+              17.399999618530273,
+              16.600000381469727,
+              16.699999809265137,
+              16.59999990463257,
+              16.59999990463257,
+              16.800000190734863,
+              16.59999990463257,
+              16.59999990463257,
+              15.200000286102295,
+              16.5,
+              18.299999713897705,
+              16.200000286102295,
+              17.199999809265137,
+              16.700000286102295,
+              16.59999990463257,
+              16.90000009536743,
+              15,
+              17.399999618530273,
+              17.600000381469727,
+              16.699999809265137,
+              15.800000190734863,
+              17.399999618530273,
+              16.700000286102295,
+              16.59999990463257,
+              14.900000095367432,
+              17.90000009536743
+            ]
+          },
+          "editMs": {
+            "p50": 16.799999713897705,
+            "p95": 31.399999618530273,
+            "max": 31.399999618530273,
+            "samples": [
+              31.399999618530273,
+              6.700000286102295,
+              16.799999713897705,
+              15.600000381469727,
+              15.399999618530273,
+              14.5,
+              18.5,
+              14.900000095367432,
+              16.90000009536743,
+              18.90000009536743,
+              16.299999713897705,
+              17.700000286102295
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "workload": "dense",
+      "profile": "webgl1",
+      "repetition": 3,
+      "variant": "after",
+      "elapsedSeconds": 11.417250165715814,
+      "status": "pass",
+      "logSha256": "c9156f97c1fb1e3475ffec82b9c694f6159e680ea5db88c9c1730cd851dae70b",
+      "measurements": [
+        {
+          "backend": "webgl1",
+          "importMs": 21.59999990463257,
+          "firstPaintMs": 1070.9000000953674,
+          "heapDeltaMiB": 11.123059272766113,
+          "gpuBytes": 7411964,
+          "drawCalls": 3,
+          "panMs": {
+            "p50": 16.699999809265137,
+            "p95": 18.5,
+            "max": 18.700000286102295,
+            "samples": [
+              18.700000286102295,
+              16.699999809265137,
+              16.59999990463257,
+              15.900000095367432,
+              15.800000190734863,
+              18.299999713897705,
+              15.200000286102295,
+              17.59999990463257,
+              17.199999809265137,
+              16.700000286102295,
+              16.59999990463257,
+              16.699999809265137,
+              16.700000286102295,
+              16.699999809265137,
+              14.800000190734863,
+              18.5,
+              16.699999809265137,
+              16.59999990463257,
+              16.700000286102295,
+              16.399999618530273,
+              16.800000190734863,
+              14.800000190734863,
+              17.09999990463257,
+              18.199999809265137,
+              16.59999990463257,
+              16.700000286102295,
+              15.299999713897705,
+              17.100000381469727,
+              17.699999809265137,
+              14.800000190734863,
+              17.699999809265137,
+              17.5,
+              16.5,
+              16.800000190734863,
+              16.699999809265137,
+              15.099999904632568
+            ]
+          },
+          "editMs": {
+            "p50": 16.600000381469727,
+            "p95": 33,
+            "max": 33,
+            "samples": [
+              33,
+              6.300000190734863,
+              16.40000009536743,
+              16.40000009536743,
+              13.099999904632568,
+              17.799999713897705,
+              17,
+              16.5,
+              16.600000381469727,
+              16.5,
+              17.199999809265137,
+              16.90000009536743
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "workload": "dense",
+      "profile": "webgpu",
+      "repetition": 1,
+      "variant": "after",
+      "elapsedSeconds": 11.372268875129521,
+      "status": "pass",
+      "logSha256": "4412cf8d70cfe0f1d2999674e8e0b530c3be921552c584b8a5c1e6e81e1acdf5",
+      "measurements": [
+        {
+          "backend": "webgpu",
+          "importMs": 20.800000190734863,
+          "firstPaintMs": 1101.3000001907349,
+          "heapDeltaMiB": 11.081891059875488,
+          "gpuBytes": 7463480,
+          "drawCalls": 3,
+          "panMs": {
+            "p50": 16.700000286102295,
+            "p95": 18.09999990463257,
+            "max": 18.399999618530273,
+            "samples": [
+              16.90000009536743,
+              17,
+              17.299999713897705,
+              15.300000190734863,
+              18.09999990463257,
+              16.40000009536743,
+              16.40000009536743,
+              17.09999990463257,
+              16.299999713897705,
+              16.90000009536743,
+              16.700000286102295,
+              16.59999990463257,
+              16.90000009536743,
+              16.199999809265137,
+              16.800000190734863,
+              16.59999990463257,
+              15.599999904632568,
+              18,
+              16.699999809265137,
+              16.200000286102295,
+              17,
+              16.800000190734863,
+              16.59999990463257,
+              15.199999809265137,
+              18.09999990463257,
+              16.200000286102295,
+              17.199999809265137,
+              16.5,
+              16.800000190734863,
+              15.299999713897705,
+              16.300000190734863,
+              16.800000190734863,
+              18.399999618530273,
+              15.100000381469727,
+              17.299999713897705,
+              16.700000286102295
+            ]
+          },
+          "editMs": {
+            "p50": 16.200000286102295,
+            "p95": 32.39999961853027,
+            "max": 32.39999961853027,
+            "samples": [
+              32.39999961853027,
+              7.100000381469727,
+              15.5,
+              14.299999713897705,
+              16.200000286102295,
+              17.09999990463257,
+              15.299999713897705,
+              17.700000286102295,
+              18.09999990463257,
+              15.900000095367432,
+              16.40000009536743,
+              14.799999713897705
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "workload": "dense",
+      "profile": "webgpu",
+      "repetition": 2,
+      "variant": "after",
+      "elapsedSeconds": 11.356517249718308,
+      "status": "pass",
+      "logSha256": "1b79d9f5eeb285ce9dd5dab03bdd77c6ffd317539fb62e153c1c353fd93b0d04",
+      "measurements": [
+        {
+          "backend": "webgpu",
+          "importMs": 21.800000190734863,
+          "firstPaintMs": 1101.4000000953674,
+          "heapDeltaMiB": 11.081223487854004,
+          "gpuBytes": 7463480,
+          "drawCalls": 3,
+          "panMs": {
+            "p50": 16.699999809265137,
+            "p95": 18.40000009536743,
+            "max": 18.5,
+            "samples": [
+              18.5,
+              15.699999809265137,
+              17.59999990463257,
+              15.599999904632568,
+              17.800000190734863,
+              16.59999990463257,
+              16.700000286102295,
+              16.699999809265137,
+              15.099999904632568,
+              18.09999990463257,
+              15.900000095367432,
+              15.800000190734863,
+              18.40000009536743,
+              16.699999809265137,
+              15.400000095367432,
+              17.90000009536743,
+              15.199999809265137,
+              17.5,
+              17.199999809265137,
+              16.800000190734863,
+              15.099999904632568,
+              18.200000286102295,
+              15.5,
+              17.899999618530273,
+              16.300000190734863,
+              16.300000190734863,
+              15.899999618530273,
+              18.100000381469727,
+              16.699999809265137,
+              16.09999990463257,
+              17.200000286102295,
+              15,
+              18.399999618530273,
+              16.600000381469727,
+              15.399999618530273,
+              18
+            ]
+          },
+          "editMs": {
+            "p50": 16.199999809265137,
+            "p95": 32,
+            "max": 32,
+            "samples": [
+              32,
+              7.200000286102295,
+              15.099999904632568,
+              15.800000190734863,
+              15.599999904632568,
+              16,
+              17.09999990463257,
+              16.199999809265137,
+              15.400000095367432,
+              16.800000190734863,
+              16.90000009536743,
+              16.699999809265137
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "workload": "dense",
+      "profile": "webgpu",
+      "repetition": 3,
+      "variant": "after",
+      "elapsedSeconds": 11.393946167081594,
+      "status": "pass",
+      "logSha256": "a28deeae8d760f76aa5deb4ba1938c1b963d7e86df9cd701bb86841567e19e36",
+      "measurements": [
+        {
+          "backend": "webgpu",
+          "importMs": 20.899999618530273,
+          "firstPaintMs": 1098.3999996185303,
+          "heapDeltaMiB": 11.072213172912598,
+          "gpuBytes": 7463480,
+          "drawCalls": 3,
+          "panMs": {
+            "p50": 16.799999713897705,
+            "p95": 18.40000009536743,
+            "max": 18.5,
+            "samples": [
+              16.90000009536743,
+              15.199999809265137,
+              17.800000190734863,
+              15.099999904632568,
+              18.09999990463257,
+              16.800000190734863,
+              14.800000190734863,
+              16.799999713897705,
+              18.5,
+              16.59999990463257,
+              14.900000095367432,
+              17,
+              16.300000190734863,
+              17.699999809265137,
+              16.09999990463257,
+              16.90000009536743,
+              17.700000286102295,
+              15.199999809265137,
+              18.199999809265137,
+              16,
+              17.200000286102295,
+              15.900000095367432,
+              17.399999618530273,
+              16.700000286102295,
+              15.099999904632568,
+              17.800000190734863,
+              16,
+              17.799999713897705,
+              16.700000286102295,
+              15.099999904632568,
+              18.40000009536743,
+              16,
+              16.59999990463257,
+              17.299999713897705,
+              16.5,
+              17
+            ]
+          },
+          "editMs": {
+            "p50": 16.199999809265137,
+            "p95": 27.600000381469727,
+            "max": 27.600000381469727,
+            "samples": [
+              27.600000381469727,
+              10.799999713897705,
+              14.5,
+              18.09999990463257,
+              14.5,
+              16.300000190734863,
+              16.199999809265137,
+              15.900000095367432,
+              19.300000190734863,
+              14.099999904632568,
+              18.5,
+              14.400000095367432
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "workload": "dense",
+      "profile": "basic",
+      "repetition": 1,
+      "variant": "after",
+      "elapsedSeconds": 11.399341166950762,
+      "status": "pass",
+      "logSha256": "b0c02b4e25605d294d7b7c85b6d335b6d1aa5fcfa9efc4c539e42a0818878528",
+      "measurements": [
+        {
+          "backend": "webgl1-basic",
+          "importMs": 21.700000286102295,
+          "firstPaintMs": 1134.0999999046326,
+          "heapDeltaMiB": 50.95283031463623,
+          "gpuBytes": 47367564,
+          "drawCalls": 3,
+          "panMs": {
+            "p50": 16.699999809265137,
+            "p95": 18.299999713897705,
+            "max": 18.40000009536743,
+            "samples": [
+              17.300000190734863,
+              16.59999990463257,
+              16.799999713897705,
+              16.600000381469727,
+              16.799999713897705,
+              16.59999990463257,
+              16.5,
+              16.90000009536743,
+              16.59999990463257,
+              16.700000286102295,
+              16.699999809265137,
+              16.59999990463257,
+              16.5,
+              16.800000190734863,
+              16.699999809265137,
+              16.700000286102295,
+              16.59999990463257,
+              16.5,
+              16.800000190734863,
+              16.5,
+              15.099999904632568,
+              18.40000009536743,
+              16.59999990463257,
+              16.699999809265137,
+              16.700000286102295,
+              16.699999809265137,
+              16.59999990463257,
+              16.800000190734863,
+              14.900000095367432,
+              18.299999713897705,
+              16.700000286102295,
+              16.699999809265137,
+              16.59999990463257,
+              16.700000286102295,
+              16.59999990463257,
+              15.799999713897705
+            ]
+          },
+          "editMs": {
+            "p50": 16.59999990463257,
+            "p95": 36.700000286102295,
+            "max": 36.700000286102295,
+            "samples": [
+              36.700000286102295,
+              9.699999809265137,
+              12.700000286102295,
+              15.199999809265137,
+              15.900000095367432,
+              16.09999990463257,
+              16.59999990463257,
+              16.90000009536743,
+              14.300000190734863,
+              18.5,
+              16.799999713897705,
+              16.700000286102295
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "summary": [
+    {
+      "workload": "points",
+      "profile": "webgl1",
+      "medians": {
+        "before": {
+          "importMs": 380,
+          "setupToPaintMs": 465,
+          "heapDeltaMiB": 138.7,
+          "drawCalls": 1,
+          "gpuMiB": 15.8,
+          "warmPanP50Ms": 16.7,
+          "warmPanP95Ms": 17.4,
+          "warmPanMaxMs": 1016.6
+        },
+        "after": {
+          "importMs": 313,
+          "setupToPaintMs": 405,
+          "heapDeltaMiB": 142,
+          "drawCalls": 1,
+          "gpuMiB": 15.8,
+          "warmPanP50Ms": 16.7,
+          "warmPanP95Ms": 17.4,
+          "warmPanMaxMs": 1016.5
+        }
+      }
+    },
+    {
+      "workload": "points",
+      "profile": "webgpu",
+      "medians": {
+        "before": {
+          "importMs": 378,
+          "setupToPaintMs": 458,
+          "heapDeltaMiB": 138.7,
+          "drawCalls": 1,
+          "gpuMiB": 15.8,
+          "warmPanP50Ms": 16.7,
+          "warmPanP95Ms": 17.6,
+          "warmPanMaxMs": 1016.5
+        },
+        "after": {
+          "importMs": 242,
+          "setupToPaintMs": 326,
+          "heapDeltaMiB": 142,
+          "drawCalls": 1,
+          "gpuMiB": 15.8,
+          "warmPanP50Ms": 16.7,
+          "warmPanP95Ms": 17.5,
+          "warmPanMaxMs": 1017
+        }
+      }
+    },
+    {
+      "workload": "complex",
+      "profile": "webgl1",
+      "medians": {
+        "before": {
+          "importMs": 23,
+          "firstPaintMs": 1120.5,
+          "heapDeltaMiB": 20.10869598388672,
+          "drawCalls": 2070,
+          "gpuMiB": 17.36688995361328,
+          "warmPanP50Ms": 56.80000019073486,
+          "warmPanP95Ms": 59.69999980926514,
+          "warmPanMaxMs": 60.799999713897705,
+          "editP50Ms": 57.700000286102295,
+          "editP95Ms": 63
+        },
+        "after": {
+          "importMs": 17.90000009536743,
+          "firstPaintMs": 1080.5999999046326,
+          "heapDeltaMiB": 7.549022674560547,
+          "drawCalls": 5,
+          "gpuMiB": 4.437255859375,
+          "warmPanP50Ms": 16.699999809265137,
+          "warmPanP95Ms": 18.299999713897705,
+          "warmPanMaxMs": 18.59999990463257,
+          "editP50Ms": 16.90000009536743,
+          "editP95Ms": 18.800000190734863
+        }
+      }
+    },
+    {
+      "workload": "complex",
+      "profile": "webgpu",
+      "medians": {
+        "before": {
+          "importMs": 22.199999809265137,
+          "firstPaintMs": 1119.3000001907349,
+          "heapDeltaMiB": 20.122093200683594,
+          "drawCalls": 2070,
+          "gpuMiB": 17.36688995361328,
+          "warmPanP50Ms": 57.299999713897705,
+          "warmPanP95Ms": 59.40000009536743,
+          "warmPanMaxMs": 61.299999713897705,
+          "editP50Ms": 57.59999990463257,
+          "editP95Ms": 63.5
+        },
+        "after": {
+          "importMs": 18.09999990463257,
+          "firstPaintMs": 1074,
+          "heapDeltaMiB": 7.508845329284668,
+          "drawCalls": 5,
+          "gpuMiB": 4.49072265625,
+          "warmPanP50Ms": 16.699999809265137,
+          "warmPanP95Ms": 18.399999618530273,
+          "warmPanMaxMs": 18.699999809265137,
+          "editP50Ms": 16.59999990463257,
+          "editP95Ms": 19.5
+        }
+      }
+    },
+    {
+      "workload": "dense",
+      "profile": "webgl1",
+      "medians": {
+        "before": null,
+        "after": {
+          "importMs": 21.09999990463257,
+          "firstPaintMs": 1070.9000000953674,
+          "heapDeltaMiB": 11.12239933013916,
+          "drawCalls": 3,
+          "gpuMiB": 7.068599700927734,
+          "warmPanP50Ms": 16.699999809265137,
+          "warmPanP95Ms": 18.299999713897705,
+          "warmPanMaxMs": 18.5,
+          "editP50Ms": 16.600000381469727,
+          "editP95Ms": 31.399999618530273
+        }
+      }
+    },
+    {
+      "workload": "dense",
+      "profile": "webgpu",
+      "medians": {
+        "before": null,
+        "after": {
+          "importMs": 20.899999618530273,
+          "firstPaintMs": 1101.3000001907349,
+          "heapDeltaMiB": 11.081223487854004,
+          "drawCalls": 3,
+          "gpuMiB": 7.117729187011719,
+          "warmPanP50Ms": 16.700000286102295,
+          "warmPanP95Ms": 18.40000009536743,
+          "warmPanMaxMs": 18.5,
+          "editP50Ms": 16.199999809265137,
+          "editP95Ms": 32
+        }
+      }
+    }
+  ],
+  "validation": {
+    "unitTests": 248,
+    "unitFailures": 0,
+    "buildAndTypes": "pass",
+    "browser": [
+      {
+        "profile": "webgl1",
+        "scenarios": 36,
+        "failures": 0,
+        "logSha256": "205a6f41010c2e1bc6bd4958b6370961a2a1df51cc613abbb0ad23bed54535ae",
+        "soak": [
+          {
+            "name": "SOAK-01 twelve create/destroy cycles render and clean up",
+            "status": "pass",
+            "detail": {
+              "cycles": 12,
+              "blue": 12,
+              "canvasGone": 12
+            }
+          },
+          {
+            "name": "SOAK-02 the font asset is released with its map",
+            "status": "pass",
+            "detail": {
+              "fontState": "ready",
+              "fontBaseline": 0,
+              "fontAfter": 0
+            }
+          },
+          {
+            "name": "SOAK-03 cycle heap growth stays bounded",
+            "status": "pass",
+            "detail": {
+              "growthMB": 0.7,
+              "boundMB": 8,
+              "gc": true,
+              "measured": true,
+              "note": "GC-stabilized"
+            }
+          },
+          {
+            "name": "SOAK-04 the 500k worker import publishes and renders",
+            "status": "pass",
+            "detail": {
+              "detached": true,
+              "imports": {
+                "backend": "worker",
+                "pending": 0,
+                "used": {
+                  "worker": 1,
+                  "inline": 0
+                }
+              },
+              "pixelsBlue": true,
+              "genMs": 22,
+              "importMs": 272,
+              "renderMs": 65,
+              "peakImportMB": 50.8,
+              "heapAfterImportMB": 92,
+              "stats": {
+                "drawCalls": 1,
+                "instances": 113040,
+                "gpuBytesMB": 6.9
+              }
+            }
+          },
+          {
+            "name": "SOAK-05 a cancelled heavy job rolls back and stays healthy",
+            "status": "pass",
+            "detail": {
+              "aborted": {
+                "ok": false,
+                "code": "aborted"
+              },
+              "countAfterAbort": 500000,
+              "pendingAfterAbort": 0,
+              "smallCount": 1
+            }
+          },
+          {
+            "name": "SOAK-06 destroying the heavy map releases the store",
+            "status": "pass",
+            "detail": {
+              "residualMB": 1,
+              "residualImmediateMB": 1,
+              "heapAfterImportMB": 92,
+              "boundMB": 96,
+              "gc": true,
+              "measured": true,
+              "note": "GC-stabilized after destroy"
+            }
+          },
+          {
+            "name": "SOAK-07 a sustained pan/update run keeps rendering",
+            "status": "pass",
+            "detail": {
+              "rafFrames": 180,
+              "engineFrames": 180,
+              "p50Ms": 16.6,
+              "p95Ms": 17.4,
+              "maxMs": 17.6,
+              "pixel": "rgba(37,99,235)",
+              "updatedProperty": 176,
+              "lastUpdate": 176,
+              "bare": [
+                0,
+                4,
+                17
+              ],
+              "bareAfterMap": [
+                14,
+                17,
+                17
+              ],
+              "setTimes": [
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "waitTimes": [
+                16,
+                16,
+                17,
+                17,
+                17
+              ],
+              "visibility": "visible",
+              "heapStartMB": 1
+            }
+          }
+        ]
+      },
+      {
+        "profile": "webgpu",
+        "scenarios": 36,
+        "failures": 0,
+        "logSha256": "1fa9eb881f4ae4cf6c228dbbb53a3d4244f5561d6b7e77dc99c78219c400a512",
+        "soak": [
+          {
+            "name": "SOAK-01 twelve create/destroy cycles render and clean up",
+            "status": "pass",
+            "detail": {
+              "cycles": 12,
+              "blue": 12,
+              "canvasGone": 12
+            }
+          },
+          {
+            "name": "SOAK-02 the font asset is released with its map",
+            "status": "pass",
+            "detail": {
+              "fontState": "ready",
+              "fontBaseline": 0,
+              "fontAfter": 0
+            }
+          },
+          {
+            "name": "SOAK-03 cycle heap growth stays bounded",
+            "status": "pass",
+            "detail": {
+              "growthMB": 0.7,
+              "boundMB": 8,
+              "gc": true,
+              "measured": true,
+              "note": "GC-stabilized"
+            }
+          },
+          {
+            "name": "SOAK-04 the 500k worker import publishes and renders",
+            "status": "pass",
+            "detail": {
+              "detached": true,
+              "imports": {
+                "backend": "worker",
+                "pending": 0,
+                "used": {
+                  "worker": 1,
+                  "inline": 0
+                }
+              },
+              "pixelsBlue": true,
+              "genMs": 22,
+              "importMs": 474,
+              "renderMs": 75,
+              "peakImportMB": 51.1,
+              "heapAfterImportMB": 92,
+              "stats": {
+                "drawCalls": 1,
+                "instances": 113040,
+                "gpuBytesMB": 6.9
+              }
+            }
+          },
+          {
+            "name": "SOAK-05 a cancelled heavy job rolls back and stays healthy",
+            "status": "pass",
+            "detail": {
+              "aborted": {
+                "ok": false,
+                "code": "aborted",
+                "reason": "aborted"
+              },
+              "countAfterAbort": 500000,
+              "pendingAfterAbort": 0,
+              "smallCount": 1
+            }
+          },
+          {
+            "name": "SOAK-06 destroying the heavy map releases the store",
+            "status": "pass",
+            "detail": {
+              "residualMB": 1,
+              "residualImmediateMB": 1,
+              "heapAfterImportMB": 92,
+              "boundMB": 96,
+              "gc": true,
+              "measured": true,
+              "note": "GC-stabilized after destroy"
+            }
+          },
+          {
+            "name": "SOAK-07 a sustained pan/update run keeps rendering",
+            "status": "pass",
+            "detail": {
+              "rafFrames": 180,
+              "engineFrames": 180,
+              "p50Ms": 16.6,
+              "p95Ms": 17.6,
+              "maxMs": 17.7,
+              "pixel": "rgba(37,99,235)",
+              "updatedProperty": 176,
+              "lastUpdate": 176,
+              "bare": [
+                0,
+                11,
+                17
+              ],
+              "bareAfterMap": [
+                14,
+                18,
+                17
+              ],
+              "setTimes": [
+                1,
+                0,
+                0,
+                0,
+                0
+              ],
+              "waitTimes": [
+                16,
+                17,
+                17,
+                16,
+                17
+              ],
+              "visibility": "visible",
+              "heapStartMB": 1
+            }
+          }
+        ]
+      },
+      {
+        "profile": "basic",
+        "scenarios": 36,
+        "failures": 0,
+        "logSha256": "28cd5e0c148d2d75c68cd87f6dd3b0e865246901486753872b868c44e6b4a1d6",
+        "soak": [
+          {
+            "name": "SOAK-01 twelve create/destroy cycles render and clean up",
+            "status": "pass",
+            "detail": {
+              "cycles": 12,
+              "blue": 12,
+              "canvasGone": 12
+            }
+          },
+          {
+            "name": "SOAK-02 the font asset is released with its map",
+            "status": "pass",
+            "detail": {
+              "fontState": "ready",
+              "fontBaseline": 0,
+              "fontAfter": 0
+            }
+          },
+          {
+            "name": "SOAK-03 cycle heap growth stays bounded",
+            "status": "pass",
+            "detail": {
+              "growthMB": 0.7,
+              "boundMB": 8,
+              "gc": true,
+              "measured": true,
+              "note": "GC-stabilized"
+            }
+          },
+          {
+            "name": "SOAK-04 the 500k worker import publishes and renders",
+            "status": "pass",
+            "detail": {
+              "detached": true,
+              "imports": {
+                "backend": "worker",
+                "pending": 0,
+                "used": {
+                  "worker": 1,
+                  "inline": 0
+                }
+              },
+              "pixelsBlue": true,
+              "genMs": 22,
+              "importMs": 528,
+              "renderMs": 139,
+              "peakImportMB": 51.1,
+              "heapAfterImportMB": 91.9,
+              "stats": {
+                "drawCalls": 1,
+                "instances": 113040,
+                "gpuBytesMB": 46.6
+              }
+            }
+          },
+          {
+            "name": "SOAK-05 a cancelled heavy job rolls back and stays healthy",
+            "status": "pass",
+            "detail": {
+              "aborted": {
+                "ok": false,
+                "code": "aborted"
+              },
+              "countAfterAbort": 500000,
+              "pendingAfterAbort": 0,
+              "smallCount": 1
+            }
+          },
+          {
+            "name": "SOAK-06 destroying the heavy map releases the store",
+            "status": "pass",
+            "detail": {
+              "residualMB": 0.9,
+              "residualImmediateMB": 0.9,
+              "heapAfterImportMB": 91.9,
+              "boundMB": 96,
+              "gc": true,
+              "measured": true,
+              "note": "GC-stabilized after destroy"
+            }
+          },
+          {
+            "name": "SOAK-07 a sustained pan/update run keeps rendering",
+            "status": "pass",
+            "detail": {
+              "rafFrames": 180,
+              "engineFrames": 180,
+              "p50Ms": 16.7,
+              "p95Ms": 17.2,
+              "maxMs": 17.4,
+              "pixel": "rgba(37,99,235)",
+              "updatedProperty": 176,
+              "lastUpdate": 176,
+              "bare": [
+                0,
+                10,
+                17
+              ],
+              "bareAfterMap": [
+                14,
+                17,
+                17
+              ],
+              "setTimes": [
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "waitTimes": [
+                16,
+                17,
+                17,
+                17,
+                17
+              ],
+              "visibility": "visible",
+              "heapStartMB": 0.9
+            }
+          }
+        ]
+      }
+    ],
+    "mutations": [
+      {
+        "profile": "webgl1",
+        "repetition": 1,
+        "status": "pass",
+        "measurements": {
+          "engine": "maplet",
+          "count": 500000,
+          "targetId": "p:250986",
+          "radiusCssPx": 8,
+          "pass": true,
+          "summary": {
+            "hide": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 26.2,
+                "p95Ms": 27.2,
+                "maxMs": 27.2
+              }
+            },
+            "show": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0,
+                "p95Ms": 0.2,
+                "maxMs": 0.2
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 30.8,
+                "p95Ms": 32.1,
+                "maxMs": 32.1
+              }
+            },
+            "color": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 28.1,
+                "p95Ms": 30.6,
+                "maxMs": 30.6
+              }
+            },
+            "position": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0.2,
+                "p95Ms": 0.9,
+                "maxMs": 0.9
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 30,
+                "p95Ms": 31.8,
+                "maxMs": 31.8
+              }
+            }
+          },
+          "samples": [
+            {
+              "operation": "hide",
+              "repetition": 0,
+              "apiMs": 0,
+              "toFrameMs": 10.400000095367432,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 0,
+              "apiMs": 0,
+              "toFrameMs": 30.800000190734863,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 0,
+              "apiMs": 0,
+              "toFrameMs": 30.59999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 0,
+              "apiMs": 0.9000000953674316,
+              "toFrameMs": 31.800000190734863,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 1,
+              "apiMs": 0,
+              "toFrameMs": 26.200000286102295,
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 1,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 30.59999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 1,
+              "apiMs": 0,
+              "toFrameMs": 27.90000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 1,
+              "apiMs": 0.20000028610229492,
+              "toFrameMs": 30.40000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 2,
+              "apiMs": 0.10000038146972656,
+              "toFrameMs": 25.5,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 2,
+              "apiMs": 0.20000028610229492,
+              "toFrameMs": 32.10000038146973,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 2,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 27.700000286102295,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 2,
+              "apiMs": 0.19999980926513672,
+              "toFrameMs": 28.59999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 3,
+              "apiMs": 0.10000038146972656,
+              "toFrameMs": 26.300000190734863,
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 3,
+              "apiMs": 0,
+              "toFrameMs": 27.300000190734863,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 3,
+              "apiMs": 0,
+              "toFrameMs": 29.09999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 3,
+              "apiMs": 0.3000001907348633,
+              "toFrameMs": 29.200000286102295,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 4,
+              "apiMs": 0,
+              "toFrameMs": 27.200000286102295,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 4,
+              "apiMs": 0,
+              "toFrameMs": 31.09999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 4,
+              "apiMs": 0,
+              "toFrameMs": 28.09999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 4,
+              "apiMs": 0.19999980926513672,
+              "toFrameMs": 30,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            }
+          ]
+        }
+      },
+      {
+        "profile": "webgl1",
+        "repetition": 2,
+        "status": "pass",
+        "measurements": {
+          "engine": "maplet",
+          "count": 500000,
+          "targetId": "p:250986",
+          "radiusCssPx": 8,
+          "pass": true,
+          "summary": {
+            "hide": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0,
+                "p95Ms": 0,
+                "maxMs": 0
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 25.4,
+                "p95Ms": 27.4,
+                "maxMs": 27.4
+              }
+            },
+            "show": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0.1,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 30.4,
+                "p95Ms": 31.2,
+                "maxMs": 31.2
+              }
+            },
+            "color": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 30.2,
+                "p95Ms": 31.6,
+                "maxMs": 31.6
+              }
+            },
+            "position": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0.3,
+                "p95Ms": 0.8,
+                "maxMs": 0.8
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 29.8,
+                "p95Ms": 30.6,
+                "maxMs": 30.6
+              }
+            }
+          },
+          "samples": [
+            {
+              "operation": "hide",
+              "repetition": 0,
+              "apiMs": 0,
+              "toFrameMs": 23.40000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 0,
+              "apiMs": 0,
+              "toFrameMs": 30.40000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 0,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 31.59999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 0,
+              "apiMs": 0.8000001907348633,
+              "toFrameMs": 30.100000381469727,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 1,
+              "apiMs": 0,
+              "toFrameMs": 25.40000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 1,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 31.199999809265137,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 1,
+              "apiMs": 0,
+              "toFrameMs": 30.199999809265137,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 1,
+              "apiMs": 0.19999980926513672,
+              "toFrameMs": 29.5,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 2,
+              "apiMs": 0,
+              "toFrameMs": 27.40000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 2,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 30.90000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 2,
+              "apiMs": 0,
+              "toFrameMs": 30.300000190734863,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 2,
+              "apiMs": 0.2999997138977051,
+              "toFrameMs": 29.799999713897705,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 3,
+              "apiMs": 0,
+              "toFrameMs": 27.300000190734863,
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 3,
+              "apiMs": 0,
+              "toFrameMs": 30.09999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 3,
+              "apiMs": 0.10000038146972656,
+              "toFrameMs": 29.700000286102295,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 3,
+              "apiMs": 0.2999997138977051,
+              "toFrameMs": 29,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 4,
+              "apiMs": 0,
+              "toFrameMs": 23.300000190734863,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 4,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 30.199999809265137,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 4,
+              "apiMs": 0,
+              "toFrameMs": 29.90000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 4,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 30.59999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            }
+          ]
+        }
+      },
+      {
+        "profile": "webgl1",
+        "repetition": 3,
+        "status": "pass",
+        "measurements": {
+          "engine": "maplet",
+          "count": 500000,
+          "targetId": "p:250986",
+          "radiusCssPx": 8,
+          "pass": true,
+          "summary": {
+            "hide": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0.1,
+                "p95Ms": 0.2,
+                "maxMs": 0.2
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 26.2,
+                "p95Ms": 27.6,
+                "maxMs": 27.6
+              }
+            },
+            "show": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 29.8,
+                "p95Ms": 31.3,
+                "maxMs": 31.3
+              }
+            },
+            "color": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 30,
+                "p95Ms": 30.3,
+                "maxMs": 30.3
+              }
+            },
+            "position": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0.2,
+                "p95Ms": 0.9,
+                "maxMs": 0.9
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 31.1,
+                "p95Ms": 31.3,
+                "maxMs": 31.3
+              }
+            }
+          },
+          "samples": [
+            {
+              "operation": "hide",
+              "repetition": 0,
+              "apiMs": 0,
+              "toFrameMs": 13.199999809265137,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 0,
+              "apiMs": 0,
+              "toFrameMs": 26.90000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 0,
+              "apiMs": 0,
+              "toFrameMs": 29.299999713897705,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 0,
+              "apiMs": 0.9000000953674316,
+              "toFrameMs": 31.300000190734863,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 1,
+              "apiMs": 0,
+              "toFrameMs": 27.600000381469727,
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 1,
+              "apiMs": 0,
+              "toFrameMs": 28.200000286102295,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 1,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 29.200000286102295,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 1,
+              "apiMs": 0.10000038146972656,
+              "toFrameMs": 31.100000381469727,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 2,
+              "apiMs": 0.20000028610229492,
+              "toFrameMs": 26.59999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 2,
+              "apiMs": 0,
+              "toFrameMs": 29.899999618530273,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 2,
+              "apiMs": 0,
+              "toFrameMs": 30,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 2,
+              "apiMs": 0.19999980926513672,
+              "toFrameMs": 30.40000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 3,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 26.199999809265137,
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 3,
+              "apiMs": 0,
+              "toFrameMs": 29.799999713897705,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 3,
+              "apiMs": 0,
+              "toFrameMs": 30.300000190734863,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 3,
+              "apiMs": 0.19999980926513672,
+              "toFrameMs": 31.09999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 4,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 25.300000190734863,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 4,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 31.300000190734863,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 4,
+              "apiMs": 0.10000038146972656,
+              "toFrameMs": 30.300000190734863,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 4,
+              "apiMs": 0.19999980926513672,
+              "toFrameMs": 30.09999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            }
+          ]
+        }
+      },
+      {
+        "profile": "webgpu",
+        "repetition": 1,
+        "status": "pass",
+        "measurements": {
+          "engine": "maplet",
+          "count": 500000,
+          "targetId": "p:250986",
+          "radiusCssPx": 8,
+          "pass": true,
+          "summary": {
+            "hide": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 25.4,
+                "p95Ms": 28.9,
+                "maxMs": 28.9
+              }
+            },
+            "show": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 27.6,
+                "p95Ms": 30,
+                "maxMs": 30
+              }
+            },
+            "color": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 29.2,
+                "p95Ms": 30.3,
+                "maxMs": 30.3
+              }
+            },
+            "position": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0.2,
+                "p95Ms": 0.6,
+                "maxMs": 0.6
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 29.3,
+                "p95Ms": 29.8,
+                "maxMs": 29.8
+              }
+            }
+          },
+          "samples": [
+            {
+              "operation": "hide",
+              "repetition": 0,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 28.90000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 0,
+              "apiMs": 0.10000038146972656,
+              "toFrameMs": 27.5,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 0,
+              "apiMs": 0,
+              "toFrameMs": 30.299999713897705,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 0,
+              "apiMs": 0.5999999046325684,
+              "toFrameMs": 29.800000190734863,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 1,
+              "apiMs": 0,
+              "toFrameMs": 25.800000190734863,
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 1,
+              "apiMs": 0,
+              "toFrameMs": 30,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 1,
+              "apiMs": 0,
+              "toFrameMs": 28.700000286102295,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 1,
+              "apiMs": 0.19999980926513672,
+              "toFrameMs": 28.699999809265137,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 2,
+              "apiMs": 0,
+              "toFrameMs": 24.100000381469727,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 2,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 29.299999713897705,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 2,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 29.199999809265137,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 2,
+              "apiMs": 0.19999980926513672,
+              "toFrameMs": 29.299999713897705,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 3,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 22.09999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 3,
+              "apiMs": 0,
+              "toFrameMs": 26.300000190734863,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 3,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 29.899999618530273,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 3,
+              "apiMs": 0.2999997138977051,
+              "toFrameMs": 29.199999809265137,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 4,
+              "apiMs": 0,
+              "toFrameMs": 25.40000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 4,
+              "apiMs": 0,
+              "toFrameMs": 27.59999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 4,
+              "apiMs": 0,
+              "toFrameMs": 27.700000286102295,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 4,
+              "apiMs": 0.20000028610229492,
+              "toFrameMs": 29.300000190734863,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            }
+          ]
+        }
+      },
+      {
+        "profile": "webgpu",
+        "repetition": 2,
+        "status": "pass",
+        "measurements": {
+          "engine": "maplet",
+          "count": 500000,
+          "targetId": "p:250986",
+          "radiusCssPx": 8,
+          "pass": true,
+          "summary": {
+            "hide": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 25.7,
+                "p95Ms": 29.2,
+                "maxMs": 29.2
+              }
+            },
+            "show": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0.1,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 30,
+                "p95Ms": 30.3,
+                "maxMs": 30.3
+              }
+            },
+            "color": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0.1,
+                "p95Ms": 0.2,
+                "maxMs": 0.2
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 29.4,
+                "p95Ms": 30.3,
+                "maxMs": 30.3
+              }
+            },
+            "position": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0.3,
+                "p95Ms": 0.7,
+                "maxMs": 0.7
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 29.8,
+                "p95Ms": 30,
+                "maxMs": 30
+              }
+            }
+          },
+          "samples": [
+            {
+              "operation": "hide",
+              "repetition": 0,
+              "apiMs": 0,
+              "toFrameMs": 29.199999809265137,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 0,
+              "apiMs": 0,
+              "toFrameMs": 29.799999713897705,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 0,
+              "apiMs": 0.10000038146972656,
+              "toFrameMs": 27.700000286102295,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 0,
+              "apiMs": 0.6999998092651367,
+              "toFrameMs": 28.699999809265137,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 1,
+              "apiMs": 0,
+              "toFrameMs": 25.799999713897705,
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 1,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 30,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 1,
+              "apiMs": 0,
+              "toFrameMs": 29,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 1,
+              "apiMs": 0.19999980926513672,
+              "toFrameMs": 29.799999713897705,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 2,
+              "apiMs": 0,
+              "toFrameMs": 25.699999809265137,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 2,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 30.299999713897705,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 2,
+              "apiMs": 0.19999980926513672,
+              "toFrameMs": 29.699999809265137,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 2,
+              "apiMs": 0.19999980926513672,
+              "toFrameMs": 30,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 3,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 24.299999713897705,
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 3,
+              "apiMs": 0,
+              "toFrameMs": 28.199999809265137,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 3,
+              "apiMs": 0,
+              "toFrameMs": 30.300000190734863,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 3,
+              "apiMs": 0.3000001907348633,
+              "toFrameMs": 30,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 4,
+              "apiMs": 0,
+              "toFrameMs": 24.100000381469727,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 4,
+              "apiMs": 0.10000038146972656,
+              "toFrameMs": 30,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 4,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 29.399999618530273,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 4,
+              "apiMs": 0.2999997138977051,
+              "toFrameMs": 27.699999809265137,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            }
+          ]
+        }
+      },
+      {
+        "profile": "webgpu",
+        "repetition": 3,
+        "status": "pass",
+        "measurements": {
+          "engine": "maplet",
+          "count": 500000,
+          "targetId": "p:250986",
+          "radiusCssPx": 8,
+          "pass": true,
+          "summary": {
+            "hide": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0.1,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 25.1,
+                "p95Ms": 27.4,
+                "maxMs": 27.4
+              }
+            },
+            "show": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0,
+                "p95Ms": 0,
+                "maxMs": 0
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 28.9,
+                "p95Ms": 29.9,
+                "maxMs": 29.9
+              }
+            },
+            "color": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0.1,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 29.5,
+                "p95Ms": 29.7,
+                "maxMs": 29.7
+              }
+            },
+            "position": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0.2,
+                "p95Ms": 0.6,
+                "maxMs": 0.6
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 28.6,
+                "p95Ms": 29.7,
+                "maxMs": 29.7
+              }
+            }
+          },
+          "samples": [
+            {
+              "operation": "hide",
+              "repetition": 0,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 20.699999809265137,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 0,
+              "apiMs": 0,
+              "toFrameMs": 28.90000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 0,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 29.199999809265137,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 0,
+              "apiMs": 0.5999999046325684,
+              "toFrameMs": 28.59999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 1,
+              "apiMs": 0,
+              "toFrameMs": 25.59999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 1,
+              "apiMs": 0,
+              "toFrameMs": 29.90000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 1,
+              "apiMs": 0.10000038146972656,
+              "toFrameMs": 29.5,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 1,
+              "apiMs": 0.20000028610229492,
+              "toFrameMs": 28.700000286102295,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 2,
+              "apiMs": 0.10000038146972656,
+              "toFrameMs": 27.40000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 2,
+              "apiMs": 0,
+              "toFrameMs": 25.5,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 2,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 27.90000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 2,
+              "apiMs": 0.2999997138977051,
+              "toFrameMs": 28.199999809265137,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 3,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 21.699999809265137,
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 3,
+              "apiMs": 0,
+              "toFrameMs": 29.5,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 3,
+              "apiMs": 0,
+              "toFrameMs": 29.699999809265137,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 3,
+              "apiMs": 0.20000028610229492,
+              "toFrameMs": 27.90000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 4,
+              "apiMs": 0,
+              "toFrameMs": 25.100000381469727,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 4,
+              "apiMs": 0,
+              "toFrameMs": 28.799999713897705,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 4,
+              "apiMs": 0,
+              "toFrameMs": 29.600000381469727,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 4,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 29.700000286102295,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            }
+          ]
+        }
+      },
+      {
+        "profile": "basic",
+        "repetition": 1,
+        "status": "pass",
+        "measurements": {
+          "engine": "maplet",
+          "count": 500000,
+          "targetId": "p:250986",
+          "radiusCssPx": 8,
+          "pass": true,
+          "summary": {
+            "hide": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 21.9,
+                "p95Ms": 23.6,
+                "maxMs": 23.6
+              }
+            },
+            "show": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 29.6,
+                "p95Ms": 30.1,
+                "maxMs": 30.1
+              }
+            },
+            "color": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0,
+                "p95Ms": 0,
+                "maxMs": 0
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 28.9,
+                "p95Ms": 28.9,
+                "maxMs": 28.9
+              }
+            },
+            "position": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0.2,
+                "p95Ms": 0.8,
+                "maxMs": 0.8
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 29.1,
+                "p95Ms": 29.7,
+                "maxMs": 29.7
+              }
+            }
+          },
+          "samples": [
+            {
+              "operation": "hide",
+              "repetition": 0,
+              "apiMs": 0,
+              "toFrameMs": 22.299999713897705,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 0,
+              "apiMs": 0,
+              "toFrameMs": 30.100000381469727,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 0,
+              "apiMs": 0,
+              "toFrameMs": 28.90000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 0,
+              "apiMs": 0.8000001907348633,
+              "toFrameMs": 29.700000286102295,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 1,
+              "apiMs": 0,
+              "toFrameMs": 21,
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 1,
+              "apiMs": 0.10000038146972656,
+              "toFrameMs": 29.300000190734863,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 1,
+              "apiMs": 0,
+              "toFrameMs": 28.800000190734863,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 1,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 29.200000286102295,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 2,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 21.90000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 2,
+              "apiMs": 0,
+              "toFrameMs": 28.5,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 2,
+              "apiMs": 0,
+              "toFrameMs": 27.600000381469727,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 2,
+              "apiMs": 0.19999980926513672,
+              "toFrameMs": 28.5,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 3,
+              "apiMs": 0,
+              "toFrameMs": 21.90000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 3,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 29.59999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 3,
+              "apiMs": 0,
+              "toFrameMs": 28.90000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 3,
+              "apiMs": 0.19999980926513672,
+              "toFrameMs": 29.09999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 4,
+              "apiMs": 0,
+              "toFrameMs": 23.59999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 4,
+              "apiMs": 0,
+              "toFrameMs": 30,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 4,
+              "apiMs": 0,
+              "toFrameMs": 28.90000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 4,
+              "apiMs": 0.3000001907348633,
+              "toFrameMs": 28.59999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            }
+          ]
+        }
+      },
+      {
+        "profile": "basic",
+        "repetition": 2,
+        "status": "pass",
+        "measurements": {
+          "engine": "maplet",
+          "count": 500000,
+          "targetId": "p:250986",
+          "radiusCssPx": 8,
+          "pass": true,
+          "summary": {
+            "hide": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0.1,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 21.8,
+                "p95Ms": 25.4,
+                "maxMs": 25.4
+              }
+            },
+            "show": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 29.1,
+                "p95Ms": 29.8,
+                "maxMs": 29.8
+              }
+            },
+            "color": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 28.6,
+                "p95Ms": 29.7,
+                "maxMs": 29.7
+              }
+            },
+            "position": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0.3,
+                "p95Ms": 0.5,
+                "maxMs": 0.5
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 28.8,
+                "p95Ms": 29.8,
+                "maxMs": 29.8
+              }
+            }
+          },
+          "samples": [
+            {
+              "operation": "hide",
+              "repetition": 0,
+              "apiMs": 0.10000038146972656,
+              "toFrameMs": 17.600000381469727,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 0,
+              "apiMs": 0,
+              "toFrameMs": 29.09999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 0,
+              "apiMs": 0,
+              "toFrameMs": 29.199999809265137,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 0,
+              "apiMs": 0.5,
+              "toFrameMs": 25.40000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 1,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 21.799999713897705,
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 1,
+              "apiMs": 0,
+              "toFrameMs": 28.799999713897705,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 1,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 29.699999809265137,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 1,
+              "apiMs": 0.19999980926513672,
+              "toFrameMs": 28.799999713897705,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 2,
+              "apiMs": 0,
+              "toFrameMs": 22.59999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 2,
+              "apiMs": 0.10000038146972656,
+              "toFrameMs": 29.300000190734863,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 2,
+              "apiMs": 0.10000038146972656,
+              "toFrameMs": 26.90000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 2,
+              "apiMs": 0.2999997138977051,
+              "toFrameMs": 27.699999809265137,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 3,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 25.40000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 3,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 28.5,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 3,
+              "apiMs": 0,
+              "toFrameMs": 27.700000286102295,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 3,
+              "apiMs": 0.3000001907348633,
+              "toFrameMs": 29.59999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 4,
+              "apiMs": 0,
+              "toFrameMs": 21.399999618530273,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 4,
+              "apiMs": 0,
+              "toFrameMs": 29.799999713897705,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 4,
+              "apiMs": 0,
+              "toFrameMs": 28.59999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 4,
+              "apiMs": 0.20000028610229492,
+              "toFrameMs": 29.800000190734863,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            }
+          ]
+        }
+      },
+      {
+        "profile": "basic",
+        "repetition": 3,
+        "status": "pass",
+        "measurements": {
+          "engine": "maplet",
+          "count": 500000,
+          "targetId": "p:250986",
+          "radiusCssPx": 8,
+          "pass": true,
+          "summary": {
+            "hide": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0.1,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 22.5,
+                "p95Ms": 24.3,
+                "maxMs": 24.3
+              }
+            },
+            "show": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0.1,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 29,
+                "p95Ms": 29.4,
+                "maxMs": 29.4
+              }
+            },
+            "color": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0.1,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 29.5,
+                "p95Ms": 29.8,
+                "maxMs": 29.8
+              }
+            },
+            "position": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0.2,
+                "p95Ms": 0.7,
+                "maxMs": 0.7
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 28.8,
+                "p95Ms": 30.3,
+                "maxMs": 30.3
+              }
+            }
+          },
+          "samples": [
+            {
+              "operation": "hide",
+              "repetition": 0,
+              "apiMs": 0,
+              "toFrameMs": 21.200000286102295,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 0,
+              "apiMs": 0,
+              "toFrameMs": 29.40000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 0,
+              "apiMs": 0,
+              "toFrameMs": 28.100000381469727,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 0,
+              "apiMs": 0.7000002861022949,
+              "toFrameMs": 28.800000190734863,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 1,
+              "apiMs": 0,
+              "toFrameMs": 24.200000286102295,
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 1,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 29,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 1,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 29.5,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 1,
+              "apiMs": 0.19999980926513672,
+              "toFrameMs": 25.59999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 2,
+              "apiMs": 0.10000038146972656,
+              "toFrameMs": 22.100000381469727,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 2,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 29,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 2,
+              "apiMs": 0.10000038146972656,
+              "toFrameMs": 29.600000381469727,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 2,
+              "apiMs": 0.3000001907348633,
+              "toFrameMs": 28.700000286102295,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 3,
+              "apiMs": 0.10000038146972656,
+              "toFrameMs": 24.300000190734863,
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 3,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 28.5,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 3,
+              "apiMs": 0,
+              "toFrameMs": 29.799999713897705,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 3,
+              "apiMs": 0.19999980926513672,
+              "toFrameMs": 29,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 4,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 22.5,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 4,
+              "apiMs": 0,
+              "toFrameMs": 28.799999713897705,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 4,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 26.199999809265137,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 4,
+              "apiMs": 0.19999980926513672,
+              "toFrameMs": 30.300000190734863,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "limitations": [
+    "Three-run medians are not confidence intervals or guarantees for other hardware/workloads.",
+    "Chromium on the development machine; basic WebGL is forced, not physical old-GPU validation.",
+    "Paint fences and pan intervals include browser scheduling; they do not isolate GPU execution time.",
+    "Heap is main-thread JS heap after exposed GC, not total browser/worker/native/GPU memory.",
+    "Point warm-pan maxima still contain approximately one-second intervals; not hitch-free playback.",
+    "No fresh Canvas/PixiJS performance comparison in this record; compare only against 315c5c8.",
+    "Vertex-heavy baseline attempts did not finish within the 120-second whole-process budget; no baseline app-stage timing, median or speedup ratio is claimed for that fixture.",
+    "Appearance patches are localized; changed symbol text/size/priority or source topology requires safe layout/rebuild."
+  ]
+}

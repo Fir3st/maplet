@@ -1,0 +1,3453 @@
+{
+  "measuredAtUtc": "2026-10-13T08:59:56.131874+00:00",
+  "mode": "updates",
+  "workload": {
+    "points": 500000,
+    "viewportCssPx": [
+      720,
+      520
+    ],
+    "zoom": 10,
+    "radiusCssPx": 2,
+    "color": "#2563eb",
+    "interactive": true,
+    "coldPanMs": 2500,
+    "warmupPanMs": 5000,
+    "measuredWarmPanMs": 10000,
+    "mutations": {
+      "repetitionsPerOperation": 5,
+      "radiusCssPx": 8,
+      "operations": [
+        "hide",
+        "show",
+        "color",
+        "position"
+      ],
+      "moveCssPx": 40
+    }
+  },
+  "repetitions": 3,
+  "processBudgetSeconds": 120,
+  "runs": [
+    {
+      "profile": "maplet-webgl1",
+      "repetition": 1,
+      "elapsedSeconds": 19.94,
+      "status": "pass",
+      "measurements": [
+        {
+          "engine": "maplet",
+          "count": 500000,
+          "targetId": "p:250986",
+          "radiusCssPx": 8,
+          "pass": true,
+          "summary": {
+            "hide": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 19.9,
+                "p95Ms": 21.9,
+                "maxMs": 21.9
+              }
+            },
+            "show": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 29.9,
+                "p95Ms": 30.9,
+                "maxMs": 30.9
+              }
+            },
+            "color": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0.1,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 28.7,
+                "p95Ms": 31.7,
+                "maxMs": 31.7
+              }
+            },
+            "position": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0.2,
+                "p95Ms": 0.6,
+                "maxMs": 0.6
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 29.6,
+                "p95Ms": 30.4,
+                "maxMs": 30.4
+              }
+            }
+          },
+          "samples": [
+            {
+              "operation": "hide",
+              "repetition": 0,
+              "apiMs": 0,
+              "toFrameMs": 21.90000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 0,
+              "apiMs": 0,
+              "toFrameMs": 29.90000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 0,
+              "apiMs": 0,
+              "toFrameMs": 31.699999809265137,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 0,
+              "apiMs": 0.6000003814697266,
+              "toFrameMs": 29.90000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 1,
+              "apiMs": 0,
+              "toFrameMs": 21.700000286102295,
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 1,
+              "apiMs": 0,
+              "toFrameMs": 30.699999809265137,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 1,
+              "apiMs": 0,
+              "toFrameMs": 28.699999809265137,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 1,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 28.09999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 2,
+              "apiMs": 0,
+              "toFrameMs": 19.90000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 2,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 27.40000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 2,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 27.59999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 2,
+              "apiMs": 0.20000028610229492,
+              "toFrameMs": 29.600000381469727,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 3,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 19.40000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 3,
+              "apiMs": 0,
+              "toFrameMs": 28,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 3,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 28.40000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 3,
+              "apiMs": 0.3000001907348633,
+              "toFrameMs": 27.100000381469727,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 4,
+              "apiMs": 0,
+              "toFrameMs": 16.299999713897705,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 4,
+              "apiMs": 0,
+              "toFrameMs": 30.899999618530273,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 4,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 31.299999713897705,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 4,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 30.40000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "profile": "leaflet-canvas",
+      "repetition": 1,
+      "elapsedSeconds": 20.54,
+      "status": "pass",
+      "measurements": [
+        {
+          "engine": "leaflet-canvas",
+          "count": 500000,
+          "targetId": "p:250986",
+          "radiusCssPx": 8,
+          "pass": true,
+          "summary": {
+            "hide": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 33.2,
+                "p95Ms": 34.1,
+                "maxMs": 34.1
+              }
+            },
+            "show": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 33.2,
+                "p95Ms": 33.3,
+                "maxMs": 33.3
+              }
+            },
+            "color": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 32.9,
+                "p95Ms": 33.4,
+                "maxMs": 33.4
+              }
+            },
+            "position": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 33.3,
+                "p95Ms": 34.2,
+                "maxMs": 34.2
+              }
+            }
+          },
+          "samples": [
+            {
+              "operation": "hide",
+              "repetition": 0,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 33.09999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 98,
+                "b": 235,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 0,
+              "apiMs": 0,
+              "toFrameMs": 33.200000286102295,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 0,
+              "apiMs": 0,
+              "toFrameMs": 33.19999980926514,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 0,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 33.299999713897705,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 98,
+                "b": 235,
+                "a": 255
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 1,
+              "apiMs": 0,
+              "toFrameMs": 33.200000286102295,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 98,
+                "b": 235,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 1,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 33.30000019073486,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 1,
+              "apiMs": 0,
+              "toFrameMs": 32.799999713897705,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 1,
+              "apiMs": 0,
+              "toFrameMs": 32.80000019073486,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 98,
+                "b": 235,
+                "a": 255
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 2,
+              "apiMs": 0,
+              "toFrameMs": 34.09999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 98,
+                "b": 235,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 2,
+              "apiMs": 0,
+              "toFrameMs": 33.19999980926514,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 2,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 32.40000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 2,
+              "apiMs": 0,
+              "toFrameMs": 34.19999980926514,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 98,
+                "b": 235,
+                "a": 255
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 3,
+              "apiMs": 0.10000038146972656,
+              "toFrameMs": 33.10000038146973,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 98,
+                "b": 235,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 3,
+              "apiMs": 0,
+              "toFrameMs": 32.69999980926514,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 3,
+              "apiMs": 0,
+              "toFrameMs": 33.40000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 3,
+              "apiMs": 0,
+              "toFrameMs": 34.19999980926514,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 98,
+                "b": 235,
+                "a": 255
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 4,
+              "apiMs": 0,
+              "toFrameMs": 33.200000286102295,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 98,
+                "b": 235,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 4,
+              "apiMs": 0,
+              "toFrameMs": 33.19999980926514,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 4,
+              "apiMs": 0,
+              "toFrameMs": 32.89999961853027,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 4,
+              "apiMs": 0.10000038146972656,
+              "toFrameMs": 32.80000019073486,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 98,
+                "b": 235,
+                "a": 255
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "profile": "maplet-webgpu",
+      "repetition": 1,
+      "elapsedSeconds": 20.03,
+      "status": "pass",
+      "measurements": [
+        {
+          "engine": "maplet",
+          "count": 500000,
+          "targetId": "p:250986",
+          "radiusCssPx": 8,
+          "pass": true,
+          "summary": {
+            "hide": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 26.6,
+                "p95Ms": 31.4,
+                "maxMs": 31.4
+              }
+            },
+            "show": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 29.2,
+                "p95Ms": 30,
+                "maxMs": 30
+              }
+            },
+            "color": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 28.4,
+                "p95Ms": 29.7,
+                "maxMs": 29.7
+              }
+            },
+            "position": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0.2,
+                "p95Ms": 0.6,
+                "maxMs": 0.6
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 28.4,
+                "p95Ms": 30,
+                "maxMs": 30
+              }
+            }
+          },
+          "samples": [
+            {
+              "operation": "hide",
+              "repetition": 0,
+              "apiMs": 0,
+              "toFrameMs": 31.40000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 0,
+              "apiMs": 0,
+              "toFrameMs": 29.40000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 0,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 28.399999618530273,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 0,
+              "apiMs": 0.5999999046325684,
+              "toFrameMs": 28.40000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 1,
+              "apiMs": 0,
+              "toFrameMs": 21.300000190734863,
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 1,
+              "apiMs": 0,
+              "toFrameMs": 27.40000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 1,
+              "apiMs": 0,
+              "toFrameMs": 26.699999809265137,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 1,
+              "apiMs": 0.20000028610229492,
+              "toFrameMs": 25.100000381469727,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 2,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 28.09999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 2,
+              "apiMs": 0.10000038146972656,
+              "toFrameMs": 30,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 2,
+              "apiMs": 0,
+              "toFrameMs": 29.5,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 2,
+              "apiMs": 0.19999980926513672,
+              "toFrameMs": 30,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 3,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 26.59999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 3,
+              "apiMs": 0,
+              "toFrameMs": 29.199999809265137,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 3,
+              "apiMs": 0,
+              "toFrameMs": 29.699999809265137,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 3,
+              "apiMs": 0.10000038146972656,
+              "toFrameMs": 29.100000381469727,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 4,
+              "apiMs": 0,
+              "toFrameMs": 22.09999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 4,
+              "apiMs": 0,
+              "toFrameMs": 26.59999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 4,
+              "apiMs": 0,
+              "toFrameMs": 24.09999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 4,
+              "apiMs": 0.20000028610229492,
+              "toFrameMs": 23.5,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "profile": "maplet-webgl1",
+      "repetition": 2,
+      "elapsedSeconds": 19.97,
+      "status": "pass",
+      "measurements": [
+        {
+          "engine": "maplet",
+          "count": 500000,
+          "targetId": "p:250986",
+          "radiusCssPx": 8,
+          "pass": true,
+          "summary": {
+            "hide": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 18.9,
+                "p95Ms": 20.8,
+                "maxMs": 20.8
+              }
+            },
+            "show": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0.1,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 28.5,
+                "p95Ms": 30.9,
+                "maxMs": 30.9
+              }
+            },
+            "color": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 29.1,
+                "p95Ms": 29.4,
+                "maxMs": 29.4
+              }
+            },
+            "position": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0.2,
+                "p95Ms": 0.6,
+                "maxMs": 0.6
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 28.6,
+                "p95Ms": 30.4,
+                "maxMs": 30.4
+              }
+            }
+          },
+          "samples": [
+            {
+              "operation": "hide",
+              "repetition": 0,
+              "apiMs": 0,
+              "toFrameMs": 20.800000190734863,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 0,
+              "apiMs": 0.10000038146972656,
+              "toFrameMs": 30.90000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 0,
+              "apiMs": 0,
+              "toFrameMs": 29.40000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 0,
+              "apiMs": 0.5999999046325684,
+              "toFrameMs": 29.699999809265137,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 1,
+              "apiMs": 0,
+              "toFrameMs": 20,
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 1,
+              "apiMs": 0,
+              "toFrameMs": 28.5,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 1,
+              "apiMs": 0,
+              "toFrameMs": 29.100000381469727,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 1,
+              "apiMs": 0.19999980926513672,
+              "toFrameMs": 30.399999618530273,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 2,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 18.899999618530273,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 2,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 27.90000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 2,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 29.399999618530273,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 2,
+              "apiMs": 0.20000028610229492,
+              "toFrameMs": 26.59999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 3,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 16.09999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 3,
+              "apiMs": 0,
+              "toFrameMs": 28.5,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 3,
+              "apiMs": 0,
+              "toFrameMs": 26.299999713897705,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 3,
+              "apiMs": 0.20000028610229492,
+              "toFrameMs": 27.700000286102295,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 4,
+              "apiMs": 0,
+              "toFrameMs": 17.300000190734863,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 4,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 27.5,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 4,
+              "apiMs": 0,
+              "toFrameMs": 28.09999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 4,
+              "apiMs": 0.20000028610229492,
+              "toFrameMs": 28.59999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "profile": "leaflet-canvas",
+      "repetition": 2,
+      "elapsedSeconds": 20.39,
+      "status": "pass",
+      "measurements": [
+        {
+          "engine": "leaflet-canvas",
+          "count": 500000,
+          "targetId": "p:250986",
+          "radiusCssPx": 8,
+          "pass": true,
+          "summary": {
+            "hide": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0,
+                "p95Ms": 0.2,
+                "maxMs": 0.2
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 33.3,
+                "p95Ms": 33.9,
+                "maxMs": 33.9
+              }
+            },
+            "show": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0.1,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 33.1,
+                "p95Ms": 34,
+                "maxMs": 34
+              }
+            },
+            "color": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 33.5,
+                "p95Ms": 34.1,
+                "maxMs": 34.1
+              }
+            },
+            "position": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0.1,
+                "p95Ms": 0.2,
+                "maxMs": 0.2
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 32.7,
+                "p95Ms": 33.7,
+                "maxMs": 33.7
+              }
+            }
+          },
+          "samples": [
+            {
+              "operation": "hide",
+              "repetition": 0,
+              "apiMs": 0.20000028610229492,
+              "toFrameMs": 31.200000286102295,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 98,
+                "b": 235,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 0,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 32.700000286102295,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 0,
+              "apiMs": 0,
+              "toFrameMs": 33.5,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 0,
+              "apiMs": 0.19999980926513672,
+              "toFrameMs": 32.69999980926514,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 98,
+                "b": 235,
+                "a": 255
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 1,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 33.59999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 98,
+                "b": 235,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 1,
+              "apiMs": 0.10000038146972656,
+              "toFrameMs": 33.80000019073486,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 1,
+              "apiMs": 0,
+              "toFrameMs": 33.30000019073486,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 1,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 32.40000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 98,
+                "b": 235,
+                "a": 255
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 2,
+              "apiMs": 0,
+              "toFrameMs": 33.90000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 98,
+                "b": 235,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 2,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 32.69999980926514,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 2,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 34.09999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 2,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 33.299999713897705,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 98,
+                "b": 235,
+                "a": 255
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 3,
+              "apiMs": 0,
+              "toFrameMs": 32.40000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 98,
+                "b": 235,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 3,
+              "apiMs": 0,
+              "toFrameMs": 33.10000038146973,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 3,
+              "apiMs": 0,
+              "toFrameMs": 34.09999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 3,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 32.59999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 98,
+                "b": 235,
+                "a": 255
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 4,
+              "apiMs": 0,
+              "toFrameMs": 33.30000019073486,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 98,
+                "b": 235,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 4,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 34,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 4,
+              "apiMs": 0,
+              "toFrameMs": 32.30000019073486,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 4,
+              "apiMs": 0,
+              "toFrameMs": 33.700000286102295,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 98,
+                "b": 235,
+                "a": 255
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "profile": "maplet-webgpu",
+      "repetition": 2,
+      "elapsedSeconds": 20.02,
+      "status": "pass",
+      "measurements": [
+        {
+          "engine": "maplet",
+          "count": 500000,
+          "targetId": "p:250986",
+          "radiusCssPx": 8,
+          "pass": true,
+          "summary": {
+            "hide": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 22.7,
+                "p95Ms": 33.1,
+                "maxMs": 33.1
+              }
+            },
+            "show": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 27.8,
+                "p95Ms": 28.7,
+                "maxMs": 28.7
+              }
+            },
+            "color": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 27.6,
+                "p95Ms": 28.3,
+                "maxMs": 28.3
+              }
+            },
+            "position": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0.2,
+                "p95Ms": 0.5,
+                "maxMs": 0.5
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 26.4,
+                "p95Ms": 28.5,
+                "maxMs": 28.5
+              }
+            }
+          },
+          "samples": [
+            {
+              "operation": "hide",
+              "repetition": 0,
+              "apiMs": 0,
+              "toFrameMs": 22.700000286102295,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 0,
+              "apiMs": 0,
+              "toFrameMs": 28.399999618530273,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 0,
+              "apiMs": 0,
+              "toFrameMs": 28.09999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 0,
+              "apiMs": 0.5,
+              "toFrameMs": 25.300000190734863,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 1,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 17.299999713897705,
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 1,
+              "apiMs": 0,
+              "toFrameMs": 27.800000190734863,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 1,
+              "apiMs": 0,
+              "toFrameMs": 28.300000190734863,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 1,
+              "apiMs": 0.20000028610229492,
+              "toFrameMs": 28.5,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 2,
+              "apiMs": 0,
+              "toFrameMs": 24.40000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 2,
+              "apiMs": 0.10000038146972656,
+              "toFrameMs": 28.700000286102295,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 2,
+              "apiMs": 0,
+              "toFrameMs": 27.40000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 2,
+              "apiMs": 0.20000028610229492,
+              "toFrameMs": 28,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 3,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 21.59999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 3,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 27.199999809265137,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 3,
+              "apiMs": 0,
+              "toFrameMs": 27.59999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 3,
+              "apiMs": 0.19999980926513672,
+              "toFrameMs": 26.40000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 4,
+              "apiMs": 0,
+              "toFrameMs": 33.10000038146973,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 4,
+              "apiMs": 0,
+              "toFrameMs": 25.799999713897705,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 4,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 25.90000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 4,
+              "apiMs": 0.20000028610229492,
+              "toFrameMs": 24.100000381469727,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "profile": "maplet-webgl1",
+      "repetition": 3,
+      "elapsedSeconds": 19.98,
+      "status": "pass",
+      "measurements": [
+        {
+          "engine": "maplet",
+          "count": 500000,
+          "targetId": "p:250986",
+          "radiusCssPx": 8,
+          "pass": true,
+          "summary": {
+            "hide": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0.1,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 21.8,
+                "p95Ms": 25.9,
+                "maxMs": 25.9
+              }
+            },
+            "show": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 30,
+                "p95Ms": 30.3,
+                "maxMs": 30.3
+              }
+            },
+            "color": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 29.9,
+                "p95Ms": 31,
+                "maxMs": 31
+              }
+            },
+            "position": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0.3,
+                "p95Ms": 0.7,
+                "maxMs": 0.7
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 29.8,
+                "p95Ms": 31.7,
+                "maxMs": 31.7
+              }
+            }
+          },
+          "samples": [
+            {
+              "operation": "hide",
+              "repetition": 0,
+              "apiMs": 0,
+              "toFrameMs": 21.800000190734863,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 0,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 28.800000190734863,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 0,
+              "apiMs": 0,
+              "toFrameMs": 28.199999809265137,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 0,
+              "apiMs": 0.7000002861022949,
+              "toFrameMs": 27.700000286102295,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 1,
+              "apiMs": 0,
+              "toFrameMs": 17.299999713897705,
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 1,
+              "apiMs": 0,
+              "toFrameMs": 30,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 1,
+              "apiMs": 0,
+              "toFrameMs": 31,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 1,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 30.59999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 2,
+              "apiMs": 0.10000038146972656,
+              "toFrameMs": 25.90000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 2,
+              "apiMs": 0,
+              "toFrameMs": 30.200000286102295,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 2,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 29.899999618530273,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 2,
+              "apiMs": 0.2999997138977051,
+              "toFrameMs": 29.799999713897705,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 3,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 22.199999809265137,
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 3,
+              "apiMs": 0,
+              "toFrameMs": 29,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 3,
+              "apiMs": 0,
+              "toFrameMs": 26.699999809265137,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 3,
+              "apiMs": 0.3000001907348633,
+              "toFrameMs": 26.5,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 4,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 16.800000190734863,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 4,
+              "apiMs": 0,
+              "toFrameMs": 30.299999713897705,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 4,
+              "apiMs": 0,
+              "toFrameMs": 30,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 4,
+              "apiMs": 0.3000001907348633,
+              "toFrameMs": 31.700000286102295,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "profile": "leaflet-canvas",
+      "repetition": 3,
+      "elapsedSeconds": 20.51,
+      "status": "pass",
+      "measurements": [
+        {
+          "engine": "leaflet-canvas",
+          "count": 500000,
+          "targetId": "p:250986",
+          "radiusCssPx": 8,
+          "pass": true,
+          "summary": {
+            "hide": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 33.3,
+                "p95Ms": 33.5,
+                "maxMs": 33.5
+              }
+            },
+            "show": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0.1,
+                "p95Ms": 0.2,
+                "maxMs": 0.2
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 33.2,
+                "p95Ms": 33.3,
+                "maxMs": 33.3
+              }
+            },
+            "color": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0.1,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 33.1,
+                "p95Ms": 33.5,
+                "maxMs": 33.5
+              }
+            },
+            "position": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0.1,
+                "p95Ms": 0.2,
+                "maxMs": 0.2
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 33.5,
+                "p95Ms": 33.8,
+                "maxMs": 33.8
+              }
+            }
+          },
+          "samples": [
+            {
+              "operation": "hide",
+              "repetition": 0,
+              "apiMs": 0,
+              "toFrameMs": 33.5,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 98,
+                "b": 235,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 0,
+              "apiMs": 0.19999980926513672,
+              "toFrameMs": 33.19999980926514,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 0,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 33,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 0,
+              "apiMs": 0.10000038146972656,
+              "toFrameMs": 33.5,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 98,
+                "b": 235,
+                "a": 255
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 1,
+              "apiMs": 0.10000038146972656,
+              "toFrameMs": 33.30000019073486,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 98,
+                "b": 235,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 1,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 33.200000286102295,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 1,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 33.299999713897705,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 1,
+              "apiMs": 0,
+              "toFrameMs": 33.19999980926514,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 98,
+                "b": 235,
+                "a": 255
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 2,
+              "apiMs": 0,
+              "toFrameMs": 33.200000286102295,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 98,
+                "b": 235,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 2,
+              "apiMs": 0,
+              "toFrameMs": 33.299999713897705,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 2,
+              "apiMs": 0,
+              "toFrameMs": 33.10000038146973,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 2,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 33.40000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 98,
+                "b": 235,
+                "a": 255
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 3,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 33.39999961853027,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 98,
+                "b": 235,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 3,
+              "apiMs": 0.10000038146972656,
+              "toFrameMs": 33.30000019073486,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 3,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 32.90000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 3,
+              "apiMs": 0,
+              "toFrameMs": 33.69999980926514,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 98,
+                "b": 235,
+                "a": 255
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 4,
+              "apiMs": 0,
+              "toFrameMs": 33.200000286102295,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 98,
+                "b": 235,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 4,
+              "apiMs": 0,
+              "toFrameMs": 32.59999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 4,
+              "apiMs": 0,
+              "toFrameMs": 33.5,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 4,
+              "apiMs": 0.19999980926513672,
+              "toFrameMs": 33.799999713897705,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 98,
+                "b": 235,
+                "a": 255
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "profile": "maplet-webgpu",
+      "repetition": 3,
+      "elapsedSeconds": 19.97,
+      "status": "pass",
+      "measurements": [
+        {
+          "engine": "maplet",
+          "count": 500000,
+          "targetId": "p:250986",
+          "radiusCssPx": 8,
+          "pass": true,
+          "summary": {
+            "hide": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0.1,
+                "p95Ms": 0.2,
+                "maxMs": 0.2
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 24.1,
+                "p95Ms": 30.8,
+                "maxMs": 30.8
+              }
+            },
+            "show": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0.1,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 26.9,
+                "p95Ms": 29.5,
+                "maxMs": 29.5
+              }
+            },
+            "color": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0,
+                "p95Ms": 0.1,
+                "maxMs": 0.1
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 25.4,
+                "p95Ms": 29.5,
+                "maxMs": 29.5
+              }
+            },
+            "position": {
+              "api": {
+                "samples": 5,
+                "p50Ms": 0.3,
+                "p95Ms": 0.6,
+                "maxMs": 0.6
+              },
+              "toFrame": {
+                "samples": 5,
+                "p50Ms": 27.8,
+                "p95Ms": 28.6,
+                "maxMs": 28.6
+              }
+            }
+          },
+          "samples": [
+            {
+              "operation": "hide",
+              "repetition": 0,
+              "apiMs": 0,
+              "toFrameMs": 30.799999713897705,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 0,
+              "apiMs": 0,
+              "toFrameMs": 26.700000286102295,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 0,
+              "apiMs": 0,
+              "toFrameMs": 23.300000190734863,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 0,
+              "apiMs": 0.5999999046325684,
+              "toFrameMs": 27.799999713897705,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 1,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 24.09999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 1,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 29.5,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 1,
+              "apiMs": 0,
+              "toFrameMs": 29.5,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 1,
+              "apiMs": 0.19999980926513672,
+              "toFrameMs": 28.59999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 2,
+              "apiMs": 0.20000028610229492,
+              "toFrameMs": 25.300000190734863,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 2,
+              "apiMs": 0,
+              "toFrameMs": 28.199999809265137,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 2,
+              "apiMs": 0,
+              "toFrameMs": 28.90000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 2,
+              "apiMs": 0.39999961853027344,
+              "toFrameMs": 28.5,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 3,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 21.09999990463257,
+              "pass": true,
+              "pixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 3,
+              "apiMs": 0.09999990463256836,
+              "toFrameMs": 24.90000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 3,
+              "apiMs": 0.10000038146972656,
+              "toFrameMs": 24.100000381469727,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 3,
+              "apiMs": 0.3000001907348633,
+              "toFrameMs": 25.100000381469727,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 37,
+                "g": 99,
+                "b": 234,
+                "a": 254
+              }
+            },
+            {
+              "operation": "hide",
+              "repetition": 4,
+              "apiMs": 0,
+              "toFrameMs": 18.700000286102295,
+              "pass": true,
+              "pixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "show",
+              "repetition": 4,
+              "apiMs": 0.10000038146972656,
+              "toFrameMs": 26.90000009536743,
+              "pass": true,
+              "pixel": {
+                "r": 225,
+                "g": 29,
+                "b": 72,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "color",
+              "repetition": 4,
+              "apiMs": 0,
+              "toFrameMs": 25.399999618530273,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": null
+            },
+            {
+              "operation": "position",
+              "repetition": 4,
+              "apiMs": 0.3000001907348633,
+              "toFrameMs": 25.700000286102295,
+              "pass": true,
+              "pixel": {
+                "r": 34,
+                "g": 197,
+                "b": 94,
+                "a": 255
+              },
+              "oldPixel": {
+                "r": 36,
+                "g": 97,
+                "b": 231,
+                "a": 250
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

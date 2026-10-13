@@ -16,8 +16,10 @@ import { fail } from '../api/errors.ts';
 import type { FeatureId, Position } from '../api/types.ts';
 import { featureIdKey } from '../api/types.ts';
 import { ChangeJournal } from './change-journal.ts';
-import type { Crs } from '../math/crs.ts';
+import { SlotTable } from './slot-table.ts';
+import { nativeProjectionCode, projectColumns, type Crs } from '../math/crs.ts';
 import type { ColumnarPointBatch } from '../io/columnar.ts';
+import type { PreparedPartsImport } from '../io/parts.ts';
 import {
   GEOMETRY_KIND,
   prepareGeometry,
@@ -198,10 +200,11 @@ export class SpatialIndex {
 export class FeatureStore {
   readonly changes = new ChangeJournal<number>();
   private complexCount = 0;
-  private byKey = new Map<string, number>();
-  /** Generation counter per identity; kept for the store's whole lifetime. */
-  private generationCounters = new Map<string, number>();
-  private slots: (SlotRecord | null)[] = [];
+  /** Identity rows survive deletion; physical slots may be recycled independently. */
+  private identities = new Map<string, number>();
+  private identitySlots: number[] = [];
+  private identityGenerations: number[] = [];
+  private slots = new SlotTable();
   private readonly freeSlots: number[] = [];
   private liveCount = 0;
   private bounds: Float64Array | null = null;
@@ -221,7 +224,23 @@ export class FeatureStore {
 
   get pointOnly(): boolean { return this.complexCount === 0; }
   get slotCapacity(): number { return this.slots.length; }
-  get pristine(): boolean { return this.slots.length === 0 && this.generationCounters.size === 0; }
+  get pristine(): boolean { return this.slots.length === 0 && this.identities.size === 0; }
+
+  /** Destruction ends identity history too, even while callers retain a handle. */
+  dispose(): void {
+    this.slots = new SlotTable();
+    this.identities.clear();
+    this.identitySlots.length = 0;
+    this.identityGenerations.length = 0;
+    this.freeSlots.length = 0;
+    this.index = new SpatialIndex();
+    this.visitStamp = new Uint32Array(0);
+    this.liveCount = 0;
+    this.complexCount = 0;
+    this.bounds = null;
+    this.boundsDirty = false;
+    this.changes.invalidate();
+  }
 
   /**
    * Build an initial point dataset off-store, then adopt it atomically. The
@@ -238,45 +257,50 @@ export class FeatureStore {
     for (let slot = 0; slot < count; slot++) {
       const id = batch.ids?.[slot] ?? nextId();
       const key = featureIdKey(id);
-      if (byKey.has(key)) fail('duplicate-id', `columnar import: duplicate id in input: ${String(id)}`, { id });
       byKey.set(key, slot);
+      if (byKey.size !== slot + 1) fail('duplicate-id', `columnar import: duplicate id in input: ${String(id)}`, { id });
       ids[slot] = id;
     }
-    const slots: SlotRecord[] = new Array(count);
-    const generations = new Map<string, number>();
+    const projected = nativeProjectionCode(this.crs) === undefined ? null : projectColumns(this.crs, batch.positions);
+    const slots = new SlotTable(projected ?? undefined);
+    const identitySlots: number[] = new Array(count);
+    const generations: number[] = new Array(count).fill(1);
     const index = new SpatialIndex();
     let minX = Infinity;
     let minY = Infinity;
     let maxX = -Infinity;
     let maxY = -Infinity;
-    // Iterate the resolved identity map so its keys are not constructed twice.
+    // Iterate resolved keys so their strings are not constructed twice.
     for (const [key, slot] of byKey) {
       if (signal?.aborted) fail('aborted', 'operation aborted', {});
       const x = batch.positions[slot * 2]!;
       const y = batch.positions[slot * 2 + 1]!;
       const altitude = batch.altitudes?.[slot];
-      const position: Position = this.crs.positionKind === 'planar' ? { x, y } :
-        altitude === undefined || Number.isNaN(altitude) ? { lng: x, lat: y } : { lng: x, lat: y, altitude };
-      const point = positionToWorldChecked(this.crs, position, 'geometry.position');
-      slots[slot] = {
-        slot, key, id: ids[slot]!, namespace: undefined, generation: 1,
-        kind: GEOMETRY_KIND.point, wx: point.wx, wy: point.wy, alt: point.alt,
-        geometry: null, properties: batch.properties?.[slot] ?? EMPTY_PROPERTIES,
-      };
-      generations.set(key, 1);
-      index.addPoint(slot, point.wx, point.wy);
-      minX = Math.min(minX, point.wx);
-      minY = Math.min(minY, point.wy);
-      maxX = Math.max(maxX, point.wx);
-      maxY = Math.max(maxY, point.wy);
+      let wx: number, wy: number, alt = altitude === undefined || Number.isNaN(altitude) ? undefined : altitude;
+      if (projected) {
+        wx = projected[slot * 2]!; wy = projected[slot * 2 + 1]!;
+      } else {
+        const position: Position = this.crs.positionKind === 'planar' ? { x, y } :
+          alt === undefined ? { lng: x, lat: y } : { lng: x, lat: y, altitude: alt };
+        const point = positionToWorldChecked(this.crs, position, 'geometry.position');
+        wx = point.wx; wy = point.wy; alt = point.alt;
+      }
+      slots.setPoint(slot, key, ids[slot]!, wx, wy, alt,
+        batch.properties?.[slot] ?? EMPTY_PROPERTIES);
+      identitySlots[slot] = slot;
+      index.addPoint(slot, wx, wy);
+      minX = Math.min(minX, wx);
+      minY = Math.min(minY, wy);
+      maxX = Math.max(maxX, wx);
+      maxY = Math.max(maxY, wy);
     }
     if (signal?.aborted) fail('aborted', 'operation aborted', {});
     const previousSlots = this.slots;
-    const previousKeys = this.byKey;
     const previousIndex = this.index;
     this.slots = slots;
-    this.byKey = byKey;
-    this.generationCounters = generations;
+    this.identities = byKey;
+    this.identitySlots = identitySlots;
+    this.identityGenerations = generations;
     this.index = index;
     this.liveCount = count;
     this.bounds = count === 0 ? null : Float64Array.of(minX, minY, maxX, maxY);
@@ -286,7 +310,7 @@ export class FeatureStore {
       ids,
       undo: () => {
         this.slots = previousSlots;
-        this.byKey = previousKeys;
+        this.identitySlots.fill(-1);
         this.index = previousIndex;
         this.freeSlots.length = 0;
         this.liveCount = 0;
@@ -305,17 +329,47 @@ export class FeatureStore {
     return featureIdKey(id, namespace);
   }
 
+  /** Compile complex imports off-store and publish all canonical pages together. */
+  initializePrepared(batch: PreparedPartsImport, ids: readonly FeatureId[], signal?: AbortSignal): () => void {
+    if (!this.pristine) fail('invalid-state', 'geometry initialization requires a pristine store');
+    const staged = new FeatureStore(this.crs);
+    for (let i = 0; i < ids.length; i++) {
+      if (signal?.aborted) fail('aborted', 'operation aborted');
+      staged.addPrepared({ id: ids[i]!, namespace: undefined, prepared: batch.geometries[i]!, properties: batch.properties?.[i] });
+    }
+    if (signal?.aborted) fail('aborted', 'operation aborted');
+    const previousSlots = this.slots, previousIndex = this.index;
+    this.slots = staged.slots; this.identities = staged.identities; this.index = staged.index;
+    this.identitySlots = staged.identitySlots; this.identityGenerations = staged.identityGenerations;
+    this.liveCount = staged.liveCount; this.complexCount = staged.complexCount;
+    this.boundsDirty = true; this.changes.invalidate();
+    return () => {
+      this.slots = previousSlots; this.identitySlots.fill(-1); this.index = previousIndex;
+      this.freeSlots.length = 0; this.liveCount = 0; this.complexCount = 0;
+      this.bounds = null; this.boundsDirty = false; this.visitStamp = new Uint32Array(0); this.visitEpoch = 0;
+      // Consumed generations survive rollback, including captured staged refs.
+      this.changes.invalidate();
+    };
+  }
+
   has(id: FeatureId, namespace?: string): boolean {
-    return this.byKey.has(this.keyOf(id, namespace));
+    return this.liveSlot(this.keyOf(id, namespace)) !== undefined;
   }
 
   get(id: FeatureId, namespace?: string): SlotRecord | undefined {
-    const slot = this.byKey.get(this.keyOf(id, namespace));
-    return slot === undefined ? undefined : this.slots[slot] ?? undefined;
+    const slot = this.liveSlot(this.keyOf(id, namespace));
+    return slot === undefined ? undefined : this.slots.get(slot);
+  }
+
+  private liveSlot(key: string): number | undefined {
+    const identity = this.identities.get(key);
+    if (identity === undefined) return undefined;
+    const slot = this.identitySlots[identity]!;
+    return slot < 0 ? undefined : slot;
   }
 
   getBySlot(slot: number): SlotRecord | undefined {
-    return this.slots[slot] ?? undefined;
+    return this.slots.get(slot);
   }
 
   /** Validates and prepares a record without mutating the store. */
@@ -367,18 +421,26 @@ export class FeatureStore {
 
   private insert(input: Omit<AddRecordInput, 'geometry'>, geometry: RecordGeometry, upsert: boolean): AddRecordResult {
     const key = this.keyOf(input.id, input.namespace);
-    const existingSlot = this.byKey.get(key);
+    let identity = this.identities.get(key);
+    const previousSlot = identity === undefined ? -1 : this.identitySlots[identity]!;
+    const existingSlot = previousSlot < 0 ? undefined : previousSlot;
     if (existingSlot !== undefined && !upsert) {
       fail('duplicate-id', `feature id already exists: ${String(input.id)}`, {
         id: input.id,
         namespace: input.namespace ?? null,
       });
     }
-    const generation = (this.generationCounters.get(key) ?? 0) + 1;
-    this.generationCounters.set(key, generation);
+    if (identity === undefined) {
+      identity = this.identityGenerations.length;
+      this.identities.set(key, identity);
+      this.identityGenerations.push(0);
+      this.identitySlots.push(-1);
+    }
+    const generation = this.identityGenerations[identity]! + 1;
+    this.identityGenerations[identity] = generation;
     let previous: SlotRecord | null = null;
     if (existingSlot !== undefined) {
-      const old = this.slots[existingSlot];
+      const old = this.slots.snapshot(existingSlot);
       if (old) {
         previous = old;
         this.index.removeWithBBox(existingSlot, recordBBox(old));
@@ -398,11 +460,11 @@ export class FeatureStore {
       geometry: geometry.geometry,
       properties: input.properties ?? EMPTY_PROPERTIES,
     };
-    this.slots[slot] = record;
+    this.slots.set(slot, record);
     if (previous?.geometry) this.complexCount--;
     if (record.geometry) this.complexCount++;
     this.changes.note(slot);
-    this.byKey.set(key, slot);
+    this.identitySlots[identity] = slot;
     if (record.geometry) this.index.add(slot, record.geometry.bbox);
     else this.index.addPoint(slot, record.wx, record.wy);
     if (existingSlot === undefined) this.liveCount++;
@@ -414,10 +476,10 @@ export class FeatureStore {
   restore(record: SlotRecord): void {
     const free = this.freeSlots.indexOf(record.slot);
     if (free >= 0) this.freeSlots.splice(free, 1);
-    this.slots[record.slot] = record;
+    this.slots.set(record.slot, record);
     if (record.geometry) this.complexCount++;
     this.changes.note(record.slot);
-    this.byKey.set(record.key, record.slot);
+    this.identitySlots[this.identities.get(record.key)!] = record.slot;
     this.index.add(record.slot, recordBBox(record));
     this.liveCount++;
     this.boundsDirty = true;
@@ -428,14 +490,14 @@ export class FeatureStore {
    * with the previous one. Live count and identity do not change.
    */
   restoreReplacing(previous: SlotRecord, currentBBox: Float64Array): void {
-    const current = this.slots[previous.slot];
+    const current = this.slots.get(previous.slot);
     if (!current) fail('invalid-state', `slot ${previous.slot} is not live`);
     this.index.removeWithBBox(previous.slot, currentBBox);
     if (current.geometry) this.complexCount--;
     if (previous.geometry) this.complexCount++;
     this.changes.note(previous.slot);
-    this.slots[previous.slot] = previous;
-    this.byKey.set(previous.key, previous.slot);
+    this.slots.set(previous.slot, previous);
+    this.identitySlots[this.identities.get(previous.key)!] = previous.slot;
     this.index.add(previous.slot, recordBBox(previous));
     this.boundsDirty = true;
   }
@@ -443,15 +505,16 @@ export class FeatureStore {
   /** Removes a record and returns it (for undo logs and change sets). */
   removeRecord(id: FeatureId, namespace?: string): SlotRecord | null {
     const key = this.keyOf(id, namespace);
-    const slot = this.byKey.get(key);
-    if (slot === undefined) return null;
-    const record = this.slots[slot];
+    const identity = this.identities.get(key);
+    const slot = identity === undefined ? -1 : this.identitySlots[identity]!;
+    if (slot < 0) return null;
+    const record = this.slots.snapshot(slot);
     if (!record) return null;
     this.index.removeWithBBox(slot, recordBBox(record));
     if (record.geometry) this.complexCount--;
     this.changes.note(slot);
-    this.slots[slot] = null;
-    this.byKey.delete(key);
+    this.slots.delete(slot);
+    this.identitySlots[identity!] = -1;
     this.freeSlots.push(slot);
     this.liveCount--;
     this.boundsDirty = true;
@@ -459,7 +522,7 @@ export class FeatureStore {
   }
 
   replaceGeometry(slot: number, prepared: PreparedFeatureGeometry): GeometryState {
-    const record = this.slots[slot];
+    const record = this.slots.get(slot);
     if (!record) fail('invalid-state', `slot ${slot} is not live`);
     const previous: GeometryState = {
       kind: record.kind,
@@ -486,7 +549,7 @@ export class FeatureStore {
   }
 
   restoreGeometryState(slot: number, state: GeometryState, currentBBox: Float64Array): void {
-    const record = this.slots[slot];
+    const record = this.slots.get(slot);
     if (!record) fail('invalid-state', `slot ${slot} is not live`);
     this.index.removeWithBBox(slot, currentBBox);
     if (record.geometry) this.complexCount--;
@@ -505,7 +568,7 @@ export class FeatureStore {
     slot: number,
     properties: Readonly<Record<string, unknown>>,
   ): Readonly<Record<string, unknown>> {
-    const record = this.slots[slot];
+    const record = this.slots.get(slot);
     if (!record) fail('invalid-state', `slot ${slot} is not live`);
     const previous = record.properties;
     record.properties = properties;
@@ -561,7 +624,7 @@ export class FeatureStore {
     this.index.queryRect(minX, minY, maxX, maxY, (slot) => {
       if (stamp[slot] === epoch) return;
       stamp[slot] = epoch;
-      const record = this.slots[slot];
+      const record = this.slots.getInRect(slot, minX, minY, maxX, maxY);
       if (record) visit(record);
     });
   }
