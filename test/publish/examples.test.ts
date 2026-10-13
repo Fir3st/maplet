@@ -19,6 +19,8 @@ test('all eight examples build under a Pages subdirectory, with honest Gist link
     assert.ok(!gallery.includes('Small examples.'));
     assert.ok(!gallery.includes('Learning examples, not performance benchmarks.'));
     assert.match(gallery, /class="syntax-keyword"/);
+    const stylesheet = /href="(\.\/style\.css\?v=[0-9a-f]{12})"/.exec(gallery)?.[1];
+    assert.ok(stylesheet, 'Gallery stylesheet must have a content fingerprint');
     assert.deepEqual(JSON.parse(readFileSync(join(site, 'gists.json'), 'utf8')), {});
     assert.ok(readFileSync(join(site, 'dist', 'workers', 'import.worker.js'), 'utf8').length > 0);
     for (const gist of plan.gists) {
@@ -26,6 +28,8 @@ test('all eight examples build under a Pages subdirectory, with honest Gist link
       const html = readFileSync(join(site, 'examples', gist.id, 'index.html'), 'utf8');
       assert.match(html, /id="map"/);
       assert.match(html, /class="syntax-string"/);
+      assert.ok(html.includes(`href="${stylesheet}"`), 'Each detail must use the fingerprinted stylesheet');
+      assert.ok(gist.files['index.html'].includes(`href="${stylesheet}"`), 'Gist HTML must use the fingerprinted stylesheet');
       assert.match(html, /Gist not published yet/);
       assert.match(html, /src="\.\/example\.js"/);
       assert.match(gist.files['shared.js'], /from 'https:\/\/example.github.io\/project\/dist\/index.js'/);

@@ -1,11 +1,13 @@
 import { readFileSync, readdirSync, mkdirSync, writeFileSync, copyFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
 import ts from 'typescript';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 const read = file => readFileSync(join(root, file), 'utf8');
+const stylesheetHash = createHash('sha256').update(read('examples/style.css')).digest('hex').slice(0, 12);
 const logo = '<svg viewBox="0 0 28 28" fill="none" aria-hidden="true"><path d="M3 7l7-3 8 3 7-3v19l-7 3-8-3-7 3V7z" stroke="currentColor" stroke-width="1.7"/><path d="M10 4v19M18 7v19" stroke="currentColor" stroke-width="1.7"/></svg>';
 const repository = 'Fir3st/maplet';
 
@@ -67,7 +69,7 @@ function header(version, home) {
 }
 const footer = '<footer class="site-footer"><span>Maplet · Apache-2.0</span></footer>';
 function documentHtml(title, body, script, attributes = '') {
-  return `<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Practical Maplet examples with live maps and source code."><title>${escapeHtml(title)} · Maplet examples</title><link rel="stylesheet" href="./style.css"></head><body ${attributes}>${body}<script type="module" src="./${script}"></script></body></html>\n`;
+  return `<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Practical Maplet examples with live maps and source code."><title>${escapeHtml(title)} · Maplet examples</title><link rel="stylesheet" href="./style.css?v=${stylesheetHash}"></head><body ${attributes}>${body}<script type="module" src="./${script}"></script></body></html>\n`;
 }
 
 function galleryHtml(catalog, version) {
