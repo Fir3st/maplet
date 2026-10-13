@@ -1,0 +1,66 @@
+[
+  {
+    "id": "basics", "title": "Your first map", "group": "Getting started", "kind": "map",
+    "summary": "Create a map, add a source and put interactive places on it.",
+    "learn": "A source owns the data. A layer decides how to draw it. Start with three places, then fit the view or select a place to inspect its details.",
+    "hint": "Click a place · drag to pan · scroll to zoom",
+    "note": "Real city coordinates, without a basemap. No external tile requests.",
+    "origin": "demo/demo.js"
+  },
+  {
+    "id": "points", "title": "Points that change", "group": "Data & styling", "kind": "points",
+    "summary": "Style by properties, edit one point and hide it without deleting it.",
+    "learn": "Expressions read feature properties and interaction state. Change a feature's status, move it, or apply a layer-specific visibility override while keeping its identity.",
+    "hint": "Drag a point · click to select · try the data controls",
+    "note": "Synthetic station data in planar coordinates. Changes are made through the public API.",
+    "origin": "demo/demo.js"
+  },
+  {
+    "id": "geometry", "title": "Lines, fills & holes", "group": "Data & styling", "kind": "geometry",
+    "summary": "Draw a route and a polygon with a real opening in its center.",
+    "learn": "Line strings and polygon rings are separate geometry types. The first polygon ring is the outside boundary; the next ring is a hole. Switch the fill or route independently.",
+    "hint": "Toggle a layer · zoom into the polygon opening",
+    "note": "Synthetic route and site plan. The polygon hole is geometry, not a background-colored overlay.",
+    "origin": "demo/demo.js"
+  },
+  {
+    "id": "bindings", "title": "Connected data", "group": "Data & styling", "kind": "bindings",
+    "summary": "Move an endpoint and let its connected line follow in the same update.",
+    "learn": "Stable feature references identify the endpoints. A lineBetween binding derives the route from their positions. The relation records their connection without duplicating geometry.",
+    "hint": "Drag an endpoint · use Move endpoint for a keyboard-accessible update",
+    "note": "Two synthetic stations and one derived line. No animation loop or manual line repair.",
+    "origin": "demo/demo.js"
+  },
+  {
+    "id": "geojson", "title": "Bring your GeoJSON", "group": "Data & styling", "kind": "geojson",
+    "summary": "Edit a small FeatureCollection, import it and export the stored data.",
+    "learn": "GeoJSON uses [longitude, latitude], not [latitude, longitude]. Importing replaces this example's source atomically; a rejected import leaves the previously accepted data on the map.",
+    "hint": "Edit the GeoJSON · import · export to inspect the result",
+    "note": "Input stays in your browser. This example accepts at most 64 KiB and 100 point features.",
+    "origin": "demo/import.js"
+  },
+  {
+    "id": "labels", "title": "Labels & image pins", "group": "Presentation", "kind": "labels",
+    "summary": "Reuse one SVG pin and label places from their feature properties.",
+    "learn": "Register an image once, reference it from a point layer, then add a label layer over the same source. Toggle labels and move pins without creating one DOM element per symbol.",
+    "hint": "Drag a pin · toggle the labels · change their text",
+    "note": "The SVG image is embedded in the source. Labels use system fonts; no asset download is needed.",
+    "origin": "demo/icons.js"
+  },
+  {
+    "id": "raster", "title": "Raster tiles", "group": "Presentation", "kind": "raster",
+    "summary": "Add an XYZ tile source and switch between demo tiles and OpenStreetMap.",
+    "learn": "A raster source requests tiles for the visible view. The default grid is an inline SVG tile; live OpenStreetMap is requested only after you choose it. Attribution follows the active source.",
+    "hint": "Choose a basemap · pan and zoom · check its attribution",
+    "note": "OpenStreetMap needs an internet connection and follows its tile usage policy. No prefetching or offline caching.",
+    "origin": "demo/tiles.js"
+  },
+  {
+    "id": "plugins", "title": "A plugin is a function", "group": "Extending Maplet", "kind": "plugins",
+    "summary": "Install a small pin plugin, use its API and remove all its resources.",
+    "learn": "map.use() passes a context into a plain function. Return your own API and register cleanup in ownership order. Removing the plugin removes its layer, source and HTML badge.",
+    "hint": "Install the plugin · add a pin · remove it and watch its resources disappear",
+    "note": "A focused version of the existing plugin playground. No external assets or runtime dependencies.",
+    "origin": "demo/plugins.js"
+  }
+]

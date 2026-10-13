@@ -52,7 +52,7 @@ test('npm pack includes the runtime assets and no development files', () => {
     assert.ok(files.includes(required), `packed archive is missing ${required}`);
   }
   for (const file of files) {
-    for (const prefix of ['src/', 'test/', 'demo/', 'docs/', 'scripts/']) {
+    for (const prefix of ['src/', 'test/', 'demo/', 'docs/', 'scripts/', 'examples/', '.example-build/', '.github/']) {
       assert.ok(!file.startsWith(prefix), `development file packed: ${file}`);
     }
   }

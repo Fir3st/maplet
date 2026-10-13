@@ -1,0 +1,103 @@
+# Example collection and publication
+
+The public collection contains eight focused learning examples adapted from the
+existing demos: first map, editable points, lines/polygon holes, bindings,
+GeoJSON, labels/image pins, raster tiles and plugins. Diagnostic pages,
+benchmarks and server-dependent fixtures remain unchanged in `demo/`.
+
+## Local preview
+
+```bash
+npm ci --ignore-scripts
+npm run examples:build
+npm run examples:serve
+```
+
+Open <http://localhost:8401/>. The generated site is in `.example-build/site/`.
+Each example has a map, usable controls, renderer selection, source, navigation
+and a link to its originating demo. WebGL 1 is the default; WebGPU can fall back
+to WebGL 1. Unsupported GPU initialization is reported in the example's status.
+
+The examples do not download basemaps by default. The raster example requests
+OpenStreetMap only after its button is selected; it includes attribution and
+does not prefetch or cache tiles. GeoJSON input is local to the browser and
+bounded to 64 KiB / 100 points. Diagram thumbnails are labeled as schematic
+previews, not screenshots or benchmark evidence.
+
+## GitHub Pages
+
+In **Settings → Pages → Build and deployment → Source**, choose **GitHub Actions**.
+The `Publish examples` workflow runs on pushes to `main` and can be run manually
+from the Actions tab. It checks the project, builds the library and examples,
+then uploads and deploys only the generated public site. No npm package version
+change is needed to update the collection. Package releases keep their separate
+workflow.
+
+The default project URL is <https://fir3st.github.io/maplet/>. The workflow uses
+the actual Pages base URL from `configure-pages`, including a custom domain if
+configured, for standalone Gist imports and live-example links. The site itself
+uses relative links and runs under a project subdirectory.
+
+## Public source Gists
+
+**Gist does not host executable HTML.** Pages hosts the live examples; Gists
+contain their source files. There is one public Gist per example and one public
+Markdown index linking to the live collection and individual source Gists.
+
+GitHub's built-in repository workflow authentication cannot write Gists. The
+account owner must separately configure this in GitHub's UI:
+
+1. Create a classic personal access authorization with only the **`gist`** scope
+   for the `Fir3st` account. Choose an expiration and rotate it in GitHub as needed.
+2. Store it as the repository Actions secret **`GIST_PUBLISH_PAT`**.
+3. Create the repository Actions variable **`GISTS_ENABLED`** with value `true`.
+4. Run **Publish examples** from the Actions tab, or push to `main`.
+
+Do not commit authorization material, create local auth files or paste values
+into source code, chat or logs. The publisher delegates authentication to `gh`
+inside the runner; it does not inspect authentication files. This setup must be
+performed by the account owner, not by the coding agent.
+
+Without `GISTS_ENABLED=true`, Pages can deploy independently and displays
+“Gist not published yet” instead of broken or fabricated source links. When
+enabled, missing/expired authorization or GitHub API errors fail the workflow;
+they do not silently claim success. The authorization's account must match the
+repository owner.
+
+The publisher discovers **public Gist metadata only**, using descriptions
+beginning with `Maplet examples [Fir3st/maplet]`. It creates missing Gists,
+updates changed files in place and skips unchanged ones by content hash. No
+unrelated Gist contents are read or changed, and no Gist is deleted. Duplicate managed
+descriptions are an error. Partial runs can be retried: already-created URLs
+are rediscovered, so retries do not create another set of Gists.
+
+Each example Gist contains `index.html`, `example.js`, `shared.js`, `style.css`,
+`README.md`, `LICENSE` and `NOTICE`. Download them into one directory and serve
+them over HTTP to run a copy. The shared setup imports the built library from
+the configured Pages URL, including its worker-relative module graph. Thus the
+downloaded example requires that Pages deployment and an internet connection;
+the compiled library is not misleadingly presented as a self-contained Gist.
+Browser cross-origin worker restrictions can select the library's supported
+inline import fallback when running a downloaded copy.
+
+Generated Gists follow the current website, not immutable package releases.
+Edit `examples/` in the repository; the publisher owns the generated Gist files.
+Stable Gist URLs and the index URL are saved in the deployed `gists.json` and
+linked from the gallery and example pages. Turning Gist publication off builds
+a fresh site without Gist links; it does not delete previously published Gists.
+
+## Maintaining the collection
+
+- `examples/catalog.json` is the single source for titles, groups, descriptions,
+  source provenance and navigation.
+- `examples/*.js` implement the actual examples; `shared.js` owns common page
+  setup, map lifecycle, error reporting and toolbar behavior.
+- `scripts/build-examples.mjs` builds the Pages site and allowlisted Gist payloads.
+- `scripts/publish-gists.mjs` owns discovery and idempotent Gist publication.
+- Gist payloads are bounded to 1 MiB total and 128 KiB per example. Discovery is
+  limited to 2,000 public Gists and fails before any writes if it cannot finish.
+  Writes are sequential and limited to one per changed example plus its index.
+
+Unit tests use fake GitHub responses; they never publish or inspect live Gists.
+Real publication is established only by a successful authorized workflow and
+the resulting Pages/Gist URLs, not by those tests alone.

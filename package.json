@@ -45,6 +45,8 @@
     "check": "npm run build && npm run typecheck && npm run typecheck:tests && npm run typecheck:types && npm run test",
     "demo": "python3 demo/serve.py",
     "e2e": "node demo/e2e/runner.mjs",
+    "examples:build": "npm run build && node scripts/build-examples.mjs",
+    "examples:serve": "python3 -m http.server 8401 --directory .example-build/site --bind 127.0.0.1",
     "typecheck:types": "tsc -p tsconfig.type-tests.json --noEmit"
   },
   "keywords": [

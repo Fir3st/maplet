@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add a focused eight-example learning collection with a searchable directory,
+  live maps, source code and GitHub Pages / public Gist publication workflow.
 ## 0.1.0-alpha.3
 
 - Publish `@fir3st/maplet` to the GitHub Packages npm registry on version changes,

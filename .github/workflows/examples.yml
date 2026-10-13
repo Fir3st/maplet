@@ -1,0 +1,65 @@
+name: Publish examples
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: examples-publication
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pages: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run check
+      - name: Configure Pages
+        id: pages
+        uses: actions/configure-pages@v5
+      - name: Build the collection and standalone Gist files
+        env:
+          PAGES_URL: ${{ steps.pages.outputs.base_url }}
+        run: node scripts/build-examples.mjs "$PAGES_URL"
+      - name: Publish or update public Gists
+        if: vars.GISTS_ENABLED == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GIST_PUBLISH_PAT }}
+        run: node scripts/publish-gists.mjs
+      - name: Explain pending Gist setup
+        if: vars.GISTS_ENABLED != 'true'
+        run: echo "Gist publication is disabled. Set up gist authorization and GISTS_ENABLED as described in docs/examples.md. Pages will still be published."
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: .example-build/site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy the examples
+        id: deployment
+        uses: actions/deploy-pages@v4

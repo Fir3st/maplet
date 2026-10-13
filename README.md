@@ -199,6 +199,10 @@ python3 demo/compare.py --updates --no-dom --output docs/benchmarks/points-500k-
 
 ## Quick start
 
+The [example collection](examples/) includes eight learning examples with live
+maps, controls and source code. [Build it locally or configure Pages and Gist
+publication](docs/examples.md).
+
 The source checkout requires **Node.js 22 or later** and **Python 3** for the demo
 server. The library has no runtime package dependencies; the TypeScript compiler
 is a pinned development dependency.
