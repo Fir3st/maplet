@@ -1,0 +1,99 @@
+name: Build and release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# Do not cancel a release halfway through creating its tag and uploading assets.
+concurrency:
+  group: main-release
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      version: ${{ steps.release.outputs.version }}
+      tag: ${{ steps.release.outputs.tag }}
+      changed: ${{ steps.release.outputs.changed }}
+      prerelease: ${{ steps.release.outputs.prerelease }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run check
+      - name: Determine release version
+        id: release
+        env:
+          PREVIOUS_COMMIT: ${{ github.event.before }}
+        run: |
+          node --input-type=module <<'JS'
+          import { appendFileSync } from 'node:fs';
+          import { planForPush } from './scripts/release-plan.mjs';
+          const plan = planForPush(process.env.PREVIOUS_COMMIT);
+          for (const [key, value] of Object.entries(plan)) {
+            appendFileSync(process.env.GITHUB_OUTPUT, `${key}=${value}\n`);
+          }
+          JS
+      - name: Pack installable archive
+        run: npm pack --ignore-scripts
+      - uses: actions/upload-artifact@v4
+        with:
+          name: package
+          path: maplet-*.tgz
+          if-no-files-found: error
+          retention-days: 14
+
+  release:
+    needs: build
+    if: needs.build.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: package
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          COMMIT: ${{ github.sha }}
+          TAG: ${{ needs.build.outputs.tag }}
+          PRERELEASE: ${{ needs.build.outputs.prerelease }}
+        run: |
+          # A rerun must not overwrite an already published version. API errors
+          # other than a missing release fail the job rather than hiding failures.
+          status=$(gh api "repos/$GH_REPO/releases/tags/$TAG" --silent --include 2>&1) || {
+            if ! grep -q 'HTTP.* 404' <<< "$status"; then
+              echo "$status" >&2
+              exit 1
+            fi
+          }
+          if grep -q 'HTTP.* 200' <<< "$status"; then
+            complete=$(gh api "repos/$GH_REPO/releases/tags/$TAG" \
+              --jq '(.draft == false) and any(.assets[]; .name == "maplet-'"${TAG#v}"'.tgz")')
+            if [ "$complete" != true ]; then
+              echo "Release $TAG is incomplete. Remove its draft/incomplete release in GitHub, then rerun this workflow." >&2
+              exit 1
+            fi
+            echo "Release $TAG already exists; nothing to publish."
+            exit 0
+          fi
+          flags=()
+          if [ "$PRERELEASE" = true ]; then
+            flags+=(--prerelease --latest=false)
+          fi
+          gh release create "$TAG" maplet-*.tgz \
+            --target "$COMMIT" --title "$TAG" --generate-notes "${flags[@]}"

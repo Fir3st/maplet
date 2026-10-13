@@ -199,12 +199,12 @@ python3 demo/compare.py --updates --no-dom --output docs/benchmarks/points-500k-
 
 ## Quick start
 
-The source checkout requires **Node.js 22 or later**, **TypeScript 5.8 or later**
-(`tsc` on your PATH), and **Python 3** for the demo server. The library has no
-runtime package dependencies. TypeScript is not currently declared as a package
-development dependency, so `npm install` alone does not provide the compiler.
+The source checkout requires **Node.js 22 or later** and **Python 3** for the demo
+server. The library has no runtime package dependencies; the TypeScript compiler
+is a pinned development dependency.
 
 ```bash
+npm ci --ignore-scripts                # install the pinned compiler
 npm run check                         # build, type checks and unit tests
 python3 demo/generate-tiles.py         # generate local PNG/SVG demo tiles
 npm run demo                          # http://localhost:8400/demo/
@@ -275,6 +275,42 @@ The package specifier above is for a packaged or locally linked build; the
 repository demos import `../dist/index.js` directly. This checkout is marked
 `private` in `package.json` to prevent accidental npm publication. Public Git
 hosting does not require removing that safeguard.
+
+### Builds and releases
+
+Every push to `main` runs the build, type checks and unit tests in GitHub Actions
+and stores an installable `.tgz` package as a workflow artifact for 14 days.
+If `package.json`'s version differs from the version before the push, the workflow
+also creates a tag `v<version>` at the tested commit and a GitHub Release with the
+package attached and automatically generated release notes. The initial push of
+a new `main` branch also releases its version. Existing releases are not overwritten
+on reruns. Alpha, beta and RC versions are marked as prereleases.
+
+To publish the next alpha:
+
+```bash
+npm version prerelease --preid=alpha --no-git-tag-version
+# Update CHANGELOG.md, then commit package.json, package-lock.json and the changelog.
+git push origin main
+```
+
+Use `npm version patch --no-git-tag-version` (or `minor` / `major`) for a stable
+release. Always choose a new version; reusing a published version does not update
+its package. A code-only push without a version change builds but does not release.
+Rerun a failed workflow in GitHub Actions to retry the same release. If publication
+left an incomplete release or draft, delete that incomplete release in GitHub first;
+the workflow refuses to silently overwrite it.
+
+Download the `.tgz` asset from [GitHub Releases](https://github.com/Fir3st/maplet/releases)
+and install it in a consuming project:
+
+```bash
+npm install ./maplet-0.1.0-alpha.2.tgz
+```
+
+No npm registry or custom credentials are needed. Enable GitHub Actions in the
+repository; the release job uses GitHub's built-in authentication with
+`contents: write` permission. Registry publication remains disabled by `private: true`.
 
 Follow each tile provider's usage policy and display its required attribution.
 The OpenStreetMap standard layer is used live, not cached by the demo scripts.
