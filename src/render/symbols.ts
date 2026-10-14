@@ -21,6 +21,11 @@ export interface SymbolMesh {
   upload: BufferUpload;
 }
 
+/** Sprite attribute color: tint RGB with tint alpha combined into the opacity. */
+function spriteColor(sprite: SpritePlacement): readonly number[] {
+  return [sprite.tint[0], sprite.tint[1], sprite.tint[2], sprite.tint[3] * sprite.opacity];
+}
+
 interface RetainedSymbols {
   dependency: string;
   mesh: SymbolMesh;
@@ -168,7 +173,7 @@ export class Symbols {
     const dependency = JSON.stringify(Array.from(assets, ([id, value]) => [id, value?.version, value?.image?.naturalWidth, value?.image?.naturalHeight]));
     const cached = this.retained(previous, dependency, frame);
     if (cached) {
-      this.patchAppearance(previous!, appearance, (index) => [1, 1, 1, sprites[index]!.opacity], (index) => sprites[index]!.interactive);
+      this.patchAppearance(previous!, appearance, (index) => spriteColor(sprites[index]!), (index) => sprites[index]!.interactive);
       return cached;
     }
     const data: number[] = [], runs: { page: AtlasPage; count: number }[] = [];
@@ -182,7 +187,7 @@ export class Symbols {
       const width = sprite.sizePx > 0 ? sprite.sizePx : region.width / this.dpr, height = sprite.sizePx > 0 ? sprite.sizePx : region.height / this.dpr;
       const vertices = quadVertices(sprite.offsetX, sprite.offsetY, width, height, sprite.rotate, 0, 0);
       offsets[index] = data.length;
-      this.quad(data, runs, region, vertices, sprite.sx, sprite.sy, [1, 1, 1, sprite.opacity], sprite.pickIndex, sprite.interactive);
+      this.quad(data, runs, region, vertices, sprite.sx, sprite.sy, spriteColor(sprite), sprite.pickIndex, sprite.interactive);
     }
     const version = appearance?.version ?? 0, mesh = { data: Float32Array.from(data), runs, upload: { version, previousVersion: -1, ranges: [] } };
     this.spriteMeshes.set(sprites, { dependency, mesh, ids, offsets, appearanceVersion: version });

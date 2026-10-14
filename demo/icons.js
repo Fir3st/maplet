@@ -5,7 +5,7 @@
  *
  * Results: `window.__iconCheckResult`.
  */
-import { createMap } from '../dist/index.js';
+import { createMap, style as expr } from '../dist/index.js';
 
 const SIZE = 512;
 const PIN_SVG =
@@ -40,6 +40,8 @@ const rotatedPosition = map.screenToPosition({ x: centerScreen.x + 58, y: center
 // A pin whose tip is declared as the anchor (tip 12 px below the 24 px sprite
 // centre) and which is rotated: the tip must stay on the feature position.
 const tipPosition = map.screenToPosition({ x: centerScreen.x + 150, y: centerScreen.y + 60 });
+// Tinted samples sit at an exact integer screen offset too.
+const tintedPosition = map.screenToPosition({ x: centerScreen.x - 100, y: centerScreen.y });
 const bulk = [];
 for (let i = 0; i < 500; i++) {
   bulk.push({
@@ -53,6 +55,7 @@ bulk.push({ id: 'broken', geometry: { type: 'point', position: { lat: 50.03, lng
 bulk.push({ id: 'anchor', geometry: { type: 'point', position: { lat: 50.02, lng: 13.98 } }, properties: {} });
 bulk.push({ id: 'rotated', geometry: { type: 'point', position: rotatedPosition }, properties: {} });
 bulk.push({ id: 'tip', geometry: { type: 'point', position: tipPosition }, properties: {} });
+bulk.push({ id: 'tinted', geometry: { type: 'point', position: tintedPosition }, properties: { tint: 'blue' } });
 await source.features.replace(bulk);
 
 const states = [];
@@ -63,7 +66,7 @@ map.addLayer({
   id: 'icons',
   type: 'points',
   source,
-  filter: { and: [{ not: { id: 'broken' } }, { not: { id: 'anchor' } }, { not: { id: 'rotated' } }, { not: { id: 'tip' } }] },
+  filter: { and: [{ not: { id: 'broken' } }, { not: { id: 'anchor' } }, { not: { id: 'rotated' } }, { not: { id: 'tip' } }, { not: { id: 'tinted' } }] },
   style: { icon: 'pin', iconSize: 24, radiusPx: 4, color: '#64748b' },
 });
 map.addLayer({
@@ -93,6 +96,13 @@ map.addLayer({
   source,
   filter: { id: 'tip' },
   style: { icon: 'pin', iconSize: 24, radiusPx: 0, iconAnchor: { x: 0, y: -12 }, iconRotate: 90 },
+});
+map.addLayer({
+  id: 'tinted-icons',
+  type: 'points',
+  source,
+  filter: { id: 'tinted' },
+  style: { icon: 'pin', iconSize: 24, radiusPx: 0, iconTint: expr.by('tint', { blue: '#3366ff' }, '#ffffff') },
 });
 
 const sample = async (x, y) => {
@@ -163,6 +173,31 @@ await check('PICK-05 transparent icon areas are not hits', async () => {
       middle.some((hit) => hit.feature.id === 'center'),
     detail: { corner: corner.map((hit) => hit.feature.id), middle: middle.map((hit) => hit.feature.id) },
   };
+});
+
+await check('iconTint multiplies the atlas texture and keeps picking', async () => {
+  const tinted = map.positionToScreen(tintedPosition);
+  await sleep(200);
+  // White texels times #3366ff are the tint itself; the red pin body stays red-dominant
+  // (225,29,72) * (51,102,255) / 255.
+  const white = await sample(tinted.x, tinted.y);
+  const red = await sample(tinted.x, tinted.y + 7);
+  const picks = await map.query.rendered({ x: Math.round(tinted.x), y: Math.round(tinted.y) });
+  return {
+    pass:
+      channel(white, [51, 102, 255]) <= 12 &&
+      channel(red, [45, 12, 72]) <= 40 &&
+      picks.some((hit) => hit.feature.id === 'tinted'),
+    detail: { white, red, picks: picks.map((hit) => hit.feature.id) },
+  };
+});
+
+await check('a per-feature iconTint override reaches pixels', async () => {
+  const tinted = map.positionToScreen(tintedPosition);
+  map.layers.get('tinted-icons').setFeatureStyle('tinted', { iconTint: '#00ff00' });
+  await map.whenRendered();
+  const white = await sample(tinted.x, tinted.y);
+  return { pass: channel(white, [0, 255, 0]) <= 12, detail: { white } };
 });
 
 await check('anchor offset shifts the sprite', async () => {

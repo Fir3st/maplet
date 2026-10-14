@@ -135,12 +135,15 @@ export async function consumerContracts(container: HTMLElement): Promise<void> {
 
   // Expressions and layers keep their generics through the published surface.
   const style = expr.field<'status', 'online' | 'offline'>('status');
+  const statusColor = expr.match(style, { online: '#16a34a', offline: '#dc2626' }, '#6b7280');
   map.addLayer({
     id: 'typed',
     type: 'points',
     source: stations,
-    style: { color: expr.match(style, { online: '#16a34a', offline: '#dc2626' }, '#6b7280') },
+    style: { color: statusColor, iconTint: statusColor },
   });
   // @ts-expect-error radiusPx is a number expression; a string field is rejected (TYPE-02/08)
   map.addLayer({ id: 'bad', type: 'points', source: stations, style: { radiusPx: style } });
+  // @ts-expect-error iconTint is a color expression; a numeric zoom field is rejected (TYPE-02/08)
+  map.addLayer({ id: 'bad-tint', type: 'points', source: stations, style: { iconTint: expr.zoom() } });
 }

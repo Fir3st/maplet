@@ -43,7 +43,16 @@ places.addLabels(points.source, { style: { sizePx: 14, offsetPx: { x: 0, y: -32 
 
 Register an image once and reuse it by ID. Loading or failed icons draw their
 declared shape fallback. Icon size is square CSS pixels, and rotation is clockwise
-around the feature anchor. Icons are not tinted.
+around the feature anchor. `iconTint` multiplies the icon's colors (default white,
+no tint), so one monochrome or light asset can serve several colored markers:
+
+```ts
+points.setStyle({ icon: 'pin', iconSize: 32, iconTint: '#bd573b' });
+points.get('prague')?.setStyle({ iconTint: '#16724c' }); // per-feature override
+```
+
+Tint alpha combines with `opacity`. Only the ready sprite is tinted; the shape
+fallback of a loading or failed icon keeps its `color`.
 
 Labels default to `properties.name`. Empty text is skipped. Font registration uses
 `map.assets.addFont({ id, family, src })`; fallback fonts render while loading.

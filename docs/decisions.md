@@ -89,6 +89,11 @@ The current public construction, object lifetime and migration contract is in
   share a texture page without changing painter order. Icon size is `iconSize` (square,
   CSS pixels), or natural size divided by DPR; center is offset by `iconAnchor`.
   Picking uses an alpha threshold of `0.5`.
+- `iconTint` (default white) multiplies the atlas RGB per instance; its alpha
+  combines with `opacity`. A per-feature tint is an appearance patch, not a
+  layout rebuild. Only the ready sprite is tinted — the shape fallback of a
+  loading/failed icon keeps `color`. Picking ignores the tint RGB; the
+  `0.5` texture-alpha threshold and the combined alpha still decide.
 - `stats().drawCalls` counts actual GPU submissions, not planned placements.
 - Sprite `iconRotate` and label `rotate` are clockwise degrees. A sprite rotates
   around its declared anchor at the feature position, not its offset center.

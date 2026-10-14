@@ -19,7 +19,7 @@ to use this repository.
 | Interaction | Pan, zoom, hover/click/drag, pinch, keyboard, selection, bubbling; `demo/interaction.html` and real-input E2E scenarios |
 | Picking | Shape-aware GPU queries, revision/generation checks, measured blocking/async readback; `demo/pick.html` |
 | Text and fonts | Labels, collisions, rotation, atlas eviction, font loading/fallback, platform shaping, bidi; `demo/labels.html`, `demo/fonts.html` |
-| Media | Sprites, anchor rotation, image/video bounds, partial uploads and cleanup; `demo/icons.html`, `demo/media.html` |
+| Media | Sprites, anchor rotation, tinting, image/video bounds, partial uploads and cleanup; `demo/icons.html`, `demo/media.html` |
 | HTML UI | Optional controls, scale, attribution, geolocation, feature detail and bounded accessible lists; `test/ui/`, `demo/ui.html`, `demo/detail.html` |
 | Plugins | Plain setup functions, typed APIs, HTML access, abort/cleanup, render transforms, after-frame drawing and replaceable renderers; `test/scene/plugins.test.ts`, consumer types and `plugins` browser scenario; [guide](plugins.md) |
 | Worker imports | Compact columns/canonical line and polygon pools, owned metadata on the publishing thread, validation, copy/move, cancellation, bounded queue, crash/CSP fallback; import tests, `demo/import.html`, `demo/csp.html?csp=worker-none` |
@@ -94,6 +94,15 @@ WebGL 1 / 275 ms WebGPU versus 287 ms Canvas**: comparable for this fixture,
 but WebGL is still 9.8% slower, and one WebGPU run also exceeds Canvas. Immediate
 baseline medians were 367 / 336 ms. Main-thread heap falls from 142 MiB to
 127.3–127.4 MiB. See the [final comparison](benchmarks/points-500k-canvas-target-ab.json).
+
+The icon-tint addition passes **307 unit tests**, all build/source/test/consumer
+type and distribution checks, and the complete default browser suite: **39/39
+scenarios/batteries on each of WebGL 1, WebGPU and forced basic WebGL 1**. The
+extended `battery:icons` samples the multiplied atlas pixels (a white texel times
+`#3366ff` reads `[51,101,253]`), the tinted red pin body, picking under tint and a
+per-feature override; `retained-mixed-scene` instruments the actual GPU calls: a
+tint edit uploads one 384-byte quad range with no atlas upload, and the tinted
+pixels still pick. Untinted pixels and all previous icon checks are unchanged.
 
 The recorded browser environment was headless Chromium on an Apple M5 Pro,
 using ANGLE Metal for WebGL and `apple metal-3` for WebGPU. Pixel comparisons
@@ -174,9 +183,10 @@ Canvas setup is still faster at 282 ms. One-second warm-pan outliers persist.
 - **Media:** overlays are axis-aligned bounds, without rotation/skew or color
   filters. Opacity is supported; custom blending modes are not. Runtime URL
   updates are supported for images, not video.
-- **Icons:** no tinting; size is square via `iconSize` or natural size/DPR.
-  Shape fallbacks and ordinary point shapes do not rotate. Without browser image
-  support, assets report error and use the shape fallback.
+- **Icons:** size is square via `iconSize` or natural size/DPR. `iconTint` multiplies
+  the icon atlas RGB (default white); the shape fallback of a loading/failed icon
+  keeps `color` and is not tinted. Shape fallbacks and ordinary point shapes do not
+  rotate. Without browser image support, assets report error and use the shape fallback.
 - **Altitude:** preserved for points, multiPoints, circles and rectangles, but
   not for line/polygon geometry or its exported coordinates.
 - **MVT:** no antimeridian world wrapping. Residency follows the viewport rather

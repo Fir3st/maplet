@@ -42,6 +42,12 @@ export interface PointsLayerStyle {
    * The plain shape fallback of a loading/failed icon is not rotated.
    */
   readonly iconRotate?: ExpressionInput<number>;
+  /**
+   * RGBA multiplier applied to the icon texture; default white (no tint).
+   * Alpha combines with `opacity`. Only the ready sprite is tinted — the plain
+   * shape fallback of a loading/failed icon keeps its `color` (MEDIA-07/08).
+   */
+  readonly iconTint?: ExpressionInput<ColorValue>;
   readonly zIndex?: ExpressionInput<number>;
   readonly minZoom?: number;
   readonly maxZoom?: number;
@@ -132,6 +138,7 @@ export interface LayerSpec<K extends LayerKind = LayerKind> {
 export interface FeatureOverride {
   readonly color?: ColorValue;
   readonly opacity?: number;
+  readonly iconTint?: ColorValue;
   readonly fillColor?: ColorValue;
   readonly fillOpacity?: number;
   readonly radiusPx?: number;

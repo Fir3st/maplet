@@ -68,6 +68,12 @@ export async function retainedScene({ session, expect, options }) {
       uploads.length = 0;
       map.layers.get('labels').setFeatureStyle('suppressed', { color: '#22aa55' }); await map.whenRendered();
       check('suppressed label appearance cannot allocate visible vertices or become pickable', uploads.length === 0 && !(await map.query.rendered({ x: 390, y: 354 })).some(hit => hit.feature.id === 'suppressed'), uploads.slice());
+      uploads.length = 0; textureUploads.length = 0;
+      map.layers.get('icons').setFeatureStyle('icon', { opacity: 1, iconTint: '#3366ff' });
+      await map.whenRendered();
+      check('icon tint edit uploads one quad without atlas upload or relayout', uploads.length === 1 && uploads[0].bytes === 384 && !uploads[0].full && textureUploads.length === 0, { uploads: uploads.slice(), textures: textureUploads.length });
+      const tintedIcon = await map.debug.samplePixel({ x: 390, y: 245 });
+      check('icon tint reaches actual pixels and stays pickable', Math.abs(tintedIcon.r - 48) <= 12 && Math.abs(tintedIcon.g - 41) <= 12 && Math.abs(tintedIcon.b - 51) <= 12 && (await map.query.rendered({ x: 390, y: 245 }))[0]?.feature.id === 'icon', tintedIcon);
     } finally { for (const restore of restores) restore(); }
     source.features.add([
       { id: 'circle-shape', geometry: { type: 'point', position: position(580, 250) }, properties: { shape: 'circle' } },

@@ -155,6 +155,8 @@ export interface SpritePlacement {
   /** Clockwise rotation in degrees around the anchor (GEOM-04). */
   readonly rotate: number;
   readonly opacity: number;
+  /** Straight-alpha multiplier for the atlas texel; alpha combines with `opacity`. */
+  readonly tint: Rgba;
   readonly pickIndex: number;
   readonly interactive: boolean;
 }
@@ -267,6 +269,7 @@ interface WorldRect {
 }
 
 const DEFAULT_POINT_COLOR: Rgba = [0.23, 0.51, 0.96, 1];
+const DEFAULT_ICON_TINT: Rgba = [1, 1, 1, 1];
 const DEFAULT_LINE_COLOR: Rgba = [0.2, 0.25, 0.33, 1];
 const DEFAULT_FILL_COLOR: Rgba = [0.23, 0.51, 0.96, 0.25];
 const DEFAULT_STROKE_COLOR: Rgba = [0.2, 0.25, 0.33, 1];
@@ -711,6 +714,10 @@ function collectPoints(
             offsetY: style.iconAnchor?.y ?? 0,
             rotate: evaluateStyleValue(style.iconRotate, 0, expressionContext),
             opacity: passed.override?.opacity ?? evaluateStyleValue(style.opacity, 1, expressionContext),
+            tint: parseColor(
+              passed.override?.iconTint ?? (evaluateStyleValue(style.iconTint, DEFAULT_ICON_TINT as never, expressionContext) as never),
+              DEFAULT_ICON_TINT,
+            ),
             pickIndex,
             interactive,
           });

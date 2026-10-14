@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Add `iconTint` for point icons: an RGBA multiplier over the icon texture
+  (default white), available as a layer style expression and a per-feature
+  override. Only the ready sprite is tinted; per-feature tint edits patch their
+  quads without an atlas or layout rebuild.
 - Replace the example gallery with a documentation website: overview, installation,
   thematic guides, declaration-generated API reference and eight tutorials with
   embedded live examples. Preserve existing example URLs and standalone Gist output.
