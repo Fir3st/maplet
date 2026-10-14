@@ -5,6 +5,7 @@ import { isMapletError } from '../../src/api/errors.ts';
 import {
   MediaSourceImpl,
   normalizeMediaBounds,
+  normalizeMediaRotation,
   premultiplyRegion,
   validateMediaRegion,
 } from '../../src/scene/media-source.ts';
@@ -112,4 +113,31 @@ test('MEDIA-03: region pixels are premultiplied row by row for partial uploads',
     200, 100, 50, 255, 0, 50, 100, 128,
     0, 0, 0, 0, 128, 128, 128, 128,
   ]);
+});
+
+test('MEDIA-07: rotation is validated, defaults to zero and reaches the snapshot', () => {
+  assert.equal(normalizeMediaRotation(undefined), 0);
+  assert.equal(normalizeMediaRotation(0), 0);
+  assert.equal(normalizeMediaRotation(-90), -90);
+  assert.equal(normalizeMediaRotation(435.5), 435.5);
+  const rejects = (value: unknown): void => {
+    assert.throws(
+      () => normalizeMediaRotation(value as number),
+      (error: unknown) => isMapletError(error) && error.code === 'invalid-argument',
+    );
+  };
+  rejects(Number.NaN);
+  rejects(Number.POSITIVE_INFINITY);
+  rejects('45');
+  const source = new MediaSourceImpl(
+    {
+      id: 'rotated',
+      url: './image.png',
+      bounds: { southwest: { lat: 50, lng: 14 }, northeast: { lat: 50.1, lng: 14.1 } },
+      rotate: 45,
+    },
+    'image',
+  );
+  assert.equal(source.snapshot().rotate, 45);
+  source.destroy();
 });

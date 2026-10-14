@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Add media placement rotation: `rotate` (degrees clockwise about the bounds
+  centre) on image/video sources and through `update({ rotate })`. It is a
+  descriptor change that rebuilds the plan without re-uploading pixels; picking
+  and culling follow the turned quad.
 - Add multi-line labels: a `\n` in the label text splits it into a vertically
   centred block with a fixed line height and no automatic wrapping. Single-line
   labels rasterize exactly as before; collision, rotation and picking use the

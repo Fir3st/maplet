@@ -47,6 +47,8 @@ export interface ImageSourceOptions {
   readonly url?: string;
   readonly pixels?: MediaPixelData;
   readonly bounds: MediaBounds;
+  /** Placement rotation in degrees clockwise about the bounds centre; default 0. */
+  readonly rotate?: number;
 }
 
 export interface VideoSourceOptions {
@@ -55,12 +57,14 @@ export interface VideoSourceOptions {
   readonly bounds: MediaBounds;
   /** Play the stream in a loop; default false. */
   readonly loop?: boolean;
+  /** Placement rotation in degrees clockwise about the bounds centre; default 0. */
+  readonly rotate?: number;
 }
 
 export interface MediaSourceSnapshot {
   readonly sourceId: string;
   readonly kind: MediaSourceKind;
-  /** Descriptor revision (URL/bounds); changes rebuild the frame plan. */
+  /** Descriptor revision (URL/bounds/rotation); changes rebuild the frame plan. */
   readonly revision: number;
   /** Pixel revision (decoded bitmap, region update, video frame). */
   readonly pixelVersion: number;
@@ -72,6 +76,8 @@ export interface MediaSourceSnapshot {
   readonly width: number;
   readonly height: number;
   readonly bounds: MediaBounds;
+  /** Placement rotation in degrees clockwise about the bounds centre. */
+  readonly rotate: number;
 }
 
 /** Sorts bounds into south-west/north-east and rejects non-positions. */
@@ -102,6 +108,19 @@ export function normalizeMediaBounds(bounds: MediaBounds): MediaBounds {
     southwest: { x: Math.min(a.x, b.x), y: Math.min(a.y, b.y) },
     northeast: { x: Math.max(a.x, b.x), y: Math.max(a.y, b.y) },
   };
+}
+
+/**
+ * Validates a media placement rotation: degrees clockwise about the bounds
+ * centre, the same convention as sprite and label rotation. Zero (the default)
+ * keeps the placement axis-aligned.
+ */
+export function normalizeMediaRotation(rotate: number | undefined): number {
+  if (rotate === undefined) return 0;
+  if (typeof rotate !== 'number' || !Number.isFinite(rotate)) {
+    fail('invalid-argument', 'media rotation must be a finite number of degrees', {});
+  }
+  return rotate;
 }
 
 /**
@@ -174,6 +193,8 @@ export class MediaSourceImpl {
   readonly kind: MediaSourceKind;
   url: string | null;
   bounds: MediaBounds;
+  /** Placement rotation in degrees clockwise about the bounds centre. */
+  rotate = 0;
   revision = 0;
   pixelVersion = 0;
   state: MediaState = 'loading';
@@ -199,6 +220,7 @@ export class MediaSourceImpl {
     this.id = options.id;
     this.kind = kind;
     this.bounds = normalizeMediaBounds(options.bounds);
+    this.rotate = normalizeMediaRotation(options.rotate);
     const url = (options as { url?: string }).url ?? null;
     this.url = url;
     if (typeof document === 'undefined') {
@@ -293,11 +315,15 @@ export class MediaSourceImpl {
     return this.playing;
   }
 
-  /** Descriptor update: URL (images) and bounds. Pixel updates use `updateRegion`. */
-  update(patch: { readonly url?: string; readonly bounds?: MediaBounds }): void {
+  /** Descriptor update: URL (images), bounds and rotation. Pixel updates use `updateRegion`. */
+  update(patch: { readonly url?: string; readonly bounds?: MediaBounds; readonly rotate?: number }): void {
     if (this.destroyed) fail('destroyed', 'the media source has been destroyed', { sourceId: this.id });
     if (patch.bounds) {
       this.bounds = normalizeMediaBounds(patch.bounds);
+      this.revision++;
+    }
+    if (patch.rotate !== undefined) {
+      this.rotate = normalizeMediaRotation(patch.rotate);
       this.revision++;
     }
     if (patch.url !== undefined) {
@@ -518,6 +544,7 @@ export class MediaSourceImpl {
       width: this.width,
       height: this.height,
       bounds: this.bounds,
+      rotate: this.rotate,
     };
   }
 
@@ -604,8 +631,8 @@ export interface MediaSourceHandle {
   snapshot(): MediaSourceSnapshot;
   /** Resolves once the media is usable or failed. */
   ready(): Promise<MediaSourceSnapshot>;
-  /** Descriptor update: `url` (images only) and `bounds`. */
-  update(patch: { readonly url?: string; readonly bounds?: MediaBounds }): void;
+  /** Descriptor update: `url` (images only), `bounds` and `rotate`. */
+  update(patch: { readonly url?: string; readonly bounds?: MediaBounds; readonly rotate?: number }): void;
   /** Image pixel update; validation rejects invalid regions before any change. */
   updateRegion(region: MediaRegion, pixels: Uint8Array | Uint8ClampedArray, options?: { readonly stride?: number }): void;
   play(): void;

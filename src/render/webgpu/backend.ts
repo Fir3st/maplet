@@ -32,6 +32,7 @@ import {
   type PlanBatch,
 } from './../frame-plan.ts';
 import { monotonicNow, PickStallRecorder, type PickResult } from './../picking.ts';
+import { QUAD_UVS, quadVertices } from './../quad.ts';
 import { Symbols, type AtlasPage, type SymbolMesh } from './../symbols.ts';
 import type { BackendInitOptions, MapBackend } from './../backends.ts';
 
@@ -1388,15 +1389,24 @@ export class WebGpuBackend implements MapBackend {
       if (!this.uploadMedia(entry, source)) continue;
       const pick = placement.pickIndex ?? 0;
       const flag = placement.pickIndex === undefined ? 0 : 1;
-      const { sx, sy, sw, sh, opacity } = placement;
-      vertexData.push(
-        sx, sy, 0, 0, 0, 0, opacity, 0, pick, flag, 0, 0,
-        sx + sw, sy, 0, 0, 1, 0, opacity, 0, pick, flag, 0, 0,
-        sx, sy + sh, 0, 0, 0, 1, opacity, 0, pick, flag, 0, 0,
-        sx + sw, sy, 0, 0, 1, 0, opacity, 0, pick, flag, 0, 0,
-        sx + sw, sy + sh, 0, 0, 1, 1, opacity, 0, pick, flag, 0, 0,
-        sx, sy + sh, 0, 0, 0, 1, opacity, 0, pick, flag, 0, 0,
-      );
+      const { sx, sy, sw, sh, opacity, rotate } = placement;
+      if (rotate !== 0) {
+        // A turned placement keeps the QUAD_UVS order (MEDIA-07).
+        const points = quadVertices(sx + sw / 2, sy + sh / 2, sw, sh, rotate);
+        for (let index = 0; index < 6; index++) {
+          const uv = QUAD_UVS[index]!;
+          vertexData.push(points[index * 2]!, points[index * 2 + 1]!, 0, 0, uv[0], uv[1], opacity, 0, pick, flag, 0, 0);
+        }
+      } else {
+        vertexData.push(
+          sx, sy, 0, 0, 0, 0, opacity, 0, pick, flag, 0, 0,
+          sx + sw, sy, 0, 0, 1, 0, opacity, 0, pick, flag, 0, 0,
+          sx, sy + sh, 0, 0, 0, 1, opacity, 0, pick, flag, 0, 0,
+          sx + sw, sy, 0, 0, 1, 0, opacity, 0, pick, flag, 0, 0,
+          sx + sw, sy + sh, 0, 0, 1, 1, opacity, 0, pick, flag, 0, 0,
+          sx, sy + sh, 0, 0, 0, 1, opacity, 0, pick, flag, 0, 0,
+        );
+      }
       const last = draws[draws.length - 1];
       if (last && last.entry === entry) last.run++;
       else draws.push({ entry, run: 1 });

@@ -1,9 +1,10 @@
 /**
- * Media battery (MEDIA-01..06, LIFE-05): an image with four known corners in
+ * Media battery (MEDIA-01..07, LIFE-05): an image with four known corners in
  * explicit bounds (order/opacity against other layers), URL/bounds changes that
- * touch exactly one source, partial `updateRegion` uploads with validation, a
- * two-frame video whose pump idles on pause while keeping the final frame, and
- * clean removal/destroy during playback. Results: `window.__mediaCheckResult`.
+ * touch exactly one source, placement rotation (texture corners, picking and
+ * revision), partial `updateRegion` uploads with validation, a two-frame video
+ * whose pump idles on pause while keeping the final frame, and clean
+ * removal/destroy during playback. Results: `window.__mediaCheckResult`.
  */
 import { createMap } from '../dist/index.js';
 
@@ -22,7 +23,7 @@ function finalize() {
   if (finalized) return;
   finalized = true;
   result.ms = Math.round(performance.now() - started);
-  result.pass = result.errors.length === 0 && result.checks.length === 8 && result.checks.every((entry) => entry.pass);
+  result.pass = result.errors.length === 0 && result.checks.length === 10 && result.checks.every((entry) => entry.pass);
   window.__mediaCheckResult = result;
   document.title = 'media-check-done';
   const summary = document.getElementById('summary');
@@ -72,6 +73,9 @@ const video = map.data.video({
   bounds: boundsFor(40, 420, 232, 548),
   loop: true,
 });
+// A dedicated 80x160 placement for the rotation checks, clear of every other
+// fixture (the video ends at x=232, image-pix starts at x=430).
+const imageRot = map.data.image({ id: 'image-rot', url: './media/corners.png', bounds: boundsFor(300, 420, 380, 580) });
 
 const shapes = map.data.vector({ id: 'shapes' });
 await shapes.features.replace([
@@ -88,6 +92,7 @@ map.addLayer({
 map.addLayer({ id: 'media-b', type: 'raster', source: imageB, style: { opacity: 0.5 } });
 map.addLayer({ id: 'media-pix', type: 'raster', source: imagePix });
 map.addLayer({ id: 'media-video', type: 'raster', source: video });
+map.addLayer({ id: 'media-rot', type: 'raster', source: imageRot });
 
 /* --------------------------------- helpers -------------------------------- */
 
@@ -132,6 +137,7 @@ started = startedMark;
 await imageA.ready();
 await imageB.ready();
 await video.ready();
+await imageRot.ready();
 
 await check('MEDIA-01 image corners, opacity and layer order', async () => {
   const samples = {
@@ -158,6 +164,103 @@ await check('MEDIA-01 image corners, opacity and layer order', async () => {
     near(samples.bOverBackground, [128, 0, 128, 128]);
   const detail = Object.fromEntries(Object.entries(samples).map(([key, pixel]) => [key, describe(pixel)]));
   return { pass, detail };
+});
+
+await check('MEDIA-07 rotation maps texture corners and picking to the turned quad', async () => {
+  const before = {
+    topLeft: await sample(320, 460),
+    topRight: await sample(360, 460),
+    bottomLeft: await sample(320, 540),
+    bottomRight: await sample(360, 540),
+  };
+  const revisionBefore = imageRot.snapshot().revision;
+  const pixelVersionBefore = imageRot.snapshot().pixelVersion;
+  // The 80x160 placement turns 90 degrees clockwise about its centre: the
+  // texture corners follow, so the old top/bottom strips empty and the left and
+  // right strips fill in.
+  imageRot.update({ rotate: 90 });
+  await sleep(120);
+  const rotated = {
+    topRightRed: await sample(380, 480),
+    bottomRightGreen: await sample(380, 520),
+    topLeftBlue: await sample(300, 480),
+    bottomLeftWhite: await sample(300, 520),
+    // Inside the old axis-aligned bounds, outside the turned quad.
+    oldTop: await sample(340, 440),
+    oldBottom: await sample(340, 560),
+    // Outside the old bounds, inside the turned quad.
+    newRight: await sample(410, 470),
+  };
+  const snapshot = imageRot.snapshot();
+  const hits = (entries) => entries.filter((entry) => entry.feature.id === 'image-rot').length;
+  const pickNewRight = hits(await map.query.rendered({ x: 410, y: 470 }));
+  const pickNewLeft = hits(await map.query.rendered({ x: 280, y: 500 }));
+  const pickOldTop = hits(await map.query.rendered({ x: 340, y: 440 }));
+  return {
+    pass:
+      near(before.topLeft, [255, 0, 0, 255]) &&
+      near(before.topRight, [0, 200, 0, 255]) &&
+      near(before.bottomLeft, [0, 0, 255, 255]) &&
+      near(before.bottomRight, [255, 255, 255, 255]) &&
+      near(rotated.topRightRed, [255, 0, 0, 255]) &&
+      near(rotated.bottomRightGreen, [0, 200, 0, 255]) &&
+      near(rotated.topLeftBlue, [0, 0, 255, 255]) &&
+      near(rotated.bottomLeftWhite, [255, 255, 255, 255]) &&
+      rotated.oldTop.a === 0 &&
+      rotated.oldBottom.a === 0 &&
+      near(rotated.newRight, [255, 0, 0, 255]) &&
+      snapshot.rotate === 90 &&
+      snapshot.revision > revisionBefore &&
+      snapshot.pixelVersion === pixelVersionBefore &&
+      pickNewRight === 1 &&
+      pickNewLeft === 1 &&
+      pickOldTop === 0,
+    detail: {
+      before: Object.fromEntries(Object.entries(before).map(([key, pixel]) => [key, describe(pixel)])),
+      rotated: Object.fromEntries(Object.entries(rotated).map(([key, pixel]) => [key, describe(pixel)])),
+      revision: [revisionBefore, snapshot.revision],
+      pixelVersion: [pixelVersionBefore, snapshot.pixelVersion],
+      picks: [pickNewRight, pickNewLeft, pickOldTop],
+    },
+  };
+});
+
+await check('MEDIA-07 rotation at an arbitrary angle keeps only the turned placement', async () => {
+  const revisionBeforeTurn = imageRot.snapshot().revision;
+  imageRot.update({ rotate: 45 });
+  await sleep(120);
+  const pixels = {
+    // A 45 degree turn leaves the corners of its axis-aligned box empty.
+    emptyCorner: await sample(258, 418),
+    emptyRight: await sample(428, 500),
+    // Filled at 90 degrees, empty once the placement has turned past it.
+    turnedAway: await sample(300, 460),
+    filledGreen: await sample(380, 480),
+    filledBlue: await sample(300, 520),
+  };
+  const snapshot = imageRot.snapshot();
+  const hits = (entries) => entries.filter((entry) => entry.feature.id === 'image-rot').length;
+  const pickFilled = hits(await map.query.rendered({ x: 380, y: 480 }));
+  const pickTurnedAway = hits(await map.query.rendered({ x: 300, y: 460 }));
+  const pickLeftOfDiamond = hits(await map.query.rendered({ x: 270, y: 470 }));
+  return {
+    pass:
+      pixels.emptyCorner.a === 0 &&
+      pixels.emptyRight.a === 0 &&
+      pixels.turnedAway.a === 0 &&
+      near(pixels.filledGreen, [0, 200, 0, 255]) &&
+      near(pixels.filledBlue, [0, 0, 255, 255]) &&
+      snapshot.rotate === 45 &&
+      snapshot.revision > revisionBeforeTurn &&
+      pickFilled === 1 &&
+      pickTurnedAway === 0 &&
+      pickLeftOfDiamond === 0,
+    detail: {
+      pixels: Object.fromEntries(Object.entries(pixels).map(([key, pixel]) => [key, describe(pixel)])),
+      revision: [revisionBeforeTurn, snapshot.revision],
+      picks: [pickFilled, pickTurnedAway, pickLeftOfDiamond],
+    },
+  };
 });
 
 let revisionABeforeUrl = 0;

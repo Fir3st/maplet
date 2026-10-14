@@ -210,6 +210,11 @@ The current public construction, object lifetime and migration contract is in
 - `updateRegion(region, pixels, { stride })` validates bounds, stride and buffer
   length before writing (`invalid-region`). Uploads are partial, with
   premultiplied rows: `texSubImage2D` or `writeTexture` with `origin`.
+- `rotate` turns a media placement clockwise about its bounds centre (degrees,
+  the convention shared with sprite and label rotation). It is a descriptor
+  change: `revision` bumps and the plan re-places the turned quad, while pixels
+  and `pixelVersion` are untouched. Picking and culling use the turned quad
+  (MEDIA-07).
 - Video uses `requestVideoFrameCallback` (rAF fallback) only while playing.
   `pause()` uploads the final frame once and stops the pump. Remove/destroy
   releases the video and textures and ignores late frames. Only images support

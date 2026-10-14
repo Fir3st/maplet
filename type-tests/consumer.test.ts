@@ -57,6 +57,21 @@ export async function consumerContracts(container: HTMLElement): Promise<void> {
   const imported = await stations.importColumnar(batch);
   void imported.revision;
 
+  // MEDIA-07: media placements take a rotation option, expose it in the
+  // readonly snapshot and accept descriptor updates.
+  const overlay = map.data.image({
+    id: 'overlay',
+    url: '/images/overlay.png',
+    bounds: { southwest: { lat: 50, lng: 14 }, northeast: { lat: 50.1, lng: 14.1 } },
+    rotate: 15,
+  });
+  const overlayRotation: number = overlay.snapshot().rotate;
+  overlay.update({ rotate: 30 });
+  overlay.update({ bounds: { southwest: { lat: 50, lng: 14 }, northeast: { lat: 50.2, lng: 14.2 } } });
+  void overlayRotation;
+  // @ts-expect-error rotation is a number of degrees, not a string (MEDIA-07)
+  overlay.update({ rotate: '30' });
+
   // PICK-12: the measured pick stall is part of the diagnostics contract.
   const picking = map.stats().picking;
   const lastStallMs: number = picking.lastMs;

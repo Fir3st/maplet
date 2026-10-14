@@ -19,7 +19,7 @@ to use this repository.
 | Interaction | Pan, zoom, hover/click/drag, pinch, keyboard, selection, bubbling; `demo/interaction.html` and real-input E2E scenarios |
 | Picking | Shape-aware GPU queries, revision/generation checks, measured blocking/async readback; `demo/pick.html` |
 | Text and fonts | Labels, multi-line text, collisions, rotation, atlas eviction, font loading/fallback, platform shaping, bidi; `demo/labels.html`, `demo/fonts.html` |
-| Media | Sprites, anchor rotation, tinting, image/video bounds, partial uploads and cleanup; `demo/icons.html`, `demo/media.html` |
+| Media | Sprites, anchor rotation, tinting, image/video bounds with placement rotation, partial uploads and cleanup; `demo/icons.html`, `demo/media.html` |
 | HTML UI | Optional controls, scale, attribution, geolocation, feature detail and bounded accessible lists; `test/ui/`, `demo/ui.html`, `demo/detail.html` |
 | Plugins | Plain setup functions, typed APIs, HTML access, abort/cleanup, render transforms, after-frame drawing and replaceable renderers; `test/scene/plugins.test.ts`, consumer types and `plugins` browser scenario; [guide](plugins.md) |
 | Worker imports | Compact columns/canonical line and polygon pools, owned metadata on the publishing thread, validation, copy/move, cancellation, bounded queue, crash/CSP fallback; import tests, `demo/import.html`, `demo/csp.html?csp=worker-none` |
@@ -114,6 +114,18 @@ glyph picking hits both lines and neither the inter-line gap nor the space above
 the block. Single-line pixels and every previous label, font and icon check are
 unchanged.
 
+The media-rotation addition passes **309 unit tests**, the same build/type/
+distribution and consumer-type checks, and the complete default browser suite:
+**39/39 scenarios/batteries on each of WebGL 1, WebGPU and forced basic WebGL 1**.
+The extended `battery:media` turns an 80x160 placement by 90 degrees about its
+centre and samples the texture quadrants at their turned positions (the red
+top-left corner reads at the right edge, and so on), the emptied old strips and
+the filled new strip; picking hits inside the turned quad and misses inside the
+old axis-aligned bounds, the descriptor revision bumps while `pixelVersion`
+stays. At 45 degrees the corners of the axis-aligned box read `rgba(0,0,0,0)`
+while the turned midsides keep their exact quadrant colours. Unturned placements
+and every previous media, video and lifecycle check are unchanged.
+
 The recorded browser environment was headless Chromium on an Apple M5 Pro,
 using ANGLE Metal for WebGL and `apple metal-3` for WebGPU. Pixel comparisons
 against decoded source bitmaps and between backends found zero differences at
@@ -192,9 +204,10 @@ Canvas setup is still faster at 282 ms. One-second warm-pan outliers persist.
   multi-line block with a fixed line height; there is no automatic wrapping.
   Collision uses the block's bounding box without a halo margin, and labels do
   not promise identical pixels across browsers/OSes.
-- **Media:** overlays are axis-aligned bounds, without rotation/skew or color
-  filters. Opacity is supported; custom blending modes are not. Runtime URL
-  updates are supported for images, not video.
+- **Media:** overlays are placed into axis-aligned bounds; `rotate` turns a
+  placement clockwise about its centre, without skew or color filters. Opacity
+  is supported; custom blending modes are not. Runtime URL updates are supported
+  for images, not video.
 - **Icons:** size is square via `iconSize` or natural size/DPR. `iconTint` multiplies
   the icon atlas RGB (default white); the shape fallback of a loading/failed icon
   keeps `color` and is not tinted. Shape fallbacks and ordinary point shapes do not

@@ -95,8 +95,10 @@ See [vector-tile contracts](decisions.md#vector-tiles-mvt).
 ## Media overlays
 
 `addImage({ url, bounds })` and `addVideo({ url, bounds, loop })` create source-backed
-overlays. Bounds use `southwest` and `northeast` object coordinates. They are
-axis-aligned, with opacity and painter order, not rotation or skew.
+overlays. Bounds use `southwest` and `northeast` object coordinates. `rotate`
+(degrees clockwise about the bounds centre, also settable with
+`update({ rotate })`) turns the placement; opacity and painter order apply.
+Skew and color filters are not supported.
 
 Image sources also accept copied RGBA pixels and `updateRegion()` for partial
 updates. Videos expose play/pause; the frame pump stops while paused and releases

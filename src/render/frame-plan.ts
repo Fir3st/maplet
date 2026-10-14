@@ -174,6 +174,8 @@ export interface MediaPlacement {
   readonly sy: number;
   readonly sw: number;
   readonly sh: number;
+  /** Placement rotation in degrees clockwise about the quad centre. */
+  readonly rotate: number;
   readonly opacity: number;
   /** Present when the quad is drawn into the pick pass; index into the pick table. */
   readonly pickIndex?: number;
@@ -1221,8 +1223,22 @@ function collectMedia(
   const sy = (minY - origin.y) * scale;
   const ex = (maxX - origin.x) * scale;
   const ey = (maxY - origin.y) * scale;
+  const rotate = source.rotate;
+  // The placement turns about its centre, so culling uses the rotated bounds.
+  const centreX = (sx + ex) / 2;
+  const centreY = (sy + ey) / 2;
+  const radians = (rotate * Math.PI) / 180;
+  const cos = Math.abs(Math.cos(radians));
+  const sin = Math.abs(Math.sin(radians));
+  const halfX = ((ex - sx) / 2) * cos + ((ey - sy) / 2) * sin;
+  const halfY = ((ex - sx) / 2) * sin + ((ey - sy) / 2) * cos;
   const margin = 32;
-  if (ex < -margin || ey < -margin || sx > transform.width + margin || sy > transform.height + margin) {
+  if (
+    centreX + halfX < -margin ||
+    centreY + halfY < -margin ||
+    centreX - halfX > transform.width + margin ||
+    centreY - halfY > transform.height + margin
+  ) {
     return [];
   }
   const placement: MediaPlacement = {
@@ -1233,6 +1249,7 @@ function collectMedia(
     sy,
     sw: ex - sx,
     sh: ey - sy,
+    rotate,
     opacity,
   };
   if (!layer.interactionEnabled) return [placement];

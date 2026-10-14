@@ -24,6 +24,7 @@ import {
   type PlanBatch,
 } from './../frame-plan.ts';
 import { monotonicNow, PickStallRecorder, type PickResult } from './../picking.ts';
+import { QUAD_UVS, quadVertices } from './../quad.ts';
 import { Symbols, type AtlasPage, type SymbolMesh } from './../symbols.ts';
 import { ExpandedFill } from './../indexed-fill.ts';
 import type { BackendInitOptions, MapBackend } from './../backends.ts';
@@ -1365,7 +1366,18 @@ export class WebGl1Backend implements MapBackend {
       opacity: number,
       pick: number,
       flag: number,
+      rotate: number,
     ): void => {
+      // A turned placement keeps the QUAD_UVS order, so the texture orientation
+      // follows the quad instead of the screen axes (MEDIA-07).
+      if (rotate !== 0) {
+        const points = quadVertices(x + width / 2, y + height / 2, width, height, rotate);
+        for (let index = 0; index < 6; index++) {
+          const uv = QUAD_UVS[index]!;
+          data.push(points[index * 2]!, points[index * 2 + 1]!, 0, 0, uv[0], uv[1], opacity, 0, pick, flag, 0, 0);
+        }
+        return;
+      }
       data.push(
         x, y, 0, 0, 0, 0, opacity, 0, pick, flag, 0, 0,
         x + width, y, 0, 0, 1, 0, opacity, 0, pick, flag, 0, 0,
@@ -1397,6 +1409,7 @@ export class WebGl1Backend implements MapBackend {
         placement.opacity,
         placement.pickIndex ?? 0,
         placement.pickIndex === undefined ? 0 : 1,
+        placement.rotate,
       );
       const last = draws[draws.length - 1];
       if (last && last.entry === entry) last.run++;
