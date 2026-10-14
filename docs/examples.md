@@ -1,9 +1,9 @@
-# Example collection and publication
+# Documentation website and publication
 
-The public collection contains eight focused learning examples adapted from the
-existing demos: first map, editable points, lines/polygon holes, bindings,
-GeoJSON, labels/image pins, raster tiles and plugins. Diagnostic pages,
-benchmarks and server-dependent fixtures remain unchanged in `demo/`.
+The public website includes an overview, installation, guides, API reference and
+eight tutorials with live maps. Tutorials cover first maps, editable points,
+lines/polygon holes, bindings, GeoJSON, labels/image pins, raster tiles and plugins.
+Diagnostic pages, benchmarks and server-dependent fixtures remain in `demo/`.
 
 ## Local preview
 
@@ -14,23 +14,23 @@ npm run examples:serve
 ```
 
 Open <http://localhost:8401/>. The generated site is in `.example-build/site/`.
-Each example has a map, usable controls, renderer selection, source, navigation
-and a link to its originating demo. WebGL 1 is the default; WebGPU can fall back
+Each tutorial combines explanatory prose, a map, controls, renderer selection,
+complete source and links to the relevant guides and reference. WebGL 1 is the default; WebGPU can fall back
 to WebGL 1. Unsupported GPU initialization is reported in the example's status.
 
 The examples do not download basemaps by default. The raster example requests
 OpenStreetMap only after its button is selected; it includes attribution and
 does not prefetch or cache tiles. GeoJSON input is local to the browser and
-bounded to 64 KiB / 100 points. Diagram thumbnails are labeled as schematic
-previews, not screenshots or benchmark evidence.
+bounded to 64 KiB / 100 points. The website is static HTML; maps load only on
+the tutorial pages, not on overview, guide or reference pages.
 
 ## GitHub Pages
 
 In **Settings → Pages → Build and deployment → Source**, choose **GitHub Actions**.
-The `Publish examples` workflow runs on pushes to `main` and can be run manually
+The `Publish documentation` workflow runs on pushes to `main` and can be run manually
 from the Actions tab. It checks the project, builds the library and examples,
 then uploads and deploys only the generated public site. No npm package version
-change is needed to update the collection. Package releases keep their separate
+change is needed to update documentation. Package releases keep their separate
 workflow.
 
 The default project URL is <https://fir3st.github.io/maplet/>. The workflow uses
@@ -51,7 +51,7 @@ account owner must separately configure this in GitHub's UI:
    for the `Fir3st` account. Choose an expiration and rotate it in GitHub as needed.
 2. Store it as the repository Actions secret **`GIST_PUBLISH_PAT`**.
 3. Create the repository Actions variable **`GISTS_ENABLED`** with value `true`.
-4. Run **Publish examples** from the Actions tab, or push to `main`.
+4. Run **Publish documentation** from the Actions tab, or push to `main`.
 
 Do not commit authorization material, create local auth files or paste values
 into source code, chat or logs. The publisher delegates authentication to `gh`
@@ -83,21 +83,30 @@ inline import fallback when running a downloaded copy.
 Generated Gists follow the current website, not immutable package releases.
 Edit `examples/` in the repository; the publisher owns the generated Gist files.
 Stable Gist URLs and the index URL are saved in the deployed `gists.json` and
-linked from the gallery and example pages. Turning Gist publication off builds
+linked from tutorial source panels. Turning Gist publication off builds
 a fresh site without Gist links; it does not delete previously published Gists.
 
-## Maintaining the collection
+## Maintaining documentation
 
 - `examples/catalog.json` is the single source for titles, groups, descriptions,
   source provenance and navigation.
+- `docs/*.md` and `docs/tutorials/*.md` supply readable guides and tutorial prose.
+  The live-example marker places a map and its source inside a tutorial.
 - `examples/*.js` implement the actual examples; `shared.js` owns common page
   setup, map lifecycle, error reporting and toolbar behavior.
-- `scripts/build-examples.mjs` builds the Pages site and allowlisted Gist payloads.
+- `scripts/docs-site.mjs` renders authored Markdown and the shared document shell.
+  It generates reference tables from built public declarations, including inherited
+  members, overloads and all three package entry points.
+- `scripts/build-examples.mjs` builds the documentation site, embeds live tutorials
+  and assembles allowlisted standalone Gist payloads. Existing `/examples/<id>/`
+  URLs remain valid.
 - `scripts/publish-gists.mjs` owns discovery and idempotent Gist publication.
 - Gist payloads are bounded to 1 MiB total and 128 KiB per example. Discovery is
   limited to 2,000 public Gists and fails before any writes if it cannot finish.
   Writes are sequential and limited to one per changed example plus its index.
 
 Unit tests use fake GitHub responses; they never publish or inspect live Gists.
+Website tests check every local document/asset link and fragment, unique anchors,
+critical inherited API members, Markdown escaping and standalone-file budgets.
 Real publication is established only by a successful authorized workflow and
 the resulting Pages/Gist URLs, not by those tests alone.

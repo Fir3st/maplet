@@ -5,7 +5,7 @@ function pinsPlugin({ map, container, onCleanup }) {
   const layer = map.addLayer({ id: 'plugin-pins' });
   onCleanup(layer.remove);
   const pins = layer.addPoints([], {
-    style: { color: '#bd573b', radiusPx: 11, strokeColor: '#fff', strokeWidthPx: 3 } });
+    style: { minZoom: -1, color: '#bd573b', radiusPx: 11, strokeColor: '#fff', strokeWidthPx: 3 } });
   const badge = document.createElement('div');
   badge.className = 'plugin-badge'; badge.textContent = 'HTML owned by the plugin';
   container.append(badge);

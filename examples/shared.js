@@ -34,7 +34,7 @@ export function action(label, run) {
 export async function openExample({ geographic = false, center, zoom } = {}) {
   const initialView = {
     center: center ?? (geographic ? { lat: 50.08, lng: 14.43 } : { x: 0, y: 0 }),
-    zoom: zoom ?? (geographic ? 12 : 0),
+    zoom: zoom ?? (geographic ? 12 : Math.max(-1, Math.min(0, Math.log2(document.querySelector('#map').clientWidth / 520)))),
   };
   const map = await createMap('map', {
     projection: geographic ? crs.webMercator() : crs.simple(),
@@ -50,7 +50,7 @@ export async function openExample({ geographic = false, center, zoom } = {}) {
       lines.push({ id: `h${i}`, positions: [{ x: -3, y: i / 4 }, { x: 3, y: i / 4 }] });
       lines.push({ id: `v${i}`, positions: [{ x: i / 4, y: -3 }, { x: i / 4, y: 3 }] });
     }
-    map.addLines(lines, { id: 'guide-grid', style: { color: '#dce5df', widthPx: 1 }, interactive: false });
+    map.addLines(lines, { id: 'guide-grid', style: { minZoom: -1, color: '#dce5df', widthPx: 1 }, interactive: false });
   }
   document.querySelector('#reset-view').addEventListener('click', () => map.setView(initialView));
   map.on('rendererror', event => report(`Rendering failed: ${event.error?.message ?? 'GPU unavailable'}`, true));

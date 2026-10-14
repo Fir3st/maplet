@@ -1,6 +1,6 @@
 # Implementation status
 
-Maplet is an alpha library (`0.1.0-alpha.1`). This document describes the
+Maplet is an alpha library (`0.1.0-alpha.5`). This document describes the
 implementation, reproducible checks and known gaps. It replaces the internal
 development log; no external planning documents or saved screenshots are needed
 to use this repository.
@@ -11,7 +11,7 @@ to use this repository.
 | --- | --- |
 | Coordinates and view | Web Mercator, EPSG:4326, ellipsoidal Mercator, Simple/custom CRS, bounds, fit/flyTo, limits; math/view tests and a vendored Leaflet 1.9.4 oracle |
 | Data | Stable identities/generations, CRUD, transactions/rollback, snapshots, state, selection, queries, GeoJSON and columnar imports; `test/scene/`, `test/io/` |
-| Layers and styles | Groups, ordering, filters, overrides, expressions, points, lines and polygon holes; scene/render tests |
+| Layers and styles | Heterogeneous nested layers, shared base, ordering, filters, overrides, expressions, points, lines and polygon holes; scene/render tests |
 | Relations and bindings | Endpoint policies, traversal, dependency DAGs, field ownership, `lineBetween`, `anchorOnLine`, `copyProperty`; relation and data tests |
 | Rendering | WebGPU and WebGL 1, retained mixed-vector buffers with local uploads, indexed polygon meshes and spatial geometry blocks, expansion without instancing/wide indices, shared frame plan and loss recovery; `test/render/`, parity/loss batteries, `retained-point-buffers` and `retained-mixed-scene` E2E |
 | Raster | XYZ/TMS/retina, decoded parent/child fallback, previous-bitmap retention, WMS axis/CRS semantics; raster tests, `demo/tiles.html`, `demo/wms.html` |
@@ -116,7 +116,7 @@ A fresh three-run-per-backend check on October 11, 2026 recorded imports of
 1,200–1,302 ms (WebGL 1) and 1,207–1,376 ms (WebGPU), with 258,420 visible
 instances and one draw call. Its short headless pan check recorded approximately
 one-second intervals, not smooth interactive frame rates. See the
-[README measurement table](../README.md#measured-scale-not-just-architectural-claims)
+[benchmark records](benchmarks/README.md)
 for workload, memory observations, timing definitions and limitations. These
 current observations should not be confused with the earlier development record.
 
@@ -184,8 +184,9 @@ Canvas setup is still faster at 282 ms. One-second warm-pan outliers persist.
   higher view zooms scale existing geometry. Edits require a mutable overlay.
 - **Bindings:** synchronous evaluators are supported; worker-based binding
   modules and their backpressure protocol are not.
-- **GPU extensions:** no public custom-render extension or API for deliberate
-  backend switching. Automatic device/context-loss recovery is implemented.
+- **GPU extensions:** public plan transforms, frame hooks and custom renderers
+  are supported. There is no API for deliberate built-in backend switching;
+  automatic device/context-loss recovery is implemented.
 - **Picking:** WebGL 1 readback blocks the calling thread, even through an async
   API. WebGPU readback is asynchronous. Stalls are measured, not inferred from
   Promise signatures. Animation/picking concurrency is not fully validated.
@@ -292,5 +293,5 @@ and verifies its output. Consumer type tests resolve the package's root, math
 and formats exports against those generated declarations.
 
 The archive audit uses `npm pack --dry-run` to check runtime assets and exclude
-development files. The package remains marked `private` to prevent accidental
-npm publication; this does not prevent hosting the source in a public Git repo.
+development files. GitHub Packages publication uses the repository-linked registry;
+the same tested archive is attached to GitHub Releases.

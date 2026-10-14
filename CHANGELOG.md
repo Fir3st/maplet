@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Replace the example gallery with a documentation website: overview, installation,
+  thematic guides, declaration-generated API reference and eight tutorials with
+  embedded live examples. Preserve existing example URLs and standalone Gist output.
+- Reduce README to a package overview, installation and a short start; move project,
+  development and architecture details into documentation.
+
 ## 0.1.0-alpha.5
 
 - Fix the public `version` export to match the package version, and test it

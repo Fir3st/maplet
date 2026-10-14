@@ -1,21 +1,26 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, readdirSync, rmSync, existsSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 // @ts-expect-error Build tooling is a JavaScript module, not part of the library API.
 import { buildExamples, highlightJavaScript } from '../../scripts/build-examples.mjs';
 // @ts-expect-error Publication tooling is tested with fake GitHub responses only.
 import { publishGists } from '../../scripts/publish-gists.mjs';
+// @ts-expect-error Documentation tooling is not part of the package API.
+import { renderMarkdown } from '../../scripts/docs-site.mjs';
 
-test('all eight examples build under a Pages subdirectory, with honest Gist links', () => {
+test('complete documentation and eight tutorials build under a Pages subdirectory', () => {
   const directory = mkdtempSync(join(tmpdir(), 'maplet-examples-test-'));
   try {
-    const { site, plan } = buildExamples({ output: directory, baseUrl: 'https://example.github.io/project/' });
+    const { site, plan, pageCount } = buildExamples({ output: directory, baseUrl: 'https://example.github.io/project/' });
     assert.equal(plan.gists.length, 8);
+    assert.ok(pageCount >= 30);
     const gallery = readFileSync(join(site, 'index.html'), 'utf8');
-    assert.match(gallery, /Schematic preview/);
-    assert.match(gallery, /Maplet examples/);
+    assert.match(gallery, /Maplet documentation/);
+    assert.ok(!gallery.includes('Schematic preview'));
+    assert.match(gallery, /href="\.\/reference\/"/);
+    assert.match(gallery, /href="\.\/tutorials\/"/);
     assert.ok(!gallery.includes('Small examples.'));
     assert.ok(!gallery.includes('Learning examples, not performance benchmarks.'));
     assert.match(gallery, /class="syntax-keyword"/);
@@ -23,10 +28,19 @@ test('all eight examples build under a Pages subdirectory, with honest Gist link
     assert.ok(stylesheet, 'Gallery stylesheet must have a content fingerprint');
     assert.deepEqual(JSON.parse(readFileSync(join(site, 'gists.json'), 'utf8')), {});
     assert.ok(readFileSync(join(site, 'dist', 'workers', 'import.worker.js'), 'utf8').length > 0);
+    const symbols = JSON.parse(readFileSync(join(site, 'api-symbols.json'), 'utf8'));
+    for (const required of ['MapHandle', 'LayerHandle', 'SourceLayerSpec', 'MapOptions', 'style', 'crs', 'FeaturesHandle', 'LocateResult', 'boundsFromPositions', 'parseGeoJson']) assert.ok(symbols.includes(required));
+    const mapReference = readFileSync(join(site, 'reference', 'map', 'index.html'), 'utf8');
+    for (const member of ['MapHandle-addPoints', 'MapHandle-use', 'MapHandle-whenRendered', 'MapOptions-controls', 'MapOptions-projection']) assert.ok(mapReference.includes(`id="${member}"`), `Missing inherited API member ${member}`);
+    assert.ok(!mapReference.includes('MapHandle-groups'));
+    for (const route of ['download', 'tutorials', 'plugins', 'guides/maps', 'guides/layers', 'guides/data', 'guides/rendering', 'guides/interaction', 'guides/status', 'guides/contracts', 'guides/development']) assert.ok(existsSync(join(site, route, 'index.html')), `Missing documentation section ${route}`);
     for (const gist of plan.gists) {
       assert.ok(gallery.includes(`href="./examples/${gist.id}/"`));
       const html = readFileSync(join(site, 'examples', gist.id, 'index.html'), 'utf8');
       assert.match(html, /id="map"/);
+      assert.match(html, /aria-label="Documentation"/);
+      assert.match(html, /id="live-example"/);
+      assert.match(html, /Complete example source/);
       assert.match(html, /class="syntax-string"/);
       assert.ok(html.includes(`href="${stylesheet}"`), 'Each detail must use the fingerprinted stylesheet');
       assert.ok(gist.files['index.html'].includes(`href="${stylesheet}"`), 'Gist HTML must use the fingerprinted stylesheet');
@@ -38,9 +52,44 @@ test('all eight examples build under a Pages subdirectory, with honest Gist link
       assert.deepEqual(Object.keys(gist.files).sort(), ['LICENSE', 'NOTICE', 'README.md', 'example.js', 'index.html', 'shared.js', 'style.css'].sort());
       assert.ok(new TextEncoder().encode(JSON.stringify(gist.files)).length < 128 * 1024);
     }
+    // Check every static local link and fragment independently of the builder.
+    const documents: string[] = [];
+    function collect(path: string) {
+      for (const name of readdirSync(path)) {
+        if (name === 'dist') continue;
+        const file = join(path, name);
+        if (statSync(file).isDirectory()) collect(file);
+        else if (name === 'index.html') documents.push(file);
+      }
+    }
+    collect(site);
+    assert.equal(documents.length, pageCount);
+    for (const file of documents) {
+      const html = readFileSync(file, 'utf8');
+      const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]);
+      assert.equal(new Set(ids).size, ids.length, `Duplicate anchors in ${file}`);
+      for (const match of html.matchAll(/(?:href|src)="([^"]+)"/g)) {
+        if (/^(https?:|data:)/.test(match[1]!)) continue;
+        const url = new URL(match[1]!, `file://${file}`);
+        const target = url.pathname.endsWith('/') ? `${url.pathname}index.html` : url.pathname;
+        assert.ok(existsSync(target), `Broken local link: ${file} → ${match[1]}`);
+        if (url.hash) assert.ok(readFileSync(target, 'utf8').includes(`id="${decodeURIComponent(url.hash.slice(1))}"`), `Broken fragment: ${file} → ${match[1]}`);
+      }
+    }
     assert.throws(() => buildExamples({ output: directory, baseUrl: 'file:///local/' }), /Pages base URL/);
     assert.throws(() => buildExamples({ output: directory, baseUrl: 'https://user:example@example.com/' }), /Pages base URL/);
   } finally { rmSync(directory, { recursive: true, force: true }); }
+});
+
+test('guide Markdown renders safe code, tables and project-relative links', () => {
+  const rendered = renderMarkdown('# Guide\n\n## Types\n\n| Type | Meaning |\n| --- | --- |\n| `string | number` | **ID** |\n\n[Objects](api.md#collections-and-objects)\n\n```html\n<script>alert(1)</script>\n```', { source: 'docs/maps.md', home: '../../' });
+  assert.match(rendered.html, /<code>string \| number<\/code>/);
+  assert.match(rendered.html, /<strong>ID<\/strong>/);
+  assert.match(rendered.html, /href="\.\.\/\.\.\/guides\/layers\/#collections-and-objects"/);
+  assert.ok(!rendered.html.includes('<script>'));
+  assert.match(rendered.html, /&lt;script&gt;/);
+  assert.deepEqual(rendered.headings, [{ id: 'types', title: 'Types' }]);
+  assert.throws(() => renderMarkdown('```js\nconst unfinished = 1'), /Unclosed code fence/);
 });
 
 test('syntax highlighting preserves JavaScript text and escapes HTML', () => {

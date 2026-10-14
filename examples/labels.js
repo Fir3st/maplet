@@ -6,9 +6,9 @@ map.assets.addImage({ id: 'pin', src: `data:image/svg+xml;charset=utf-8,${encode
 const places = map.addPoints(['River walk', 'Příliš žluťoučký', 'Market square', 'Garden'].map((name, i) => ({
   id: `place-${i}`, properties: { name }, position: { x: (i % 2 - 0.5) * 0.8, y: (Math.floor(i / 2) - 0.5) * 0.55 },
 })), { id: 'pins', draggable: true,
-  style: { icon: 'pin', iconSize: 32, iconAnchor: { x: 0, y: -16 }, color: '#16724c', radiusPx: 8 } });
+  style: { minZoom: -1, icon: 'pin', iconSize: 32, iconAnchor: { x: 0, y: -16 }, color: '#16724c', radiusPx: 8 } });
 const labels = map.addLabels(places.source, {
-  style: { color: '#263e33', sizePx: 14, collision: true, offsetPx: { x: 0, y: -42 } } });
+  style: { minZoom: -1, color: '#263e33', sizePx: 14, collision: true, offsetPx: { x: 0, y: -42 } } });
 let visible = true, renamed = false;
 action('Toggle labels', () => { visible = !visible; labels.setVisible(visible); report(`Labels ${visible ? 'visible' : 'hidden'}; the pins remain on the map.`); });
 action('Rename first place', () => {

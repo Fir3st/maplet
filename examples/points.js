@@ -8,6 +8,7 @@ const stations = map.addPoints(Array.from({ length: 12 }, (_, i) => ({
 })), {
   id: 'stations', draggable: true,
   style: {
+    minZoom: -1,
     radiusPx: style.when(style.state('selected'), 14, 10),
     color: style.by('status', { online: '#16724c', offline: '#c65b3b' }, '#66776d'),
     strokeColor: '#ffffff', strokeWidthPx: 3,

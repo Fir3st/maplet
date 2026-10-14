@@ -1,10 +1,8 @@
-# Object API and migration
+# Layers and objects
 
-The public API is intentionally breaking. The rendering/data engine is retained;
-ordinary callers now work with a tree of heterogeneous layers and generation-bound
-map objects instead of building a source/render-pass pair for each dataset.
-There are no compatibility aliases for the previous map facade, separate groups
-API or root `expr` export.
+Organize content in heterogeneous layers, nest other layers, and edit individual
+objects through generation-bound handles. Ordinary datasets do not require
+separate source/render-pass setup; shared sources remain available when needed.
 
 ## Creating and moving a map
 
@@ -206,6 +204,9 @@ headless maps list no controls and reject DOM operations with
 Plugins and render callbacks receive the **new public map**, not the old engine.
 
 ## Migration table
+
+The alpha.4 redesign replaces the previous facade without compatibility aliases,
+including the separate groups API and root `expr` export.
 
 | Before | Now |
 | --- | --- |
