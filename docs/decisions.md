@@ -4,6 +4,9 @@ These contracts define units, defaults and observable behavior for the alpha
 implementation and its tests. Changes require an explicit contract update and
 matching test changes; tests must not establish defaults accidentally.
 
+The current public construction, object lifetime and migration contract is in
+[the object API guide](api.md). The engine contracts below remain in force.
+
 ## Units and coordinates
 
 - World coordinates use a scale of `256` at zoom 0 for every CRS. Screen
@@ -63,13 +66,18 @@ matching test changes; tests must not establish defaults accidentally.
 ## Style, ordering and visibility
 
 - Style order is layer base → property/zoom expression → per-feature override
-  (`layer.features.setOverride`) → interaction style.
-- Interaction styles read `expr.state('hovered' | 'selected' | 'disabled')`.
+  (`object.setStyle` / `layer.setFeatureStyle`) → interaction style.
+- Interaction styles read `style.state('hovered' | 'selected' | 'disabled')`.
   Hover writes `state.hovered`; selection writes `state.selected`.
 - Hiding uses an override `visible: false`, a filter or a binding; it never
   deletes source data.
 - Equal `zIndex` values use ascending stable slot order. Layers follow their
-  nested group tree order; earlier layers draw underneath later ones.
+  logical layer tree order; earlier siblings draw underneath later ones.
+- A logical layer contains any geometry/media collections and nested layers.
+  Direct map object helpers share a lazy `base` layer. Typed collections retain
+  their own sources/styles; hiding or removing an ancestor affects its subtree.
+  `move({ index })` stays among current siblings; `move({ into: null })` moves
+  to the root. The source/render-pass engine groups implement this public tree.
 - Zoom visibility is inclusive: `[minZoom, maxZoom]`.
 - Labels read an expression (default `properties.name`); empty or missing text
   is skipped. Their anchor is the feature center plus `offsetPx`.
@@ -131,7 +139,7 @@ matching test changes; tests must not establish defaults accidentally.
   pointer-down, never a repeated addition to the already-moved position.
 - Cursor is `move` over draggable features, `pointer` over other interactive
   features, `grab` otherwise and `grabbing` during a map gesture.
-- Feature events bubble `layer → groups (nearest first) → map`.
+- Feature events bubble `object/collection → logical layers (nearest first) → map`.
   `stopPropagation()` stops this chain without changing gesture handling.
 - Each pinch starts with its own baseline distance. Lifting one finger continues
   as a pan without jumping.
@@ -151,7 +159,7 @@ matching test changes; tests must not establish defaults accidentally.
   until the replacement loads; late superseded responses never replace it.
 - Interactive raster sources expose one pick record with the source ID for the
   displayed rectangle, not IDs invented from pixels. Tile basemaps require
-  explicit `interaction: { enabled: true }`; media follows layer defaults.
+  explicit `interactive: true`; media follows layer defaults.
 
 ## Vector tiles (MVT)
 
@@ -176,7 +184,7 @@ matching test changes; tests must not establish defaults accidentally.
 - Strings/floats/doubles/bools retain their values. int64/uint64/sint64 values
   use safe numbers or exact decimal strings. Polygon rings use signed area
   (positive exterior), falling back to the largest ring for reversed exteriors.
-- `layers.add({ namespace })` selects a source layer; omission selects all
+- `map.addLayer({ namespace })` selects a source layer; omission selects all
   records. Counts and box selection also honor namespaces.
 - Attribution includes each source used by a layer, deduplicating exact strings.
 - Viewport sources receive every `requestFrame()` notification, even when a
@@ -184,8 +192,8 @@ matching test changes; tests must not establish defaults accidentally.
 
 ## Images and video
 
-- `sources.image({ id, url | pixels, bounds })` and
-  `sources.video({ id, url, bounds, loop })` place data in a geographic or planar
+- `map.addImage({ url | pixels, bounds })` and
+  `map.addVideo({ url, bounds, loop })` place data in a geographic or planar
   rectangle (`southwest`/`northeast`). Raster layers provide opacity and order.
   Raw `pixels` are copied RGBA data.
 - Descriptor changes (image URL, bounds) increment `revision` and rebuild the
@@ -263,8 +271,8 @@ matching test changes; tests must not establish defaults accidentally.
 - Controls are opt-in. Their overlay/subscriptions are created with the first
   control and removed with the last. Controls read `commit`/`viewchange` and call
   the public API; they do not maintain a second model.
-- Layer controls show top-level layers/groups and update rows in place to keep
-  focus. Nested layers are controlled through their group.
+- Layer controls show root entries in painter order and update rows in place to
+  keep focus. Nested content is controlled through its root logical layer.
 - Attribution uses sources with at least one layer, registration order and exact
   string deduplication. Shared notices remain while any contributing source exists.
   Attribution strings render as text, never active HTML.

@@ -6,7 +6,7 @@
  * `window.__maplet` exposes { map, layers } for browser-console experiments and
  * for the automated browser checks.
  */
-import { createMap, expr, crs } from '../dist/index.js';
+import { createMap, style as expr, crs } from '../dist/index.js';
 
 const params = new URLSearchParams(location.search);
 const forceBackend = params.get('backend');
@@ -15,12 +15,11 @@ const log = (line) => {
   element.textContent = `${new Date().toISOString().slice(11, 19)}  ${line}\n${element.textContent}`;
 };
 
-const map = await createMap({
-  container: 'map',
-  projection: crs.webMercator(),
-  renderer: forceBackend === 'webgpu' ? { primary: 'webgpu', fallback: 'webgl1' } : { primary: 'webgl1', fallback: false },
-  view: { center: { lat: 50.08, lng: 14.44 }, zoom: 8 },
-  interaction: { boxSelection: true },
+const map = await createMap('map', {
+    projection: crs.webMercator(),
+    renderer: forceBackend === 'webgpu' ? { primary: 'webgpu', fallback: 'webgl1' } : { primary: 'webgl1', fallback: false },
+    center: { lat: 50.08, lng: 14.44 }, zoom: 8,
+    interaction: { boxSelection: true }
 });
 log(`backend: ${map.capabilities().backend} ${map.capabilities().notes.join('; ')}`);
 
@@ -48,14 +47,14 @@ const TILE_MODES = {
   'osm-de-cache': { url: './tiles-providers/osm-de/{z}/{x}/{y}.png', nativeZoom: 8, attribution: '© OpenStreetMap contributors (offline cache)' },
 };
 
-const background = map.sources.rasterTiles({
+const background = map.data.rasterTiles({
   id: 'background',
   url: './tiles/{z}/{x}/{y}.png',
   minZoom: 0,
   nativeZoom: 6,
   attribution: 'Local test tiles',
 });
-map.layers.add({ id: 'background', type: 'raster', source: background, style: { opacity: 0.9 } });
+map.addLayer({ id: 'background', type: 'raster', source: background, style: { opacity: 0.9 } });
 
 let currentTileMode = null;
 const setTileMode = (name) => {
@@ -76,23 +75,23 @@ setTileMode(params.get('tiles') ?? 'local');
 
 // Opt-in HTML controls: zoom honours the view limits, layers stay in sync with
 // the API, attribution composes from the live sources and scale uses the CRS.
-map.controls.add({ kind: 'zoom', id: 'zoom' });
-map.controls.add({ kind: 'layers', id: 'layers' });
-map.controls.add({ kind: 'attribution', id: 'attribution' });
-map.controls.add({ kind: 'scale', id: 'scale' });
+map.addControl({ kind: 'zoom', id: 'zoom' });
+map.addControl({ kind: 'layers', id: 'layers' });
+map.addControl({ kind: 'attribution', id: 'attribution' });
+map.addControl({ kind: 'scale', id: 'scale' });
 
-const stations = map.sources.vector({ id: 'stations' });
+const stations = map.data.vector({ id: 'stations' });
 await stations.features.replace([
   { id: 'a', geometry: { type: 'point', position: { lat: 50.08, lng: 14.44 } }, properties: { name: 'Praha', status: 'online', pop: 1300000 } },
   { id: 'b', geometry: { type: 'point', position: { lat: 49.19, lng: 16.61 } }, properties: { name: 'Brno', status: 'online', pop: 380000 } },
   { id: 'c', geometry: { type: 'point', position: { lat: 49.74, lng: 13.37 } }, properties: { name: 'Plzeň', status: 'offline', pop: 170000 } },
   { id: 'd', geometry: { type: 'point', position: { lat: 49.59, lng: 17.25 } }, properties: { name: 'Olomouc', status: 'offline', pop: 100000 } },
 ]);
-const stationLayer = map.layers.add({
+const stationLayer = map.addLayer({
   id: 'station-points',
   type: 'points',
   source: stations,
-  interaction: { enabled: true, draggable: true },
+  interactive: true, draggable: true ,
   style: {
     // Interaction style: hover/selection state sits above the property match.
     radiusPx: expr.when(
@@ -115,12 +114,12 @@ const stationLayer = map.layers.add({
 });
 // Feature events bubble layer -> group(s) -> map (EVENT-01); each level can
 // call event.stopPropagation().
-stationLayer.on('feature', (event) => log(`layer: ${event.type} ${String(event.feature.id)}`));
-const connections = map.sources.vector({ id: 'connections' });
+stationLayer.onFeature((event) => log(`layer: ${event.type} ${String(event.feature.id)}`));
+const connections = map.data.vector({ id: 'connections' });
 await connections.features.replace([
   { id: 'link-1', geometry: { type: 'lineString', positions: [{ lat: 50.08, lng: 14.44 }, { lat: 49.19, lng: 16.61 }] }, properties: {} },
 ]);
-map.layers.add({
+map.addLayer({
   id: 'connection-lines',
   type: 'lines',
   source: connections,
@@ -135,7 +134,7 @@ map.bindings.add({
   geometry: { kind: 'lineBetween', from: stations.features.ref('b'), to: stations.features.ref('c') },
 });
 
-const shapes = map.sources.vector({ id: 'shapes' });
+const shapes = map.data.vector({ id: 'shapes' });
 await shapes.features.replace([
   {
     id: 'donut',
@@ -159,7 +158,7 @@ await shapes.features.replace([
     properties: { name: 'Donut' },
   },
 ]);
-map.layers.add({
+map.addLayer({
   id: 'shape-fills',
   type: 'fills',
   source: shapes,
@@ -168,7 +167,7 @@ map.layers.add({
 
 // Draw order: background, shapes, links, then stations and their labels on top.
 map.layers.move('station-points', { after: 'connection-lines' });
-map.layers.add({
+map.addLayer({
   id: 'station-labels',
   type: 'labels',
   source: stations,
@@ -184,7 +183,7 @@ map.on('commit', (event) => {
   log(`commit r${event.revision} (rendered r${map.stats().renderedRevision})`);
 });
 map.on('selectchange', (event) => log(`selection: ${event.selected.length}`));
-map.on('feature', (event) => {
+map.onFeature((event) => {
   if (event.type === 'click') log(`clicked ${String(event.feature.id)} (${event.layerId})`);
   if (event.type === 'dragend') log(`moved ${String(event.feature.id)} → ${JSON.stringify(event.position)}`);
 });
@@ -256,19 +255,19 @@ let hiddenC = false;
 document.getElementById('btn-hide').onclick = () => {
   hiddenC = !hiddenC;
   const ref = stations.features.ref('c');
-  if (hiddenC) stationLayer.features.setOverride(ref, { visible: false });
-  else stationLayer.features.clearOverride(ref);
+  if (hiddenC) stationLayer.setFeatureStyle(ref, { visible: false });
+  else stationLayer.clearFeatureStyle(ref);
   log(`point c: ${hiddenC ? 'hidden (visibility override)' : 'visible'}`);
 };
 document.getElementById('btn-fit').onclick = () => {
-  map.view.fit(
+  map.fitBounds(
     { southwest: { lat: 48.5, lng: 12.0 }, northeast: { lat: 51.1, lng: 18.9 } },
     { padding: 40, maxZoom: 9 },
   );
 };
 document.getElementById('btn-zoom').onclick = () => {
-  const view = map.view.get();
-  map.view.set({ zoom: view.zoom + 1 });
+  const view = map.getView();
+  map.setView({ zoom: view.zoom + 1 });
 };
 document.querySelectorAll('#tile-buttons button').forEach((button) => {
   button.addEventListener('click', () => setTileMode(button.dataset.tile));

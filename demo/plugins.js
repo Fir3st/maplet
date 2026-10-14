@@ -25,8 +25,8 @@ function htmlPlugin({ map, container, signal, onCleanup }) {
   onCleanup(() => { zoom.title = previousTitle; });
 
   const update = () => {
-    const pins = map.sources.get('plugin-pins')?.features.count() ?? 0;
-    value.textContent = `Zoom ${map.view.get().zoom.toFixed(1)} · ${pins} pins`;
+    const pins = map.data.get('plugin-pins')?.features.count() ?? 0;
+    value.textContent = `Zoom ${map.getView().zoom.toFixed(1)} · ${pins} pins`;
   };
   map.on('viewchange', update, { signal });
   map.on('commit', update, { signal });
@@ -36,9 +36,9 @@ function htmlPlugin({ map, container, signal, onCleanup }) {
 
 // The public API is whatever the plugin returns. Cleanup follows ownership order.
 function pinsPlugin({ map, onCleanup }) {
-  const source = map.sources.vector({ id: 'plugin-pins' });
-  onCleanup(() => map.sources.remove(source.id));
-  const layer = map.layers.add({
+  const source = map.data.vector({ id: 'plugin-pins' });
+  onCleanup(() => map.data.remove(source.id));
+  const layer = map.addLayer({
     id: 'plugin-pins', type: 'points', source,
     style: { color: '#ea580c', radiusPx: 10, strokeColor: '#ffffff', strokeWidthPx: 2 },
   });
@@ -149,27 +149,28 @@ let map = null;
 try {
   const requested = new URLSearchParams(location.search).get('backend');
   const primary = requested === 'webgpu' ? 'webgpu' : requested === 'none' ? 'none' : 'webgl1';
-  map = await createMap({
-    container: 'map', projection: crs.simple(), renderer: { primary, fallback: primary === 'none' ? false : 'webgl1' },
-    view: { center: { x: 0, y: 0 }, zoom: 1 }, minZoom: 0, maxZoom: 5,
-  });
-  map.controls.add({ id: 'zoom', kind: 'zoom' });
-  const grid = map.sources.vector({ id: 'demo-grid' });
+  map = await createMap('map', {
+    projection: crs.simple(), renderer: { primary, fallback: primary === 'none' ? false : 'webgl1' },
+    center: { x: 0, y: 0 }, zoom: 1,
+    minZoom: 0, maxZoom: 5
+});
+  map.addControl({ id: 'zoom', kind: 'zoom' });
+  const grid = map.data.vector({ id: 'demo-grid' });
   const lines = [];
   for (let i = -8; i <= 8; i++) {
     lines.push({ id: `h${i}`, geometry: { type: 'lineString', positions: [{ x: -2, y: i / 4 }, { x: 2, y: i / 4 }] } });
     lines.push({ id: `v${i}`, geometry: { type: 'lineString', positions: [{ x: i / 4, y: -2 }, { x: i / 4, y: 2 }] } });
   }
   grid.features.add(lines);
-  map.layers.add({ id: 'demo-grid', type: 'lines', source: grid, style: { color: '#cbd5e1', widthPx: 1 }, interaction: { enabled: false } });
-  const route = map.sources.vector({ id: 'demo-route' });
+  map.addLayer({ id: 'demo-grid', type: 'lines', source: grid, style: { color: '#cbd5e1', widthPx: 1 }, interactive: false  });
+  const route = map.data.vector({ id: 'demo-route' });
   route.features.add({ id: 'route', geometry: { type: 'lineString', positions: [{ x: -1, y: -0.35 }, { x: -0.28, y: 0.1 }, { x: 0.18, y: -0.05 }, { x: 0.7, y: 0.4 }, { x: 1, y: 0.3 }] } });
-  map.layers.add({ id: 'demo-route', type: 'lines', source: route, style: { color: '#94a3b8', widthPx: 4 }, interaction: { enabled: false } });
+  map.addLayer({ id: 'demo-route', type: 'lines', source: route, style: { color: '#94a3b8', widthPx: 4 }, interactive: false  });
 
   const updateStatus = (message = '') => {
     addButton.disabled = !installed.has('pins');
     status.classList.remove('error');
-    const pins = map.sources.get('plugin-pins')?.features.count() ?? 0;
+    const pins = map.data.get('plugin-pins')?.features.count() ?? 0;
     status.textContent = `${map.capabilities().backend} · ${installed.size} plugins · ${pins} pins${message ? ` · ${message}` : ''}`;
   };
   const showError = (error) => { status.classList.add('error'); status.textContent = error.message; };
@@ -193,7 +194,7 @@ try {
     catch (error) { showError(error); }
   });
   document.querySelector('#reset-view').addEventListener('click', async () => {
-    try { map.view.set({ center: { x: 0, y: 0 }, zoom: 1 }); await map.whenRendered(); updateStatus('View reset'); }
+    try { map.setView({ center: { x: 0, y: 0 }, zoom: 1 }); await map.whenRendered(); updateStatus('View reset'); }
     catch (error) { showError(error); }
   });
   document.querySelector('#remove-all').addEventListener('click', async () => {
@@ -202,7 +203,7 @@ try {
       await map.whenRendered(); updateStatus('Plugins removed; base scene retained');
     } catch (error) { showError(error); }
   });
-  map.on('feature', event => { if (event.type === 'click') updateStatus(`Selected ${event.feature.id}`); });
+  map.onFeature(event => { if (event.type === 'click') updateStatus(`Selected ${event.feature.id}`); });
   map.on('rendererror', ({ error }) => showError(error));
   window.addEventListener('pagehide', () => map.destroy(), { once: true });
   await map.whenRendered();

@@ -1,13 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { crs, isMapletError } from '../../src/index.ts';
+import { crs, isMapletError, type Geometry, type GeoPosition } from '../../src/index.ts';
 import { makeMap } from '../helpers/fixture.ts';
 
 async function graphFixture() {
   const { map } = await makeMap();
-  const points = map.sources.vector({ id: 'points' });
-  const connections = map.sources.vector({ id: 'connections' });
+  const points = map.data.vector<Geometry<GeoPosition>>({ id: 'points' });
+  const connections = map.data.vector<Geometry<GeoPosition>>({ id: 'connections' });
   points.features.add([
     { id: 'a', geometry: { type: 'point', position: { lat: 0, lng: 0 } }, properties: { name: 'A' } },
     { id: 'b', geometry: { type: 'point', position: { lat: 0, lng: 1 } }, properties: { name: 'B' } },
@@ -317,7 +317,7 @@ test('BIND-04/05/09/10: ownership, release and descriptor updates', async () => 
 test('BIND-06/07: missing-input policies hide, retain or reject', async () => {
   const { map, points, connections } = await graphFixture();
   const a = points.features.ref('a');
-  map.layers.add({ id: 'links', type: 'lines', source: connections });
+  map.addLayer({ id: 'links', type: 'lines', source: connections });
   // hide policy: removing the input hides the derived target.
   map.bindings.add({
     id: 'hide-link',

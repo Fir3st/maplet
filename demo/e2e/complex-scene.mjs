@@ -4,10 +4,10 @@ export async function complexScene({ session, expect, options }) {
     window.__e2e.map.destroy();
     document.getElementById('map').style.width = '720px';
     document.getElementById('map').style.height = '520px';
-    const { createMap, crs, expr } = await import('/dist/index.js');
-    const map = await createMap({ container: 'map', projection: crs.simple(), size: { width: 720, height: 520 },
-      renderer: { primary: '${options.webgpu ? 'webgpu' : 'webgl1'}', fallback: false }, view: { center: { x: 0, y: 0 }, zoom: 0 } });
-    const lines = map.sources.vector({ id: 'lines' }), areas = map.sources.vector({ id: 'areas' }), symbols = map.sources.vector({ id: 'symbols' });
+    const { createMap, crs, style: expr } = await import('/dist/index.js');
+    const map = await createMap('map', { projection: crs.simple(), size: { width: 720, height: 520 },
+    renderer: { primary: '${options.webgpu ? 'webgpu' : 'webgl1'}', fallback: false }, center: { x: 0, y: 0 }, zoom: 0 });
+    const lines = map.data.vector({ id: 'lines' }), areas = map.data.vector({ id: 'areas' }), symbols = map.data.vector({ id: 'symbols' });
     const lineXY = [], lineOffsets = [0], polygonXY = [], ringOffsets = [0], polygonOffsets = [0];
     for (let f = 0; f < 96; f++) {
       for (let i = 0; i < 256; i++) lineXY.push(-1.2 + i * 2.4 / 255, -0.9 + f * 1.8 / 95 + Math.sin(i * 0.2 + f) * 0.008);
@@ -39,10 +39,10 @@ export async function complexScene({ session, expect, options }) {
     await areas.importColumnar({ kind: 'polygon', positions: Float64Array.from(polygonXY), partOffsets: Uint32Array.from(ringOffsets), featurePartOffsets: Uint32Array.from(polygonOffsets), ids: Array.from({ length: 64 }, (_, i) => i) }, { copy: false });
     await symbols.importColumnar({ kind: 'point', positions: symbolXY, properties, ids: Array.from({ length: 2048 }, (_, i) => i) }, { copy: false });
     const importMs = performance.now() - t0;
-    const fillLayer = map.layers.add({ id: 'fills', type: 'fills', source: areas, style: { fillColor: '#2266dd', fillOpacity: 0.35, strokeWidthPx: 1 } });
-    map.layers.add({ id: 'lines', type: 'lines', source: lines, style: { widthPx: 1, color: '#22aa55', opacity: 0.7 } });
-    const iconLayer = map.layers.add({ id: 'icons', type: 'points', source: symbols, style: { icon: expr.field('image'), iconSize: 6 } });
-    map.layers.add({ id: 'labels', type: 'labels', source: symbols, style: { text: expr.field('name'), sizePx: 9, collision: true, offsetPx: { x: 0, y: -8 } } });
+    const fillLayer = map.addLayer({ id: 'fills', type: 'fills', source: areas, style: { fillColor: '#2266dd', fillOpacity: 0.35, strokeWidthPx: 1 } });
+    map.addLayer({ id: 'lines', type: 'lines', source: lines, style: { widthPx: 1, color: '#22aa55', opacity: 0.7 } });
+    const iconLayer = map.addLayer({ id: 'icons', type: 'points', source: symbols, style: { icon: expr.field('image'), iconSize: 6 } });
+    map.addLayer({ id: 'labels', type: 'labels', source: symbols, style: { text: expr.field('name'), sizePx: 9, collision: true, offsetPx: { x: 0, y: -8 } } });
     await map.whenRendered();
     const firstPaintMs = performance.now() - t0;
     if (typeof gc === 'function') gc();
@@ -52,7 +52,7 @@ export async function complexScene({ session, expect, options }) {
       const samples = [];
       for (let i = 0; i < count; i++) {
         const start = performance.now();
-        map.view.set({ center: { x: Math.sin(i * 0.43) * 0.025, y: Math.cos(i * 0.39) * 0.02 } });
+        map.setView({ center: { x: Math.sin(i * 0.43) * 0.025, y: Math.cos(i * 0.39) * 0.02 } });
         await frame(); samples.push(performance.now() - start);
       }
       return samples;
@@ -61,8 +61,8 @@ export async function complexScene({ session, expect, options }) {
     const panMs = await pan(36), editMs = [];
     for (let i = 0; i < 12; i++) {
       const start = performance.now();
-      fillLayer.features.setOverride(i, { fillColor: i % 2 ? '#dd2266' : '#2266dd' });
-      iconLayer.features.setOverride(i, { opacity: i % 2 ? 0.6 : 1 });
+      fillLayer.setFeatureStyle(i, { fillColor: i % 2 ? '#dd2266' : '#2266dd' });
+      iconLayer.setFeatureStyle(i, { opacity: i % 2 ? 0.6 : 1 });
       await map.whenRendered(); editMs.push(performance.now() - start);
     }
     const checks = [];
@@ -72,10 +72,10 @@ export async function complexScene({ session, expect, options }) {
     check('all polygon vertices and holes survive export', areas.features.get(0).geometry.rings.map(r => r.length).join(',') === '129,9,9');
     check('worker prepares every import', map.debug.imports().used.worker === 3, map.debug.imports());
     map.layers.get('lines').setVisible(false); map.layers.get('labels').setVisible(false); iconLayer.setVisible(false);
-    fillLayer.features.setOverride(0, { fillColor: '#2266dd', fillOpacity: 1 });
-    map.view.set({ center: { x: 0, y: 0 } }); await map.whenRendered();
-    const filled = map.view.positionToScreen({ x: -1.05, y: -0.8 + 0.045 });
-    const hole = map.view.positionToScreen({ x: -1.08, y: -0.8 });
+    fillLayer.setFeatureStyle(0, { fillColor: '#2266dd', fillOpacity: 1 });
+    map.setView({ center: { x: 0, y: 0 } }); await map.whenRendered();
+    const filled = map.positionToScreen({ x: -1.05, y: -0.8 + 0.045 });
+    const hole = map.positionToScreen({ x: -1.08, y: -0.8 });
     const pixel = await map.debug.samplePixel(filled), fillHits = await map.query.rendered(filled), holeHits = await map.query.rendered(hole);
     check('polygon pixels and exact individual picking', pixel.b > 150 && fillHits[0]?.feature.id === 0 && !holeHits.some(h => h.feature.id === 0), { pixel, fillHits, holeHits });
     map.destroy();

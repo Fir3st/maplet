@@ -126,15 +126,13 @@ ${header(version, './')}
     </div>
     <pre class="install-code"><code>${highlightJavaScript(`import { createMap } from '@fir3st/maplet';
 
-const map = await createMap({
-  container: 'map',
-  view: {
-    center: { lat: 50.08, lng: 14.43 },
-    zoom: 12,
-  },
+const map = await createMap('map', {
+  center: [50.08, 14.43], zoom: 12,
+  controls: ['zoom'],
 });
 
-// Give #map a height, then add sources and layers.`)}</code></pre>
+map.addPoints([{ position: [50.08, 14.43] }]);
+// Give #map a height before creating it.`)}</code></pre>
   </section>
 </main>
 ${footer}`, 'gallery.js');

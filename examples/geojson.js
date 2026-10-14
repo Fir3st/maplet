@@ -1,8 +1,7 @@
 import { openExample, action, ready, report } from './shared.js';
 
 const map = await openExample({ geographic: true });
-const places = map.sources.vector({ id: 'imported-places' });
-map.layers.add({ id: 'places', type: 'points', source: places, style: { radiusPx: 10, color: '#16724c', strokeColor: '#fff', strokeWidthPx: 3 } });
+const places = map.addPoints([], { style: { radiusPx: 10, color: '#16724c', strokeColor: '#fff', strokeWidthPx: 3 } });
 const label = document.createElement('label');
 label.htmlFor = 'geojson-input'; label.textContent = 'GeoJSON FeatureCollection';
 const input = document.createElement('textarea');
@@ -19,11 +18,11 @@ async function importInput() {
       data.features.some(feature => feature.geometry?.type !== 'Point')) {
     throw new Error('Use a FeatureCollection with at most 100 Point features.');
   }
-  await places.importGeoJson(data);
+  await places.source.importGeoJson(data);
   await map.whenRendered();
-  report(`Imported ${places.features.count()} places. Coordinates are [longitude, latitude].`);
+  report(`Imported ${places.count()} places. GeoJSON coordinates are [longitude, latitude].`);
 }
 action('Import GeoJSON', importInput);
-action('Export current data', () => { input.value = JSON.stringify(places.exportGeoJson(), null, 2); report('The editor now contains an export of the accepted source data.'); });
+action('Export current data', () => { input.value = JSON.stringify(places.source.exportGeoJson(), null, 2); report('The editor now contains an export of the accepted source data.'); });
 await importInput();
 await ready(map, { places });

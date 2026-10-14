@@ -54,10 +54,10 @@ export interface MapFixture {
 
 export async function makeMap(options: MapOptions = {}): Promise<MapFixture> {
   const clock = manualClock();
-  const map = await createMap({
+  const map = await createMap(null, {
     renderer: { primary: 'none' },
     size: { width: 800, height: 600 },
-    view: { center: { lat: 50, lng: 14 }, zoom: 8 },
+    center: { lat: 50, lng: 14 }, zoom: 8,
     clock,
     ...options,
   });

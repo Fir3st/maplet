@@ -40,22 +40,20 @@ function finalize() {
 }
 const started = performance.now();
 
-const map = await createMap({
-  container: 'map',
-  renderer:
-    new URLSearchParams(location.search).get('backend') === 'webgpu'
-      ? { primary: 'webgpu', fallback: false }
-      : { primary: 'webgl1', fallback: false },
-  size: { width: 720, height: 520 },
-  view: { center: CENTER, zoom: ZOOM },
+const map = await createMap('map', {
+    renderer: new URLSearchParams(location.search).get('backend') === 'webgpu'
+        ? { primary: 'webgpu', fallback: false }
+        : { primary: 'webgl1', fallback: false },
+    size: { width: 720, height: 520 },
+    center: CENTER, zoom: ZOOM
 });
-const source = map.sources.vector({ id: 'points' });
-map.layers.add({
+const source = map.data.vector({ id: 'points' });
+map.addLayer({
   id: 'points',
   type: 'points',
   source,
   style: { radiusPx: 2, color: '#2563eb' },
-  interaction: { enabled: true },
+  interactive: true ,
 });
 
 /* --------------------------------- HUD ------------------------------------- */
@@ -79,7 +77,7 @@ map.on('viewchange', () => {
     updateStats();
   });
 });
-map.on('feature', (event) => {
+map.onFeature((event) => {
   if (event.type === 'mouseover') {
     const feature = source.features.get(event.feature.id);
     hud('hover', `${String(event.feature.id)} · ${feature ? JSON.stringify(feature.properties) : ''}`);
@@ -144,7 +142,7 @@ async function importPoints() {
 /* ------------------------------ measurements ------------------------------- */
 const blue = (pixel) => pixel.b > 180 && pixel.r < 90 && pixel.g < 160;
 async function probePixel(position) {
-  const screen = map.view.positionToScreen(position);
+  const screen = map.positionToScreen(position);
   return map.debug.samplePixel({ x: Math.round(screen.x), y: Math.round(screen.y) });
 }
 
@@ -155,7 +153,7 @@ async function panTest(ms = 2500) {
   let frames = 0;
   while (performance.now() < end) {
     const t0 = performance.now();
-    map.view.set({
+    map.setView({
       center: {
         lat: CENTER.lat + 0.0006 * Math.sin(frames / 9),
         lng: CENTER.lng + 0.0008 * Math.cos(frames / 7),
@@ -230,7 +228,7 @@ await check('SCL-02 the batch renders as one clipped instanced draw', async () =
 }));
 
 const pan = await panTest();
-map.view.set({ center: CENTER, zoom: ZOOM });
+map.setView({ center: CENTER, zoom: ZOOM });
 await map.whenRendered();
 await sleep(30);
 const pixelAfter = await probePixel(CENTER);

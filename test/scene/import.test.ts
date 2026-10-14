@@ -26,7 +26,7 @@ function pointBatch(count: number, startLng = 14): {
 
 test('IO-05/IO-06: a columnar import replaces the source and exports canonical data', async () => {
   const { map } = await makeMap();
-  const source = map.sources.vector({ id: 's' });
+  const source = map.data.vector({ id: 's' });
   source.features.add({ id: 'old', geometry: { type: 'point', position: { lat: 1, lng: 1 } } });
   const commit = await source.importColumnar(pointBatch(2000));
   assert.equal(source.features.count(), 2000);
@@ -70,7 +70,7 @@ test('IO-05/IO-06: a columnar import replaces the source and exports canonical d
 
 test('IO-05: append mode adds to the source and the input buffer stays usable', async () => {
   const { map } = await makeMap();
-  const source = map.sources.vector({ id: 's' });
+  const source = map.data.vector({ id: 's' });
   source.features.add({ id: 'base', geometry: { type: 'point', position: { lat: 50, lng: 14 } } });
   const batch = pointBatch(10, 15);
   await source.importColumnar(batch, { mode: 'append' });
@@ -86,7 +86,7 @@ test('IO-05: append mode adds to the source and the input buffer stays usable', 
 
 test('TX-09: a failed import keeps the previous content and revision intact', async () => {
   const { map } = await makeMap();
-  const source = map.sources.vector({ id: 's' });
+  const source = map.data.vector({ id: 's' });
   source.features.add({ id: 'keep', geometry: { type: 'point', position: { lat: 50, lng: 14 } } });
   const revisionBefore = map.stats().revision;
   await assert.rejects(
@@ -106,7 +106,7 @@ test('TX-09: a failed import keeps the previous content and revision intact', as
 
 test('IO-05: a malformed batch rejects before the source is touched', async () => {
   const { map } = await makeMap();
-  const source = map.sources.vector({ id: 's' });
+  const source = map.data.vector({ id: 's' });
   source.features.add({ id: 'keep', geometry: { type: 'point', position: { lat: 50, lng: 14 } } });
   await assert.rejects(
     source.importColumnar({ kind: 'point', positions: Float64Array.of(1, 2, 3) }),
@@ -121,7 +121,7 @@ test('IO-05: a malformed batch rejects before the source is touched', async () =
 
 test('IO-09: an abort before the import starts rejects and publishes nothing', async () => {
   const { map } = await makeMap();
-  const source = map.sources.vector({ id: 's' });
+  const source = map.data.vector({ id: 's' });
   source.features.add({ id: 'keep', geometry: { type: 'point', position: { lat: 50, lng: 14 } } });
   const controller = new AbortController();
   controller.abort();
@@ -135,7 +135,7 @@ test('IO-09: an abort before the import starts rejects and publishes nothing', a
 
 test('IO-05: columnar lines and polygons import through the same store validation', async () => {
   const { map } = await makeMap();
-  const source = map.sources.vector({ id: 's' });
+  const source = map.data.vector({ id: 's' });
   await source.importColumnar({
     kind: 'polygon',
     positions: Float64Array.of(0, 0, 4, 0, 4, 4, 0, 4, 1, 1, 1, 2, 2, 2, 2, 1),
@@ -171,9 +171,9 @@ test('IO-05: columnar lines and polygons import through the same store validatio
 test('IO-05: a planar CRS imports { x, y } columns without geographic assumptions', async () => {
   const { map } = await makeMap({
     projection: crs.simple(),
-    view: { center: { x: 0, y: 0 }, zoom: 5 },
-  });
-  const source = map.sources.vector({ id: 's' });
+    center: { x: 0, y: 0 }, zoom: 5
+});
+  const source = map.data.vector({ id: 's' });
   await source.importColumnar({
     kind: 'point',
     positions: Float32Array.of(-40, 90, 60, -20),
@@ -199,7 +199,7 @@ test('IO-05: a planar CRS imports { x, y } columns without geographic assumption
 
 test('GeoJSON imports share the pipeline and its diagnostics', async () => {
   const { map } = await makeMap();
-  const source = map.sources.vector({ id: 's' });
+  const source = map.data.vector({ id: 's' });
   await source.importGeoJson({
     type: 'FeatureCollection',
     features: [
@@ -219,7 +219,7 @@ test('GeoJSON imports share the pipeline and its diagnostics', async () => {
 
 test('compact point import preserves generations, metadata ownership and empty replacement', async () => {
   const { map } = await makeMap();
-  const source = map.sources.vector({ id: 's' });
+  const source = map.data.vector({ id: 's' });
   const batch = { kind: 'point' as const, positions: Float64Array.of(14, 50, 15, 51),
     altitudes: Float64Array.of(123, Number.NaN), ids: [42, '42'], properties: [{ value: 1 }, { value: 2 }] };
   await source.importColumnar(batch);
@@ -238,7 +238,7 @@ test('compact point import preserves generations, metadata ownership and empty r
 
 test('compact point import validates all columns and append duplicates before publication', async () => {
   const { map } = await makeMap();
-  const source = map.sources.vector({ id: 's' });
+  const source = map.data.vector({ id: 's' });
   await source.importColumnar({ kind: 'point', positions: Float64Array.of(14, 50), ids: ['keep'] });
   const before = source.features.get('keep');
   const revision = map.stats().revision;
@@ -257,8 +257,8 @@ test('compact point import validates all columns and append duplicates before pu
 
 test('compact point imports retain the existing altitude semantics', async () => {
   const { map } = await makeMap();
-  const source = map.sources.vector({ id: 'compact' });
-  const direct = map.sources.vector({ id: 'direct' });
+  const source = map.data.vector({ id: 'compact' });
+  const direct = map.data.vector({ id: 'direct' });
   // Altitude is metadata, not a projected coordinate; the existing store accepts Infinity.
   direct.features.add({ id: 'p', geometry: { type: 'point', position: { lng: 14, lat: 50, altitude: Infinity } } });
   await source.importColumnar({ kind: 'point', positions: Float64Array.of(14, 50), altitudes: Float64Array.of(Infinity), ids: ['p'] });
@@ -367,8 +367,8 @@ test('bulk initialization validates the complete CRS domain before adopting data
     const point = position as { x: number; y: number };
     return point.x === 9 ? { x: Infinity, y: 0 } : crs.simple().toWorld(position);
   } };
-  const { map } = await makeMap({ projection, view: { center: { x: 0, y: 0 }, zoom: 1 } });
-  const source = map.sources.vector({ id: 's' });
+  const { map } = await makeMap({ projection, center: { x: 0, y: 0 }, zoom: 1 });
+  const source = map.data.vector({ id: 's' });
   const revision = map.stats().revision;
   await assert.rejects(source.importColumnar({ kind: 'point', positions: Float64Array.of(1, 2, 9, 4), ids: ['a', 'b'] }),
     (error: unknown) => isMapletError(error) && error.code === 'invalid-argument' && error.message.includes('CRS domain'));
@@ -396,11 +396,9 @@ test('bulk journal invalidation rejects older plans and retains subsequent local
 
 test('bulk columns match ordinary CRUD across CRS, wrapping, generated IDs and altitude', async () => {
   for (const projection of [crs.webMercator(), crs.epsg4326(), crs.epsg3395(), crs.simple()]) {
-    const { map } = await makeMap({ projection, view: {
-      center: projection.positionKind === 'geographic' ? { lat: 0, lng: 0 } : { x: 0, y: 0 }, zoom: 1,
-    } });
-    const bulk = map.sources.vector({ id: 'bulk' });
-    const direct = map.sources.vector({ id: 'direct' });
+    const { map } = await makeMap({ projection, center: projection.positionKind === 'geographic' ? { lat: 0, lng: 0 } : { x: 0, y: 0 }, zoom: 1 });
+    const bulk = map.data.vector({ id: 'bulk' });
+    const direct = map.data.vector({ id: 'direct' });
     const coordinates = projection.positionKind === 'geographic' ? [540, 90, -721, -90, 14, 50, 0, 0] : [-500, 20, 0, 0, 256, -256, 800, 800];
     const ids = [42, '42', 'auto:1', 'last'];
     const properties = [{ nested: { value: 1 } }, {}, { nested: { value: 3 } }, {}];
@@ -435,7 +433,7 @@ test('an abort during bulk CRS conversion never publishes even the final row', a
     return base.toWorld(position);
   } };
   const { map } = await makeMap({ projection });
-  const source = map.sources.vector({ id: 's' });
+  const source = map.data.vector({ id: 's' });
   conversions = 0;
   importing = true;
   const revision = map.stats().revision;
@@ -450,8 +448,8 @@ test('an abort during bulk CRS conversion never publishes even the final row', a
 
 test('recycled stores keep generations and existing imports enforce binding ownership', async () => {
   const { map } = await makeMap();
-  const source = map.sources.vector({ id: 's' });
-  const target = map.sources.vector({ id: 'target' });
+  const source = map.data.vector({ id: 's' });
+  const target = map.data.vector({ id: 'target' });
   source.features.add({ id: 42, geometry: { type: 'point', position: { lat: 50, lng: 14 } } });
   const stale = source.features.ref(42);
   source.features.remove(42);
@@ -500,7 +498,7 @@ test('bulk adoption and subsequent staged edits roll back in reverse order', () 
 
 test('writes during point preparation are retained by append, not replaced by initialization', async () => {
   const { map } = await makeMap();
-  const source = map.sources.vector({ id: 's' });
+  const source = map.data.vector({ id: 's' });
   const pending = source.importColumnar(pointBatch(3), { mode: 'append' });
   source.features.add({ id: 'during', geometry: { type: 'point', position: { lng: 14, lat: 50 } } });
   const ref = source.features.ref('during');

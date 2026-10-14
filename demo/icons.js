@@ -18,14 +18,13 @@ const result = { checks: [], pass: false, errors: [], ms: 0 };
 window.addEventListener('error', (event) => result.errors.push(String(event.message)));
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const map = await createMap({
-  container: 'map',
-  renderer: { primary: new URLSearchParams(location.search).get('backend') === 'webgpu' ? 'webgpu' : 'webgl1', fallback: false },
-  size: { width: SIZE, height: SIZE },
-  view: { center: { lat: 50.0, lng: 14.0 }, zoom: 12 },
+const map = await createMap('map', {
+    renderer: { primary: new URLSearchParams(location.search).get('backend') === 'webgpu' ? 'webgpu' : 'webgl1', fallback: false },
+    size: { width: SIZE, height: SIZE },
+    center: { lat: 50.0, lng: 14.0 }, zoom: 12
 });
 
-const source = map.sources.vector({ id: 'pois' });
+const source = map.data.vector({ id: 'pois' });
 // Diagnostics hook for the check page and manual inspection.
 window.__iconDebug = { map, source };
 const centerFeature = {
@@ -36,11 +35,11 @@ const centerFeature = {
 // The rotated twin sits at an exact integer screen offset from the centre
 // feature, so the GEOM-04 check can compare texel-identical samples (a quarter
 // turn maps the sampling grid onto itself).
-const centerScreen = map.view.positionToScreen({ lat: 50.0, lng: 14.0 });
-const rotatedPosition = map.view.screenToPosition({ x: centerScreen.x + 58, y: centerScreen.y - 45 });
+const centerScreen = map.positionToScreen({ lat: 50.0, lng: 14.0 });
+const rotatedPosition = map.screenToPosition({ x: centerScreen.x + 58, y: centerScreen.y - 45 });
 // A pin whose tip is declared as the anchor (tip 12 px below the 24 px sprite
 // centre) and which is rotated: the tip must stay on the feature position.
-const tipPosition = map.view.screenToPosition({ x: centerScreen.x + 150, y: centerScreen.y + 60 });
+const tipPosition = map.screenToPosition({ x: centerScreen.x + 150, y: centerScreen.y + 60 });
 const bulk = [];
 for (let i = 0; i < 500; i++) {
   bulk.push({
@@ -60,35 +59,35 @@ const states = [];
 const asset = map.assets.addImage({ id: 'pin', src: PIN_URL });
 asset.subscribe((snapshot) => states.push(snapshot.state));
 const broken = map.assets.addImage({ id: 'broken-pin', src: './definitely-missing.png' });
-map.layers.add({
+map.addLayer({
   id: 'icons',
   type: 'points',
   source,
   filter: { and: [{ not: { id: 'broken' } }, { not: { id: 'anchor' } }, { not: { id: 'rotated' } }, { not: { id: 'tip' } }] },
   style: { icon: 'pin', iconSize: 24, radiusPx: 4, color: '#64748b' },
 });
-map.layers.add({
+map.addLayer({
   id: 'broken-icons',
   type: 'points',
   source,
   filter: { id: 'broken' },
   style: { icon: 'broken-pin', radiusPx: 10, color: '#16a34a', strokeColor: '#052e16', strokeWidthPx: 1 },
 });
-map.layers.add({
+map.addLayer({
   id: 'anchored',
   type: 'points',
   source,
   filter: { id: 'anchor' },
   style: { icon: 'pin', iconSize: 24, radiusPx: 0, iconAnchor: { x: 0, y: -40 } },
 });
-map.layers.add({
+map.addLayer({
   id: 'rotated-icons',
   type: 'points',
   source,
   filter: { id: 'rotated' },
   style: { icon: 'pin', iconSize: 24, radiusPx: 0, iconRotate: 90 },
 });
-map.layers.add({
+map.addLayer({
   id: 'tip-icons',
   type: 'points',
   source,
@@ -117,7 +116,7 @@ const started = performance.now();
 
 await check('MEDIA-08 error state is explicit and falls back to the shape', async () => {
   const brokenState = await broken.ready();
-  const brokenAnchor = map.view.positionToScreen({ lat: 50.03, lng: 14.03 });
+  const brokenAnchor = map.positionToScreen({ lat: 50.03, lng: 14.03 });
   await sleep(300);
   const fallbackPixel = await sample(brokenAnchor.x, brokenAnchor.y);
   return {
@@ -139,7 +138,7 @@ await check('MEDIA-07 one texture shared by 500 instances', async () => {
   const planSprites = map.debug.layerSprites('icons').length;
   await sleep(400);
   const stats = map.stats();
-  const center = map.view.positionToScreen({ lat: 50.0, lng: 14.0 });
+  const center = map.positionToScreen({ lat: 50.0, lng: 14.0 });
   // Icon centre maps to the white inner circle of the pin; the lower tip is red.
   const white = await sample(center.x, center.y);
   const red = await sample(center.x, center.y + 7);
@@ -155,7 +154,7 @@ await check('MEDIA-07 one texture shared by 500 instances', async () => {
 });
 
 await check('PICK-05 transparent icon areas are not hits', async () => {
-  const center = map.view.positionToScreen({ lat: 50.0, lng: 14.0 });
+  const center = map.positionToScreen({ lat: 50.0, lng: 14.0 });
   const corner = await map.query.rendered({ x: Math.round(center.x - 12), y: Math.round(center.y - 12) });
   const middle = await map.query.rendered({ x: Math.round(center.x), y: Math.round(center.y) });
   return {
@@ -167,7 +166,7 @@ await check('PICK-05 transparent icon areas are not hits', async () => {
 });
 
 await check('anchor offset shifts the sprite', async () => {
-  const anchor = map.view.positionToScreen({ lat: 50.02, lng: 13.98 });
+  const anchor = map.positionToScreen({ lat: 50.02, lng: 13.98 });
   const atAnchor = await sample(anchor.x, anchor.y);
   const above = await sample(anchor.x, anchor.y - 40);
   return {
@@ -177,8 +176,8 @@ await check('anchor offset shifts the sprite', async () => {
 });
 
 await check('GEOM-04 rotation turns the sprite around its anchor', async () => {
-  const flatAnchor = map.view.positionToScreen({ lat: 50.0, lng: 14.0 });
-  const turnedAnchor = map.view.positionToScreen(rotatedPosition);
+  const flatAnchor = map.positionToScreen({ lat: 50.0, lng: 14.0 });
+  const turnedAnchor = map.positionToScreen(rotatedPosition);
   // Model-free proof with texel-identical samples. Pixel centres are
   // half-integers, so a quarter clockwise turn about an integer anchor maps
   // the sampling grid onto itself as flat(dx,dy) = turned(-dy-1, dx).
@@ -253,7 +252,7 @@ await check('GEOM-04 rotation keeps the declared anchor at the feature position'
   // sprite) and sits on the feature position; a quarter turn must orbit the
   // sprite around that point: ink only to the right of it (the head), the tip
   // body just right of it and nothing above or left.
-  const anchor = map.view.positionToScreen(tipPosition);
+  const anchor = map.positionToScreen(tipPosition);
   const body = await sample(anchor.x + 6, anchor.y);
   const left = await sample(anchor.x - 6, anchor.y);
   const top = await sample(anchor.x, anchor.y - 6);

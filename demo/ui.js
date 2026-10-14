@@ -73,13 +73,12 @@ function expectedGeographicScale(zoom, lat, maxPx = 100) {
 /* --------------------------------- scene ---------------------------------- */
 
 const main = {};
-const map = await createMap({
-  container: 'map-main',
-  renderer: rendererOptions,
-  size: { width: 560, height: 420 },
-  view: { center: viewCenter, zoom: z },
-  minZoom: 1,
-  maxZoom: 4,
+const map = await createMap('map-main', {
+    renderer: rendererOptions,
+    size: { width: 560, height: 420 },
+    center: viewCenter, zoom: z,
+    minZoom: 1,
+    maxZoom: 4
 });
 main.map = map;
 const sourceOptions = (id, attribution) => ({
@@ -89,28 +88,27 @@ const sourceOptions = (id, attribution) => ({
   maxZoom: z,
   attribution,
 });
-map.sources.rasterTiles(sourceOptions('src-a', '© A'));
-map.sources.rasterTiles(sourceOptions('src-b', '© B'));
-main.layerA = map.layers.add({ id: 'layer-a', type: 'raster', source: 'src-a' });
-main.layerB = map.layers.add({ id: 'layer-b', type: 'raster', source: 'src-b' });
-map.groups.add({ id: 'grp' });
-main.layerG = map.layers.add({ id: 'layer-g', type: 'raster', source: 'src-b', group: 'grp' });
-main.zoomControl = map.controls.add({ kind: 'zoom', id: 'zoom' });
-main.layersControl = map.controls.add({ kind: 'layers', id: 'layers' });
-main.attributionControl = map.controls.add({ kind: 'attribution', id: 'attribution' });
-main.scaleControl = map.controls.add({ kind: 'scale', id: 'scale' });
+map.data.rasterTiles(sourceOptions('src-a', '© A'));
+map.data.rasterTiles(sourceOptions('src-b', '© B'));
+main.layerA = map.addLayer({ id: 'layer-a', type: 'raster', source: 'src-a' });
+main.layerB = map.addLayer({ id: 'layer-b', type: 'raster', source: 'src-b' });
+const group = map.addLayer({ id: 'grp' });
+main.layerG = group.addLayer({ id: 'layer-g', type: 'raster', source: 'src-b' });
+main.zoomControl = map.addControl({ kind: 'zoom', id: 'zoom' });
+main.layersControl = map.addControl({ kind: 'layers', id: 'layers' });
+main.attributionControl = map.addControl({ kind: 'attribution', id: 'attribution' });
+main.scaleControl = map.addControl({ kind: 'scale', id: 'scale' });
 
 const planar = {};
-planar.map = await createMap({
-  container: 'map-planar',
-  projection: crs.simple(),
-  renderer: rendererOptions,
-  size: { width: 240, height: 160 },
-  view: { center: { x: 0, y: 0 }, zoom: 3 },
-  minZoom: 0,
-  maxZoom: 8,
+planar.map = await createMap('map-planar', {
+    projection: crs.simple(),
+    renderer: rendererOptions,
+    size: { width: 240, height: 160 },
+    center: { x: 0, y: 0 }, zoom: 3,
+    minZoom: 0,
+    maxZoom: 8
 });
-planar.scaleControl = planar.map.controls.add({ kind: 'scale', id: 'scale' });
+planar.scaleControl = planar.map.addControl({ kind: 'scale', id: 'scale' });
 
 /* -------------------------------- helpers --------------------------------- */
 
@@ -137,20 +135,20 @@ const started = performance.now();
 await sleep(400);
 
 await check('UI-01 zoom buttons honour limits and stay in sync with the API', async () => {
-  map.view.set({ zoom: 4 });
+  map.setView({ zoom: 4 });
   const atMax = { inDisabled: zoomButton(containerMain, 'in').disabled, outDisabled: zoomButton(containerMain, 'out').disabled };
   zoomButton(containerMain, 'out').click();
-  const afterOut = map.view.get().zoom;
+  const afterOut = map.getView().zoom;
   const afterOutState = zoomButton(containerMain, 'in').disabled;
   // Climb down to the lower limit and try to go past it.
-  map.view.set({ zoom: 2 });
+  map.setView({ zoom: 2 });
   zoomButton(containerMain, 'out').click();
   zoomButton(containerMain, 'out').click();
-  const atMin = { zoom: map.view.get().zoom, outDisabled: zoomButton(containerMain, 'out').disabled };
+  const atMin = { zoom: map.getView().zoom, outDisabled: zoomButton(containerMain, 'out').disabled };
   zoomButton(containerMain, 'out').click();
-  const stuck = map.view.get().zoom;
+  const stuck = map.getView().zoom;
   zoomButton(containerMain, 'in').click();
-  const afterIn = map.view.get().zoom;
+  const afterIn = map.getView().zoom;
   return {
     pass:
       atMax.inDisabled === true &&
@@ -167,17 +165,17 @@ await check('UI-01 zoom buttons honour limits and stay in sync with the API', as
 
 await check('UI-02 layer list matches the layer API in both directions', async () => {
   const before = {
-    visible: main.layerA.getVisible(),
+    visible: main.layerA.isVisible(),
     checked: layerCheckbox(containerMain, 'layer-a').checked,
   };
   layerCheckbox(containerMain, 'layer-a').click();
   const afterClick = {
-    visible: main.layerA.getVisible(),
+    visible: main.layerA.isVisible(),
     checked: layerCheckbox(containerMain, 'layer-a').checked,
   };
   main.layerA.setVisible(true);
   const afterApi = {
-    visible: main.layerA.getVisible(),
+    visible: main.layerA.isVisible(),
     checked: layerCheckbox(containerMain, 'layer-a').checked,
   };
   const listed = [...controlIn(containerMain, 'layers').querySelectorAll('input')].map(
@@ -191,7 +189,7 @@ await check('UI-02 layer list matches the layer API in both directions', async (
       afterClick.checked === false &&
       afterApi.visible === true &&
       afterApi.checked === true &&
-      // Top-level entries only: the group layer is managed through its group.
+      // Top-level entries only: nested content is managed through its layer.
       listed.includes('layer-a') &&
       listed.includes('layer-b') &&
       listed.includes('grp') &&
@@ -200,15 +198,15 @@ await check('UI-02 layer list matches the layer API in both directions', async (
   };
 });
 
-await check('UI-02b group row toggles the group through the API', async () => {
+await check('UI-02b layer row toggles nested content through the API', async () => {
   layerCheckbox(containerMain, 'grp').click();
   const afterClick = {
-    visible: map.groups.get('grp').getVisible(),
+    visible: group.isVisible(),
     checked: layerCheckbox(containerMain, 'grp').checked,
   };
-  map.groups.setVisible('grp', true);
+  group.setVisible(true);
   const afterApi = {
-    visible: map.groups.get('grp').getVisible(),
+    visible: group.isVisible(),
     checked: layerCheckbox(containerMain, 'grp').checked,
   };
   return {
@@ -225,19 +223,19 @@ await check('UI-03 attribution notice dedupes and survives sharing', async () =>
   const seen = [];
   const record = () => seen.push(attributionText(containerMain));
   record();
-  const sourceC = map.sources.rasterTiles(sourceOptions('src-c', '© A'));
-  map.layers.add({ id: 'layer-c', type: 'raster', source: 'src-c' });
+  const sourceC = map.data.rasterTiles(sourceOptions('src-c', '© A'));
+  map.addLayer({ id: 'layer-c', type: 'raster', source: 'src-c' });
   record();
   // Remove the first source carrying © A; © A must stay because src-c shares it.
   map.layers.remove('layer-a');
-  map.sources.remove('src-a');
+  map.data.remove('src-a');
   record();
   map.layers.remove('layer-c');
-  map.sources.remove('src-c');
+  map.data.remove('src-c');
   record();
   map.layers.remove('layer-b');
   map.layers.remove('layer-g');
-  map.sources.remove('src-b');
+  map.data.remove('src-b');
   record();
   const countA = (text) => text.split('© A').length - 1;
   return {
@@ -255,14 +253,14 @@ await check('UI-03 attribution notice dedupes and survives sharing', async () =>
 });
 
 await check('UI-04 geographic scale matches the independent oracle', async () => {
-  map.view.set({ zoom: 3 });
-  const lat = map.view.get().center.lat;
+  map.setView({ zoom: 3 });
+  const lat = map.getView().center.lat;
   const atThree = {
     expected: expectedGeographicScale(3, lat),
     label: scaleLabel(containerMain),
     widthPx: scaleWidth(containerMain),
   };
-  map.view.set({ zoom: 4 });
+  map.setView({ zoom: 4 });
   const atFour = {
     expected: expectedGeographicScale(4, lat),
     label: scaleLabel(containerMain),
@@ -281,7 +279,7 @@ await check('UI-04 geographic scale matches the independent oracle', async () =>
 
 await check('UI-04b planar scale uses CRS units, never earth meters', async () => {
   const atThree = { label: scaleLabel(containerPlanar), widthPx: scaleWidth(containerPlanar) };
-  planar.map.view.set({ zoom: 4 });
+  planar.map.setView({ zoom: 4 });
   const atFour = { label: scaleLabel(containerPlanar), widthPx: scaleWidth(containerPlanar) };
   return {
     pass:
@@ -302,7 +300,7 @@ await check('UI-07 locate success, typed errors and unsupported', async () => {
   const pending = map.locate({ setView: true, timeoutMs: 2000 });
   fake.state.current.at(-1).success(fix(50.5, 15.5, 8));
   const success = await pending;
-  const center = map.view.get().center;
+  const center = map.getView().center;
   const setViewOk =
     success.ok && success.position.lat === 50.5 && success.position.accuracy === 8 &&
     Math.abs(center.lat - 50.5) < 1e-9 && Math.abs(center.lng - 15.5) < 1e-9;
@@ -362,8 +360,8 @@ await check('UI-07 watch delivers updates and cancel stops them', async () => {
 
 await check('UI-09 controls are hit-testable and capture their own gestures', async () => {
   // UI-03 removed all earlier layers; add one back to probe a live checkbox.
-  map.sources.rasterTiles(sourceOptions('src-hit', '© HIT'));
-  map.layers.add({ id: 'layer-hit', type: 'raster', source: 'src-hit' });
+  map.data.rasterTiles(sourceOptions('src-hit', '© HIT'));
+  map.addLayer({ id: 'layer-hit', type: 'raster', source: 'src-hit' });
   const centerOf = (element) => {
     const rect = element.getBoundingClientRect();
     return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
@@ -385,9 +383,9 @@ await check('UI-09 controls are hit-testable and capture their own gestures', as
   const hitOk = hitTargets.every((entry) => entry.ok);
 
   // A pointerdown that starts on a control must not begin a map gesture.
-  map.view.set({ zoom: 2 });
-  const zoomBefore = map.view.get().zoom;
-  const centerBefore = map.view.get().center;
+  map.setView({ zoom: 2 });
+  const zoomBefore = map.getView().zoom;
+  const centerBefore = map.getView().center;
   const rect = zoomButton(containerMain, 'in').getBoundingClientRect();
   zoomButton(containerMain, 'in').dispatchEvent(new PointerEvent('pointerdown', {
     bubbles: true, cancelable: true, pointerType: 'mouse', pointerId: 99, isPrimary: true, button: 0, buttons: 1,
@@ -404,9 +402,9 @@ await check('UI-09 controls are hit-testable and capture their own gestures', as
   }));
   await sleep(350);
   const blocked =
-    map.view.get().zoom === zoomBefore &&
-    Math.abs(map.view.get().center.lat - centerBefore.lat) < 1e-12 &&
-    Math.abs(map.view.get().center.lng - centerBefore.lng) < 1e-12;
+    map.getView().zoom === zoomBefore &&
+    Math.abs(map.getView().center.lat - centerBefore.lat) < 1e-12 &&
+    Math.abs(map.getView().center.lng - centerBefore.lng) < 1e-12;
 
   // Sanity: the same sequence started on the map itself does pan. The pan starts
   // asynchronously (feature-drag pick resolves first), so the move needs a beat.
@@ -425,20 +423,20 @@ await check('UI-09 controls are hit-testable and capture their own gestures', as
     bubbles: true, pointerType: 'mouse', pointerId: 98, isPrimary: true, buttons: 0, ...at(250, 270),
   }));
   await sleep(350);
-  const panWorks = Math.abs(map.view.get().center.lng - centerBefore.lng) > 1e-9;
+  const panWorks = Math.abs(map.getView().center.lng - centerBefore.lng) > 1e-9;
 
   // Wheel over a control must not zoom; wheel over the map must.
-  const zoomAfterPan = map.view.get().zoom;
+  const zoomAfterPan = map.getView().zoom;
   zoomButton(containerMain, 'in').dispatchEvent(new WheelEvent('wheel', {
     bubbles: true, cancelable: true, deltaY: -300,
   }));
   await sleep(450);
-  const wheelBlocked = map.view.get().zoom === zoomAfterPan;
+  const wheelBlocked = map.getView().zoom === zoomAfterPan;
   containerMain.dispatchEvent(new WheelEvent('wheel', {
     bubbles: true, cancelable: true, deltaY: -300, ...at(300, 300),
   }));
   await sleep(700);
-  const wheelWorks = map.view.get().zoom > zoomAfterPan;
+  const wheelWorks = map.getView().zoom > zoomAfterPan;
 
   return {
     pass: hitOk && blocked && panWorks && wheelBlocked && wheelWorks,

@@ -60,16 +60,15 @@ function finalize() {
 }
 let started = performance.now();
 
-const map = await createMap({
-  container: 'map',
-  renderer: { primary: backend, fallback: false },
-  size: { width: SIZE, height: SIZE },
-  view: { center: CENTER, zoom: ZOOM },
+const map = await createMap('map', {
+    renderer: { primary: backend, fallback: false },
+    size: { width: SIZE, height: SIZE },
+    center: CENTER, zoom: ZOOM
 });
 
-const bounds = map.view.getBounds();
+const bounds = map.getBounds();
 const mark = `${CENTER.lng},${CENTER.lat}`;
-const source = map.sources.wms({
+const source = map.data.wms({
   id: 'wms',
   url: live ? 'https://ows.terrestris.de/osm/service' : '/wms',
   layers: live ? 'OSM-WMS' : 'roads',
@@ -78,18 +77,18 @@ const source = map.sources.wms({
   attribution: live ? '© terrestris GmbH & Co. KG, OpenStreetMap contributors' : '© Maplet WMS fixtures',
   ...(live ? {} : { params: { MARK: mark } }),
 });
-map.layers.add({ id: 'wms-layer', type: 'raster', source, interaction: { enabled: true } });
+map.addLayer({ id: 'wms-layer', type: 'raster', source, interactive: true  });
 
 if (!live) {
-  const hotspots = map.sources.vector({ id: 'hotspots' });
+  const hotspots = map.data.vector({ id: 'hotspots' });
   await hotspots.features.replace([
-    { id: 'hotspot-a', geometry: { type: 'point', position: map.view.screenToPosition({ x: 150, y: 120 }) } },
+    { id: 'hotspot-a', geometry: { type: 'point', position: map.screenToPosition({ x: 150, y: 120 }) } },
   ]);
-  map.layers.add({
+  map.addLayer({
     id: 'hotspots',
     type: 'points',
     source: hotspots,
-    interaction: { enabled: true },
+    interactive: true ,
     style: { radiusPx: 6, color: '#f59e0b' },
   });
 }
@@ -121,7 +120,7 @@ function expectedBlue(state) {
 }
 
 function expectedColor(point, state) {
-  const position = map.view.screenToPosition(point);
+  const position = map.screenToPosition(point);
   const red = Math.round(
     (255 * (position.lng - bounds.southwest.lng)) / (bounds.northeast.lng - bounds.southwest.lng),
   );
@@ -295,7 +294,7 @@ if (live) {
     const nearHotspotHits = await map.query.rendered({ x: 162, y: 120 }, { limit: 8 });
     const hotspotHits = await map.query.rendered({ x: 150, y: 120 }, { limit: 8 });
     const clicks = [];
-    const off = map.on('feature', (event) => {
+    const off = map.onFeature((event) => {
       if (event.type === 'click') {
         clicks.push({ sourceId: event.sourceId, id: event.feature.id, layerId: event.layerId });
       }

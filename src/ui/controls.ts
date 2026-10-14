@@ -1,6 +1,6 @@
 /**
  * Bounded HTML controls (UI-01..UI-04): zoom buttons honouring the view limits,
- * a layer/group toggle list, the attribution notice and the scale line.
+ * a layer toggle list, the attribution notice and the scale line.
  *
  * Controls never keep a second model: every control renders from engine state
  * (the scene emits `commit`/`viewchange`) and all actions call the same public
@@ -35,7 +35,7 @@ export interface ControlSpec {
 
 export interface ControlLayerEntry {
   readonly id: string;
-  readonly kind: 'layer' | 'group';
+  readonly kind: 'layer';
   readonly visible: boolean;
 }
 
@@ -304,7 +304,7 @@ function buildLayers(element: HTMLElement, context: ControlsContext): () => void
           context.layers.setVisible(entry.id, checkbox.checked),
         );
         const text = document.createElement('span');
-        text.textContent = entry.kind === 'group' ? `${entry.id} (group)` : entry.id;
+        text.textContent = entry.id;
         label.append(checkbox, text);
         row = { row: label, checkbox };
         rows.set(key, row);

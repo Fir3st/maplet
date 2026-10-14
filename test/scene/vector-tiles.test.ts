@@ -99,10 +99,10 @@ async function until(condition: () => boolean, what: string, timeoutMs = 4000): 
 async function setup(): Promise<{ fixture: MapFixture; fake: FakeTiles; source: VectorTilesSourceHandle }> {
   const fixture = await makeMap({
     size: { width: 200, height: 200 },
-    view: { center: toGeo(100, 100), zoom: 1 },
-  });
+    center: toGeo(100, 100), zoom: 1
+});
   const fake = new FakeTiles(mainRoutes());
-  const source = fixture.map.sources.vectorTiles({
+  const source = fixture.map.data.vectorTiles({
     id: 'vt',
     url: URL_MAIN,
     minZoom: 0,
@@ -117,9 +117,9 @@ async function setup(): Promise<{ fixture: MapFixture; fake: FakeTiles; source: 
 test('MVT-01/02/03: fragments share one identity, source layers are namespaces, ids stay exact', async () => {
   const { fixture, fake, source } = await setup();
   const { map } = fixture;
-  map.layers.add({ id: 'ln', type: 'lines', source: 'vt', namespace: 'roads', style: {} });
-  map.layers.add({ id: 'fl', type: 'fills', source: 'vt', namespace: 'buildings', style: {} });
-  map.layers.add({ id: 'any', type: 'points', source: 'vt', style: {} });
+  map.addLayer({ id: 'ln', type: 'lines', source: 'vt', namespace: 'roads', style: {} });
+  map.addLayer({ id: 'fl', type: 'fills', source: 'vt', namespace: 'buildings', style: {} });
+  map.addLayer({ id: 'any', type: 'points', source: 'vt', style: {} });
   await until(() => source.snapshot().stats.loaded.length === 4, 'four tiles loaded');
 
   assert.equal(source.features.count(), 4, 'roads 5, buildings 5, tile-local pois, big id');
@@ -162,18 +162,18 @@ test('MVT-05/06: viewport unload changes availability; reload restores stable-id
   map.state.set(ref, { selected: true });
 
   // Part unload: tile (1,1,0) leaves the viewport, its fragment disappears.
-  map.view.set({ center: toGeo(20, 20) });
+  map.setView({ center: toGeo(20, 20) });
   await until(() => source.snapshot().stats.loaded.length === 1, 'outer tiles retired');
   const partial = source.features.get(5, { namespace: 'roads' });
   assert.equal(partial?.geometry.type, 'lineString', 'one fragment left declares one line');
 
   // Full unload: no fragment remains, so the provider feature is not available.
-  map.view.set({ center: toGeo(240, 240) });
+  map.setView({ center: toGeo(240, 240) });
   await until(() => source.features.count() === 0, 'all fragments unloaded');
   assert.equal(source.features.has(5, { namespace: 'roads' }), false);
 
   // Reload: the stable identity comes back and keeps its state (MVT-06).
-  map.view.set({ center: toGeo(100, 100) });
+  map.setView({ center: toGeo(100, 100) });
   await until(() => source.features.count() === 4, 'features reloaded');
   const reloaded = source.features.ref(5, { namespace: 'roads' });
   assert.equal(map.state.get(reloaded).selected, true, 'state follows the stable identity');
@@ -189,9 +189,9 @@ test('MVT-04: tile-local identity is scoped to the loaded tile and never transfe
   assert.match(String(oldId), /^tl:1\/0\/0:/);
   map.state.set(source.features.ref(oldId, { namespace: 'pois' }), { selected: true });
 
-  map.view.set({ center: toGeo(240, 240) });
+  map.setView({ center: toGeo(240, 240) });
   await until(() => source.features.count() === 0, 'unloaded');
-  map.view.set({ center: toGeo(100, 100) });
+  map.setView({ center: toGeo(100, 100) });
   await until(() => source.features.count() === 4, 'reloaded');
 
   const newId = source.features.ids({ namespace: 'pois' })[0]!;
@@ -209,11 +209,11 @@ test('MVT-04: tile-local identity is scoped to the loaded tile and never transfe
 test('MVT-08: stale responses never overwrite the current tile revision', async () => {
   const fixture = await makeMap({
     size: { width: 200, height: 200 },
-    view: { center: toGeo(20, 20), zoom: 1 },
-  });
+    center: toGeo(20, 20), zoom: 1
+});
   const fake = new FakeTiles();
   fake.manual = true;
-  const source = fixture.map.sources.vectorTiles({
+  const source = fixture.map.data.vectorTiles({
     id: 'vt',
     url: '/stale/{z}/{x}/{y}.mvt',
     minZoom: 0,
@@ -223,7 +223,7 @@ test('MVT-08: stale responses never overwrite the current tile revision', async 
   await until(() => fake.pending('/stale/1/0/0.mvt') === 1, 'first tile requested');
 
   // Leave the viewport while the request is in flight; the tile is retired.
-  fixture.map.view.set({ center: toGeo(240, 240) });
+  fixture.map.setView({ center: toGeo(240, 240) });
   await until(() => fake.calls.includes('/stale/1/1/1.mvt'), 'the new viewport requested its tile');
   fake.respond('/stale/1/0/0.mvt', encodeTile([
     encodeLayer({ name: 'l', features: [{ id: 42, type: 1, geometry: geomPoint([[100, 100]]) }] }),
@@ -232,7 +232,7 @@ test('MVT-08: stale responses never overwrite the current tile revision', async 
   assert.equal(source.features.has(42, { namespace: 'l' }), false, 'stale response discarded');
 
   // Returning re-requests the tile; the fresh response is installed.
-  fixture.map.view.set({ center: toGeo(20, 20) });
+  fixture.map.setView({ center: toGeo(20, 20) });
   await until(() => fake.pending('/stale/1/0/0.mvt') === 1, 'second tile requested');
   fake.respond('/stale/1/0/0.mvt', encodeTile([
     encodeLayer({ name: 'l', features: [{ id: 77, type: 1, geometry: geomPoint([[100, 100]]) }] }),
@@ -245,11 +245,11 @@ test('MVT-08: stale responses never overwrite the current tile revision', async 
 test('MVT-08: a failed tile is visible, retried after eviction and recovered', async () => {
   const fixture = await makeMap({
     size: { width: 200, height: 200 },
-    view: { center: toGeo(20, 20), zoom: 1 },
-  });
+    center: toGeo(20, 20), zoom: 1
+});
   const fake = new FakeTiles();
   fake.manual = true;
-  const source = fixture.map.sources.vectorTiles({
+  const source = fixture.map.data.vectorTiles({
     id: 'vt',
     url: '/err/{z}/{x}/{y}.mvt',
     minZoom: 0,
@@ -262,9 +262,9 @@ test('MVT-08: a failed tile is visible, retried after eviction and recovered', a
   assert.equal(source.features.count(), 0, 'no half-decoded features');
 
   // Evict and return: the failed tile is retried, this time successfully.
-  fixture.map.view.set({ center: toGeo(240, 240) });
+  fixture.map.setView({ center: toGeo(240, 240) });
   await until(() => source.snapshot().stats.failed === 0, 'failed tile retired with the viewport');
-  fixture.map.view.set({ center: toGeo(20, 20) });
+  fixture.map.setView({ center: toGeo(20, 20) });
   await until(() => fake.pending('/err/1/0/0.mvt') === 1, 'retry requested');
   fake.respond('/err/1/0/0.mvt', encodeTile([
     encodeLayer({ name: 'l', features: [{ id: 9, type: 1, geometry: geomPoint([[100, 100]]) }] }),
@@ -277,11 +277,11 @@ test('MVT-08: a failed tile is visible, retried after eviction and recovered', a
 test('MVT: decode failures surface as tile errors without touching other tiles', async () => {
   const fixture = await makeMap({
     size: { width: 200, height: 200 },
-    view: { center: toGeo(100, 100), zoom: 1 },
-  });
+    center: toGeo(100, 100), zoom: 1
+});
   const fake = new FakeTiles();
   fake.manual = true;
-  const source = fixture.map.sources.vectorTiles({
+  const source = fixture.map.data.vectorTiles({
     id: 'vt',
     url: '/mixed/{z}/{x}/{y}.mvt',
     minZoom: 0,
@@ -309,7 +309,7 @@ test('MVT-07: provider bytes are read-only; edits live in a mutable overlay', as
   assert.ok(provider);
   const geometryBefore = provider.geometry;
 
-  const overlay = map.sources.vector({ id: 'overlay' });
+  const overlay = map.data.vector({ id: 'overlay' });
   overlay.features.add({
     id: 5,
     namespace: 'roads',
@@ -344,10 +344,10 @@ test('MVT-07: provider bytes are read-only; edits live in a mutable overlay', as
 test('MVT: the tile budget defers work instead of dropping needed tiles silently', async () => {
   const fixture = await makeMap({
     size: { width: 200, height: 200 },
-    view: { center: toGeo(100, 100), zoom: 1 },
-  });
+    center: toGeo(100, 100), zoom: 1
+});
   const fake = new FakeTiles(mainRoutes());
-  const source = fixture.map.sources.vectorTiles({
+  const source = fixture.map.data.vectorTiles({
     id: 'vt',
     url: URL_MAIN,
     minZoom: 0,
@@ -364,13 +364,13 @@ test('MVT: the tile budget defers work instead of dropping needed tiles silently
 test('DATA listing: vector tile sources are registered sources with their handle', async () => {
   const fixture = await makeMap();
   const fake = new FakeTiles(mainRoutes());
-  const source = fixture.map.sources.vectorTiles({ id: 'vt', url: URL_MAIN, attribution: '© Tiles', fetchFn: fake.fetchFn });
+  const source = fixture.map.data.vectorTiles({ id: 'vt', url: URL_MAIN, attribution: '© Tiles', fetchFn: fake.fetchFn });
   assert.ok(
-    fixture.map.sources.list().includes('vt'),
+    fixture.map.data.list().includes('vt'),
     'the listing feeds the attribution notice (UI-03)',
   );
-  assert.equal(fixture.map.sources.get('vt'), source);
-  assert.equal(fixture.map.sources.get('vt')?.type, 'vectorTiles');
+  assert.equal(fixture.map.data.get('vt'), source);
+  assert.equal(fixture.map.data.get('vt')?.type, 'vectorTiles');
   fixture.map.destroy();
 });
 
@@ -385,31 +385,31 @@ test('MVT overzoom: above maxZoom tiles stay clamped and features survive furthe
   );
   const fixture = await makeMap({
     size: { width: 200, height: 200 },
-    view: { center: toGeo(100, 100), zoom: 4 },
-  });
+    center: toGeo(100, 100), zoom: 4
+});
   const fake = new FakeTiles(routes);
-  const source = fixture.map.sources.vectorTiles({
+  const source = fixture.map.data.vectorTiles({
     id: 'vt',
     url: URL_MAIN,
     minZoom: 0,
     maxZoom: 2,
     fetchFn: fake.fetchFn,
   });
-  fixture.map.layers.add({ id: 'ln', type: 'lines', source: 'vt', namespace: 'roads', style: {} });
+  fixture.map.addLayer({ id: 'ln', type: 'lines', source: 'vt', namespace: 'roads', style: {} });
   await until(() => source.features.has(11, { namespace: 'roads' }), 'the maxZoom tile loaded');
   assert.ok(source.snapshot().stats.loaded.every((coord) => coord.z === 2), 'tiles are clamped to maxZoom');
   assert.ok(fake.calls.every((url) => url.startsWith('/tiles/2/')), `only maxZoom tiles are requested: ${fake.calls.join(', ')}`);
 
   // Zooming further keeps the same clamped tile set: no new requests, same identity.
   const callsBefore = fake.calls.length;
-  const commit = fixture.map.view.set({ zoom: 9 });
+  const commit = fixture.map.setView({ zoom: 9 });
   await fixture.map.whenRendered(commit.revision);
   assert.equal(fake.calls.length, callsBefore, 'overzoom does not request deeper tile zooms');
   assert.ok(source.features.has(11, { namespace: 'roads' }), 'identity survives the overzoom');
 
   // Planned geometry scales with the view zoom (2^zoom px per world unit), not the tile zoom.
-  const a = fixture.map.view.positionToScreen(toGeo(80, 80));
-  const b = fixture.map.view.positionToScreen(toGeo(100, 80));
+  const a = fixture.map.positionToScreen(toGeo(80, 80));
+  const b = fixture.map.positionToScreen(toGeo(100, 80));
   const distance = Math.hypot(b.x - a.x, b.y - a.y);
   assert.ok(Math.abs(distance - 20 * 2 ** 9) < 1e-6, `screen distance ${distance} follows the view zoom`);
   fixture.map.destroy();

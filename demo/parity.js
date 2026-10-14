@@ -7,7 +7,7 @@
  *
  * Results: `window.__parityCheckResult`.
  */
-import { createMap, crs, expr } from '../dist/index.js';
+import { createMap, crs, style as expr } from '../dist/index.js';
 
 const SIZE = 512;
 const PIN_SVG =
@@ -51,21 +51,20 @@ const SCENE = {
 };
 
 async function buildMap(container, primary) {
-  const map = await createMap({
-    container,
+  const map = await createMap(container, {
     renderer: { primary, fallback: false },
     size: { width: SIZE, height: SIZE },
-    view: { center: viewCenter, zoom: z },
-  });
+    center: viewCenter, zoom: z
+});
   map.assets.addImage({ id: 'pin', src: PIN_URL });
-  const raster = map.sources.rasterTiles({
+  const raster = map.data.rasterTiles({
     id: 'tiles',
     url: './tiles-svg/{z}/{x}/{y}.svg',
     minZoom: 0,
     maxZoom: 3,
   });
-  map.layers.add({ id: 'tiles', type: 'raster', source: raster });
-  const vector = map.sources.vector({ id: 'shapes' });
+  map.addLayer({ id: 'tiles', type: 'raster', source: raster });
+  const vector = map.data.vector({ id: 'shapes' });
   await vector.features.replace([
     { id: 'circle', geometry: { type: 'point', position: SCENE.points[0].at }, properties: SCENE.points[0].properties },
     { id: 'square', geometry: { type: 'point', position: SCENE.points[1].at }, properties: SCENE.points[1].properties },
@@ -80,7 +79,7 @@ async function buildMap(container, primary) {
     { id: 'label', geometry: { type: 'point', position: SCENE.labelAt }, properties: { name: 'Příliš žluťoučký kůň' } },
     { id: 'icon', geometry: { type: 'point', position: SCENE.iconAt }, properties: {} },
   ]);
-  map.layers.add({
+  map.addLayer({
     id: 'shapes',
     type: 'points',
     source: 'shapes',
@@ -91,35 +90,35 @@ async function buildMap(container, primary) {
       shape: expr.field('shape'),
     },
   });
-  map.layers.add({
+  map.addLayer({
     id: 'solid',
     type: 'lines',
     source: 'shapes',
     filter: { id: 'solid' },
     style: { color: '#0ea5e9', widthPx: 6 },
   });
-  map.layers.add({
+  map.addLayer({
     id: 'dashed',
     type: 'lines',
     source: 'shapes',
     filter: { id: 'dashed' },
     style: { color: '#111827', widthPx: 5, dash: [12, 10] },
   });
-  map.layers.add({
+  map.addLayer({
     id: 'holed',
     type: 'fills',
     source: 'shapes',
     filter: { id: 'holed' },
     style: { fillColor: '#f59e0b', fillOpacity: 0.9, strokeColor: '#b45309', strokeWidthPx: 2 },
   });
-  map.layers.add({
+  map.addLayer({
     id: 'labels',
     type: 'labels',
     source: 'shapes',
     filter: { id: 'label' },
     style: { text: expr.field('name'), sizePx: 16, color: '#111827' },
   });
-  map.layers.add({
+  map.addLayer({
     id: 'icons',
     type: 'points',
     source: 'shapes',
@@ -136,7 +135,7 @@ const [glMap, gpuMap] = await Promise.all([
 
 /** Exact CSS position of the scene feature placed at `geoAt(dx, dy)`. */
 const screenAt = (dx, dy) => {
-  const position = glMap.view.positionToScreen(geoAt(dx, dy));
+  const position = glMap.positionToScreen(geoAt(dx, dy));
   return { x: position.x, y: position.y };
 };
 
@@ -359,12 +358,11 @@ await check('fallback creates a WebGL 1 scene when WebGPU is unavailable', async
   let fallbackMap = null;
   let error = null;
   try {
-    fallbackMap = await createMap({
-      container,
-      renderer: { primary: 'webgpu', fallback: 'webgl1' },
-      size: { width: 64, height: 64 },
-      view: { center: viewCenter, zoom: z },
-    });
+    fallbackMap = await createMap(container, {
+    renderer: { primary: 'webgpu', fallback: 'webgl1' },
+    size: { width: 64, height: 64 },
+    center: viewCenter, zoom: z
+});
     const capabilities = fallbackMap.capabilities();
     return {
       pass:

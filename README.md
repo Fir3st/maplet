@@ -13,9 +13,10 @@ Maplet is not a Leaflet plugin or a drop-in replacement, and has no runtime
 dependency on Leaflet. Some coordinate calculations derive from Leaflet;
 their attribution and license are included in [NOTICE](NOTICE).
 
-> **Alpha: `0.1.0-alpha.3`.** The API is still evolving. See
+> **Alpha: `0.1.0-alpha.4`.** The API is still evolving. See
 > [implementation status](docs/status.md) for known limitations and the scope of
 > testing. Development-machine timings are not reference benchmarks.
+> This version includes a breaking API redesign; see [migration](docs/api.md#migration-table).
 
 ## Why Maplet exists
 
@@ -169,7 +170,7 @@ python3 demo/compare.py --updates --no-dom --output docs/benchmarks/points-500k-
 - **GPU rendering:** WebGPU with a configurable WebGL 1 fallback, a shared frame
   plan, GPU picking and recovery after device or context loss.
 - **Vector layers:** points, lines, polygon fills with holes and labels;
-  expression-based styles, filters, feature overrides and nested layer groups.
+  expression-based styles, filters, feature overrides and heterogeneous nested layers.
 - **Raster sources:** XYZ/TMS/retina tiles and WMS, cached loading, parent/child
   tile fallback and retention of the previous bitmap while a replacement loads.
 - **Vector tiles:** dependency-free MVT decoding, source-layer namespaces,
@@ -187,7 +188,7 @@ python3 demo/compare.py --updates --no-dom --output docs/benchmarks/points-500k-
 - **Text and media:** GPU-rendered labels, font registration, collision handling,
   image sprites, bounded image/video overlays and partial pixel updates.
 - **Interaction:** pan, wheel zoom, pinch, keyboard navigation, hover, click,
-  feature dragging, box selection and events bubbling through layers and groups.
+  feature dragging, box selection and events bubbling through the layer tree.
 - **Optional HTML UI:** zoom, layers, attribution, scale and accessible list
   controls, generation-bound feature details and typed geolocation results.
 - **Function-based plugins:** typed plugin APIs, HTML access and scoped cleanup;
@@ -225,51 +226,34 @@ Give the map container a height before creating the map:
 ```
 
 ```ts
-import { createMap, crs, expr } from '@fir3st/maplet';
+import { createMap, style } from '@fir3st/maplet';
 
-const map = await createMap({
-  container: 'map',
-  projection: crs.webMercator(),
-  renderer: { primary: 'webgpu', fallback: 'webgl1' },
-  view: { center: { lat: 50.08, lng: 14.44 }, zoom: 8 },
+const map = await createMap('map', {
+  center: [50.08, 14.44], zoom: 8,
+  controls: ['zoom', 'scale', 'attribution'],
 });
 
-map.sources.rasterTiles({
-  id: 'base',
-  url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+map.addTiles('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 19,
   attribution: '© OpenStreetMap contributors',
 });
-map.layers.add({ id: 'base', type: 'raster', source: 'base' });
 
-const stations = map.sources.vector({ id: 'stations' });
-await stations.features.replace([
-  {
-    id: 'prague',
-    geometry: { type: 'point', position: { lat: 50.08, lng: 14.44 } },
-    properties: { name: 'Prague', status: 'online' },
-  },
-]);
-
-map.layers.add({
-  id: 'stations',
-  type: 'points',
-  source: stations,
-  interaction: { enabled: true, draggable: true },
+const stations = map.addPoints([
+  { id: 'prague', position: [50.08, 14.44], properties: { name: 'Prague', status: 'online' } },
+], {
+  draggable: true,
   style: {
     radiusPx: 9,
-    color: expr.match(expr.field('status'),
+    color: style.by('status',
       { online: '#16a34a', offline: '#dc2626' }, '#6b7280'),
   },
 });
 
-map.on('feature', (event) => {
-  if (event.type === 'click') console.log(event.feature.id, event.position);
+stations.on('click', (event) => {
+  console.log(event.feature.id, event.position);
 });
 
-map.controls.add({ kind: 'zoom' });
-map.controls.add({ kind: 'scale' });
-map.controls.add({ kind: 'attribution' });
+stations.get('prague')!.setPosition([50.1, 14.5]);
 
 // Release resources when the map is no longer needed.
 // map.destroy();
@@ -312,7 +296,7 @@ Download the `.tgz` asset from [GitHub Releases](https://github.com/Fir3st/maple
 and install it in a consuming project:
 
 ```bash
-npm install ./fir3st-maplet-0.1.0-alpha.3.tgz
+npm install ./fir3st-maplet-0.1.0-alpha.4.tgz
 ```
 
 Alternatively, install from GitHub Packages after authenticating npm with GitHub
@@ -339,20 +323,43 @@ The OpenStreetMap standard layer is used live, not cached by the demo scripts.
 
 ## API overview
 
-| Handle | Operations |
+Web Mercator and automatic WebGPU → WebGL 1 fallback are defaults. Geographic
+tuples are **`[latitude, longitude]`**; GeoJSON still uses `[longitude, latitude]`.
+IDs are optional. No separate source/layer setup is needed for ordinary data.
+
+Layers are heterogeneous containers and can contain other layers. Direct object
+helpers add to the shared `map.base`; an explicit layer provides the same helpers:
+
+```ts
+const places = map.addLayer({ id: 'places' });
+const pins = places.addPoints([{ position: [50.08, 14.44] }]);
+places.addLabels(pins.source);
+const routes = places.addLayer({ id: 'routes' });
+routes.addLines([{ positions: [[50.08, 14.44], [49.2, 16.6]] }]);
+places.hide(); // hides this entire subtree, not map.base
+```
+
+**Breaking API redesign:** old `createMap({ container, view })`, `map.sources`,
+`map.view`, `map.layers.add`, `map.groups` and the root `expr` export are removed. See the
+[object API and migration guide](docs/api.md) for the complete contract.
+
+| API | Operations |
 | --- | --- |
-| `map.view` | `get`, `set`, `fit`, `flyTo`, `stop`, `zoomAround`, `resize`, coordinate conversions |
-| `map.sources` | `vector`, `rasterTiles`, `wms`, `vectorTiles`, `image`, `video`, `get`, `list`, `remove` |
+| `map` | `getView`, `setView`, `getCenter`, `setCenter`, `getZoom`, `setZoom`, `fitBounds`, `flyTo`, coordinate conversions |
+| `map` | `addPoints`, `addLines`, `addPolygons`, `addLabels`, `addTiles`, `addWms`, `addImage`, `addVideo` |
+| Logical layer | all object helpers, nested `addLayer`, `layers`, `show`, `hide`, `move`, `remove`, bubbling events |
+| Vector collection | `get(id)`, `add`, `addMany`, `setData`, `count`, `getBounds`; `.source` for shared data and imports |
+| Point / line / polygon | `setPosition` / `setPositions` / `setRings`, `setProperties`, `setStyle`, `show`, `hide`, `select`, `remove` |
+| Styled collection / render pass | `show`, `hide`, `setStyle`, `setFilter`, `update`, `move`, `remove`, `on('click', …)` |
+| `map.data` | explicit shared sources: `vector`, `rasterTiles`, `wms`, `vectorTiles`, `image`, `video`, `get`, `list`, `remove` |
 | `map.assets` | `addImage`, `addFont`, `get`, `list`, `remove` |
-| `source.features` | `get`, `ref`, `has`, `add`, `update`, `updateMany`, `remove`, `replace`, `append`, `count`, `ids`, `each` (mutations only on mutable vector sources) |
-| `source` | `importGeoJson`, `importColumnar`, `exportGeoJson`, `snapshot`, `getBounds`, `subscribe` (depending on source type) |
-| `map.layers` | `add`, `get`, `list`, `update`, `remove`, `move`; feature overrides and feature events |
-| `map.groups` | `add`, `get`, `list`, `remove`, `move`, `setVisible`, feature events |
+| `source` | `features`, `importGeoJson`, `importColumnar`, `exportGeoJson`, `snapshot`, `getBounds`, `subscribe` (depending on source type) |
+| `map.addLayer` / `map.layers` | logical containers or advanced shared-source rendering / `get`, ordered `list`, `remove`, `move` |
 | `map.relations` | `add`, `get`, `remove`, `list`, `neighbors`, `traverse`, `setEndpointPolicy` |
 | `map.bindings` | `add`, `get`, `update`, `remove`, `list` |
 | `map.state` / `map.selection` | feature state and selection management, subscriptions |
 | `map.query` | `at`, `area`, `rendered` |
-| `map.controls` / `map.detail` / `map.locate` | optional controls, feature details, one-shot and watched geolocation |
+| `map.addControl` / `map.controls` / `map.detail` / `map.locate` | optional controls, feature details, geolocation |
 | `map` | `batch`, `whenRendered`, `on`, `capabilities`, `stats`, `interaction`, `debug`, `destroy` |
 
 See [API contracts](docs/decisions.md) for units, defaults, ownership and deletion

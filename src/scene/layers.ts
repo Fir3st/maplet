@@ -151,7 +151,7 @@ export type MoveTarget =
   | { readonly before: string }
   | { readonly after: string }
   | { readonly index: number }
-  | { readonly into: string; readonly index?: number };
+  | { readonly into: string | null; readonly index?: number };
 
 export class LayerImpl {
   readonly id: string;
@@ -168,6 +168,7 @@ export class LayerImpl {
   readonly overrides = new Map<string, FeatureOverride>();
   /** Feature events delivered to this layer before their group chain (EVENT-01). */
   readonly featureEmitter = new Emitter<{ feature: MapFeatureEvent }>();
+  readonly lifetime = new AbortController();
   parent: GroupImpl | null = null;
   removed = false;
   /** Incremented on every change that affects what this layer draws. */
@@ -221,6 +222,7 @@ export class GroupImpl {
   children: (LayerImpl | GroupImpl)[] = [];
   /** Feature events bubble through groups between their layer and the map. */
   readonly featureEmitter = new Emitter<{ feature: MapFeatureEvent }>();
+  readonly lifetime = new AbortController();
   removed = false;
 
   constructor(spec: GroupSpec) {
@@ -393,6 +395,8 @@ export class LayerRegistry {
     if (layer) {
       this.detach(layer);
       layer.removed = true;
+      layer.lifetime.abort();
+      layer.featureEmitter.clear();
       this.layers.delete(id);
       this.notify();
       return;
@@ -412,11 +416,15 @@ export class LayerRegistry {
       if (child instanceof GroupImpl) this.removeSubtree(child);
       else {
         child.removed = true;
+        child.lifetime.abort();
+        child.featureEmitter.clear();
         this.layers.delete(child.id);
       }
     }
     group.children = [];
     group.removed = true;
+    group.lifetime.abort();
+    group.featureEmitter.clear();
     this.groups.delete(group.id);
   }
 
@@ -435,22 +443,25 @@ export class LayerRegistry {
     const entry = this.getEntry(id);
     if (!entry) fail('not-found', `layer or group not found: ${id}`, { id });
     if ('into' in target) {
-      const container = this.groups.get(target.into);
-      if (!container) fail('not-found', `group not found: ${target.into}`, { group: target.into });
+      const container = target.into === null ? null : this.groups.get(target.into);
+      if (container === undefined) fail('not-found', `group not found: ${target.into}`, { group: target.into });
       if (entry === container) fail('invalid-argument', 'cannot move a group into itself', { id });
-      if (entry instanceof GroupImpl && entry.isAncestorOf(container)) {
+      if (container && entry instanceof GroupImpl && entry.isAncestorOf(container)) {
         fail('invalid-argument', `cannot move group ${id} into its own descendant`, { id });
       }
       this.detach(entry);
       entry.parent = container;
-      const index = target.index ?? container.children.length;
-      container.children.splice(Math.max(0, Math.min(index, container.children.length)), 0, entry);
+      const children = container ? container.children : this.root;
+      const index = target.index ?? children.length;
+      children.splice(Math.max(0, Math.min(index, children.length)), 0, entry);
       this.notify();
       return;
     }
-    const siblings = this.root;
+    const siblings = entry.parent ? entry.parent.children : this.root;
     if ('index' in target) {
+      const parent = entry.parent;
       this.detach(entry);
+      entry.parent = parent;
       const index = Math.max(0, Math.min(target.index, siblings.length));
       siblings.splice(index, 0, entry);
       this.notify();
@@ -459,6 +470,7 @@ export class LayerRegistry {
     const anchorId = 'before' in target ? target.before : target.after;
     const anchor = this.getEntry(anchorId);
     if (!anchor) fail('not-found', `anchor not found: ${anchorId}`, { id: anchorId });
+    if (entry === anchor) return;
     if (entry instanceof GroupImpl && entry.isAncestorOf(anchor)) {
       fail('invalid-argument', `cannot move group ${id} inside its own subtree`, { id });
     }

@@ -10,7 +10,7 @@ test('plain plugins return typed APIs; detached use/remove and independent insta
     assert.equal(owner, map);
     onCleanup(() => order.push('first'));
     onCleanup(() => { assert.equal(signal.aborted, true); order.push('second'); });
-    return { zoom: () => owner.view.get().zoom, signal };
+    return { zoom: () => owner.getView().zoom, signal };
   };
   const use = map.use;
   const first = use(plugin), second = use(plugin);
@@ -39,7 +39,7 @@ test('failed installation rolls back registered resources and all cleanups run o
   }), AggregateError);
   assert.equal(signal!.aborted, true);
   assert.deepEqual(calls, [3, 2, 1]);
-  map.view.set({ zoom: 9 });
+  map.setView({ zoom: 9 });
   await map.whenRendered();
   map.destroy();
 });
@@ -47,11 +47,11 @@ test('failed installation rolls back registered resources and all cleanups run o
 test('initial plugins install in order, and createMap cleans up on setup failure', async () => {
   const order: string[] = [];
   let context: PluginContext | undefined;
-  await assert.rejects(createMap({ renderer: { primary: 'none' }, plugins: [
-    (ctx) => { context = ctx; order.push('a'); ctx.onCleanup(() => order.push('remove-a')); },
-    () => { order.push('b'); throw new Error('broken'); },
-    () => { order.push('never'); },
-  ] }), /broken/);
+  await assert.rejects(createMap(null, { renderer: { primary: 'none' }, plugins: [
+        (ctx) => { context = ctx; order.push('a'); ctx.onCleanup(() => order.push('remove-a')); },
+        () => { order.push('b'); throw new Error('broken'); },
+        () => { order.push('never'); },
+    ] }), /broken/);
   assert.deepEqual(order, ['a', 'b', 'remove-a']);
   assert.equal(context!.map.destroyed, true);
   assert.equal(context!.signal.aborted, true);
@@ -61,29 +61,29 @@ test('functionality plugin owns sources, layers, events and cleanup before scene
   const { map } = await makeMap();
   let updates = 0;
   const plugin = map.use(({ map, signal, onCleanup }) => {
-    const source = map.sources.vector({ id: 'plugin-source' });
-    onCleanup(() => map.sources.remove(source.id));
-    const layer = map.layers.add({ id: 'plugin-layer', type: 'points', source });
+    const source = map.data.vector({ id: 'plugin-source' });
+    onCleanup(() => map.data.remove(source.id));
+    const layer = map.addLayer({ id: 'plugin-layer', type: 'points', source });
     onCleanup(layer.remove);
     map.on('viewchange', () => updates++, { signal });
     return { add: () => source.features.add({ id: 'point', geometry: { type: 'point', position: { lat: 50, lng: 14 } } }) };
   });
   plugin.api.add();
-  map.view.set({ zoom: 9 });
+  map.setView({ zoom: 9 });
   assert.equal(updates, 1);
   plugin.remove();
-  map.view.set({ zoom: 10 });
+  map.setView({ zoom: 10 });
   assert.equal(updates, 1);
   assert.equal(map.layers.get('plugin-layer'), undefined);
-  assert.equal(map.sources.get('plugin-source'), undefined);
+  assert.equal(map.data.get('plugin-source'), undefined);
   map.destroy();
 });
 
 test('transforms compose without modifying canonical data and are cached across repeat frames', async () => {
-  const { map } = await makeMap({ projection: crs.simple(), view: { center: { x: 0, y: 0 }, zoom: 0 } });
-  const source = map.sources.vector<PointGeometry<PlanarPosition>>({ id: 'points' });
+  const { map } = await makeMap({ projection: crs.simple(), center: { x: 0, y: 0 }, zoom: 0 });
+  const source = map.data.vector<PointGeometry<PlanarPosition>>({ id: 'points' });
   source.features.add({ id: 1, geometry: { type: 'point', position: { x: 0, y: 0 } } });
-  map.layers.add({ id: 'points', type: 'points', source });
+  map.addLayer({ id: 'points', type: 'points', source });
   const calls: string[] = [];
   let observed: RenderFrame | undefined;
   const extension = map.use(({ render }) => {
@@ -111,11 +111,11 @@ test('the same callback can be registered twice and removed independently', asyn
   let calls = 0;
   const fn = () => { calls++; };
   const first = map.render.onFrame(fn), second = map.render.onFrame(fn);
-  map.view.set({ zoom: 9 });
+  map.setView({ zoom: 9 });
   await map.whenRendered();
   assert.equal(calls, 2);
   first();
-  map.view.set({ zoom: 10 });
+  map.setView({ zoom: 10 });
   await map.whenRendered();
   assert.equal(calls, 3);
   second(); map.destroy();
@@ -137,7 +137,7 @@ test('custom renderer serializes async frames, preserves revision fences and del
   let firstDone = false, secondDone = false;
   const first = map.whenRendered(firstRevision).then(() => { firstDone = true; });
   clock.advance(0);
-  map.view.set({ zoom: 9 });
+  map.setView({ zoom: 9 });
   const secondRevision = map.stats().revision;
   const second = map.whenRendered(secondRevision).then(() => { secondDone = true; });
   clock.advance(0);
@@ -211,11 +211,11 @@ test('plugin invalidation creates a revision fence without changing sources', as
 
 test('plugin-only invalidation retains the packed buffer for 10,000 points', async () => {
   const { map } = await makeMap();
-  const source = map.sources.vector({ id: 'points' });
+  const source = map.data.vector({ id: 'points' });
   const positions = new Float64Array(20_000);
   for (let i = 0; i < 10_000; i++) { positions[i * 2] = 14; positions[i * 2 + 1] = 50; }
   await source.importColumnar({ kind: 'point', positions });
-  map.layers.add({ id: 'points', type: 'points', source });
+  map.addLayer({ id: 'points', type: 'points', source });
   let buffer: Float32Array | undefined;
   let calls = 0;
   const plugin = map.use(({ render, container }) => {
@@ -235,7 +235,7 @@ test('plugin-only invalidation retains the packed buffer for 10,000 points', asy
 });
 
 test('async rendering and after-frame projection use the rendered view, not a newer view', async () => {
-  const { map, clock } = await makeMap({ projection: crs.simple(), view: { center: { x: 0, y: 0 }, zoom: 0 } });
+  const { map, clock } = await makeMap({ projection: crs.simple(), center: { x: 0, y: 0 }, zoom: 0 });
   let finish: (() => void) | undefined;
   let frame: RenderFrame | undefined;
   const points: number[] = [];
@@ -245,7 +245,7 @@ test('async rendering and after-frame projection use the rendered view, not a ne
   });
   clock.advance(0);
   assert.equal(frame!.positionToScreen({ x: 1, y: 0 }).x, 656);
-  map.view.set({ zoom: 1 });
+  map.setView({ zoom: 1 });
   assert.equal(frame!.positionToScreen({ x: 1, y: 0 }).x, 656);
   finish!(); await settled();
   assert.deepEqual(points, [656]);

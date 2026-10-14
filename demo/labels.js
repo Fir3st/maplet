@@ -6,7 +6,7 @@
  * Results: `window.__labelCheckResult`. All input is synthetic; ink is measured
  * by sampling the GL back buffer.
  */
-import { createMap, expr } from '../dist/index.js';
+import { createMap, style as expr } from '../dist/index.js';
 
 const SIZE = 512;
 const result = { checks: [], pass: false, errors: [], ms: 0 };
@@ -14,14 +14,13 @@ window.addEventListener('error', (event) => result.errors.push(String(event.mess
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const map = await createMap({
-  container: 'map',
-  renderer: { primary: new URLSearchParams(location.search).get('backend') === 'webgpu' ? 'webgpu' : 'webgl1', fallback: false },
-  size: { width: SIZE, height: SIZE },
-  view: { center: { lat: 50.03, lng: 14.03 }, zoom: 12 },
+const map = await createMap('map', {
+    renderer: { primary: new URLSearchParams(location.search).get('backend') === 'webgpu' ? 'webgpu' : 'webgl1', fallback: false },
+    size: { width: SIZE, height: SIZE },
+    center: { lat: 50.03, lng: 14.03 }, zoom: 12
 });
 
-const source = map.sources.vector({ id: 'pois' });
+const source = map.data.vector({ id: 'pois' });
 await source.features.replace([
   { id: 'dia', geometry: { type: 'point', position: { lat: 50.06, lng: 14.06 } }, properties: { name: 'Příliš žluťoučký kůň' } },
   { id: 'A', geometry: { type: 'point', position: { lat: 50.0, lng: 14.0 } }, properties: { name: 'ALFA-ALFA', rank: 2 } },
@@ -29,28 +28,28 @@ await source.features.replace([
   { id: 'rot', geometry: { type: 'point', position: { lat: 50.0, lng: 14.055 } }, properties: { name: 'ROTACE-ROTACE' } },
   { id: 'flat', geometry: { type: 'point', position: { lat: 49.985, lng: 14.06 } }, properties: { name: 'ROTACE-ROTACE' } },
 ]);
-map.layers.add({
+map.addLayer({
   id: 'labels',
   type: 'labels',
   source,
   filter: { id: 'dia' },
   style: { text: expr.field('name'), sizePx: 14, offsetPx: { x: 0, y: -18 } },
 });
-map.layers.add({
+map.addLayer({
   id: 'colliding',
   type: 'labels',
   source,
   filter: { or: [{ id: 'A' }, { id: 'B' }] },
   style: { text: expr.field('name'), sizePx: 14, collision: true, priority: expr.field('rank') },
 });
-map.layers.add({
+map.addLayer({
   id: 'rotated',
   type: 'labels',
   source,
   filter: { id: 'rot' },
   style: { text: expr.field('name'), sizePx: 14, rotate: 90 },
 });
-map.layers.add({
+map.addLayer({
   id: 'flat',
   type: 'labels',
   source,
@@ -108,7 +107,7 @@ const started = performance.now();
 await sleep(400);
 
 await check('TEXT-02 diacritics with anchor offset', async () => {
-  const anchor = map.view.positionToScreen({ lat: 50.06, lng: 14.06 });
+  const anchor = map.positionToScreen({ lat: 50.06, lng: 14.06 });
   // offsetPx y=-18 puts the label centre 18 CSS px above the anchor.
   const above = await inkCount({ x0: anchor.x - 90, y0: anchor.y - 34, x1: anchor.x + 90, y1: anchor.y - 8 }, 2);
   const below = await inkCount({ x0: anchor.x - 90, y0: anchor.y + 8, x1: anchor.x + 90, y1: anchor.y + 34 }, 2);
@@ -133,8 +132,8 @@ await check('TEXT-01 text follows the source feature', async () => {
 });
 
 await check('TEXT-07 collision suppression is deterministic', async () => {
-  const a = map.view.positionToScreen({ lat: 50.0, lng: 14.0 });
-  const b = map.view.positionToScreen({ lat: 50.0, lng: 14.0035 });
+  const a = map.positionToScreen({ lat: 50.0, lng: 14.0 });
+  const b = map.positionToScreen({ lat: 50.0, lng: 14.0035 });
   const measure = document.createElement('canvas').getContext('2d');
   measure.font = '14px system-ui, sans-serif';
   const wa = measure.measureText('ALFA-ALFA').width;
@@ -154,8 +153,8 @@ await check('TEXT-07 collision suppression is deterministic', async () => {
 
 await check('TEXT-06 label picking and hover', async () => {
   const events = [];
-  map.on('feature', (event) => events.push(`${event.type}:${String(event.feature.id)}`));
-  const anchor = map.view.positionToScreen({ lat: 50.06, lng: 14.06 });
+  map.onFeature((event) => events.push(`${event.type}:${String(event.feature.id)}`));
+  const anchor = map.positionToScreen({ lat: 50.06, lng: 14.06 });
   const point = { x: Math.round(anchor.x), y: Math.round(anchor.y - 18) };
   pointer('pointermove', point);
   await sleep(400);
@@ -172,8 +171,8 @@ await check('TEXT-06 label picking and hover', async () => {
 });
 
 await check('TEXT-06 label rotation keeps the anchor and turns the ink box', async () => {
-  const rotAnchor = map.view.positionToScreen({ lat: 50.0, lng: 14.055 });
-  const flatAnchor = map.view.positionToScreen({ lat: 49.985, lng: 14.06 });
+  const rotAnchor = map.positionToScreen({ lat: 50.0, lng: 14.055 });
+  const flatAnchor = map.positionToScreen({ lat: 49.985, lng: 14.06 });
   const box = async (anchor, halfWidth, halfHeight, stepX, stepY) => {
     let minX = Infinity;
     let maxX = -Infinity;
@@ -230,7 +229,7 @@ await check('TEXT-06 label rotation keeps the anchor and turns the ink box', asy
 });
 
 await check('TEXT-08 atlas pressure reconstructs pages', async () => {
-  const clusters = map.sources.vector({ id: 'clusters' });
+  const clusters = map.data.vector({ id: 'clusters' });
   const clusterA = [];
   for (let i = 0; i < 80; i++) {
     clusterA.push({
@@ -248,12 +247,12 @@ await check('TEXT-08 atlas pressure reconstructs pages', async () => {
     });
   }
   await clusters.features.replace([...clusterA, ...clusterB]);
-  map.layers.add({ id: 'cluster-labels', type: 'labels', source: clusters, style: { text: expr.field('name'), sizePx: 9 } });
+  map.addLayer({ id: 'cluster-labels', type: 'labels', source: clusters, style: { text: expr.field('name'), sizePx: 9 } });
 
   const viewA = { center: { lat: 49.9954, lng: 13.9056 }, zoom: 12 };
   const viewB = { center: { lat: 49.9966, lng: 14.167 }, zoom: 12 };
   const inkNearA0 = async () => {
-    const anchor = map.view.positionToScreen({ lat: 49.99, lng: 13.9 });
+    const anchor = map.positionToScreen({ lat: 49.99, lng: 13.9 });
     return inkCount({ x0: anchor.x - 16, y0: anchor.y - 8, x1: anchor.x + 16, y1: anchor.y + 8 }, 1, 620);
   };
   const waitInk = async () => {
@@ -265,12 +264,12 @@ await check('TEXT-08 atlas pressure reconstructs pages', async () => {
     return 0;
   };
 
-  map.view.set(viewA);
+  map.setView(viewA);
   const before = await waitInk();
-  map.view.set(viewB);
+  map.setView(viewB);
   await sleep(700);
   const pressureInk = await inkNearA0(); // A is off-screen now, nothing to count
-  map.view.set(viewA);
+  map.setView(viewA);
   const after = await waitInk();
   return {
     pass: before >= 2 && after >= 2 && pressureInk === 0,

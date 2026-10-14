@@ -93,18 +93,17 @@ for (let i = 0; i < 12; i++) {
   host.style.width = '320px';
   host.style.height = '240px';
   offscreen.appendChild(host);
-  const map = await createMap({
-    container: host,
+  const map = await createMap(host, {
     renderer,
     size: { width: 320, height: 240 },
-    view: { center: { lat: 50, lng: 14.05 }, zoom: 10 },
-  });
-  const source = map.sources.vector({ id: `v${i}` });
+    center: { lat: 50, lng: 14.05 }, zoom: 10
+});
+  const source = map.data.vector({ id: `v${i}` });
   source.features.replace([
     { id: 'a', geometry: { type: 'point', position: { lat: 50, lng: 14.05 } }, properties: {} },
     { id: 'b', geometry: { type: 'point', position: { lat: 50.05, lng: 14.1 } }, properties: {} },
   ]);
-  map.layers.add({ id: `p${i}`, type: 'points', source, style: { radiusPx: 8, color: '#2563eb' } });
+  map.addLayer({ id: `p${i}`, type: 'points', source, style: { radiusPx: 8, color: '#2563eb' } });
   if (i === 3) {
     const font = map.assets.addFont({ id: 'soak', family: 'SoakFixture', src: './fonts/maplet-subset.woff2' });
     await font.ready();
@@ -158,14 +157,13 @@ const heavy = await (async () => {
   host.style.width = '420px';
   host.style.height = '320px';
   offscreen.appendChild(host);
-  const map = await createMap({
-    container: host,
+  const map = await createMap(host, {
     renderer,
     size: { width: 420, height: 320 },
-    view: { center: { lat: 50, lng: 14.05 }, zoom: 10 },
-  });
-  const source = map.sources.vector({ id: 'big' });
-  map.layers.add({ id: 'big', type: 'points', source, style: { radiusPx: 2, color: '#2563eb' } });
+    center: { lat: 50, lng: 14.05 }, zoom: 10
+});
+  const source = map.data.vector({ id: 'big' });
+  map.addLayer({ id: 'big', type: 'points', source, style: { radiusPx: 2, color: '#2563eb' } });
 
   const tGen0 = performance.now();
   let batch = makeBatch('p', 8);
@@ -189,7 +187,7 @@ const heavy = await (async () => {
   await sleep(30);
   const renderMs = performance.now() - tRender0;
   const sampleAt = async (position) => {
-    const screen = map.view.positionToScreen(position);
+    const screen = map.positionToScreen(position);
     return map.debug.samplePixel({ x: Math.round(screen.x), y: Math.round(screen.y) });
   };
   const pixelsBlue = blue(await sampleAt({ lat: 50, lng: 14.05 })) && blue(await sampleAt({ lat: 49.6, lng: 14.5 }));
@@ -313,13 +311,12 @@ await check('SOAK-07 a sustained pan/update run keeps rendering', async () => {
   gcNow();
   const heapStart = memory();
   const host = document.getElementById('map');
-  const map = await createMap({
-    container: host,
+  const map = await createMap(host, {
     renderer,
     size: { width: 420, height: 320 },
-    view: { center: { lat: 50, lng: 14.05 }, zoom: 10 },
-  });
-  const source = map.sources.vector({ id: 'run' });
+    center: { lat: 50, lng: 14.05 }, zoom: 10
+});
+  const source = map.data.vector({ id: 'run' });
   const features = [];
   for (let i = 0; i < 400; i++) {
     features.push({
@@ -329,7 +326,7 @@ await check('SOAK-07 a sustained pan/update run keeps rendering', async () => {
     });
   }
   source.features.replace(features);
-  map.layers.add({ id: 'run', type: 'points', source, style: { radiusPx: 5, color: '#2563eb' } });
+  map.addLayer({ id: 'run', type: 'points', source, style: { radiusPx: 5, color: '#2563eb' } });
   await map.whenRendered();
 
   const bareAfterMap = [];
@@ -348,7 +345,7 @@ await check('SOAK-07 a sustained pan/update run keeps rendering', async () => {
   let lastUpdate = 0;
   while (performance.now() < end) {
     const t0 = performance.now();
-    map.view.set({ center: { lat: 50 + 0.0006 * Math.sin(rafFrames / 9), lng: 14.05 + 0.0008 * Math.cos(rafFrames / 7) } });
+    map.setView({ center: { lat: 50 + 0.0006 * Math.sin(rafFrames / 9), lng: 14.05 + 0.0008 * Math.cos(rafFrames / 7) } });
     const t1 = performance.now();
     await new Promise((resolve) => requestAnimationFrame(resolve));
     const t2 = performance.now();
@@ -367,10 +364,10 @@ await check('SOAK-07 a sustained pan/update run keeps rendering', async () => {
   times.sort((a, b) => a - b);
   const pct = (q) => Math.round(times[Math.min(times.length - 1, Math.floor(times.length * q))] * 10) / 10;
 
-  map.view.set({ center: { lat: 49.9, lng: 13.9 }, zoom: 10 });
+  map.setView({ center: { lat: 49.9, lng: 13.9 }, zoom: 10 });
   await map.whenRendered();
   await sleep(30);
-  const screen = map.view.positionToScreen({ lat: 49.9, lng: 13.9 });
+  const screen = map.positionToScreen({ lat: 49.9, lng: 13.9 });
   const pixel = await map.debug.samplePixel({ x: Math.round(screen.x), y: Math.round(screen.y) });
   const feature = source.features.get('f:0');
   map.destroy();

@@ -1,23 +1,23 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { isMapletError, parseGeoJson } from '../../src/index.ts';
+import { isMapletError, parseGeoJson, type PointGeometry } from '../../src/index.ts';
 import { makeMap } from '../helpers/fixture.ts';
 
 test('DATA-01: sources are unique, typed and listed', async () => {
   const { map } = await makeMap();
-  map.sources.vector({ id: 'a' });
-  map.sources.vector({ id: 'b' });
-  assert.deepEqual([...map.sources.list()].sort(), ['a', 'b']);
-  assert.equal(map.sources.get('a')?.type, 'vector');
-  assert.equal(map.sources.get('missing'), undefined);
-  assert.throws(() => map.sources.vector({ id: 'a' }), /already exists/);
+  map.data.vector({ id: 'a' });
+  map.data.vector({ id: 'b' });
+  assert.deepEqual([...map.data.list()].sort(), ['a', 'b']);
+  assert.equal(map.data.get('a')?.type, 'vector');
+  assert.equal(map.data.get('missing'), undefined);
+  assert.throws(() => map.data.vector({ id: 'a' }), /already exists/);
   map.destroy();
 });
 
 test('DATA-02: get of unknown ids returns undefined; ref throws a defined error', async () => {
   const { map } = await makeMap();
-  const source = map.sources.vector({ id: 's' });
+  const source = map.data.vector({ id: 's' });
   source.features.add({ id: 'a', geometry: { type: 'point', position: { lat: 50, lng: 14 } } });
   const snapshot = source.features.get('a');
   assert.ok(snapshot);
@@ -36,7 +36,7 @@ test('DATA-02: get of unknown ids returns undefined; ref throws a defined error'
 
 test('DATA-03: number 42 and string "42" are independent features', async () => {
   const { map } = await makeMap();
-  const source = map.sources.vector({ id: 's' });
+  const source = map.data.vector({ id: 's' });
   source.features.add([
     { id: 42, geometry: { type: 'point', position: { lat: 1, lng: 1 } } },
     { id: '42', geometry: { type: 'point', position: { lat: 2, lng: 2 } } },
@@ -52,7 +52,7 @@ test('DATA-03: number 42 and string "42" are independent features', async () => 
 
 test('DATA-04: duplicate ids reject the ordinary write; upsert replaces atomically', async () => {
   const { map } = await makeMap();
-  const source = map.sources.vector({ id: 's' });
+  const source = map.data.vector<PointGeometry>({ id: 's' });
   source.features.add({ id: 'a', geometry: { type: 'point', position: { lat: 50, lng: 14 } }, properties: { v: 1 } });
   try {
     source.features.add({ id: 'a', geometry: { type: 'point', position: { lat: 51, lng: 15 } } });
@@ -77,7 +77,7 @@ test('DATA-04: duplicate ids reject the ordinary write; upsert replaces atomical
 
 test('DATA-05/06: update replaces geometry wholesale and patches properties per key', async () => {
   const { map } = await makeMap();
-  const source = map.sources.vector({ id: 's' });
+  const source = map.data.vector({ id: 's' });
   source.features.add({
     id: 'a',
     geometry: { type: 'point', position: { lat: 50, lng: 14 } },
@@ -105,7 +105,7 @@ test('DATA-05/06: update replaces geometry wholesale and patches properties per 
 
 test('DATA-07: replace keeps retained identities, drops the rest, adds new ones', async () => {
   const { map } = await makeMap();
-  const source = map.sources.vector({ id: 's' });
+  const source = map.data.vector({ id: 's' });
   source.features.add([
     { id: 'a', geometry: { type: 'point', position: { lat: 1, lng: 1 } }, properties: { tag: 'old' } },
     { id: 'b', geometry: { type: 'point', position: { lat: 2, lng: 2 } } },
@@ -125,7 +125,7 @@ test('DATA-07: replace keeps retained identities, drops the rest, adds new ones'
 
 test('DATA-08: remove + re-add + slot reuse never restores an old reference', async () => {
   const { map } = await makeMap();
-  const source = map.sources.vector({ id: 's' });
+  const source = map.data.vector({ id: 's' });
   source.features.add({ id: 'keep', geometry: { type: 'point', position: { lat: 1, lng: 1 } } });
   source.features.add({ id: 'gone', geometry: { type: 'point', position: { lat: 2, lng: 2 } } });
   const old = source.features.ref('gone');
@@ -148,7 +148,7 @@ test('DATA-08: remove + re-add + slot reuse never restores an old reference', as
 
 test('DATA-09: a bulk add with one invalid record changes nothing', async () => {
   const { map } = await makeMap();
-  const source = map.sources.vector({ id: 's' });
+  const source = map.data.vector({ id: 's' });
   source.features.add({ id: 'base', geometry: { type: 'point', position: { lat: 1, lng: 1 } } });
   try {
     source.features.add([
@@ -167,13 +167,13 @@ test('DATA-09: a bulk add with one invalid record changes nothing', async () => 
 
 test('DATA-10/11: source removal requires cascade when used; cascade cleans dependents', async () => {
   const { map } = await makeMap();
-  const source = map.sources.vector({ id: 's' });
+  const source = map.data.vector({ id: 's' });
   source.features.add([
     { id: 'a', geometry: { type: 'point', position: { lat: 50, lng: 14 } } },
     { id: 'b', geometry: { type: 'point', position: { lat: 51, lng: 15 } } },
   ]);
-  map.layers.add({ id: 'points', type: 'points', source });
-  map.layers.add({ id: 'fills', type: 'fills', source });
+  map.addLayer({ id: 'points', type: 'points', source });
+  map.addLayer({ id: 'fills', type: 'fills', source });
   map.relations.add({
     id: 'r',
     type: 'connects',
@@ -181,16 +181,16 @@ test('DATA-10/11: source removal requires cascade when used; cascade cleans depe
     to: source.features.ref('b'),
   });
   try {
-    map.sources.remove('s');
+    map.data.remove('s');
     assert.fail('expected dependency-conflict');
   } catch (error) {
     assert.ok(isMapletError(error));
     assert.equal(error.code, 'dependency-conflict');
   }
-  assert.equal(map.sources.get('s') !== undefined, true);
+  assert.equal(map.data.get('s') !== undefined, true);
   assert.equal(map.layers.list().length, 2);
-  map.sources.remove('s', { cascade: true });
-  assert.equal(map.sources.get('s'), undefined);
+  map.data.remove('s', { cascade: true });
+  assert.equal(map.data.get('s'), undefined);
   assert.equal(map.layers.list().length, 0);
   assert.equal(map.relations.list().length, 0);
   map.destroy();
@@ -199,8 +199,8 @@ test('DATA-10/11: source removal requires cascade when used; cascade cleans depe
 test('DATA-12: references from another scene, namespace or generation are rejected', async () => {
   const { map } = await makeMap();
   const other = await makeMap();
-  const source = map.sources.vector({ id: 's' });
-  const otherSource = other.map.sources.vector({ id: 's' });
+  const source = map.data.vector({ id: 's' });
+  const otherSource = other.map.data.vector({ id: 's' });
   source.features.add({ id: 'a', geometry: { type: 'point', position: { lat: 1, lng: 1 } } });
   otherSource.features.add({ id: 'a', geometry: { type: 'point', position: { lat: 2, lng: 2 } } });
   const foreign = otherSource.features.ref('a');
@@ -223,7 +223,7 @@ test('DATA-12: references from another scene, namespace or generation are reject
 
 test('DATA-13: unknown JSON property fields survive get and export unchanged', async () => {
   const { map } = await makeMap();
-  const source = map.sources.vector({ id: 's' });
+  const source = map.data.vector({ id: 's' });
   const properties = {
     unknown: { nested: [1, 'two', { three: true }] },
     nul: null,
@@ -240,7 +240,7 @@ test('DATA-13: unknown JSON property fields survive get and export unchanged', a
 
 test('DATA-14: one point changed in 500k stays a local, O(1) operation', async () => {
   const { map } = await makeMap();
-  const source = map.sources.vector({ id: 'big' });
+  const source = map.data.vector<PointGeometry>({ id: 'big' });
   const items = new Array(500_000);
   for (let i = 0; i < items.length; i++) {
     items[i] = { id: i, geometry: { type: 'point', position: { lat: 50 + (i % 100) / 1000, lng: 14 + (i % 1000) / 10000 } } };
@@ -264,7 +264,7 @@ test('DATA-14: one point changed in 500k stays a local, O(1) operation', async (
 
 test('IO-01: GeoJSON point import/export keeps [lng, lat, alt] and metadata', async () => {
   const { map } = await makeMap();
-  const source = map.sources.vector({ id: 's' });
+  const source = map.data.vector<PointGeometry>({ id: 's' });
   await source.importGeoJson({
     type: 'FeatureCollection',
     features: [
@@ -295,7 +295,7 @@ test('IO-01: GeoJSON point import/export keeps [lng, lat, alt] and metadata', as
 
 test('IO-02: multi geometries keep their parts and rings under one identity', async () => {
   const { map } = await makeMap();
-  const source = map.sources.vector({ id: 's' });
+  const source = map.data.vector({ id: 's' });
   const features = parseGeoJson({
     type: 'FeatureCollection',
     features: [
@@ -328,7 +328,7 @@ test('IO-02: multi geometries keep their parts and rings under one identity', as
 
 test('IO-03: a failed import leaves the previous source content complete', async () => {
   const { map } = await makeMap();
-  const source = map.sources.vector({ id: 's' });
+  const source = map.data.vector({ id: 's' });
   await source.importGeoJson({
     type: 'Feature', id: 'old', geometry: { type: 'Point', coordinates: [1, 1] }, properties: { keep: true },
   });
@@ -354,7 +354,7 @@ test('IO-03: a failed import leaves the previous source content complete', async
 
 test('IO-04: features without ids receive deterministic unique generated ids', async () => {
   const { map } = await makeMap();
-  const source = map.sources.vector({ id: 's' });
+  const source = map.data.vector({ id: 's' });
   await source.importGeoJson({
     type: 'FeatureCollection',
     features: [
@@ -376,7 +376,7 @@ test('IO-04: features without ids receive deterministic unique generated ids', a
 
 test('IO-06/12: imports copy their input and export returns canonical coordinates', async () => {
   const { map } = await makeMap();
-  const source = map.sources.vector({ id: 's' });
+  const source = map.data.vector({ id: 's' });
   const coordinates: [number, number][] = [[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]];
   const geojson = {
     type: 'Feature' as const,
@@ -399,7 +399,7 @@ test('IO-06/12: imports copy their input and export returns canonical coordinate
 
 test('IO-09: an aborted import rejects and publishes nothing', async () => {
   const { map } = await makeMap();
-  const source = map.sources.vector({ id: 's' });
+  const source = map.data.vector({ id: 's' });
   source.features.add({ id: 'base', geometry: { type: 'point', position: { lat: 1, lng: 1 } } });
   const controller = new AbortController();
   controller.abort();
@@ -417,7 +417,7 @@ test('IO-09: an aborted import rejects and publishes nothing', async () => {
 
 test('TX-01/02/03: batches publish once, read staged state and roll back atomically', async () => {
   const { map } = await makeMap();
-  const source = map.sources.vector({ id: 's' });
+  const source = map.data.vector({ id: 's' });
   source.features.add({ id: 'a', geometry: { type: 'point', position: { lat: 50, lng: 14 } }, properties: { name: 'A' } });
   source.features.add({ id: 'b', geometry: { type: 'point', position: { lat: 51, lng: 15 } }, properties: { name: 'B' } });
   const events: number[] = [];
@@ -452,9 +452,10 @@ test('TX-01/02/03: batches publish once, read staged state and roll back atomica
 
 test('TX-04: async callbacks are rejected; later writes commit separately', async () => {
   const { map } = await makeMap();
-  const source = map.sources.vector({ id: 's' });
+  const source = map.data.vector({ id: 's' });
   let leaked: Promise<unknown> | null = null;
   assert.throws(() => {
+    // @ts-expect-error deliberately violate the synchronous contract to test runtime rejection
     map.batch(() => {
       source.features.add({ id: 'async', geometry: { type: 'point', position: { lat: 1, lng: 1 } } });
       leaked = Promise.resolve();
@@ -470,7 +471,7 @@ test('TX-04: async callbacks are rejected; later writes commit separately', asyn
 
 test('TX-05/07: logical and rendered revisions stay distinct and waiters resolve by threshold', async () => {
   const { map } = await makeMap();
-  const source = map.sources.vector({ id: 's' });
+  const source = map.data.vector({ id: 's' });
   const first = source.features.add({ id: 'a', geometry: { type: 'point', position: { lat: 1, lng: 1 } } });
   const second = source.features.add({ id: 'b', geometry: { type: 'point', position: { lat: 2, lng: 2 } } });
   const stats = map.stats();
@@ -483,7 +484,7 @@ test('TX-05/07: logical and rendered revisions stay distinct and waiters resolve
 
 test('EVENT-04/05: unsubscribe is idempotent, AbortSignal works, emission is snapshot-based', async () => {
   const { map } = await makeMap();
-  const source = map.sources.vector({ id: 's' });
+  const source = map.data.vector({ id: 's' });
   const seen: string[] = [];
   const off = source.on('change', (event) => seen.push(`first:${event.revision}`));
   off();

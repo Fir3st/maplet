@@ -32,22 +32,20 @@ function finalize() {
 }
 let started = 0;
 
-const map = await createMap({
-  container: 'map',
-  renderer:
-    new URLSearchParams(location.search).get('backend') === 'webgpu'
-      ? { primary: 'webgpu', fallback: false }
-      : { primary: 'webgl1', fallback: false },
-  size: { width: 600, height: 600 },
-  view: { center: { lat: 50.05, lng: 14.45 }, zoom: 12 },
+const map = await createMap('map', {
+    renderer: new URLSearchParams(location.search).get('backend') === 'webgpu'
+        ? { primary: 'webgpu', fallback: false }
+        : { primary: 'webgl1', fallback: false },
+    size: { width: 600, height: 600 },
+    center: { lat: 50.05, lng: 14.45 }, zoom: 12
 });
 
 const element = document.getElementById('map');
 // Debug handle for post-mortem probing (`?keep=1` keeps the map alive).
 window.__mediaMap = map;
 const boundsFor = (x0, y0, x1, y1) => ({
-  southwest: map.view.screenToPosition({ x: x0, y: y1 }),
-  northeast: map.view.screenToPosition({ x: x1, y: y0 }),
+  southwest: map.screenToPosition({ x: x0, y: y1 }),
+  northeast: map.screenToPosition({ x: x1, y: y0 }),
 });
 
 /** 8x8 RGBA pixel fixture: color(x, y) = (x*30, y*30, 128, 255). */
@@ -65,31 +63,31 @@ function pixelsFixture() {
   return { width: 8, height: 8, data };
 }
 
-const imageA = map.sources.image({ id: 'image-a', url: './media/corners.png', bounds: boundsFor(40, 40, 240, 240) });
-const imageB = map.sources.image({ id: 'image-b', url: './media/corners-alt.png', bounds: boundsFor(200, 200, 400, 400) });
-const imagePix = map.sources.image({ id: 'image-pix', pixels: pixelsFixture(), bounds: boundsFor(430, 430, 510, 510) });
-const video = map.sources.video({
+const imageA = map.data.image({ id: 'image-a', url: './media/corners.png', bounds: boundsFor(40, 40, 240, 240) });
+const imageB = map.data.image({ id: 'image-b', url: './media/corners-alt.png', bounds: boundsFor(200, 200, 400, 400) });
+const imagePix = map.data.image({ id: 'image-pix', pixels: pixelsFixture(), bounds: boundsFor(430, 430, 510, 510) });
+const video = map.data.video({
   id: 'video-a',
   url: './media/two-frames.mp4',
   bounds: boundsFor(40, 420, 232, 548),
   loop: true,
 });
 
-const shapes = map.sources.vector({ id: 'shapes' });
+const shapes = map.data.vector({ id: 'shapes' });
 await shapes.features.replace([
   { id: 'plate', geometry: { type: 'rectangle', ...boundsFor(280, 40, 480, 240) }, properties: {} },
 ]);
 
-map.layers.add({ id: 'media-a', type: 'raster', source: imageA });
-map.layers.add({
+map.addLayer({ id: 'media-a', type: 'raster', source: imageA });
+map.addLayer({
   id: 'plate',
   type: 'fills',
   source: shapes,
   style: { fillColor: '#f97316', fillOpacity: 1, strokeWidthPx: 0 },
 });
-map.layers.add({ id: 'media-b', type: 'raster', source: imageB, style: { opacity: 0.5 } });
-map.layers.add({ id: 'media-pix', type: 'raster', source: imagePix });
-map.layers.add({ id: 'media-video', type: 'raster', source: video });
+map.addLayer({ id: 'media-b', type: 'raster', source: imageB, style: { opacity: 0.5 } });
+map.addLayer({ id: 'media-pix', type: 'raster', source: imagePix });
+map.addLayer({ id: 'media-video', type: 'raster', source: video });
 
 /* --------------------------------- helpers -------------------------------- */
 
@@ -210,7 +208,7 @@ await check('MEDIA media records have their own id and interactive area', async 
   const hits = await map.query.rendered({ x: 450, y: 370 });
   const hit = hits[0] ?? null;
   const clicks = [];
-  const off = map.on('feature', (event) => {
+  const off = map.onFeature((event) => {
     if (event.type === 'click') clicks.push({ sourceId: event.sourceId, feature: event.feature });
   });
   const rect = element.getBoundingClientRect();
@@ -390,7 +388,7 @@ await check('MEDIA-06 removal and destroy during playback apply no late frame', 
   video.play();
   await sleep(300);
   map.layers.remove('media-video');
-  map.sources.remove('video-a');
+  map.data.remove('video-a');
   await sleep(200);
   const removedBaseline = map.stats().frames;
   await sleep(600);
@@ -404,7 +402,7 @@ await check('MEDIA-06 removal and destroy during playback apply no late frame', 
   if (new URLSearchParams(location.search).has('keep')) {
     return { pass: lateFrames === 0 && removed.a === 0 && errorsBeforeDestroy === 0, detail: { lateFrames, removed: describe(removed), keep: true } };
   }
-  map.sources.video({ id: 'video-late', url: './media/two-frames.mp4', bounds: boundsFor(300, 420, 492, 548) });
+  map.data.video({ id: 'video-late', url: './media/two-frames.mp4', bounds: boundsFor(300, 420, 492, 548) });
   map.destroy();
   await sleep(500);
   return {

@@ -32,24 +32,22 @@ function finalize() {
 }
 let started = 0;
 
-const map = await createMap({
-  container: 'map',
-  renderer:
-    new URLSearchParams(location.search).get('backend') === 'webgpu'
-      ? { primary: 'webgpu', fallback: false }
-      : { primary: 'webgl1', fallback: false },
-  size: { width: 640, height: 480 },
-  view: { center: { lat: 50, lng: 14.05 }, zoom: 10 },
+const map = await createMap('map', {
+    renderer: new URLSearchParams(location.search).get('backend') === 'webgpu'
+        ? { primary: 'webgpu', fallback: false }
+        : { primary: 'webgl1', fallback: false },
+    size: { width: 640, height: 480 },
+    center: { lat: 50, lng: 14.05 }, zoom: 10
 });
 
 window.__importMap = map;
-const marks = map.sources.vector({ id: 'marks' });
-map.layers.add({
+const marks = map.data.vector({ id: 'marks' });
+map.addLayer({
   id: 'marks',
   type: 'points',
   source: marks,
   style: { radiusPx: 7, color: '#2563eb' },
-  interaction: { enabled: true },
+  interactive: true ,
 });
 
 /* --------------------------------- helpers -------------------------------- */
@@ -68,7 +66,7 @@ const sample = (x, y) => map.debug.samplePixel({ x, y });
 const describe = (pixel) => `rgba(${pixel.r},${pixel.g},${pixel.b},${pixel.a})`;
 const blue = (pixel) => pixel.b > 180 && pixel.r < 90 && pixel.g < 160;
 const pixelAt = async (position) => {
-  const screen = map.view.positionToScreen(position);
+  const screen = map.positionToScreen(position);
   return sample(Math.round(screen.x), Math.round(screen.y));
 };
 const rejectionOf = async (promise) => {
@@ -314,7 +312,7 @@ await check('imported identity drives get, query.at, update and export', async (
   const commit = await marks.importColumnar(batch);
   await map.whenRendered(commit.revision);
   const got = marks.features.get(7);
-  const screen = map.view.positionToScreen({ lat: 50.02, lng: 14.02 });
+  const screen = map.positionToScreen({ lat: 50.02, lng: 14.02 });
   const hits = await map.query.rendered(screen);
   const exported = marks.exportGeoJson({ ids: [7] });
   await marks.features.update(7, { geometry: { type: 'point', position: { lat: 50.04, lng: 14.06 } } });

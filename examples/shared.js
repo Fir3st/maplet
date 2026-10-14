@@ -1,5 +1,5 @@
-import { createMap, crs, expr } from '../../dist/index.js';
-export { expr };
+import { createMap, crs, style } from '../../dist/index.js';
+export { style };
 
 const status = document.querySelector('#status');
 const tools = document.querySelector('#example-tools');
@@ -36,24 +36,23 @@ export async function openExample({ geographic = false, center, zoom } = {}) {
     center: center ?? (geographic ? { lat: 50.08, lng: 14.43 } : { x: 0, y: 0 }),
     zoom: zoom ?? (geographic ? 12 : 0),
   };
-  const map = await createMap({
-    container: 'map', projection: geographic ? crs.webMercator() : crs.simple(),
-    renderer: { primary: initialBackend, fallback: 'webgl1' },
-    view: initialView, minZoom: geographic ? 2 : -1, maxZoom: geographic ? 18 : 6,
+  const map = await createMap('map', {
+    projection: geographic ? crs.webMercator() : crs.simple(),
+    renderer: initialBackend,
+    ...initialView,
+    minZoom: geographic ? 2 : -1, maxZoom: geographic ? 18 : 6,
     interaction: { boxSelection: true },
+    controls: ['zoom'],
   });
-  map.controls.add({ id: 'zoom', kind: 'zoom' });
   if (!geographic) {
-    const grid = map.sources.vector({ id: 'guide-grid' });
     const lines = [];
     for (let i = -12; i <= 12; i++) {
-      lines.push({ id: `h${i}`, geometry: { type: 'lineString', positions: [{ x: -3, y: i / 4 }, { x: 3, y: i / 4 }] } });
-      lines.push({ id: `v${i}`, geometry: { type: 'lineString', positions: [{ x: i / 4, y: -3 }, { x: i / 4, y: 3 }] } });
+      lines.push({ id: `h${i}`, positions: [{ x: -3, y: i / 4 }, { x: 3, y: i / 4 }] });
+      lines.push({ id: `v${i}`, positions: [{ x: i / 4, y: -3 }, { x: i / 4, y: 3 }] });
     }
-    grid.features.add(lines);
-    map.layers.add({ id: 'guide-grid', type: 'lines', source: grid, style: { color: '#dce5df', widthPx: 1 }, interaction: { enabled: false } });
+    map.addLines(lines, { id: 'guide-grid', style: { color: '#dce5df', widthPx: 1 }, interactive: false });
   }
-  document.querySelector('#reset-view').addEventListener('click', () => map.view.set(initialView));
+  document.querySelector('#reset-view').addEventListener('click', () => map.setView(initialView));
   map.on('rendererror', event => report(`Rendering failed: ${event.error?.message ?? 'GPU unavailable'}`, true));
   return map;
 }

@@ -679,7 +679,7 @@ export class VectorTileSourceImpl extends SourceImpl {
             namespace: options?.namespace ?? null,
           });
         }
-        return this.refOf(record) as FeatureRef;
+        return this.refOf(record);
       },
       has: (id, options) => this.store.has(id, options?.namespace),
       count: (options) => {

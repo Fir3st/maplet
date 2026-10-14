@@ -51,15 +51,14 @@ function finalize() {
 }
 let started = performance.now();
 
-const map = await createMap({
-  container: 'map',
-  renderer: { primary: backend, fallback: false },
-  size: { width: SIZE, height: SIZE },
-  view: { center: { lat: 50.05, lng: 14.4 }, zoom: 12 },
+const map = await createMap('map', {
+    renderer: { primary: backend, fallback: false },
+    size: { width: SIZE, height: SIZE },
+    center: { lat: 50.05, lng: 14.4 }, zoom: 12
 });
 
-const toScreen = (x, y) => map.view.screenToPosition({ x, y });
-const probes = map.sources.vector({ id: 'probes' });
+const toScreen = (x, y) => map.screenToPosition({ x, y });
+const probes = map.data.vector({ id: 'probes' });
 await probes.features.replace([
   { id: 'a', geometry: { type: 'point', position: toScreen(PROBE.x, PROBE.y) } },
   { id: 'b', geometry: { type: 'point', position: toScreen(PROBE.x, PROBE.y + 3) } },
@@ -69,7 +68,7 @@ await probes.features.replace([
 // A dense interactive base layer gives the pick pass realistic work (and makes
 // the measured span comfortably above the clock resolution); the neighbourhood
 // of the probe stays clear so the candidates there are known.
-const grid = map.sources.vector({ id: 'grid' });
+const grid = map.data.vector({ id: 'grid' });
 const gridFeatures = [];
 for (let y = 12; y <= SIZE - 12; y += 16) {
   for (let x = 12; x <= SIZE - 12; x += 16) {
@@ -79,18 +78,18 @@ for (let y = 12; y <= SIZE - 12; y += 16) {
 }
 await grid.features.replace(gridFeatures);
 
-map.layers.add({
+map.addLayer({
   id: 'grid-layer',
   type: 'points',
   source: 'grid',
-  interaction: { enabled: true },
+  interactive: true ,
   style: { radiusPx: 1, color: '#2563eb' },
 });
-const layer = map.layers.add({
+const layer = map.addLayer({
   id: 'probes-layer',
   type: 'points',
   source: 'probes',
-  interaction: { enabled: true },
+  interactive: true ,
   style: { radiusPx: 2, color: '#dc2626' },
 });
 
@@ -123,10 +122,10 @@ await check('PICK-12 target, candidates, limit and window', async () => {
   const one = ids(await map.query.rendered(PROBE, { limit: 1 }));
   const empty = ids(await map.query.rendered(EMPTY, { limit: 8 }));
   // With the neighbour hidden only the pointer's own target may remain.
-  layer.features.setOverride(refB, { visible: false });
+  layer.setFeatureStyle(refB, { visible: false });
   await map.whenRendered(map.stats().revision);
   const isolated = ids(await map.query.rendered(PROBE, { limit: 8 }));
-  layer.features.clearOverride(refB);
+  layer.clearFeatureStyle(refB);
   await map.whenRendered(map.stats().revision);
   return {
     pass:

@@ -192,33 +192,33 @@ test('WMS-04: special characters in layers and styles are URL encoded', () => {
 });
 
 test('RASTER-07: a source update repaints immediately and rebuilds the plan with the new URL', async () => {
-  const { map } = await makeMap({ view: { center: TILE_2_1_1_CENTER, zoom: 2 } });
-  const source = map.sources.rasterTiles({ id: 'base', url: 'https://a.example/{z}/{x}/{y}.png' });
-  map.layers.add({ id: 'base', type: 'raster', source });
-  assert.ok(map.debug.layerTiles('base').every((tile) => tile.url.startsWith('https://a.example/')));
+  const { map } = await makeMap({ center: TILE_2_1_1_CENTER, zoom: 2 });
+  const source = map.data.rasterTiles({ id: 'base', url: 'https://a.example/{z}/{x}/{y}.png' });
+  map.addLayer({ id: 'basemap', type: 'raster', source });
+  assert.ok(map.debug.layerTiles('basemap').every((tile) => tile.url.startsWith('https://a.example/')));
 
   const frames = map.stats().frames;
   source.update({ url: 'https://b.example/{z}/{x}/{y}.png' });
   await settled();
   assert.ok(map.stats().frames > frames, 'a descriptor change requests a repaint, no zoom needed');
   assert.ok(
-    map.debug.layerTiles('base').every((tile) => tile.url.startsWith('https://b.example/')),
+    map.debug.layerTiles('basemap').every((tile) => tile.url.startsWith('https://b.example/')),
     'the rebuilt plan carries the new template',
   );
 
   const builds = map.debug.planBuildCount();
-  map.debug.layerTiles('base');
+  map.debug.layerTiles('basemap');
   assert.equal(map.debug.planBuildCount(), builds, 'the plan is cached until something changes');
   source.update({ attribution: 'changed' });
-  map.debug.layerTiles('base');
+  map.debug.layerTiles('basemap');
   assert.ok(map.debug.planBuildCount() > builds, 'a further descriptor change rebuilds the plan');
   map.destroy();
 });
 
 test('RASTER-11: placements carry ancestor/child fallback chains with exact UV sub-rects', async () => {
-  const { map } = await makeMap({ view: { center: TILE_2_1_1_CENTER, zoom: 2 } });
-  const source = map.sources.rasterTiles({ id: 'chain', url: 'https://t.example/{z}/{x}/{y}.png', minZoom: 0 });
-  map.layers.add({ id: 'chain', type: 'raster', source });
+  const { map } = await makeMap({ center: TILE_2_1_1_CENTER, zoom: 2 });
+  const source = map.data.rasterTiles({ id: 'chain', url: 'https://t.example/{z}/{x}/{y}.png', minZoom: 0 });
+  map.addLayer({ id: 'chain', type: 'raster', source });
   const tile = map.debug.layerTiles('chain').find((entry) => entry.tileKey === '2/1/1');
   assert.ok(tile, 'the centre tile is planned');
   assert.equal(tile.url, 'https://t.example/2/1/1.png');
@@ -240,15 +240,15 @@ test('RASTER-11: placements carry ancestor/child fallback chains with exact UV s
 });
 
 test('RASTER-11: fallback chains respect minZoom and nativeZoom limits', async () => {
-  const { map } = await makeMap({ view: { center: TILE_2_1_1_CENTER, zoom: 2 } });
-  const source = map.sources.rasterTiles({
+  const { map } = await makeMap({ center: TILE_2_1_1_CENTER, zoom: 2 });
+  const source = map.data.rasterTiles({
     id: 'limits',
     url: 'https://t.example/{z}/{x}/{y}.png',
     minZoom: 2,
     nativeZoom: 2,
     maxZoom: 18,
   });
-  map.layers.add({ id: 'limits', type: 'raster', source });
+  map.addLayer({ id: 'limits', type: 'raster', source });
   const tile = map.debug.layerTiles('limits').find((entry) => entry.tileKey === '2/1/1');
   assert.ok(tile);
   assert.equal(tile.fallbacks.length, 0, 'no ancestor requests below minZoom');
@@ -258,12 +258,12 @@ test('RASTER-11: fallback chains respect minZoom and nativeZoom limits', async (
 
 test('RASTER-07/09: raster source updates bump the revision for stale-response handling', async () => {
   const { map } = await makeMap();
-  const tiles = map.sources.rasterTiles({ id: 't', url: XYZ.url });
+  const tiles = map.data.rasterTiles({ id: 't', url: XYZ.url });
   assert.equal(tiles.snapshot().revision, 0);
   tiles.update({ url: 'https://other.example/{z}/{x}/{y}.png' });
   assert.equal(tiles.snapshot().revision, 1);
   assert.match(tiles.getOptions().url, /other\.example/);
-  const wms = map.sources.wms({ id: 'w', url: 'https://wms.example/', layers: 'roads' });
+  const wms = map.data.wms({ id: 'w', url: 'https://wms.example/', layers: 'roads' });
   wms.setParams({ time: '2026-10-10' });
   assert.equal(wms.snapshot().revision, 1);
   assert.equal((wms.getOptions() as { params?: Record<string, string> }).params?.time, '2026-10-10');
@@ -277,17 +277,17 @@ test('RASTER-07/09: raster source updates bump the revision for stale-response h
 });
 
 test('WMS-01/03: the plan requests the view bounds with the source CRS semantics', async () => {
-  const { map } = await makeMap({ view: { center: { lat: 50, lng: 14 }, zoom: 8 } });
-  const source = map.sources.wms({
+  const { map } = await makeMap({ center: { lat: 50, lng: 14 }, zoom: 8 });
+  const source = map.data.wms({
     id: 'wms',
     url: 'https://wms.example/ows',
     layers: 'roads',
     version: '1.1.1',
     crs: 'EPSG:4326',
   });
-  map.layers.add({ id: 'wms', type: 'raster', source });
+  map.addLayer({ id: 'wms', type: 'raster', source });
   // The fixture map uses the default geographic CRS, so the view bounds are lng/lat.
-  const bounds = map.view.getBounds() as Bounds<GeoPosition>;
+  const bounds = map.getBounds() as Bounds<GeoPosition>;
   const [placement] = map.debug.layerTiles('wms');
   assert.ok(placement, 'one GetMap request covers the viewport');
   const url = new URL(placement.url);

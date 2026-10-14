@@ -89,7 +89,7 @@ async function verifyOutput() {
   for (const position of PROBES) {
     let pixel;
     if (engine === 'maplet') {
-      const screen = map.view.positionToScreen(position);
+      const screen = map.positionToScreen(position);
       pixel = await map.debug.samplePixel({ x: Math.round(screen.x), y: Math.round(screen.y) });
     } else {
       const screen = map.latLngToLayerPoint(position).subtract(renderer._bounds.min);
@@ -112,7 +112,7 @@ async function panTest(durationMs) {
       lat: CENTER.lat + 0.0006 * Math.sin(samples.length / 9),
       lng: CENTER.lng + 0.0008 * Math.cos(samples.length / 7),
     };
-    if (engine === 'maplet') map.view.set({ center });
+    if (engine === 'maplet') map.setView({ center });
     else map.panTo(center, { animate: false });
     await frame();
     samples.push(performance.now() - t0);
@@ -136,15 +136,14 @@ try {
   const baseHeap = heap();
   const setupStart = performance.now();
   if (engine === 'maplet') {
-    map = await createMap({
-      container: 'map',
-      renderer: { primary: params.get('backend') === 'webgpu' ? 'webgpu' : 'webgl1', fallback: false },
-      size: { width: 720, height: 520 },
-      view: { center: CENTER, zoom: ZOOM },
-    });
-    source = map.sources.vector({ id: 'points' });
-    map.layers.add({ id: 'points', type: 'points', source,
-      style: { radiusPx: 2, color: '#2563eb' }, interaction: { enabled: true } });
+    map = await createMap('map', {
+    renderer: { primary: params.get('backend') === 'webgpu' ? 'webgpu' : 'webgl1', fallback: false },
+    size: { width: 720, height: 520 },
+    center: CENTER, zoom: ZOOM
+});
+    source = map.data.vector({ id: 'points' });
+    map.addLayer({ id: 'points', type: 'points', source,
+      style: { radiusPx: 2, color: '#2563eb' }, interactive: true  });
   } else {
     renderer = engine === 'leaflet-canvas' ? L.canvas({ padding: 0 }) : undefined;
     map = L.map('map', { renderer, zoomControl: false, attributionControl: false,
@@ -193,7 +192,7 @@ try {
   const output = await verifyOutput();
   const projections = PROBES.map((position) => {
     const expected = expectedScreen(position);
-    const actual = engine === 'maplet' ? map.view.positionToScreen(position) : map.latLngToContainerPoint(position);
+    const actual = engine === 'maplet' ? map.positionToScreen(position) : map.latLngToContainerPoint(position);
     return { expected, actual, pass: Math.abs(expected.x - actual.x) <= 1 && Math.abs(expected.y - actual.y) <= 1 };
   });
   const drawn = countRenderedPoints();
@@ -220,7 +219,7 @@ try {
   await panTest(5000);
   const warmPan = await panTest(10000);
   if (engine === 'maplet') {
-    map.view.set({ center: CENTER, zoom: ZOOM });
+    map.setView({ center: CENTER, zoom: ZOOM });
     await map.whenRendered();
   } else map.panTo(CENTER, { animate: false });
   await frame();

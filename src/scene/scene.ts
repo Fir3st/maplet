@@ -237,6 +237,14 @@ export class Scene {
   destroy(): void {
     if (this.destroyedValue) return;
     this.destroyedValue = true;
+    for (const layer of this.layers.list()) {
+      layer.lifetime.abort();
+      layer.featureEmitter.clear();
+    }
+    for (const group of this.layers.listGroups()) {
+      group.lifetime.abort();
+      group.featureEmitter.clear();
+    }
     // Pending import preparation is prepared work, never published: rejecting it
     // keeps the scene at its last consistent revision (IO-11, TX-09).
     this.importPipelineValue?.destroy();

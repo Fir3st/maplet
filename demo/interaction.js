@@ -11,7 +11,7 @@
  *   base   a = #16a34a  b = #2563eb
  *   hover  #ff0000      selected #f59e0b
  */
-import { createMap, expr } from '../dist/index.js';
+import { createMap, style as expr } from '../dist/index.js';
 
 const SIZE = 512;
 const TOL = 8;
@@ -25,26 +25,24 @@ const GREEN = [22, 163, 74];
 const HOVER_RED = [255, 0, 0];
 const SELECTED_AMBER = [245, 158, 11];
 
-const map = await createMap({
-  container: 'map',
-  renderer: { primary: new URLSearchParams(location.search).get('backend') === 'webgpu' ? 'webgpu' : 'webgl1', fallback: false },
-  size: { width: SIZE, height: SIZE },
-  view: { center: { lat: 50.1, lng: 14.1 }, zoom: 10 },
+const map = await createMap('map', {
+    renderer: { primary: new URLSearchParams(location.search).get('backend') === 'webgpu' ? 'webgpu' : 'webgl1', fallback: false },
+    size: { width: SIZE, height: SIZE },
+    center: { lat: 50.1, lng: 14.1 }, zoom: 10
 });
 
-const source = map.sources.vector({ id: 'pois' });
+const source = map.data.vector({ id: 'pois' });
 await source.features.replace([
   { id: 'a', geometry: { type: 'point', position: { lat: 50.0, lng: 14.0 } }, properties: { name: 'a' } },
   { id: 'b', geometry: { type: 'point', position: { lat: 50.2, lng: 14.2 } }, properties: { name: 'b' } },
 ]);
-map.groups.add({ id: 'root' });
-map.groups.add({ id: 'leaf', parent: 'root' });
-const layer = map.layers.add({
+const root = map.addLayer({ id: 'root' });
+const leaf = root.addLayer({ id: 'leaf' });
+const layer = leaf.addLayer({
   id: 'pois-layer',
   type: 'points',
   source,
-  group: 'leaf',
-  interaction: { enabled: true, draggable: true },
+  interactive: true, draggable: true ,
   style: {
     radiusPx: 10,
     color: expr.when(
@@ -58,17 +56,17 @@ const layer = map.layers.add({
 const element = document.getElementById('map');
 const refA = source.features.ref('a');
 const refB = source.features.ref('b');
-const posA = map.view.positionToScreen({ lat: 50.0, lng: 14.0 });
-const posB = map.view.positionToScreen({ lat: 50.2, lng: 14.2 });
+const posA = map.positionToScreen({ lat: 50.0, lng: 14.0 });
+const posB = map.positionToScreen({ lat: 50.2, lng: 14.2 });
 const empty = { x: 40, y: 40 };
 
 /* Event capture through the bubbling chain. */
 const list = [];
 const capture = (tag) => (event) => list.push(`${tag}:${event.type}`);
-layer.on('feature', capture('layer'));
-map.groups.get('leaf').on('feature', capture('leaf'));
-map.groups.get('root').on('feature', capture('root'));
-map.on('feature', capture('map'));
+layer.onFeature(capture('layer'));
+leaf.onFeature(capture('leaf'));
+root.onFeature(capture('root'));
+map.onFeature(capture('map'));
 
 function pointer(type, point, options = {}) {
   const rect = element.getBoundingClientRect();
@@ -124,7 +122,7 @@ await check('EVENT-02 stopPropagation at the layer', async () => {
       event.stopPropagation();
     }
   };
-  layer.on('feature', stopper);
+  layer.onFeature(stopper);
   list.length = 0;
   await click(posA);
   const order = [...list];
@@ -184,11 +182,11 @@ await check('PICK-09 last hover wins', async () => {
 
 await check('STYLE-11 visibility override', async () => {
   const before = await map.debug.samplePixel(posA);
-  layer.features.setOverride(refA, { visible: false });
+  layer.setFeatureStyle(refA, { visible: false });
   await sleep(350);
   const hidden = await map.debug.samplePixel(posA);
   const hitsHidden = await map.query.rendered(posA);
-  layer.features.clearOverride(refA);
+  layer.clearFeatureStyle(refA);
   await sleep(350);
   const back = await map.debug.samplePixel(posA);
   const hitsBack = await map.query.rendered(posA);
@@ -234,19 +232,19 @@ await check('selection style via state.selected', async () => {
 
 await check('INPUT-07/02 keyboard pan and zoom, form guard', async () => {
   element.focus();
-  const before = map.view.get();
+  const before = map.getView();
   element.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }));
   await sleep(120);
-  const afterPan = map.view.get();
+  const afterPan = map.getView();
   element.dispatchEvent(new KeyboardEvent('keydown', { key: '+', bubbles: true, cancelable: true }));
   await sleep(120);
-  const afterZoom = map.view.get();
+  const afterZoom = map.getView();
   const input = document.createElement('input');
   element.appendChild(input);
-  const lngBefore = map.view.get().center.lng;
+  const lngBefore = map.getView().center.lng;
   input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }));
   await sleep(120);
-  const lngAfterInput = map.view.get().center.lng;
+  const lngAfterInput = map.getView().center.lng;
   input.remove();
   return {
     pass:
@@ -262,9 +260,9 @@ await check('INPUT-07/02 keyboard pan and zoom, form guard', async () => {
 });
 
 await check('INPUT-03 pinch mid-gesture and pending-drag', async () => {
-  map.view.set({ center: { lat: 50.1, lng: 14.1 }, zoom: 10 });
+  map.setView({ center: { lat: 50.1, lng: 14.1 }, zoom: 10 });
   await sleep(150);
-  const zoom0 = map.view.get().zoom;
+  const zoom0 = map.getView().zoom;
   // Both fingers land while the first press still waits for its pick.
   pointer('pointerdown', { x: 206, y: 256 }, { pointerId: 21, pointerType: 'touch' });
   pointer('pointerdown', { x: 306, y: 256 }, { pointerId: 22, pointerType: 'touch' });
@@ -276,12 +274,12 @@ await check('INPUT-03 pinch mid-gesture and pending-drag', async () => {
   pointer('pointermove', { x: 156, y: 256 }, { pointerId: 21, pointerType: 'touch', buttons: 1 });
   pointer('pointermove', { x: 356, y: 256 }, { pointerId: 22, pointerType: 'touch', buttons: 1 });
   await sleep(60);
-  const zoomEarly = map.view.get().zoom;
+  const zoomEarly = map.getView().zoom;
   pointer('pointerup', { x: 156, y: 256 }, { pointerId: 21, pointerType: 'touch' });
   pointer('pointerup', { x: 356, y: 256 }, { pointerId: 22, pointerType: 'touch' });
   await sleep(80);
   // A finger lifted later: pinch continues as pan without a jump.
-  const zoom1 = map.view.get().zoom;
+  const zoom1 = map.getView().zoom;
   pointer('pointerdown', { x: 206, y: 256 }, { pointerId: 23, pointerType: 'touch' });
   await sleep(120);
   pointer('pointerdown', { x: 306, y: 256 }, { pointerId: 24, pointerType: 'touch' });
@@ -292,13 +290,13 @@ await check('INPUT-03 pinch mid-gesture and pending-drag', async () => {
   pointer('pointermove', { x: 156, y: 256 }, { pointerId: 23, pointerType: 'touch', buttons: 1 });
   pointer('pointermove', { x: 356, y: 256 }, { pointerId: 24, pointerType: 'touch', buttons: 1 });
   await sleep(60);
-  const zoom2 = map.view.get().zoom;
+  const zoom2 = map.getView().zoom;
   pointer('pointerup', { x: 156, y: 256 }, { pointerId: 23, pointerType: 'touch' });
   await sleep(60);
-  const zoomAfterLift = map.view.get().zoom;
+  const zoomAfterLift = map.getView().zoom;
   pointer('pointermove', { x: 120, y: 300 }, { pointerId: 24, pointerType: 'touch', buttons: 1 });
   await sleep(60);
-  const zoomWhilePan = map.view.get().zoom;
+  const zoomWhilePan = map.getView().zoom;
   pointer('pointerup', { x: 120, y: 300 }, { pointerId: 24, pointerType: 'touch' });
   return {
     pass:
@@ -312,10 +310,10 @@ await check('INPUT-03 pinch mid-gesture and pending-drag', async () => {
 
 await check('INPUT-04 feature drag moves the feature, not the map', async () => {
   // Earlier checks moved the view; re-anchor so posA points at the feature again.
-  map.view.set({ center: { lat: 50.1, lng: 14.1 }, zoom: 10 });
+  map.setView({ center: { lat: 50.1, lng: 14.1 }, zoom: 10 });
   await sleep(150);
-  const anchorA = map.view.positionToScreen({ lat: 50.0, lng: 14.0 });
-  const centerBefore = map.view.get().center;
+  const anchorA = map.positionToScreen({ lat: 50.0, lng: 14.0 });
+  const centerBefore = map.getView().center;
   const aBefore = source.features.get('a').geometry.position;
   list.length = 0;
   pointer('pointerdown', anchorA, { pointerId: 41 });
@@ -323,14 +321,14 @@ await check('INPUT-04 feature drag moves the feature, not the map', async () => 
   pointer('pointermove', { x: anchorA.x + 20, y: anchorA.y + 10 }, { pointerId: 41, buttons: 1 });
   await sleep(40);
   const aMid = source.features.get('a').geometry.position;
-  const expectedMid = map.view.screenToPosition({ x: anchorA.x + 20, y: anchorA.y + 10 });
+  const expectedMid = map.screenToPosition({ x: anchorA.x + 20, y: anchorA.y + 10 });
   pointer('pointermove', { x: anchorA.x + 40, y: anchorA.y + 20 }, { pointerId: 41, buttons: 1 });
   await sleep(60);
   pointer('pointerup', { x: anchorA.x + 40, y: anchorA.y + 20 }, { pointerId: 41 });
   await sleep(250);
   const aAfter = source.features.get('a').geometry.position;
-  const expectedEnd = map.view.screenToPosition({ x: anchorA.x + 40, y: anchorA.y + 20 });
-  const centerAfter = map.view.get().center;
+  const expectedEnd = map.screenToPosition({ x: anchorA.x + 40, y: anchorA.y + 20 });
+  const centerAfter = map.getView().center;
   const dragEvents = list.filter((entry) => entry.includes('drag'));
   // Every move must land exactly under the pointer: adding the full delta since
   // drag start to the already moved position used to accelerate the feature.

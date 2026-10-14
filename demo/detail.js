@@ -25,13 +25,12 @@ const POINTS = {
   f: geoAt(-30, -70),
 };
 
-const map = await createMap({
-  container: 'map-main',
-  renderer: { primary: 'webgl1', fallback: false },
-  size: { width: 520, height: 420 },
-  view: { center: { lat: 50.05, lng: 14.45 }, zoom: 12 },
+const map = await createMap('map-main', {
+    renderer: { primary: 'webgl1', fallback: false },
+    size: { width: 520, height: 420 },
+    center: { lat: 50.05, lng: 14.45 }, zoom: 12
 });
-const pois = map.sources.vector({ id: 'pois' });
+const pois = map.data.vector({ id: 'pois' });
 await pois.features.replace(
   Object.entries(POINTS).map(([id, position]) => ({
     id,
@@ -39,26 +38,25 @@ await pois.features.replace(
     properties: { name: id.toUpperCase(), status: 'open' },
   })),
 );
-map.layers.add({ id: 'pois', type: 'points', source: pois, style: { radiusPx: 6, color: '#2563eb' } });
-const listControl = map.controls.add({
+map.addLayer({ id: 'pois', type: 'points', source: pois, style: { radiusPx: 6, color: '#2563eb' } });
+const listControl = map.addControl({
   kind: 'list',
   id: 'results',
   options: { sources: ['pois'], limit: 3 },
 });
 
-const live = await createMap({
-  container: 'map-live',
-  renderer: { primary: 'webgl1', fallback: false },
-  size: { width: 320, height: 240 },
-  view: { center: { lat: 50.05, lng: 14.45 }, zoom: 12 },
+const live = await createMap('map-live', {
+    renderer: { primary: 'webgl1', fallback: false },
+    size: { width: 320, height: 240 },
+    center: { lat: 50.05, lng: 14.45 }, zoom: 12
 });
-const liveSource = live.sources.vector({ id: 'live' });
+const liveSource = live.data.vector({ id: 'live' });
 await liveSource.features.replace([
   { id: 'l1', geometry: { type: 'point', position: geoAt(0, 0) }, properties: { name: 'Live one' } },
   { id: 'l2', geometry: { type: 'point', position: geoAt(40, 30) }, properties: { name: 'Live two' } },
 ]);
-live.layers.add({ id: 'live', type: 'points', source: liveSource, style: { radiusPx: 6, color: '#16a34a' } });
-live.controls.add({ kind: 'list', id: 'live-list', options: { sources: ['live'], limit: 10 } });
+live.addLayer({ id: 'live', type: 'points', source: liveSource, style: { radiusPx: 6, color: '#16a34a' } });
+live.addControl({ kind: 'list', id: 'live-list', options: { sources: ['live'], limit: 10 } });
 
 const containerMain = document.getElementById('map-main');
 const detailElement = () => containerMain.querySelector('[data-maplet-detail="true"]');
@@ -87,7 +85,7 @@ await check('UI-05 detail opens, follows the feature and updates with data', asy
     content: (feature) => `A:${String(feature.properties.name)}:${feature.properties.status}`,
   });
   const opened = detailElement() !== null && detailContent() === 'A:A:open';
-  const anchor = map.view.positionToScreen(POINTS.a);
+  const anchor = map.positionToScreen(POINTS.a);
   const rect = detailElement().getBoundingClientRect();
   const mapRect = containerMain.getBoundingClientRect();
   const nearAnchor =
@@ -100,7 +98,7 @@ await check('UI-05 detail opens, follows the feature and updates with data', asy
   const afterUpdate = detailContent();
   // View change moves the anchored detail by the same delta.
   const beforeMove = detailElement().getBoundingClientRect();
-  map.view.set({ center: { lat: 50.051, lng: 14.451 } });
+  map.setView({ center: { lat: 50.051, lng: 14.451 } });
   await sleep(50);
   const afterMove = detailElement().getBoundingClientRect();
   const moved = Math.abs(afterMove.left - beforeMove.left) > 1;

@@ -14,6 +14,8 @@ import { complexScene } from './complex-scene.mjs';
 import { retainedScene } from './retained-scene.mjs';
 import { denseGeometry } from './dense-geometry.mjs';
 import { plugins } from './plugins.mjs';
+import { objectApi } from './object-api.mjs';
+import { layerTree } from './layer-tree.mjs';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -78,6 +80,8 @@ async function emptyScreen(session, from) {
 /* -------------------------------- scenarios ------------------------------- */
 
 export const scenarios = [
+  { name: 'layer-tree', page: 'e2e/scene.html', run: layerTree },
+  { name: 'object-api', page: 'e2e/scene.html', run: objectApi },
   { name: 'plugins', page: 'e2e/scene.html', run: plugins },
   { name: 'dense-geometry-performance', page: 'e2e/scene.html', manual: true, run: denseGeometry },
   { name: 'retained-mixed-scene', page: 'e2e/scene.html', run: retainedScene },
@@ -139,13 +143,13 @@ export const scenarios = [
         y += dy;
         await session.mouse('mouseMoved', x, y, { dragging: true });
         await sleep(40);
-        const expected = await session.evaluate(`window.__e2e.map.view.screenToPosition({ x: ${x}, y: ${y} })`);
+        const expected = await session.evaluate(`window.__e2e.map.screenToPosition({ x: ${x}, y: ${y} })`);
         const actual = await positionOf(session, 'points', 'p1');
         const error = metersBetween(actual, expected);
         expect.ok(error < 3, `pointer at (${x}, ${y}): point is ${Math.round(error)} m away from the pointer`);
       }
       await session.mouse('mouseReleased', x, y);
-      const expectedEnd = await session.evaluate(`window.__e2e.map.view.screenToPosition({ x: ${x}, y: ${y} })`);
+      const expectedEnd = await session.evaluate(`window.__e2e.map.screenToPosition({ x: ${x}, y: ${y} })`);
       await sleep(150);
       const end = await positionOf(session, 'points', 'p1');
       expect.ok(metersBetween(end, expectedEnd) < 3, 'point drifted after release');
@@ -207,7 +211,7 @@ export const scenarios = [
       expect.equal(cleared, false, 'hover clears when the pointer leaves');
 
       await session.evaluate(
-        `window.__clicked = null; window.__e2e.map.on('feature', (event) => { if (event.type === 'click') window.__clicked = { id: event.feature.id, sourceId: event.sourceId, layerId: event.layerId }; }); 1`,
+        `window.__clicked = null; window.__e2e.map.onFeature((event) => { if (event.type === 'click') window.__clicked = { id: event.feature.id, sourceId: event.sourceId, layerId: event.layerId }; }); 1`,
       );
       await session.click(screen.x, screen.y);
       await sleep(300);
@@ -238,14 +242,14 @@ export const scenarios = [
       expect.ok(spot !== null, 'empty canvas spot for the pan gesture');
       if (!spot) return;
       const before = await screenOf(session, 'points', 'p3');
-      const centerBefore = await session.evaluate('window.__e2e.map.view.get().center');
+      const centerBefore = await session.evaluate('window.__e2e.map.getView().center');
       await session.drag(spot.x, spot.y, [
         { x: -30, y: 10 },
         { x: -30, y: 10 },
         { x: -20, y: 10 },
       ]);
       const after = await screenOf(session, 'points', 'p3');
-      const centerAfter = await session.evaluate('window.__e2e.map.view.get().center');
+      const centerAfter = await session.evaluate('window.__e2e.map.getView().center');
       expect.close(after.x - before.x, -80, 2, 'point screen dx after 80 px pan');
       expect.close(after.y - before.y, 30, 2, 'point screen dy after 30 px pan');
       expect.ok(centerAfter.lng > centerBefore.lng, 'center lng moved with the pan');
@@ -261,14 +265,14 @@ export const scenarios = [
     run: async ({ session, expect }) => {
       const p3 = await positionOf(session, 'points', 'p3');
       const cursor = await session.evaluate(`window.__e2e.screenOf(window.__e2e.positionOf(window.__e2e.points, 'p3'))`);
-      const before = await session.evaluate('window.__e2e.map.view.get().zoom');
+      const before = await session.evaluate('window.__e2e.map.getView().zoom');
       const p1 = await screenOf(session, 'points', 'p1');
       const p2 = await screenOf(session, 'points', 'p2');
       const distanceBefore = Math.hypot(p2.x - p1.x, p2.y - p1.y);
       await session.move(cursor.x, cursor.y);
       await session.wheel(cursor.x, cursor.y, -120);
       await sleep(250);
-      const after = await session.evaluate('window.__e2e.map.view.get().zoom');
+      const after = await session.evaluate('window.__e2e.map.getView().zoom');
       expect.ok(after > before, `zoom increased (${before} -> ${after})`);
       const ratio = 2 ** (after - before);
       const p1b = await screenOf(session, 'points', 'p1');
@@ -294,13 +298,13 @@ export const scenarios = [
       })()`);
       expect.ok(button !== null, 'zoom-in control button exists');
       if (!button) return;
-      const before = await session.evaluate('window.__e2e.map.view.get().zoom');
+      const before = await session.evaluate('window.__e2e.map.getView().zoom');
       const p1 = await screenOf(session, 'points', 'p1');
       const p2 = await screenOf(session, 'points', 'p2');
       const distanceBefore = Math.hypot(p2.x - p1.x, p2.y - p1.y);
       await session.click(button.x, button.y);
       await sleep(250);
-      const after = await session.evaluate('window.__e2e.map.view.get().zoom');
+      const after = await session.evaluate('window.__e2e.map.getView().zoom');
       const p1b = await screenOf(session, 'points', 'p1');
       const p2b = await screenOf(session, 'points', 'p2');
       const distanceAfter = Math.hypot(p2b.x - p1b.x, p2b.y - p1b.y);
@@ -315,12 +319,12 @@ export const scenarios = [
     run: async ({ session, expect }) => {
       await session.evaluate(`document.getElementById('map').focus(); 1`);
       const before = await screenOf(session, 'points', 'p1');
-      const centerBefore = await session.evaluate('window.__e2e.map.view.get().center');
+      const centerBefore = await session.evaluate('window.__e2e.map.getView().center');
       await session.key('keyDown', 'ArrowRight', { code: 'ArrowRight', windowsVirtualKeyCode: 39 });
       await session.key('keyUp', 'ArrowRight', { code: 'ArrowRight', windowsVirtualKeyCode: 39 });
       await sleep(200);
       const after = await screenOf(session, 'points', 'p1');
-      const centerAfter = await session.evaluate('window.__e2e.map.view.get().center');
+      const centerAfter = await session.evaluate('window.__e2e.map.getView().center');
       expect.close(after.x - before.x, -60, 2, 'ArrowRight pans the view by 60 px');
       expect.ok(centerAfter.lng > centerBefore.lng, 'center lng moved right');
     },
@@ -454,7 +458,7 @@ export const scenarios = [
         y += dy;
         await session.mouse('mouseMoved', x, y, { dragging: true });
         await sleep(40);
-        const expected = await session.evaluate(`window.__e2e.map.view.screenToPosition({ x: ${x}, y: ${y} })`);
+        const expected = await session.evaluate(`window.__e2e.map.screenToPosition({ x: ${x}, y: ${y} })`);
         const actual = await positionOf(session, 'marks', 'm1');
         const error = Math.hypot(actual.x - expected.x, actual.y - expected.y);
         expect.ok(error < 1e-6, `planar drag to (${x}, ${y}): point is ${error.toExponential(2)} units off the pointer`);
@@ -479,17 +483,17 @@ export const scenarios = [
       const probe = await session.evaluate(`(async () => {
         const { map, stations } = window.__maplet;
         const position = stations.features.get('a').geometry.position;
-        const screen = map.view.positionToScreen(position);
+        const screen = map.positionToScreen(position);
         return { position, screen };
       })()`);
       const pixelBefore = await session.evaluate(
         `window.__maplet.map.debug.samplePixel({ x: ${Math.round(probe.screen.x)}, y: ${Math.round(probe.screen.y)} })`,
       );
       // Anchor the view first so the station is at a known spot.
-      await session.evaluate(`window.__maplet.map.view.set({ center: { lat: 50.08, lng: 14.44 }, zoom: 10 }); 1`);
+      await session.evaluate(`window.__maplet.map.setView({ center: { lat: 50.08, lng: 14.44 }, zoom: 10 }); 1`);
       await sleep(200);
       const screen = await session.evaluate(
-        `window.__maplet.map.view.positionToScreen(window.__maplet.stations.features.get('a').geometry.position)`,
+        `window.__maplet.map.positionToScreen(window.__maplet.stations.features.get('a').geometry.position)`,
       );
       const rect = await session.evaluate(`(() => {
         const box = document.getElementById('map').getBoundingClientRect();
@@ -511,7 +515,7 @@ export const scenarios = [
         previous = { x: previous.x + dx, y: previous.y + dy };
         await session.mouse('mouseMoved', x, y, { dragging: true });
         await sleep(45);
-        const expected = await session.evaluate(`window.__maplet.map.view.screenToPosition({ x: ${previous.x}, y: ${previous.y} })`);
+        const expected = await session.evaluate(`window.__maplet.map.screenToPosition({ x: ${previous.x}, y: ${previous.y} })`);
         const actual = await session.evaluate(`window.__maplet.stations.features.get('a').geometry.position`);
         const error = metersBetween(actual, expected);
         expect.ok(error < 3, `station at container (${previous.x}, ${previous.y}) is ${Math.round(error)} m off`);

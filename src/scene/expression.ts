@@ -87,7 +87,7 @@ function match<T, const Cases extends Record<string, T>>(
     const value = subjectExpression.evaluate(context);
     if (value === null || value === undefined) return fallback;
     const key = String(value);
-    return key in cases ? (cases[key] as T) : fallback;
+    return Object.hasOwn(cases, key) ? (cases[key] as T) : fallback;
   });
 }
 

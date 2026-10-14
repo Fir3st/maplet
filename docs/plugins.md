@@ -11,7 +11,7 @@ hit testing. The example is offline; `?backend=webgpu` selects WebGPU and
 deliberately supports only the circle/solid-line scene used by the example.
 
 ```ts
-import type { PluginContext } from 'maplet';
+import type { PluginContext } from '@fir3st/maplet';
 
 function zoomBadge({ map, container, signal, onCleanup }: PluginContext) {
   if (!container) return;
@@ -20,7 +20,7 @@ function zoomBadge({ map, container, signal, onCleanup }: PluginContext) {
   container.append(badge);
   onCleanup(() => badge.remove());
 
-  const update = () => { badge.textContent = `Zoom ${map.view.get().zoom.toFixed(1)}`; };
+  const update = () => { badge.textContent = `Zoom ${map.getZoom().toFixed(1)}`; };
   map.on('viewchange', update, { signal });
   update();
   return { element: badge };
@@ -31,7 +31,7 @@ badge.api?.element.classList.add('my-badge'); // inferred API, no casting
 badge.remove();                            // unsubscribe + remove DOM
 ```
 
-Install automatically with `createMap({ …, plugins: [zoomBadge, otherPlugin] })`.
+Install automatically with `createMap(container, { …, plugins: [zoomBadge, otherPlugin] })`.
 Use `map.use()` when you need the returned API. A factory is enough for options:
 `map.use(myPlugin({ color: 'blue' }))`, where `myPlugin(options)` returns a setup
 function. Each installation is independent, even for the same function on the
@@ -41,7 +41,7 @@ same map. `use` and `remove` can be detached from their handles.
 
 | Member | Purpose |
 | --- | --- |
-| `map` | Full public map API: sources, layers, view, selection, events, controls, details, bindings… |
+| `map` | Full public object API: layer creation, view methods, shared data, selection, events, controls, details, bindings… |
 | `container` | Actual HTML container, or `null` for a DOM-free map; also available as `map.container` |
 | `signal` | Aborted when the installation is removed, setup fails, or the map is destroyed |
 | `onCleanup(fn)` | Register resource cleanup, run once in reverse registration order |
@@ -77,17 +77,15 @@ operations without adding properties to the map or subclassing it:
 
 ```ts
 function pins({ map, onCleanup }: PluginContext) {
-  const source = map.sources.vector({ id: 'my-pins' });
-  onCleanup(() => map.sources.remove(source.id));
-  const layer = map.layers.add({
-    id: 'my-pins', type: 'points', source,
+  const layer = map.addLayer({ id: 'my-pins' });
+  onCleanup(layer.remove); // removes its complete subtree and inline data
+  const points = layer.addPoints([], {
     style: { color: '#2563eb', radiusPx: 8 },
   });
-  onCleanup(layer.remove); // LIFO: remove layer before its source
 
   return {
     add(id: string, lat: number, lng: number) {
-      source.features.add({ id, geometry: { type: 'point', position: { lat, lng } } });
+      points.add({ id, position: [lat, lng] });
     },
     hide() { layer.setVisible(false); },
   };
@@ -106,7 +104,7 @@ cleanup immediately after acquiring each resource.
 
 ## Change rendering
 
-Ordinary appearance changes use `map.layers.update`, `layer.setStyle` and
+Ordinary appearance changes use a typed collection's `update`, `setStyle` and
 feature overrides. For advanced rendering there are three independent hooks,
 also available outside plugins as `map.render`:
 
@@ -117,7 +115,7 @@ Transforms compose in registration order and are cached for the same base plan
 and plugin invalidation epoch. Color-only example:
 
 ```ts
-import { POINT_STRIDE } from 'maplet';
+import { POINT_STRIDE } from '@fir3st/maplet';
 
 const bluePoints = map.use(({ render }) => {
   render.transform(plan => ({
@@ -202,7 +200,7 @@ replacement.remove(); // restores the previous built-in renderer
 ```
 
 For a custom-only map, avoid GPU initialization with
-`createMap({ container, renderer: { primary: 'none' }, plugins: [customPlugin] })`.
+`createMap(container, { renderer: 'none', plugins: [customPlugin] })`.
 A supplied container still enables controls, layout and map gestures. Without
 a container, custom rendering can also run headlessly.
 

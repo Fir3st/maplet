@@ -10,17 +10,15 @@ import { createMap } from '../../dist/index.js';
 
 const backend = new URLSearchParams(location.search).get('backend');
 
-const map = await createMap({
-  container: 'map',
-  renderer:
-    backend === 'webgpu'
-      ? { primary: 'webgpu', fallback: false }
-      : { primary: 'webgl1', fallback: false },
-  size: { width: 640, height: 480 },
-  view: { center: { lat: 50.0, lng: 14.05 }, zoom: 10 },
+const map = await createMap('map', {
+    renderer: backend === 'webgpu'
+        ? { primary: 'webgpu', fallback: false }
+        : { primary: 'webgl1', fallback: false },
+    size: { width: 640, height: 480 },
+    center: { lat: 50.0, lng: 14.05 }, zoom: 10
 });
 
-const backdrop = map.sources.vector({ id: 'backdrop' });
+const backdrop = map.data.vector({ id: 'backdrop' });
 await backdrop.features.replace([
   {
     id: 'white',
@@ -32,18 +30,18 @@ await backdrop.features.replace([
   },
 ]);
 
-const points = map.sources.vector({ id: 'points' });await points.features.replace([
+const points = map.data.vector({ id: 'points' });await points.features.replace([
   { id: 'p1', geometry: { type: 'point', position: { lat: 50.02, lng: 14.02 } }, properties: { name: 'P1', status: 'ok' } },
   { id: 'p2', geometry: { type: 'point', position: { lat: 50.02, lng: 14.08 } }, properties: { name: 'P2', status: 'ok' } },
   { id: 'p3', geometry: { type: 'point', position: { lat: 49.955, lng: 14.12 } }, properties: { name: 'P3', status: 'warn' } },
 ]);
 
-const links = map.sources.vector({ id: 'links' });
+const links = map.data.vector({ id: 'links' });
 await links.features.replace([
   { id: 'l1', geometry: { type: 'lineString', positions: [{ lat: 50.02, lng: 14.02 }, { lat: 50.02, lng: 14.08 }] } },
 ]);
 
-const shapes = map.sources.vector({ id: 'shapes' });
+const shapes = map.data.vector({ id: 'shapes' });
 await shapes.features.replace([
   {
     id: 'plate',
@@ -55,7 +53,7 @@ await shapes.features.replace([
   },
 ]);
 
-const routes = map.sources.vector({ id: 'routes' });
+const routes = map.data.vector({ id: 'routes' });
 await routes.features.replace([
   {
     id: 'r1',
@@ -63,47 +61,47 @@ await routes.features.replace([
   },
 ]);
 
-const targets = map.sources.vector({ id: 'targets' });
+const targets = map.data.vector({ id: 'targets' });
 await targets.features.replace([
   { id: 't1', geometry: { type: 'point', position: { lat: 50.0, lng: 14.04 } }, properties: { name: 'T1' } },
 ]);
 
-map.layers.add({
+map.addLayer({
   id: 'backdrop',
   type: 'fills',
   source: backdrop,
-  interaction: { enabled: false },
+  interactive: false ,
   style: { fillColor: '#ffffff', fillOpacity: 1, strokeWidthPx: 0 },
 });
-map.layers.add({
+map.addLayer({
   id: 'plate',
   type: 'fills',
   source: shapes,
   style: { fillColor: '#f97316', fillOpacity: 1, strokeWidthPx: 0 },
 });
-map.layers.add({
+map.addLayer({
   id: 'route',
   type: 'lines',
   source: routes,
   style: { color: '#dc2626', widthPx: 4 },
 });
-map.layers.add({
+map.addLayer({
   id: 'links',
   type: 'lines',
   source: links,
   style: { color: '#7c3aed', widthPx: 3 },
 });
-map.layers.add({
+map.addLayer({
   id: 'target',
   type: 'points',
   source: targets,
   style: { radiusPx: 5, color: '#16a34a' },
 });
-map.layers.add({
+map.addLayer({
   id: 'points',
   type: 'points',
   source: points,
-  interaction: { enabled: true, draggable: true },
+  interactive: true, draggable: true ,
   style: { radiusPx: 6, color: '#2563eb' },
 });
 
@@ -119,7 +117,7 @@ map.bindings.add({
 
 map.relations.add({ id: 'p1-p2', type: 'near', from: points.features.ref('p1'), to: points.features.ref('p2') });
 
-map.controls.add({ id: 'zoom', kind: 'zoom', position: 'top-left' });
+map.addControl({ id: 'zoom', kind: 'zoom', position: 'top-left' });
 
 const COLORS = {
   point: [37, 99, 235],
@@ -141,14 +139,14 @@ window.__e2e = {
   targets,
   ref: (source, id) => source.features.ref(id),
   positionOf: (source, id) => source.features.get(id).geometry.position,
-  screenOf: (position) => map.view.positionToScreen(position),
+  screenOf: (position) => map.positionToScreen(position),
   samplePixel: (x, y) => map.debug.samplePixel({ x, y }),
   pixel: (position) => {
-    const screen = map.view.positionToScreen(position);
+    const screen = map.positionToScreen(position);
     return map.debug.samplePixel({ x: Math.round(screen.x), y: Math.round(screen.y) });
   },
   rendered: (revision) => map.whenRendered(revision),
-  view: () => map.view.get(),
+  view: () => map.getView(),
   stats: () => map.stats(),
 };
 

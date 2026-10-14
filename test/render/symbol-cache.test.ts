@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { crs, expr } from '../../src/index.ts';
+import { crs, style as expr } from '../../src/index.ts';
 import { Scene } from '../../src/scene/scene.ts';
 import { ViewImpl } from '../../src/view/view.ts';
 import { buildFramePlan, invalidateFramePlanCache, type FramePlan } from '../../src/render/frame-plan.ts';

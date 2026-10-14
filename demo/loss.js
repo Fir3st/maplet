@@ -5,7 +5,7 @@
  * view, selection, state, bindings and feature generations must survive every
  * recovery. Results: `window.__lossCheckResult`.
  */
-import { createMap, crs, expr } from '../dist/index.js';
+import { createMap, crs, style as expr } from '../dist/index.js';
 
 const RED = { r: 220, g: 38, b: 38, a: 255 };
 const SIZE = 512;
@@ -31,36 +31,35 @@ const POINTS = {
 const DOT_SCREEN = { x: 256, y: 120 };
 
 async function buildMainMap() {
-  const map = await createMap({
-    container: 'map-main',
+  const map = await createMap('map-main', {
     renderer: { primary: 'webgpu', fallback: 'webgl1' },
     size: { width: SIZE, height: SIZE },
-    view: { center: viewCenter, zoom: z },
-  });
-  map.sources.rasterTiles({
+    center: viewCenter, zoom: z
+});
+  map.data.rasterTiles({
     id: 'tiles',
     url: './tiles-svg/{z}/{x}/{y}.svg',
     minZoom: 0,
     maxZoom: z,
   });
-  map.layers.add({ id: 'tiles', type: 'raster', source: 'tiles' });
-  const nodes = map.sources.vector({ id: 'nodes' });
+  map.addLayer({ id: 'tiles', type: 'raster', source: 'tiles' });
+  const nodes = map.data.vector({ id: 'nodes' });
   await nodes.features.replace([
     { id: 'dot', geometry: { type: 'point', position: POINTS.dot }, properties: { color: '#dc2626' } },
     { id: 'a', geometry: { type: 'point', position: POINTS.a }, properties: { color: '#2563eb' } },
     { id: 'b', geometry: { type: 'point', position: POINTS.b }, properties: { color: '#2563eb' } },
   ]);
-  const links = map.sources.vector({ id: 'links' });
+  const links = map.data.vector({ id: 'links' });
   await links.features.replace([
     { id: 'ab', geometry: { type: 'point', position: POINTS.a }, properties: {} },
   ]);
-  map.layers.add({
+  map.addLayer({
     id: 'nodes',
     type: 'points',
     source: 'nodes',
     style: { radiusPx: 10, color: expr.field('color') },
   });
-  map.layers.add({
+  map.addLayer({
     id: 'links',
     type: 'lines',
     source: 'links',
@@ -77,17 +76,16 @@ async function buildMainMap() {
 }
 
 async function buildFailMap() {
-  const map = await createMap({
-    container: 'map-fail',
+  const map = await createMap('map-fail', {
     renderer: { primary: 'webgpu', fallback: 'webgl1' },
     size: { width: 192, height: 192 },
-    view: { center: viewCenter, zoom: z },
-  });
-  const source = map.sources.vector({ id: 'pois' });
+    center: viewCenter, zoom: z
+});
+  const source = map.data.vector({ id: 'pois' });
   await source.features.replace([
     { id: 'center', geometry: { type: 'point', position: viewCenter }, properties: {} },
   ]);
-  map.layers.add({
+  map.addLayer({
     id: 'pois',
     type: 'points',
     source,
@@ -146,8 +144,8 @@ function sceneState(map, nodes, links) {
     generation: nodes.features.ref('dot').generation ?? null,
     bindingType: link?.geometry?.type ?? null,
     bindingPoints: link?.geometry?.type === 'lineString' ? link.geometry.positions.length : 0,
-    center: map.view.get().center,
-    zoom: map.view.get().zoom,
+    center: map.getView().center,
+    zoom: map.getView().zoom,
   };
 }
 

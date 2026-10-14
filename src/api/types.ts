@@ -105,7 +105,7 @@ export interface RectangleGeometry<P = GeoPosition> {
   readonly northeast: P;
 }
 
-export type Geometry<P = GeoPosition> =
+export type Geometry<P = Position> =
   | PointGeometry<P>
   | MultiPointGeometry<P>
   | LineStringGeometry<P>
@@ -138,8 +138,10 @@ declare const featureTypes: unique symbol;
  * a reactive reference, to wrap in a transparent proxy or to detach a method from.
  * Validity is decided by `sceneId` + `sourceId` +
  * `namespace` + `id` + `generation`, never by object identity.
+ * The default properties type is unknown so identity-only APIs accept typed refs
+ * without requiring an index signature; typed sources retain both parameters.
  */
-export interface FeatureRef<G = Geometry, P = FeatureProperties> {
+export interface FeatureRef<G = Geometry, P = unknown> {
   readonly sceneId: string;
   readonly sourceId: string;
   readonly namespace?: string;
@@ -239,6 +241,7 @@ export interface MapStats {
   readonly revision: number;
   readonly renderedRevision: number;
   readonly sources: number;
+  /** Styled render passes; logical containers do not add GPU draws. */
   readonly layers: number;
   readonly features: number;
   readonly drawCalls: number;

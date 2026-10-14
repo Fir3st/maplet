@@ -9,7 +9,7 @@ const plugin: Plugin<{ setLabel(label: string): void }> = ({ container, signal, 
 };
 
 export async function pluginConsumer(): Promise<void> {
-  const map = await createMap({ renderer: { primary: 'none' }, plugins: [plugin] });
+  const map = await createMap(null, { renderer: { primary: 'none' }, plugins: [plugin] });
   const use = map.use;
   const installed = use(plugin);
   installed.api.setLabel('hello');

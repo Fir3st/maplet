@@ -4,7 +4,7 @@
  * failures stay visible and fall back, base direction changes bidi layout and
  * combining marks stay composed. Results: `window.__fontCheckResult`.
  */
-import { createMap, crs, expr } from '../dist/index.js';
+import { createMap, crs, style as expr } from '../dist/index.js';
 
 const result = { checks: [], pass: false, errors: [], ms: 0 };
 window.addEventListener('error', (event) => result.errors.push(String(event.message)));
@@ -35,14 +35,12 @@ const geoAt = (dx, dy) => mercator.fromWorld({
   y: worldCenter.y + dy / 2 ** 12,
 });
 
-const map = await createMap({
-  container: 'map',
-  renderer:
-    new URLSearchParams(location.search).get('backend') === 'webgpu'
-      ? { primary: 'webgpu', fallback: false }
-      : { primary: 'webgl1', fallback: false },
-  size: { width: 560, height: 560 },
-  view: { center: { lat: 50.05, lng: 14.45 }, zoom: 12 },
+const map = await createMap('map', {
+    renderer: new URLSearchParams(location.search).get('backend') === 'webgpu'
+        ? { primary: 'webgpu', fallback: false }
+        : { primary: 'webgl1', fallback: false },
+    size: { width: 560, height: 560 },
+    center: { lat: 50.05, lng: 14.45 }, zoom: 12
 });
 
 // Registered before the labels exist, with a delayed response: the first frames
@@ -72,7 +70,7 @@ const FEATURES = [
   ['ctl', geoAt(150, -180), LIGATURE_CONTROL],
   ['kern', geoAt(150, -120), KERNED],
 ];
-const pois = map.sources.vector({ id: 'pois' });
+const pois = map.data.vector({ id: 'pois' });
 await pois.features.replace(
   FEATURES.map(([id, position, name]) => ({
     id,
@@ -80,29 +78,29 @@ await pois.features.replace(
     properties: { name },
   })),
 );
-map.layers.add({ id: 'dots', type: 'points', source: pois, style: { radiusPx: 2, color: '#cbd5e1' } });
-map.layers.add({
+map.addLayer({ id: 'dots', type: 'points', source: pois, style: { radiusPx: 2, color: '#cbd5e1' } });
+map.addLayer({
   id: 'late',
   type: 'labels',
   source: pois,
   filter: { id: 'late' },
   style: { text: expr.field('name'), sizePx: 18, fontFamily: FIXTURE_FAMILY },
 });
-map.layers.add({
+map.addLayer({
   id: 'missing',
   type: 'labels',
   source: pois,
   filter: { id: 'missing' },
   style: { text: expr.field('name'), sizePx: 16, fontFamily: MISSING_FAMILY },
 });
-map.layers.add({
+map.addLayer({
   id: 'dir-ltr',
   type: 'labels',
   source: pois,
   filter: { id: 'dl' },
   style: { text: expr.field('name'), sizePx: 18, fontFamily: FIXTURE_FAMILY, direction: 'ltr' },
 });
-map.layers.add({
+map.addLayer({
   id: 'dir-rtl',
   type: 'labels',
   source: pois,
@@ -110,7 +108,7 @@ map.layers.add({
   style: { text: expr.field('name'), sizePx: 18, fontFamily: FIXTURE_FAMILY, direction: 'rtl' },
 });
 for (const [layerId, featureId] of [['share-a', 's1'], ['share-b', 's2']]) {
-  map.layers.add({
+  map.addLayer({
     id: layerId,
     type: 'labels',
     source: pois,
@@ -118,14 +116,14 @@ for (const [layerId, featureId] of [['share-a', 's1'], ['share-b', 's2']]) {
     style: { text: expr.field('name'), sizePx: 16, fontFamily: FIXTURE_FAMILY },
   });
 }
-map.layers.add({
+map.addLayer({
   id: 'comb-acute',
   type: 'labels',
   source: pois,
   filter: { id: 'ce' },
   style: { text: expr.field('name'), sizePx: 18, fontFamily: FIXTURE_FAMILY },
 });
-map.layers.add({
+map.addLayer({
   id: 'comb-pre',
   type: 'labels',
   source: pois,
@@ -133,7 +131,7 @@ map.layers.add({
   style: { text: expr.field('name'), sizePx: 18, fontFamily: FIXTURE_FAMILY },
 });
 for (const [layerId, featureId] of [['shaping-lig', 'lig'], ['shaping-ctl', 'ctl'], ['shaping-kern', 'kern']]) {
-  map.layers.add({
+  map.addLayer({
     id: layerId,
     type: 'labels',
     source: pois,
@@ -146,7 +144,7 @@ for (const [layerId, featureId] of [['shaping-lig', 'lig'], ['shaping-ctl', 'ctl
 
 const anchorOf = (id) => {
   const snapshot = pois.features.get(id);
-  return map.view.positionToScreen(snapshot.geometry.position);
+  return map.positionToScreen(snapshot.geometry.position);
 };
 
 async function inkBox(anchor, halfWidth, halfHeight, stepX = 2, stepY = 2) {

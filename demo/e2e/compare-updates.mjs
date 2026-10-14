@@ -14,7 +14,7 @@ export async function compareUpdates({ session, expect }) {
     let visible = true;
     let color = '#e11d48';
     let x = 360;
-    const setOverride = () => layer.features.setOverride(ref, { visible, color, radiusPx: 8, zIndex: 1 });
+    const setOverride = () => layer.setFeatureStyle(ref, { visible, color, radiusPx: 8, zIndex: 1 });
     const sample = async (screen) => {
       if (engine === 'maplet') return map.debug.samplePixel(screen);
       const at = map.containerPointToLayerPoint(screen).subtract(map.options.renderer._bounds.min);
@@ -54,7 +54,7 @@ export async function compareUpdates({ session, expect }) {
         } else {
           x = x === 360 ? 400 : 360;
           if (engine === 'maplet') source.features.update(id, { geometry: {
-            type: 'point', position: map.view.screenToPosition({ x, y: 260 }) } });
+            type: 'point', position: map.screenToPosition({ x, y: 260 }) } });
           else point.setLatLng(map.containerPointToLatLng([x, 260]));
         }
         const apiMs = performance.now() - started;

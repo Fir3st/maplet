@@ -5,12 +5,12 @@ export async function plugins({ session, expect, options }) {
     const container = document.createElement('div');
     container.style.cssText = 'position:relative;width:320px;height:240px';
     document.body.append(container);
-    const map = await createMap({ container, projection: crs.simple(), renderer: { primary: '${options.webgpu ? 'webgpu' : 'webgl1'}', fallback: false }, view: { center: { x: 0, y: 0 }, zoom: 0 } });
+    const map = await createMap(container, { projection: crs.simple(), renderer: { primary: '${options.webgpu ? 'webgpu' : 'webgl1'}', fallback: false }, center: { x: 0, y: 0 }, zoom: 0 });
     const point = { x: 160, y: 120 };
     try {
-      const source = map.sources.vector({ id: 'plugin-points' });
+      const source = map.data.vector({ id: 'plugin-points' });
       source.features.add({ id: 'p', geometry: { type: 'point', position: { x: 0, y: 0 } } });
-      map.layers.add({ id: 'plugin-points', type: 'points', source, style: { color: '#ff0000', radiusPx: 20 } });
+      map.addLayer({ id: 'plugin-points', type: 'points', source, style: { color: '#ff0000', radiusPx: 20 } });
       await map.whenRendered();
       const original = await map.debug.samplePixel(point);
       let hooks = 0;
@@ -78,36 +78,47 @@ export async function plugins({ session, expect, options }) {
     const container = document.createElement('div');
     container.style.cssText = 'position:relative;width:320px;height:240px'; document.body.append(container);
     let surface, control, lastFrame;
-    const map = await createMap({ container, projection: crs.simple(), renderer: { primary: 'none' }, view: { center: { x: 0, y: 0 }, zoom: 0 }, plugins: [({ map, render, onCleanup }) => {
-      const source = map.sources.vector({ id: 'custom-only' });
-      onCleanup(() => map.sources.remove(source.id));
-      source.features.add({ id: 'p', geometry: { type: 'point', position: { x: 0, y: 0 } } });
-      const layer = map.layers.add({ id: 'custom-only', type: 'points', source }); onCleanup(layer.remove);
-      control = map.controls.add({ id: 'custom-zoom', kind: 'zoom' }); onCleanup(control.remove);
-      control.element().title = 'Changed by plugin';
-      surface = document.createElement('canvas'); surface.style.cssText = 'position:absolute;inset:0;pointer-events:none';
-      container.append(surface); onCleanup(() => surface.remove());
-      const ctx = surface.getContext('2d');
-      render.use({
-        render(frame) { lastFrame = frame; surface.width = frame.plan.deviceWidth; surface.height = frame.plan.deviceHeight;
-          surface.style.width = frame.plan.view.width + 'px'; surface.style.height = frame.plan.view.height + 'px';
-          ctx.setTransform(frame.plan.dpr, 0, 0, frame.plan.dpr, 0, 0);
-          const p = frame.positionToScreen({ x: 0, y: 0 }); ctx.fillStyle = '#00ff00'; ctx.fillRect(p.x - 10, p.y - 10, 20, 20);
-        },
-        async pick(point, { limit }) { const p = lastFrame.positionToScreen({ x: 0, y: 0 });
-          return limit > 0 && Math.abs(point.x - p.x) <= 10 && Math.abs(point.y - p.y) <= 10
-            ? [{ feature: source.features.ref('p'), sourceId: source.id, layerId: layer.id, screen: point, revision: lastFrame.plan.revision }] : [];
-        },
-      });
-    }] });
+    const map = await createMap(container, { projection: crs.simple(), renderer: { primary: 'none' }, center: { x: 0, y: 0 }, zoom: 0, plugins: [({ map, render, onCleanup }) => {
+            const source = map.data.vector({ id: 'custom-only' });
+            onCleanup(() => map.data.remove(source.id));
+            source.features.add({ id: 'p', geometry: { type: 'point', position: { x: 0, y: 0 } } });
+            const layer = map.addLayer({ id: 'custom-only', type: 'points', source });
+            onCleanup(layer.remove);
+            control = map.addControl({ id: 'custom-zoom', kind: 'zoom' });
+            onCleanup(control.remove);
+            control.element().title = 'Changed by plugin';
+            surface = document.createElement('canvas');
+            surface.style.cssText = 'position:absolute;inset:0;pointer-events:none';
+            container.append(surface);
+            onCleanup(() => surface.remove());
+            const ctx = surface.getContext('2d');
+            render.use({
+                render(frame) {
+                    lastFrame = frame;
+                    surface.width = frame.plan.deviceWidth;
+                    surface.height = frame.plan.deviceHeight;
+                    surface.style.width = frame.plan.view.width + 'px';
+                    surface.style.height = frame.plan.view.height + 'px';
+                    ctx.setTransform(frame.plan.dpr, 0, 0, frame.plan.dpr, 0, 0);
+                    const p = frame.positionToScreen({ x: 0, y: 0 });
+                    ctx.fillStyle = '#00ff00';
+                    ctx.fillRect(p.x - 10, p.y - 10, 20, 20);
+                },
+                async pick(point, { limit }) {
+                    const p = lastFrame.positionToScreen({ x: 0, y: 0 });
+                    return limit > 0 && Math.abs(point.x - p.x) <= 10 && Math.abs(point.y - p.y) <= 10
+                        ? [{ feature: source.features.ref('p'), sourceId: source.id, layerId: layer.id, screen: point, revision: lastFrame.plan.revision }] : [];
+                },
+            });
+        }] });
     try {
       await map.whenRendered();
       const hit = (await map.query.rendered({ x: 160, y: 120 }))[0]?.feature.id;
       const miss = (await map.query.rendered({ x: 10, y: 10 })).length;
-      const size = map.size(); const oldCenter = map.view.get().center.x;
+      const size = map.size(); const oldCenter = map.getView().center.x;
       container.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
       await map.whenRendered();
-      return { hit, miss, size, canvases: container.querySelectorAll('canvas').length, changedHtml: control.element().title, keyboardPanned: map.view.get().center.x !== oldCenter, interactive: map.interaction !== null };
+      return { hit, miss, size, canvases: container.querySelectorAll('canvas').length, changedHtml: control.element().title, keyboardPanned: map.getView().center.x !== oldCenter, interactive: map.interaction !== null };
     } finally { map.destroy(); container.remove(); }
   })()`);
   expect.equal(customOnly.canvases, 1, 'custom-only creation does not initialize a built-in GPU canvas');

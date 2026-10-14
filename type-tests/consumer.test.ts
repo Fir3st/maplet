@@ -12,7 +12,7 @@
 
 import {
   createMap,
-  expr,
+  style as expr,
   isMapletError,
   type ColumnarBatch,
   type FeatureRef,
@@ -30,8 +30,8 @@ interface StationProperties extends Record<string, unknown> {
 }
 
 export async function consumerContracts(container: HTMLElement): Promise<void> {
-  const map = await createMap({ container, renderer: { primary: 'webgl1', fallback: false } });
-  const stations: VectorSourceHandle<PointGeometry, StationProperties> = map.sources.vector({
+  const map = await createMap(container, { renderer: { primary: 'webgl1', fallback: false } });
+  const stations: VectorSourceHandle<PointGeometry, StationProperties> = map.data.vector({
     id: 'stations',
   });
 
@@ -67,7 +67,7 @@ export async function consumerContracts(container: HTMLElement): Promise<void> {
   picking.lastMs = 0;
 
   // TYPE-05: event payloads and typed results narrow through the published names.
-  const stopFeature = map.on('feature', (event) => {
+  const stopFeature = map.onFeature((event) => {
     const kind: 'click' | 'mouseover' | 'mouseout' | 'mousemove' | 'dragstart' | 'drag' | 'dragend' = event.type;
     const hit: string | number = event.feature.id;
     event.stopPropagation();
@@ -104,7 +104,7 @@ export async function consumerContracts(container: HTMLElement): Promise<void> {
   void explicitAltitude;
 
   // TYPE-07: detached methods need no receiver and keep their parameter contract.
-  const setView = map.view.set;
+  const setView = map.setView;
   const commit = setView({ zoom: 4 });
   void commit.revision;
   const update = stations.features.update;
@@ -135,12 +135,12 @@ export async function consumerContracts(container: HTMLElement): Promise<void> {
 
   // Expressions and layers keep their generics through the published surface.
   const style = expr.field<'status', 'online' | 'offline'>('status');
-  map.layers.add({
+  map.addLayer({
     id: 'typed',
     type: 'points',
     source: stations,
     style: { color: expr.match(style, { online: '#16a34a', offline: '#dc2626' }, '#6b7280') },
   });
   // @ts-expect-error radiusPx is a number expression; a string field is rejected (TYPE-02/08)
-  map.layers.add({ id: 'bad', type: 'points', source: stations, style: { radiusPx: style } });
+  map.addLayer({ id: 'bad', type: 'points', source: stations, style: { radiusPx: style } });
 }

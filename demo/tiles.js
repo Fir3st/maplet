@@ -82,14 +82,12 @@ function tileCenter(z, x, y) {
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const COMPARE_TILE = { z: 3, x: 4, y: 2 }; // central Europe: land water roads labels
-const map = await createMap({
-  container: 'map',
-  renderer: { primary: new URLSearchParams(location.search).get('backend') === 'webgpu' ? 'webgpu' : 'webgl1', fallback: false },
-  size: { width: SIZE, height: SIZE },
-  // Start already at the first check target so no extra tiles are requested.
-  view: provider
-    ? { center: tileCenter(COMPARE_TILE.z, COMPARE_TILE.x, COMPARE_TILE.y), zoom: COMPARE_TILE.z }
-    : { center: tileCenter(2, 1, 1), zoom: 2 },
+const map = await createMap('map', {
+    renderer: { primary: new URLSearchParams(location.search).get('backend') === 'webgpu' ? 'webgpu' : 'webgl1', fallback: false },
+    size: { width: SIZE, height: SIZE },
+    ...provider
+        ? { center: tileCenter(COMPARE_TILE.z, COMPARE_TILE.x, COMPARE_TILE.y), zoom: COMPARE_TILE.z }
+        : { center: tileCenter(2, 1, 1), zoom: 2 }
 });
 
 const sourceOptions = provider
@@ -101,8 +99,8 @@ const sourceOptions = provider
       attribution: provider.attribution,
     }
   : { url: './tiles-svg/{z}/{x}/{y}.svg', minZoom: 0, maxZoom: 3, attribution: 'Local SVG tiles (maplet)' };
-const source = map.sources.rasterTiles({ id: 'tiles', ...sourceOptions });
-map.layers.add({ id: 'tiles', type: 'raster', source, style: { opacity: 1 } });
+const source = map.data.rasterTiles({ id: 'tiles', ...sourceOptions });
+map.addLayer({ id: 'tiles', type: 'raster', source, style: { opacity: 1 } });
 window.__maplet = { map, source };
 document.getElementById('mode-label').textContent = `${mode}${provider ? (effectiveLive ? ' · live' : ' · cache') : ''}`;
 
@@ -186,7 +184,7 @@ function resourceSummary() {
 async function svgChecks() {
   const oracle = await (await fetch('./tiles-svg/checks.json')).json();
   const { z, x, y } = oracle.tile;
-  map.view.set({ center: tileCenter(z, x, y), zoom: z });
+  map.setView({ center: tileCenter(z, x, y), zoom: z });
   const center = oracle.samples.find((entry) => entry.name === 'circleCenter');
   const ready = await waitFor(async () => {
     const got = await sample(OFFSET + center.x, OFFSET + center.y);
@@ -240,7 +238,7 @@ async function svgChecks() {
 
 async function providerChecks() {
   const tile = COMPARE_TILE;
-  map.view.set({ center: tileCenter(tile.z, tile.x, tile.y), zoom: tile.z });
+  map.setView({ center: tileCenter(tile.z, tile.x, tile.y), zoom: tile.z });
   const ready = await waitFor(async () => {
     const got = await sample(SIZE / 2, SIZE / 2);
     return got[3] >= 250;
@@ -296,7 +294,7 @@ async function providerChecks() {
  * bilinear-filtered texels, and no pixel may stay transparent.
  */
 async function fallbackChecks() {
-  map.view.set({ center: tileCenter(5, 19, 10), zoom: 5 });
+  map.setView({ center: tileCenter(5, 19, 10), zoom: 5 });
   const ready = await waitFor(async () => (await sample(SIZE / 2, SIZE / 2))[3] >= 250);
   const probes = [];
   for (const child of [{ x: 19, y: 10 }, { x: 19, y: 9 }]) {
@@ -341,7 +339,7 @@ async function fallbackChecks() {
 async function switchChecks() {
   const target = PROVIDERS['opentopomap'];
   const tile = COMPARE_TILE;
-  map.view.set({ center: tileCenter(tile.z, tile.x, tile.y), zoom: tile.z });
+  map.setView({ center: tileCenter(tile.z, tile.x, tile.y), zoom: tile.z });
   const point = [OFFSET + 64, OFFSET + 64];
   await waitFor(async () => (await sample(point[0], point[1]))[3] >= 250);
   const before = await sample(point[0], point[1]);
@@ -372,7 +370,7 @@ async function switchChecks() {
 }
 
 async function seamChecks() {
-  map.view.set({ center: { lat: 0, lng: 0 }, zoom: 2.4 });
+  map.setView({ center: { lat: 0, lng: 0 }, zoom: 2.4 });
   const quadrants = [[112, 112], [400, 112], [112, 400], [400, 400]];
   const ready = await waitFor(async () => {
     for (const [x, y] of quadrants) {

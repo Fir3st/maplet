@@ -7,7 +7,7 @@
  *
  * Results: `window.__mvtCheckResult`.
  */
-import { createMap, crs, expr } from '../dist/index.js';
+import { createMap, crs, style as expr } from '../dist/index.js';
 
 const TILE_WORLD = 128; // z1 tile world size; extent 4096 -> 32 local per world unit
 const mercator = crs.webMercator();
@@ -22,49 +22,48 @@ const result = { checks: [], pass: false, errors: [], ms: 0 };
 window.addEventListener('error', (event) => result.errors.push(String(event.message)));
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const map = await createMap({
-  container: 'map',
-  renderer: { primary: new URLSearchParams(location.search).get('backend') === 'webgpu' ? 'webgpu' : 'webgl1', fallback: false },
-  size: { width: 512, height: 512 },
-  view: { center: geoOf({ x: 128, y: 128 }), zoom: 1.2 },
+const map = await createMap('map', {
+    renderer: { primary: new URLSearchParams(location.search).get('backend') === 'webgpu' ? 'webgpu' : 'webgl1', fallback: false },
+    size: { width: 512, height: 512 },
+    center: geoOf({ x: 128, y: 128 }), zoom: 1.2
 });
 
-const vt = map.sources.vectorTiles({
+const vt = map.data.vectorTiles({
   id: 'vt',
   url: './mvt/{z}/{x}/{y}.mvt',
   minZoom: 0,
   maxZoom: 1,
   attribution: '© Maplet MVT fixtures',
 });
-const broken = map.sources.vectorTiles({
+const broken = map.data.vectorTiles({
   id: 'vt-broken',
   url: './mvt-broken/{z}/{x}/{y}.mvt',
   minZoom: 0,
   maxZoom: 1,
 });
 
-map.layers.add({
+map.addLayer({
   id: 'vt-fills',
   type: 'fills',
   source: 'vt',
   namespace: 'buildings',
   style: { fillColor: '#f59e0b', fillOpacity: 0.95, strokeColor: '#b45309', strokeWidthPx: 2 },
 });
-map.layers.add({
+map.addLayer({
   id: 'vt-roads',
   type: 'lines',
   source: 'vt',
   namespace: 'roads',
   style: { color: '#2563eb', widthPx: 3 },
 });
-map.layers.add({
+map.addLayer({
   id: 'vt-pois',
   type: 'points',
   source: 'vt',
   namespace: 'pois',
   style: { radiusPx: 6, color: '#dc2626', strokeColor: '#7f1d1d', strokeWidthPx: 1 },
 });
-map.layers.add({
+map.addLayer({
   id: 'vt-labels',
   type: 'labels',
   source: 'vt',
@@ -75,8 +74,8 @@ map.layers.add({
 // Diagnostics hook for the check page and manual inspection.
 window.__mvt = { map, vt, broken, geoOf };
 
-const screenOfWorld = (wx, wy) => map.view.positionToScreen(geoOf({ x: wx, y: wy }));
-const screenOfLocal = (tx, ty, lx, ly) => map.view.positionToScreen(localGeo(tx, ty, lx, ly));
+const screenOfWorld = (wx, wy) => map.positionToScreen(geoOf({ x: wx, y: wy }));
+const screenOfLocal = (tx, ty, lx, ly) => map.positionToScreen(localGeo(tx, ty, lx, ly));
 const sampleAt = async (screen) => {
   const pixel = await map.debug.samplePixel({ x: Math.round(screen.x), y: Math.round(screen.y) });
   return [pixel.r, pixel.g, pixel.b, pixel.a];
@@ -113,7 +112,7 @@ async function waitStats(source, pick, what, timeoutMs = 20000) {
     if (performance.now() - start > timeoutMs) {
       throw new Error(
         `timeout waiting for ${what}; last stats: ${JSON.stringify(last.stats)}` +
-          `; view: ${JSON.stringify(map.view.get())}; frames: ${map.stats().frames}`,
+          `; view: ${JSON.stringify(map.getView())}; frames: ${map.stats().frames}`,
       );
     }
     await sleep(60);
@@ -194,7 +193,7 @@ await check('MVT-03: the uint64 id beyond 2^53 stays exact', async () => {
 });
 
 await check('Prague zoom: layers, hole, labels and namespace picking', async () => {
-  map.view.set({ center: PRAGUE_CENTER, zoom: 12 });
+  map.setView({ center: PRAGUE_CENTER, zoom: 12 });
   await waitStats(
     vt,
     (snapshot) => {
@@ -234,7 +233,7 @@ await check('MVT-06/04: viewport unload keeps stable-identity state, tile-local 
   const localBefore = before.find((id) => id.startsWith('tl:'));
   map.state.set(vt.features.ref(1, { namespace: 'roads' }), { selected: true });
   map.state.set(vt.features.ref(localBefore, { namespace: 'pois' }), { selected: true });
-  map.view.set({ center: TILE_0_0_CENTER, zoom: 8 });
+  map.setView({ center: TILE_0_0_CENTER, zoom: 8 });
   await until(() => {
     const loaded = vt.snapshot().stats.loaded;
     return loaded.length === 1 && loaded[0].x === 0 && loaded[0].y === 0;
@@ -244,7 +243,7 @@ await check('MVT-06/04: viewport unload keeps stable-identity state, tile-local 
     roadGone: !vt.features.has(1, { namespace: 'roads' }),
     multiPresent: vt.features.has(7, { namespace: 'buildings' }),
   };
-  map.view.set({ center: PRAGUE_CENTER, zoom: 12 });
+  map.setView({ center: PRAGUE_CENTER, zoom: 12 });
   await waitStats(vt, (snapshot) => snapshot.count === 8, 'Prague reloaded');
   const restored = map.state.get(vt.features.ref(1, { namespace: 'roads' })).selected;
   const localAfter = vt.features.ids({ namespace: 'pois' }).map(String).find((id) => id.startsWith('tl:'));
@@ -273,7 +272,7 @@ await check('MVT-08: broken tiles error locally, the healthy scene stays intact'
 await check('MVT features behave like map features (click + hover state)', async () => {
   const element = document.getElementById('map');
   const events = [];
-  map.on('feature', (event) => events.push(`${event.type}:${event.layerId}:${String(event.feature.id)}:${event.feature.namespace}`));
+  map.onFeature((event) => events.push(`${event.type}:${event.layerId}:${String(event.feature.id)}:${event.feature.namespace}`));
   const point = await screenOfLocal(1, 0, 324, 2774);
   const rect = element.getBoundingClientRect();
   const fire = (type, buttons) => {
@@ -314,19 +313,19 @@ await check('MVT overzoom: above maxZoom the clamped tile keeps rendering and sc
   const roadPoint = localGeo(1, 0, 324, 2775);
   const mid = { lat: (poiPoint.lat + roadPoint.lat) / 2, lng: (poiPoint.lng + roadPoint.lng) / 2 };
   const failedBefore = vt.snapshot().stats.failed;
-  map.view.set({ center: mid, zoom: 12 });
+  map.setView({ center: mid, zoom: 12 });
   await sleep(200);
   const screenDistance = (current) => {
-    const a = map.view.positionToScreen(poiPoint);
-    const b = map.view.positionToScreen(roadPoint);
+    const a = map.positionToScreen(poiPoint);
+    const b = map.positionToScreen(roadPoint);
     return Math.hypot(b.x - a.x, b.y - a.y);
   };
   const distance12 = screenDistance(12);
-  map.view.set({ zoom: 13 });
+  map.setView({ zoom: 13 });
   await sleep(200);
   const distance13 = screenDistance(13);
-  const poiPixel = await sampleAt(map.view.positionToScreen(poiPoint));
-  const roadPixel = await sampleAt(map.view.positionToScreen(roadPoint));
+  const poiPixel = await sampleAt(map.positionToScreen(poiPoint));
+  const roadPixel = await sampleAt(map.positionToScreen(roadPoint));
   const loaded = vt.snapshot().stats.loaded;
   const failedAfter = vt.snapshot().stats.failed;
   return {
@@ -350,7 +349,7 @@ await check('LIFE-04: a settled map stops drawing and a change asks a new frame'
   const settled = map.stats().frames;
   await sleep(1000);
   const stillSettled = map.stats().frames;
-  map.view.set({ zoom: map.view.get().zoom + 0.5 });
+  map.setView({ zoom: map.getView().zoom + 0.5 });
   await until(() => map.stats().frames > stillSettled, 'the requested frame');
   const afterChange = map.stats().frames;
   await sleep(600);
@@ -362,7 +361,7 @@ await check('LIFE-04: a settled map stops drawing and a change asks a new frame'
 });
 
 await check('MVT attribution: the source notice reaches the control and follows its layers', async () => {
-  map.controls.add({ kind: 'attribution', id: 'mvt-attribution' });
+  map.addControl({ kind: 'attribution', id: 'mvt-attribution' });
   const element = document.querySelector('[data-maplet-control="attribution"]');
   const text = () => element?.textContent ?? '';
   await until(() => text().includes('© Maplet MVT fixtures'), 'the notice in the control');
@@ -373,7 +372,7 @@ await check('MVT attribution: the source notice reaches the control and follows 
   await until(() => !text().includes('© Maplet MVT fixtures'), 'the notice to clear');
   const cleared = text();
   // ...and re-adding one layer brings it back without a reload.
-  map.layers.add({
+  map.addLayer({
     id: 'vt-fills',
     type: 'fills',
     source: 'vt',

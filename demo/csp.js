@@ -56,22 +56,20 @@ async function workerBlocked() {
 
 const blocked = await workerBlocked();
 
-const map = await createMap({
-  container: 'map',
-  renderer:
-    new URLSearchParams(location.search).get('backend') === 'webgpu'
-      ? { primary: 'webgpu', fallback: false }
-      : { primary: 'webgl1', fallback: false },
-  size: { width: 420, height: 320 },
-  view: { center: { lat: 50, lng: 14.05 }, zoom: 10 },
+const map = await createMap('map', {
+    renderer: new URLSearchParams(location.search).get('backend') === 'webgpu'
+        ? { primary: 'webgpu', fallback: false }
+        : { primary: 'webgl1', fallback: false },
+    size: { width: 420, height: 320 },
+    center: { lat: 50, lng: 14.05 }, zoom: 10
 });
-const source = map.sources.vector({ id: 'marks' });
-map.layers.add({
+const source = map.data.vector({ id: 'marks' });
+map.addLayer({
   id: 'marks',
   type: 'points',
   source,
   style: { radiusPx: 6, color: '#2563eb' },
-  interaction: { enabled: true },
+  interactive: true ,
 });
 
 async function check(name, fn) {
@@ -87,7 +85,7 @@ async function check(name, fn) {
 const blue = (pixel) => pixel.b > 180 && pixel.r < 90 && pixel.g < 160;
 const describe = (pixel) => `rgba(${pixel.r},${pixel.g},${pixel.b},${pixel.a})`;
 const pixelAt = async (position) => {
-  const screen = map.view.positionToScreen(position);
+  const screen = map.positionToScreen(position);
   return map.debug.samplePixel({ x: Math.round(screen.x), y: Math.round(screen.y) });
 };
 

@@ -1,9 +1,19 @@
 # Changelog
 
-## Unreleased
+## 0.1.0-alpha.4
 
+- **Breaking:** replace the source-first map facade with `createMap(container,
+  options)`, direct map view methods, `addPoints`/`addLines`/`addPolygons` and
+  one-step raster/media layers. Add lazy generation-bound objects, direct feature
+  events, `style.by`, optional ids and initial control lists. Preserve advanced
+  shared data/imports under `map.data`, rendering, transactions and bindings.
+  Layers are heterogeneous recursive containers; direct map object helpers share
+  a lazy base layer, replacing the separate groups API. Subtree visibility,
+  ordering, event bubbling and cleanup use the same engine tree.
+  Migrate demos and learning examples; see [migration guide](docs/api.md).
 - Add a focused eight-example learning collection with a searchable directory,
   live maps, source code and GitHub Pages / public Gist publication workflow.
+
 ## 0.1.0-alpha.3
 
 - Publish `@fir3st/maplet` to the GitHub Packages npm registry on version changes,

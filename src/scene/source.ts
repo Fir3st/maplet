@@ -252,7 +252,7 @@ export class SourceImpl {
     };
   }
 
-  refOf(record: SlotRecord): FeatureRef {
+  refOf(record: SlotRecord): FeatureRef<Geometry, FeatureProperties> {
     return {
       sceneId: this.scene.sceneId,
       sourceId: this.id,
@@ -335,7 +335,7 @@ export class SourceImpl {
     change: PendingChange,
     input: FeatureInput,
     options: AddOptions,
-  ): { ref: FeatureRef; slot: number } {
+  ): { ref: FeatureRef<Geometry, FeatureProperties>; slot: number } {
     const id = input.id ?? this.nextId();
     const namespace = input.namespace ?? options.namespace;
     const result = this.store.add(
@@ -351,7 +351,7 @@ export class SourceImpl {
   }
 
   private finishInsert(change: PendingChange, id: FeatureId, namespace: string | undefined,
-    result: import('./store.ts').AddRecordResult): { ref: FeatureRef; slot: number } {
+    result: import('./store.ts').AddRecordResult): { ref: FeatureRef<Geometry, FeatureProperties>; slot: number } {
     const undoStore = this.store;
     if (result.previous) {
       const previousRecord = result.previous;
@@ -684,7 +684,7 @@ export function createSourceHandle(source: SourceImpl, scene: SourceHandleContex
           namespace: options?.namespace ?? null,
         });
       }
-      return source.refOf(record) as FeatureRef;
+      return source.refOf(record);
     },
     has(id, options) {
       return source.store.has(id, options?.namespace);
@@ -692,7 +692,7 @@ export function createSourceHandle(source: SourceImpl, scene: SourceHandleContex
     add(items, options = {}) {
       const list = Array.isArray(items) ? items : [items as FeatureInput];
       assertArgument(list.length > 0, 'features.add: at least one item is required');
-      const refs: FeatureRef[] = [];
+      const refs: FeatureRef<Geometry, FeatureProperties>[] = [];
       source.mutate((change) => {
         for (const item of list) {
           const { ref } = source.addOne(change, item as FeatureInput, options);

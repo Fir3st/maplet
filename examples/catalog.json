@@ -1,8 +1,8 @@
 [
   {
     "id": "basics", "title": "Your first map", "group": "Getting started", "kind": "map",
-    "summary": "Create a map, add a source and put interactive places on it.",
-    "learn": "A source owns the data. A layer decides how to draw it. Start with three places, then fit the view or select a place to inspect its details.",
+    "summary": "Create a map and add interactive places in one step.",
+    "learn": "Create a places layer, then add points and shared labels to it. Start with three places, then fit the view or select a place to inspect its details.",
     "hint": "Click a place · drag to pan · scroll to zoom",
     "note": "Real city coordinates, without a basemap. No external tile requests.",
     "origin": "demo/demo.js"
@@ -18,8 +18,8 @@
   {
     "id": "geometry", "title": "Lines, fills & holes", "group": "Data & styling", "kind": "geometry",
     "summary": "Draw a route and a polygon with a real opening in its center.",
-    "learn": "Line strings and polygon rings are separate geometry types. The first polygon ring is the outside boundary; the next ring is a hole. Switch the fill or route independently.",
-    "hint": "Toggle a layer · zoom into the polygon opening",
+    "learn": "A site layer contains a polygon and a nested paths layer. The first polygon ring is the outside boundary; the next ring is a hole. Toggle each collection or the entire subtree.",
+    "hint": "Toggle the site or its contents · zoom into the polygon opening",
     "note": "Synthetic route and site plan. The polygon hole is geometry, not a background-colored overlay.",
     "origin": "demo/demo.js"
   },
