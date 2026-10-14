@@ -28,5 +28,9 @@ export function planForPush(previousCommit) {
   const previousVersion = /^0+$/.test(previousCommit) ? undefined : JSON.parse(
     execFileSync('git', ['show', `${previousCommit}:package.json`], { encoding: 'utf8' }),
   ).version;
-  return releasePlan(version, previousVersion);
+  const plan = releasePlan(version, previousVersion);
+  // A build fix after a failed version bump must still release that version.
+  // Full-history CI checkouts include tags; publication remains idempotent.
+  const tag = execFileSync('git', ['tag', '--list', plan.tag], { encoding: 'utf8' }).trim();
+  return { ...plan, changed: plan.changed || tag !== plan.tag };
 }

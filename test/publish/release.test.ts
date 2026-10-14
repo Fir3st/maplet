@@ -2,12 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { version } from '../../src/index.ts';
 // @ts-expect-error The release helper is an executable-tool JavaScript module.
 import { planForPush, releasePlan } from '../../scripts/release-plan.mjs';
 
 test('public version matches the package manifest', () => {
-  const manifest = JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf8'));
+  const manifest = JSON.parse(readFileSync(fileURLToPath(new URL('../../package.json', import.meta.url)), 'utf8'));
   assert.equal(version, manifest.version);
 });
 
@@ -34,7 +35,9 @@ test('reject invalid versions before using them in workflow outputs', () => {
 test('push planning compares the actual previous commit manifest', () => {
   const commit = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
   const previous = JSON.parse(execFileSync('git', ['show', `${commit}:package.json`], { encoding: 'utf8' }));
-  assert.equal(planForPush(commit).changed, planForPush(commit).version !== previous.version);
+  const plan = planForPush(commit);
+  const tag = execFileSync('git', ['tag', '--list', plan.tag], { encoding: 'utf8' }).trim();
+  assert.equal(plan.changed, plan.version !== previous.version || tag !== plan.tag);
   assert.equal(planForPush('0'.repeat(40)).changed, true);
   assert.throws(() => planForPush('main:package.json'), /commit SHA/);
 });
