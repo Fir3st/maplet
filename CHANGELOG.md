@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.0-alpha.5
+
+- Fix the public `version` export to match the package version, and test it
+  against the manifest to prevent release drift.
+
 ## 0.1.0-alpha.4
 
 - **Breaking:** replace the source-first map facade with `createMap(container,

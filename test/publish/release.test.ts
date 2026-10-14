@@ -1,8 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+import { version } from '../../src/index.ts';
 // @ts-expect-error The release helper is an executable-tool JavaScript module.
 import { planForPush, releasePlan } from '../../scripts/release-plan.mjs';
+
+test('public version matches the package manifest', () => {
+  const manifest = JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf8'));
+  assert.equal(version, manifest.version);
+});
 
 test('release only on a changed version, including the first push', () => {
   assert.equal(releasePlan('0.1.0-alpha.1', '0.1.0-alpha.1').changed, false);
