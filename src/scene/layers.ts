@@ -79,7 +79,10 @@ export interface FillsLayerStyle {
 }
 
 export interface LabelsLayerStyle {
-  /** Label text; defaults to the feature's `name` property. Empty text is skipped. */
+  /**
+   * Label text; defaults to the feature's `name` property. Empty text is skipped.
+   * `\n` splits the text into a vertically centred multi-line block.
+   */
   readonly text?: ExpressionInput<string | number | null>;
   /** Font size in CSS px (DPR-independent); default 12. */
   readonly sizePx?: ExpressionInput<number>;

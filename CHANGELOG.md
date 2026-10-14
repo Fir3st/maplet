@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Add multi-line labels: a `\n` in the label text splits it into a vertically
+  centred block with a fixed line height and no automatic wrapping. Single-line
+  labels rasterize exactly as before; collision, rotation and picking use the
+  whole block.
 - Add `iconTint` for point icons: an RGBA multiplier over the icon texture
   (default white), available as a layer style expression and a per-feature
   override. Only the ready sprite is tinted; per-feature tint edits patch their

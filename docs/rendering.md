@@ -56,8 +56,10 @@ fallback of a loading or failed icon keeps its `color`.
 
 Labels default to `properties.name`. Empty text is skipped. Font registration uses
 `map.assets.addFont({ id, family, src })`; fallback fonts render while loading.
-Labels are single-line, with platform shaping and optional collision suppression:
-higher priority wins, ties use stable order. See [labels and pins](tutorials/labels.md).
+`\n` splits a label into a vertically centred multi-line block (fixed line
+height, no automatic wrapping), with platform shaping and optional collision
+suppression: higher priority wins, ties use stable order.
+See [labels and pins](tutorials/labels.md).
 
 ## Raster tiles and WMS
 

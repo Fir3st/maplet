@@ -86,6 +86,22 @@ test('text, priority, visibility and generation changes rerun symbol layout and 
   scene.destroy();
 });
 
+test('multi-line text stays one placement and is a layout change, not an appearance patch', () => {
+  const { scene, source } = fixture();
+  const first = labels(buildFramePlan(scene, options));
+  source.features.update('a', { properties: { name: 'TOP\nBOTTOM' } });
+  const multi = labels(buildFramePlan(scene, options));
+  // Text changes rebuild the label layout; the newline is not split into placements.
+  assert.notEqual(multi.labels, first.labels);
+  const placements = multi.labels.filter(label => label.feature.id === 'a');
+  assert.equal(placements.length, 1);
+  assert.equal(placements[0]!.text, 'TOP\nBOTTOM');
+  const snapshot = multi.labels.slice();
+  invalidateFramePlanCache();
+  assert.deepEqual(labels(buildFramePlan(scene, options)).labels, snapshot);
+  scene.destroy();
+});
+
 test('sprites default to an identity tint; layer and override tints resolve to RGBA values', () => {
   const plain = spriteFixture();
   const untinted = sprites(buildFramePlan(plain.scene, options));

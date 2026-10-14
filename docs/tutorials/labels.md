@@ -27,6 +27,7 @@ system fonts, without an asset download.
 
 ## Text and placement
 
-Higher-priority labels win collisions. Text is single-line and shaped by the
-platform, so pixels can differ across operating systems. `assets.addFont()` adds
+Higher-priority labels win collisions. Text is shaped by the platform, so pixels
+can differ across operating systems. `\n` splits a label into a multi-line block
+with a fixed line height. `assets.addFont()` adds
 a named font; labels use fallback while it loads. See [images and labels](../rendering.md#images-and-labels).

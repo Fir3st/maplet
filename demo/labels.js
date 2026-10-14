@@ -27,6 +27,7 @@ await source.features.replace([
   { id: 'B', geometry: { type: 'point', position: { lat: 50.0, lng: 14.0035 } }, properties: { name: 'BETA-BETA', rank: 1 } },
   { id: 'rot', geometry: { type: 'point', position: { lat: 50.0, lng: 14.055 } }, properties: { name: 'ROTACE-ROTACE' } },
   { id: 'flat', geometry: { type: 'point', position: { lat: 49.985, lng: 14.06 } }, properties: { name: 'ROTACE-ROTACE' } },
+  { id: 'multi', geometry: { type: 'point', position: { lat: 50.012, lng: 14.0 } }, properties: { name: 'WIDE-LINE-ONE\nNARROW' } },
 ]);
 map.addLayer({
   id: 'labels',
@@ -54,6 +55,13 @@ map.addLayer({
   type: 'labels',
   source,
   filter: { id: 'flat' },
+  style: { text: expr.field('name'), sizePx: 14 },
+});
+map.addLayer({
+  id: 'multi-line',
+  type: 'labels',
+  source,
+  filter: { id: 'multi' },
   style: { text: expr.field('name'), sizePx: 14 },
 });
 
@@ -225,6 +233,68 @@ await check('TEXT-06 label rotation keeps the anchor and turns the ink box', asy
       rotatedHits >= 2 &&
       sideHits.every((value) => !value),
     detail: { turned, flat, probes, sideHits },
+  };
+});
+
+await check('TEXT-09 multi-line text keeps line order, spacing and the anchor centre', async () => {
+  const anchor = map.positionToScreen({ lat: 50.012, lng: 14.0 });
+  const inkAt = async (dx, dy) => {
+    const [r, g, b, a] = await sample(Math.round(anchor.x + dx), Math.round(anchor.y + dy));
+    // Looser than the strict ink threshold: a band must cover glyph stems that
+    // fall between coarse sample columns, not only the darkest texels.
+    return a > 120 && r + g + b < 700;
+  };
+  // Vertical ink profile over a strip wider than the first line.
+  const bands = [];
+  let current = null;
+  for (let dy = -40; dy <= 40; dy += 1) {
+    let ink = 0;
+    for (let dx = -58; dx <= 58; dx += 2) if (await inkAt(dx, dy)) ink += 1;
+    if (ink > 0) {
+      if (current) { current.y1 = dy; current.ink += ink; }
+      else { current = { y0: dy, y1: dy, ink }; bands.push(current); }
+    } else current = null;
+  }
+  const widths = [];
+  for (const band of bands) {
+    let minX = Infinity;
+    let maxX = -Infinity;
+    for (let dx = -58; dx <= 58; dx += 2) {
+      for (let dy = band.y0; dy <= band.y1; dy += 2) {
+        if (await inkAt(dx, dy)) { if (dx < minX) minX = dx; if (dx > maxX) maxX = dx; }
+      }
+    }
+    widths.push(maxX === -Infinity ? 0 : maxX - minX);
+  }
+  const [top, bottom] = bands;
+  const gap = bands.length === 2 ? bottom.y0 - top.y1 : -1;
+  const lineGap = bands.length === 2 ? (bottom.y0 + bottom.y1 - top.y0 - top.y1) / 2 : -1;
+  const centre = bands.length === 2 ? (top.y0 + bottom.y1) / 2 : 99;
+  // Glyph ink picks on both lines; the blank inter-line band and the space
+  // above the block do not.
+  const picks = [];
+  for (const band of bands) {
+    let hit = false;
+    for (const dx of [0, 10, -10, 20, -20]) {
+      const hits = await map.query.rendered({ x: Math.round(anchor.x + dx), y: Math.round(anchor.y + (band.y0 + band.y1) / 2) });
+      if (hits.some((entry) => entry.feature.id === 'multi')) { hit = true; break; }
+    }
+    picks.push(hit);
+  }
+  const gapY = bands.length === 2 ? Math.round(anchor.y + (top.y1 + bottom.y0) / 2) : Math.round(anchor.y);
+  const gapHits = (await map.query.rendered({ x: Math.round(anchor.x), y: gapY })).some((entry) => entry.feature.id === 'multi');
+  const aboveHits = (await map.query.rendered({ x: Math.round(anchor.x), y: Math.round(anchor.y + top.y0 - 6) })).some((entry) => entry.feature.id === 'multi');
+  const plan = map.debug.layerLabels('multi-line').find((entry) => entry.feature.id === 'multi');
+  return {
+    pass:
+      plan?.text === 'WIDE-LINE-ONE\nNARROW' &&
+      bands.length === 2 &&
+      widths[0] > widths[1] + 20 &&
+      gap >= 4 &&
+      Math.abs(lineGap - 19) <= 4 &&
+      Math.abs(centre) <= 5 &&
+      picks[0] === true && picks[1] === true && !gapHits && !aboveHits,
+    detail: { bands, widths, gap, lineGap, centre, picks, gapHits, aboveHits, text: plan?.text },
   };
 });
 

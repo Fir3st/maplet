@@ -95,17 +95,27 @@ export class Symbols {
     const cached = this.get(key, frame);
     if (cached) return cached;
     const deviceSize = Math.max(1, label.sizePx * this.dpr), font = `${deviceSize}px ${label.fontFamily}`;
+    const lines = label.text.split(/\r?\n/);
+    const lineHeight = Math.max(1, Math.ceil(deviceSize * 1.35));
     const canvas = document.createElement('canvas');
     if (label.direction === 'auto') canvas.dir = 'auto';
     const context = canvas.getContext('2d');
     if (!context) fail('render-failed', 'text shaping could not create a 2D context');
     context.font = font; context.direction = label.direction === 'rtl' ? 'rtl' : label.direction === 'auto' ? 'inherit' : 'ltr';
     context.textAlign = 'left'; context.fontKerning = 'normal';
-    canvas.width = Math.max(1, Math.ceil(context.measureText(label.text).width) + Math.ceil(2 * this.dpr));
-    canvas.height = Math.max(1, Math.ceil(deviceSize * 1.35));
+    const lineWidths = lines.map((line) => Math.ceil(context.measureText(line).width));
+    const padding = Math.ceil(2 * this.dpr);
+    let width = 1;
+    for (const lineWidth of lineWidths) width = Math.max(width, lineWidth + padding);
+    canvas.width = width;
+    canvas.height = Math.max(1, lineHeight * lines.length);
     context.font = font; context.direction = label.direction === 'rtl' ? 'rtl' : label.direction === 'auto' ? 'inherit' : 'ltr';
     context.textAlign = 'left'; context.fontKerning = 'normal'; context.textBaseline = 'middle'; context.fillStyle = '#ffffff';
-    context.fillText(label.text, Math.ceil(this.dpr), Math.round(canvas.height / 2));
+    for (let index = 0; index < lines.length; index++) {
+      // A single line keeps its original origin; a block centres every line.
+      const x = lines.length === 1 ? Math.ceil(this.dpr) : Math.round((width - lineWidths[index]!) / 2);
+      context.fillText(lines[index]!, x, index * lineHeight + Math.round(lineHeight / 2));
+    }
     return this.insert(key, canvas, canvas.width, canvas.height, frame);
   }
 

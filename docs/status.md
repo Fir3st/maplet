@@ -18,7 +18,7 @@ to use this repository.
 | MVT | Decoder, source-layer namespaces, exact large IDs, fragments, unload/reload, overzoom and attribution; vector-tile tests, `demo/mvt.html` |
 | Interaction | Pan, zoom, hover/click/drag, pinch, keyboard, selection, bubbling; `demo/interaction.html` and real-input E2E scenarios |
 | Picking | Shape-aware GPU queries, revision/generation checks, measured blocking/async readback; `demo/pick.html` |
-| Text and fonts | Labels, collisions, rotation, atlas eviction, font loading/fallback, platform shaping, bidi; `demo/labels.html`, `demo/fonts.html` |
+| Text and fonts | Labels, multi-line text, collisions, rotation, atlas eviction, font loading/fallback, platform shaping, bidi; `demo/labels.html`, `demo/fonts.html` |
 | Media | Sprites, anchor rotation, tinting, image/video bounds, partial uploads and cleanup; `demo/icons.html`, `demo/media.html` |
 | HTML UI | Optional controls, scale, attribution, geolocation, feature detail and bounded accessible lists; `test/ui/`, `demo/ui.html`, `demo/detail.html` |
 | Plugins | Plain setup functions, typed APIs, HTML access, abort/cleanup, render transforms, after-frame drawing and replaceable renderers; `test/scene/plugins.test.ts`, consumer types and `plugins` browser scenario; [guide](plugins.md) |
@@ -104,6 +104,16 @@ per-feature override; `retained-mixed-scene` instruments the actual GPU calls: a
 tint edit uploads one 384-byte quad range with no atlas upload, and the tinted
 pixels still pick. Untinted pixels and all previous icon checks are unchanged.
 
+The multi-line label addition passes **308 unit tests**, the same build/type/
+distribution and consumer-type checks, and the complete default browser suite:
+**39/39 scenarios/batteries on each of WebGL 1, WebGPU and forced basic WebGL 1**.
+The extended `battery:labels` scans rendered ink: a two-line label produces two
+bands in order (measured widths 102 and 58 px), centre-to-centre spacing of
+19.5 px against the fixed 19 px line height, and a block centred on the anchor;
+glyph picking hits both lines and neither the inter-line gap nor the space above
+the block. Single-line pixels and every previous label, font and icon check are
+unchanged.
+
 The recorded browser environment was headless Chromium on an Apple M5 Pro,
 using ANGLE Metal for WebGL and `apple metal-3` for WebGPU. Pixel comparisons
 against decoded source bitmaps and between backends found zero differences at
@@ -178,8 +188,10 @@ Canvas setup is still faster at 282 ms. One-second warm-pan outliers persist.
   storage; properties, IDs and geometry descriptors remain JS objects. This is
   not a fully binary scene, and retained data has a working-set cost.
 - **Text:** platform Canvas2D supplies shaping and metrics; no custom font
-  parser or GSUB/GPOS shaper. Labels are single-line, use bounding-box collision
-  without a halo margin, and do not promise identical pixels across browsers/OSes.
+  parser or GSUB/GPOS shaper. Labels split on `\n` into a vertically centred
+  multi-line block with a fixed line height; there is no automatic wrapping.
+  Collision uses the block's bounding box without a halo margin, and labels do
+  not promise identical pixels across browsers/OSes.
 - **Media:** overlays are axis-aligned bounds, without rotation/skew or color
   filters. Opacity is supported; custom blending modes are not. Runtime URL
   updates are supported for images, not video.

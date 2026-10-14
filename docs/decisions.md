@@ -80,7 +80,9 @@ The current public construction, object lifetime and migration contract is in
   to the root. The source/render-pass engine groups implement this public tree.
 - Zoom visibility is inclusive: `[minZoom, maxZoom]`.
 - Labels read an expression (default `properties.name`); empty or missing text
-  is skipped. Their anchor is the feature center plus `offsetPx`.
+  is skipped. `\n` splits the text into a vertically centred multi-line block
+  with a fixed line height (no automatic wrapping). Their anchor is the feature
+  center plus `offsetPx`.
 - Label collision uses bounding boxes: higher `priority` wins, with stable slot
   order for ties. Atlas pages use LRU eviction and can be reconstructed (limit 256).
 - Image assets have `loading`, `ready` and `error` states. A point icon uses its
@@ -313,7 +315,8 @@ The current public construction, object lifetime and migration contract is in
   A custom font parser/GSUB/GPOS shaper is outside the alpha scope.
 - The fixed Roboto subset tests fi/fl/ffi ligatures against ZWNJ controls and
   AV kerning. Layout uses measured advance and rasterizes entire text runs;
-  labels are single-line. Cross-browser/OS text pixel identity is not promised.
+  a run splits on `\n` into lines with a fixed line height and no automatic
+  wrapping. Cross-browser/OS text pixel identity is not promised.
 
 ## Distribution and types
 
