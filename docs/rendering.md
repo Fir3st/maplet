@@ -61,6 +61,30 @@ height, no automatic wrapping), with platform shaping and optional collision
 suppression: higher priority wins, ties use stable order.
 See [labels and pins](tutorials/labels.md).
 
+## Markers
+
+```ts
+const pin = map.addMarker({
+  position: { lat: 50.08, lng: 14.43 },
+  tooltip: 'Depot',
+  popup: { content: 'Depot A', autoPan: true },
+});
+map.addMarkers([
+  { position: { lat: 50.09, lng: 14.44 } },
+  { position: { lat: 50.1, lng: 14.45 }, icon: 'pin', iconSize: 16 },
+]);
+pin.setPosition({ lat: 50.081, lng: 14.431 });
+pin.openPopup();
+```
+
+A marker is a GPU sprite in one shared layer — no DOM element per marker. The
+tooltip is a DOM overlay (hover by default, `permanent` supported) and the popup
+is one dialog per map: a marker click or `openPopup()` opens it, its button, a
+background click or `closePopup()` closes it, and `autoPan` keeps it inside the
+container. Strings render as text (UI-06); pass a `Node` for rich content. The
+handle also exposes `setIcon`, `setTooltip`, `setPopup`, `openTooltip`, `show`,
+`hide` and `remove`. See [marker contracts](decisions.md#markers).
+
 ## Raster tiles and WMS
 
 ```ts

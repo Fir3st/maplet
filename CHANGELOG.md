@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Add `map.addMarker(options)` / `map.addMarkers(options[])`: Leaflet-style pins
+  drawn as GPU sprites with hover/permanent tooltips and one click popup per map
+  (close button, background click, `autoPan`), custom icon assets, per-marker
+  size/anchor/tint overrides, feature events and removal. Content strings stay
+  text (UI-06); pass a `Node` for rich content.
 - Add media placement rotation: `rotate` (degrees clockwise about the bounds
   centre) on image/video sources and through `update({ rotate })`. It is a
   descriptor change that rebuilds the plan without re-uploading pixels; picking

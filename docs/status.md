@@ -21,6 +21,7 @@ to use this repository.
 | Text and fonts | Labels, multi-line text, collisions, rotation, atlas eviction, font loading/fallback, platform shaping, bidi; `demo/labels.html`, `demo/fonts.html` |
 | Media | Sprites, anchor rotation, tinting, image/video bounds with placement rotation, partial uploads and cleanup; `demo/icons.html`, `demo/media.html` |
 | HTML UI | Optional controls, scale, attribution, geolocation, feature detail and bounded accessible lists; `test/ui/`, `demo/ui.html`, `demo/detail.html` |
+| Markers | Leaflet-style `addMarker`/`addMarkers` GPU pins with hover/permanent tooltips, one click popup with auto-pan, custom icons/tint and per-marker overrides; `demo/markers.html` |
 | Plugins | Plain setup functions, typed APIs, HTML access, abort/cleanup, render transforms, after-frame drawing and replaceable renderers; `test/scene/plugins.test.ts`, consumer types and `plugins` browser scenario; [guide](plugins.md) |
 | Worker imports | Compact columns/canonical line and polygon pools, owned metadata on the publishing thread, validation, copy/move, cancellation, bounded queue, crash/CSP fallback; import tests, `demo/import.html`, `demo/csp.html?csp=worker-none` |
 | Distribution | ESM/declaration/subpath/worker assets, archive audit and consumer types; `test/publish/`, `type-tests/` |
@@ -126,6 +127,22 @@ stays. At 45 degrees the corners of the axis-aligned box read `rgba(0,0,0,0)`
 while the turned midsides keep their exact quadrant colours. Unturned placements
 and every previous media, video and lifecycle check are unchanged.
 
+The marker addition passes **312 unit tests**, the same build/type/distribution
+and consumer-type checks, and the complete default browser suite: **40/40
+scenarios/batteries on each of WebGL 1, WebGPU and forced basic WebGL 1**. The
+new `battery:markers` samples the default pin (body `rgba(37,99,235,255)`, white
+centre, empty below the tip and above the sprite) and its `setPosition` move, the
+hover tooltip (text, `role`, bottom 36 px above the marker, `pointer-events:
+none`), a permanent tooltip that ignores `mouseout`, the click popup (single
+instance, close button, background click, plain-text strings, `Node` content),
+pan and zoom follow (the overlay delta equals the anchor delta, and zoom re-places
+to the same offset), auto-pan (the marker moved 52 px down so an edge popup fits;
+`autoPan: false` left the view untouched), a 16 px custom asset, tinted pixels
+(`rgba(0,99,0,255)` body, `rgba(0,255,0,255)` centre), marker feature events,
+`setIcon(null)` restoring the built-in pin and removal leaving no DOM overlay
+behind. Untouched layers, existing icon/media checks and the other 39
+scenarios/batteries are unchanged.
+
 The recorded browser environment was headless Chromium on an Apple M5 Pro,
 using ANGLE Metal for WebGL and `apple metal-3` for WebGPU. Pixel comparisons
 against decoded source bitmaps and between backends found zero differences at
@@ -212,6 +229,11 @@ Canvas setup is still faster at 282 ms. One-second warm-pan outliers persist.
   the icon atlas RGB (default white); the shape fallback of a loading/failed icon
   keeps `color` and is not tinted. Shape fallbacks and ordinary point shapes do not
   rotate. Without browser image support, assets report error and use the shape fallback.
+- **Markers:** pins are GPU sprites with no per-marker DOM; tooltips and popups are
+  DOM overlays (at most one popup and one hover tooltip at a time, while a
+  permanent tooltip owns one element per marker). Strings render as text (UI-06)
+  rather than Leaflet-style HTML; pass a `Node` for rich content. Marker dragging,
+  cluster grouping and DOM focus on pins are not part of this alpha.
 - **Altitude:** preserved for points, multiPoints, circles and rectangles, but
   not for line/polygon geometry or its exported coordinates.
 - **MVT:** no antimeridian world wrapping. Residency follows the viewport rather

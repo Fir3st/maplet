@@ -72,6 +72,32 @@ export async function consumerContracts(container: HTMLElement): Promise<void> {
   // @ts-expect-error rotation is a number of degrees, not a string (MEDIA-07)
   overlay.update({ rotate: '30' });
 
+  // MARKER-01: markers take a position, icon/appearance options and
+  // tooltip/popup content, and expose the Leaflet-style handle methods.
+  const marker = map.addMarker({
+    position: { lat: 50.08, lng: 14.42 },
+    tooltip: 'Depot',
+    popup: { content: 'Depot A', autoPan: true },
+  });
+  const markerId = marker.id;
+  const markerPosition: Position = marker.getPosition();
+  marker.setPosition({ lat: 50.081, lng: 14.421 });
+  marker.setTooltip({ content: 'Depot A', permanent: true });
+  marker.setPopup('Details as plain text');
+  marker.openPopup();
+  const popupElement: HTMLElement | null = marker.popupElement();
+  marker.on('click', (event) => { const ref: FeatureRef = event.feature; void ref; });
+  void markerId;
+  void markerPosition;
+  void popupElement;
+  const markerBatch = map.addMarkers([
+    { position: { lat: 50.09, lng: 14.43 } },
+    { position: { lat: 50.1, lng: 14.44 }, tooltip: 'Druhý' },
+  ]);
+  void markerBatch.length;
+  // @ts-expect-error markers require a position (MARKER-01)
+  map.addMarker({ id: 'no-position' });
+
   // PICK-12: the measured pick stall is part of the diagnostics contract.
   const picking = map.stats().picking;
   const lastStallMs: number = picking.lastMs;

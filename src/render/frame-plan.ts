@@ -694,8 +694,10 @@ function collectPoints(
     };
     // A ready icon asset turns the point into a sprite; while loading or on
     // error the shape below is drawn instead (never a silently empty symbol).
-    if (style.icon !== undefined) {
-      const rawIcon = evaluateStyleValue(style.icon, '', expressionContext);
+    // A per-feature override replaces the layer's icon, size and anchor.
+    const overrideIcon = passed.override?.icon;
+    if (overrideIcon !== undefined || style.icon !== undefined) {
+      const rawIcon = overrideIcon ?? evaluateStyleValue(style.icon, '', expressionContext);
       const iconId = typeof rawIcon === 'string' ? rawIcon.trim() : '';
       if (iconId !== '') {
         const asset = ctx.scene.assets.get(iconId);
@@ -704,6 +706,7 @@ function collectPoints(
           if (interactive) interactiveRecords++;
           const pickIndex = pickTable.length;
           pickTable.push({ feature: passed.ref, layerId: layer.id });
+          const anchor = passed.override?.iconAnchor ?? style.iconAnchor;
           sprites.push({
             sourceId: source.id,
             layerId: layer.id,
@@ -711,9 +714,9 @@ function collectPoints(
             assetId: iconId,
             sx: (record.wx - origin.x) * scale,
             sy: (record.wy - origin.y) * scale,
-            sizePx: passed.override?.radiusPx ?? evaluateStyleValue(style.iconSize, 0, expressionContext),
-            offsetX: style.iconAnchor?.x ?? 0,
-            offsetY: style.iconAnchor?.y ?? 0,
+            sizePx: passed.override?.iconSize ?? passed.override?.radiusPx ?? evaluateStyleValue(style.iconSize, 0, expressionContext),
+            offsetX: anchor?.x ?? 0,
+            offsetY: anchor?.y ?? 0,
             rotate: evaluateStyleValue(style.iconRotate, 0, expressionContext),
             opacity: passed.override?.opacity ?? evaluateStyleValue(style.opacity, 1, expressionContext),
             tint: parseColor(

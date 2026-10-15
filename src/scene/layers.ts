@@ -141,6 +141,12 @@ export interface LayerSpec<K extends LayerKind = LayerKind> {
 export interface FeatureOverride {
   readonly color?: ColorValue;
   readonly opacity?: number;
+  /** Per-feature icon asset id; overrides the layer's `icon` (MEDIA-07/08 fallback). */
+  readonly icon?: string;
+  /** Per-feature square sprite size in CSS px; overrides `iconSize`. */
+  readonly iconSize?: number;
+  /** Per-feature sprite centre offset; overrides `iconAnchor`. */
+  readonly iconAnchor?: { readonly x: number; readonly y: number };
   readonly iconTint?: ColorValue;
   readonly fillColor?: ColorValue;
   readonly fillOpacity?: number;

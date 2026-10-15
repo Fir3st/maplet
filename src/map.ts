@@ -19,6 +19,14 @@ import type { MediaSourceHandle, ImageSourceOptions, VideoSourceOptions } from '
 import type { SceneEventMap } from './scene/scene.ts';
 import type { FitOptions, FlyOptions, ViewUpdate } from './view/view.ts';
 import type { ControlHandle, ControlKind, ControlSpec } from './ui/controls.ts';
+import {
+  MarkerController,
+  MARKER_PIN_ICON_ID,
+  MARKER_PIN_URL,
+  MARKER_LAYER_STYLE,
+  type MarkerHandle,
+  type MarkerOptions,
+} from './ui/markers.ts';
 
 export type MapOptions = Omit<EngineOptions, 'container' | 'view' | 'renderer'> & {
   readonly center?: PositionInput;
@@ -92,6 +100,9 @@ export interface MapHandle extends LayerContent, Pick<MapEngine,
   /** Explicit shared sources and bulk imports; ordinary layers do not require this. */
   readonly data: SourcesHandle;
   batch<T>(fn: () => T & (T extends PromiseLike<unknown> ? never : unknown)): Commit;
+  /** Leaflet-style marker with a tooltip and a click popup (MARKER-01..08). */
+  addMarker<P = FeatureProperties>(options: MarkerOptions<P>): MarkerHandle<P>;
+  addMarkers<P = FeatureProperties>(options: readonly MarkerOptions<P>[]): MarkerHandle<P>[];
   readonly layers: LayersHandle;
   /** Lazily created shared layer for all map.addPoints/addLines/etc. calls. */
   readonly base: LayerHandle;
@@ -409,6 +420,21 @@ function buildMap(engine: MapEngine, projection: Crs): MapHandle {
     const { center, ...rest } = update;
     return { ...rest, ...(center === undefined ? {} : { center: normalizePosition(center, projection) }) };
   };
+  // Lazily created: a map without markers adds no layer, asset, controller or DOM.
+  let markerController: MarkerController | null = null;
+  const markers = (): MarkerController => {
+    if (markerController) return markerController;
+    engine.view.get();
+    if (!engine.assets.get(MARKER_PIN_ICON_ID)) {
+      engine.assets.addImage({ id: MARKER_PIN_ICON_ID, src: MARKER_PIN_URL });
+    }
+    const layer = content().addPoints([] as readonly PointInput<FeatureProperties>[], {
+      id: idFor('markers'),
+      style: MARKER_LAYER_STYLE,
+    });
+    markerController = new MarkerController(engine, layer, engine.container);
+    return markerController;
+  };
   const map: MapHandle = {
     ...content(),
     id: engine.id, container: engine.container, use: engine.use, render: engine.render,
@@ -428,6 +454,8 @@ function buildMap(engine: MapEngine, projection: Crs): MapHandle {
     get destroyed() { return engine.destroyed; },
     destroy: () => { try { engine.destroy(); } finally { events.clear(); handles.clear(); containers.clear(); ownedSources.clear(); } },
     layers: registry(),
+    addMarker: <P = FeatureProperties>(options: MarkerOptions<P>) => markers().add(options),
+    addMarkers: <P = FeatureProperties>(options: readonly MarkerOptions<P>[]) => markers().addMany(options),
     get base() { return getBase(); },
     controls: {
       get: (id) => engine.controls?.get(id), list: () => engine.controls?.list() ?? [],
@@ -456,5 +484,6 @@ function buildMap(engine: MapEngine, projection: Crs): MapHandle {
 
 export type { PositionInput } from './api/coordinates.ts';
 export type { FeatureEvent, FeatureEvents } from './api/feature-events.ts';
+export type { MarkerContent, MarkerHandle, MarkerOptions, MarkerPopupInit, MarkerPopupOptions, MarkerTooltipInit, MarkerTooltipOptions } from './ui/markers.ts';
 export type { FeatureHandle, PointHandle, LineHandle, PolygonHandle, RenderLayerHandle, ObjectOptions, PointInput, LineInput, PolygonInput, PointsLayerHandle, LinesLayerHandle, PolygonsLayerHandle, VectorLayerHandle } from './api/objects.ts';
 export type { AreaQueryOptions, AreaQueryResult, AssetsHandle, BindingsHandle, ControlHandle, ControlKind, ControlLayerEntry, ControlPosition, ControlSpec, DetailContent, DetailContentFactory, DetailHandle, DetailOptions, DetailServiceHandle, ListControlOptions, LocateErrorCode, LocateHandle, LocateOptions, LocateResult, LocateWatch, LocateWatchOptions, LocatedPosition, QueryCursor, QueryHandle, RelationsHandle, RendererOptions, SelectionHandle, SourcesHandle, StateHandle } from './map-engine.ts';

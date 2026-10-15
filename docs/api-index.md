@@ -39,6 +39,10 @@ Lifecycle: `batch`, `whenRendered`, `on`, `once`, `off`, `onFeature`,
 `addLayer(options)` creates a heterogeneous container. The map and every container
 expose `addPoints`, `addLines`, `addPolygons`, `addLabels`, `addTiles`, `addWms`,
 `addImage`, `addVideo` and nested `addLayer`. Direct map additions share `map.base`.
+`addMarker(options)` and `addMarkers(options[])` create Leaflet-style pins in a
+shared internal layer; the handle exposes `getPosition`/`setPosition`, `setIcon`,
+`setTooltip`/`setPopup`, `openTooltip`/`closeTooltip`, `openPopup`/`closePopup`,
+`show`/`hide` and `remove`.
 
 | Handle | Main operations |
 | --- | --- |

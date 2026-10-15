@@ -306,6 +306,32 @@ The current public construction, object lifetime and migration contract is in
   must not fall through to map gestures. Tests use hit testing and real input,
   not just programmatic `.click()`.
 
+## Markers
+
+- `addMarker(options)` / `addMarkers(options[])` add Leaflet-style pins. A marker
+  is one point feature in a shared internal points layer drawn as a GPU sprite:
+  there is no DOM element per marker. The built-in pin asset is registered with
+  the marker layer; `icon`, `iconSize`, `iconAnchor` and `iconTint` override it
+  per marker (per-feature `icon`/`iconSize`/`iconAnchor` overrides work for every
+  points layer, MEDIA-07/08 shape fallback included).
+- Tooltips default to hover and support `permanent`. At most one hover tooltip
+  exists at a time; each permanent tooltip owns one element per marker while
+  bound. `setTooltip(null)` unbinds it and an open tooltip updates in place;
+  `openTooltip()` opens a sticky tooltip that survives `mouseout` until
+  `closeTooltip()`.
+- One popup per map at a time: a marker click or `openPopup()` opens it, its close
+  button, a background click, `closePopup()` or marker removal closes it.
+  `autoPan` (default true) shifts the view by the minimum amount that keeps the
+  popup and its anchor inside the container with an 8 px margin; the anchor clamp
+  wins, so a popup larger than the viewport overflows instead.
+- Overlays are re-placed from the marker's current screen position on every
+  `commit`/`viewchange`, clamped horizontally for tooltips, and removed on marker
+  removal, unbinding (`setPopup(null)`/`setTooltip(null)`) or map destroy. A
+  static container receives `position: relative` once, like Leaflet's stylesheet.
+- Content follows the UI-06 contract: a string renders as text, a `Node` renders
+  as-is. Marker dragging, keyboard focus on pins and clustering are not part of
+  this alpha; pins pick and emit feature events like any interactive point.
+
 ## Fonts and text
 
 - `assets.addFont({ id, family, src })` accepts a URL or CSS `local(...)`/`url(...)`

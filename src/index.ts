@@ -34,6 +34,15 @@ export type {
   SymbolAppearance,
 } from './render/frame-plan.ts';
 export type {
+  MarkerContent,
+  MarkerHandle,
+  MarkerOptions,
+  MarkerPopupInit,
+  MarkerPopupOptions,
+  MarkerTooltipInit,
+  MarkerTooltipOptions,
+} from './ui/markers.ts';
+export type {
   AreaQueryOptions,
   AreaQueryResult,
   AssetsHandle,
