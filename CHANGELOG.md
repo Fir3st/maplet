@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.1.0-alpha.8
+
+- Redraw the built-in marker pin (MARKER-01): a slimmer flat teardrop with a
+  white rim and an inner dot, so pins stay legible on a busy basemap and
+  overlapping pins keep their edges. The marker layer also stops inheriting the
+  data-layer style default `minZoom: 0`, so a pin stays visible at the negative
+  zooms planar maps can use.
+- Rename the fullscreen plugin module file to `dist/plugins/display-mode.js`.
+  Some content filters and security suites block script URLs ending in
+  `fullscreen.js`, which took every page loading the library down for those
+  browsers; the exported `fullscreenMode` plugin and its API are unchanged.
+- Add four real-world recipe tutorials to the documentation — a city guide,
+  vehicle tracking, a filterable field explorer and a measuring tool — shown on
+  live OpenStreetMap tiles with attribution, no prefetching and an offline
+  fallback.
+
 ## 0.1.0-alpha.7
 
 - Add the built-in `gestureGuard` plugin: touch gestures need two fingers,
