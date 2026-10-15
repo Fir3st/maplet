@@ -46,6 +46,7 @@ test('complete documentation and twelve tutorials build under a Pages subdirecto
       assert.ok(gist.files['index.html'].includes(`href="${stylesheet}"`), 'Gist HTML must use the fingerprinted stylesheet');
       assert.match(html, /Gist not published yet/);
       assert.match(html, /src="\.\/runtime-[0-9a-f]{12}\.js"/);
+      assert.match(html, /Failed to start:/, 'Example pages must explain a blocked module instead of staying silent');
       assert.match(gist.files['shared.js'], /from 'https:\/\/example.github.io\/project\/dist\/index.js'/);
       assert.match(gist.files['index.html'], /data-gallery="https:\/\/example.github.io\/project\/"/);
       assert.match(gist.files['README.md'], /Gist itself does not execute HTML/);
