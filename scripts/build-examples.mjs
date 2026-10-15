@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync, mkdirSync, writeFileSync, copyFileSync } from 'node:fs';
+import { readFileSync, readdirSync, mkdirSync, writeFileSync, copyFileSync, existsSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
@@ -46,7 +46,42 @@ export function highlightJavaScript(source) {
   return html + escapeHtml(source.slice(position));
 }
 
-function exampleHtml(entry, catalog, version, source, tutorial, home = '../../') {
+/** Recursive list of `.js` files under a directory, sorted for deterministic fingerprints. */
+function siteModules(directory, prefix = '') {
+  const files = [];
+  for (const entry of readdirSync(directory, { withFileTypes: true })) {
+    const relative = prefix ? `${prefix}/${entry.name}` : entry.name;
+    if (entry.isDirectory()) files.push(...siteModules(join(directory, entry.name), relative));
+    else if (entry.name.endsWith('.js')) files.push(relative);
+  }
+  return files.sort();
+}
+
+const RELATIVE_MODULE = /(?:\bfrom\s*|\bimport\s*\(\s*|\bimport\s+)(["'])(\.\.?\/[^"']+)\1/g;
+const RELATIVE_URL = /new URL\(\s*(["'])(\.\.?\/[^"']+)\1/g;
+
+/**
+ * Every relative module or URL the site loads must exist inside the site. All
+ * examples share one module graph, so a single missing file breaks every page,
+ * and a URL that 404s once can stay cached as an error long after a fixed deploy.
+ */
+export function assertModuleGraph(site) {
+  const missing = [];
+  for (const relative of siteModules(site)) {
+    const source = readFileSync(join(site, relative), 'utf8');
+    for (const pattern of [RELATIVE_MODULE, RELATIVE_URL]) {
+      for (const match of source.matchAll(pattern)) {
+        const target = match[2].split(/[?#]/)[0];
+        const resolved = resolve(dirname(join(site, relative)), target);
+        if (!resolved.startsWith(`${site}/`)) continue;
+        if (!existsSync(resolved)) missing.push(`${relative} → ${match[2]}`);
+      }
+    }
+  }
+  if (missing.length) throw new Error(`The documentation site loads missing modules:\n  ${missing.join('\n  ')}`);
+}
+
+function exampleHtml(entry, catalog, version, source, tutorial, { home = '../../', script = 'example.js' } = {}) {
   const index = catalog.indexOf(entry);
   const previous = catalog[index - 1], next = catalog[index + 1];
   const parts = tutorial.split('<!-- example -->');
@@ -68,7 +103,7 @@ function exampleHtml(entry, catalog, version, source, tutorial, home = '../../')
     <p class="source-note">The shared <a href="./shared.js">page setup</a> creates the map and controls. In your application, import from <code>@fir3st/maplet</code>. <a href="https://github.com/${repository}/blob/main/${entry.origin}">Original diagnostic demo ↗</a></p>
   </details>${after.html}
   <nav class="example-nav" aria-label="Other tutorials">${previous ? `<a href="${home}examples/${previous.id}/">← ${escapeHtml(previous.title)}</a>` : `<a href="${home}tutorials/">← All tutorials</a>`}${next ? `<a href="${home}examples/${next.id}/">${escapeHtml(next.title)} →</a>` : `<a href="${home}reference/">API reference →</a>`}</nav>`;
-  return documentHtml({ title: entry.title, description: entry.summary, body, version, home, route: `examples/${entry.id}/`, section: 'Tutorials', catalog, headings: [...before.headings, ...after.headings], cssHash: stylesheetHash, script: 'example.js', attributes: `data-example="${entry.id}" data-gallery="${escapeHtml(home)}"` });
+  return documentHtml({ title: entry.title, description: entry.summary, body, version, home, route: `examples/${entry.id}/`, section: 'Tutorials', catalog, headings: [...before.headings, ...after.headings], cssHash: stylesheetHash, script, attributes: `data-example="${entry.id}" data-gallery="${escapeHtml(home)}"` });
 }
 
 function copyBuild(source, target) {
@@ -97,8 +132,21 @@ export function buildExamples({ output = resolve(root, '.example-build'), baseUr
   mkdirSync(site, { recursive: true });
   copyBuild(join(root, 'dist'), join(site, 'dist'));
   const css = read('examples/style.css'), shared = read('examples/shared.js');
+  const sources = new Map(catalog.map(entry => [entry.id, read(`examples/${entry.id}.js`)]));
+  // Content-fingerprinted module paths: every module the documentation loads lives
+  // at a URL that changes whenever any of them changes, so a deploy can never mix
+  // a stale cached copy (or a cached 404) with a fresh graph. The stable `dist/`
+  // copy stays for external consumers and published Gists.
+  const modules = createHash('sha256').update([
+    ...siteModules(join(site, 'dist')).map(file => readFileSync(join(site, 'dist', file), 'utf8')),
+    shared, read('examples/gallery.js'), ...sources.values(),
+  ].join('\n')).digest('hex').slice(0, 12);
+  const distDirectory = `dist-${modules}`;
+  const runtime = `runtime-${modules}.js`;
+  const sharedRuntime = `shared-${modules}.js`;
+  copyBuild(join(root, 'dist'), join(site, distDirectory));
   const license = read('LICENSE'), notice = read('NOTICE');
-  const pageCount = buildDocumentation({ root, site, catalog, version, css, cssHash: stylesheetHash, highlight: highlightJavaScript });
+  const pageCount = buildDocumentation({ root, site, catalog, version, css, cssHash: stylesheetHash, scriptHash: modules, highlight: highlightJavaScript });
   writeFileSync(join(site, 'gists.json'), '{}\n');
   writeFileSync(join(site, '.nojekyll'), '');
   writeFileSync(join(site, 'LICENSE'), license);
@@ -107,18 +155,26 @@ export function buildExamples({ output = resolve(root, '.example-build'), baseUr
   for (const entry of catalog) {
     const directory = join(site, 'examples', entry.id);
     mkdirSync(directory, { recursive: true });
-    const source = read(`examples/${entry.id}.js`), tutorial = read(`docs/tutorials/${entry.id}.md`);
-    const html = exampleHtml(entry, catalog, version, source, tutorial);
-    const files = { 'index.html': html, 'example.js': source, 'shared.js': shared, 'style.css': css };
+    const source = sources.get(entry.id), tutorial = read(`docs/tutorials/${entry.id}.md`);
+    const files = {
+      'index.html': exampleHtml(entry, catalog, version, source, tutorial, { script: runtime }),
+      'example.js': source,
+      'shared.js': shared,
+      [runtime]: source.replace("from './shared.js'", `from './${sharedRuntime}'`),
+      [sharedRuntime]: shared.replace("from '../../dist/index.js'", `from '../../${distDirectory}/index.js'`),
+      'style.css': css,
+    };
     for (const [name, content] of Object.entries(files)) writeFileSync(join(directory, name), content);
     gists.push({ id: entry.id, title: entry.title, files: {
-      ...files,
-      'index.html': exampleHtml(entry, catalog, version, source, tutorial, base.href),
+      'index.html': exampleHtml(entry, catalog, version, source, tutorial, { home: base.href }),
+      'example.js': source,
       'shared.js': shared.replace("from '../../dist/index.js'", `from '${new URL('dist/index.js', base).href}'`),
+      'style.css': css,
       'README.md': `# ${entry.title}\n\n${entry.summary}\n\n[Read the live tutorial](${new URL(`examples/${entry.id}/`, base).href}) · [Documentation](${base.href})\n\n${entry.learn}\n\n${entry.note}\n\nDownload all files into one directory and serve it over HTTP (for example with Python's http.server). The example loads the compiled Maplet library from ${base.href}; an internet connection is required for that hosted library. Gist itself does not execute HTML.\n\nGenerated from [${repository}](https://github.com/${repository}/tree/main/examples), version ${version}. Edit the repository sources rather than this generated Gist.\n\nApache-2.0; see LICENSE and NOTICE.\n`,
       LICENSE: license, NOTICE: notice,
     } });
   }
+  assertModuleGraph(site);
   const plan = { repository, baseUrl: base.href, version, gists };
   if (Buffer.byteLength(JSON.stringify(plan)) > 1024 * 1024) throw new Error('Example Gist payloads exceed the 1 MiB build budget');
   writeFileSync(join(output, 'gist-plan.json'), `${JSON.stringify(plan, null, 2)}\n`);

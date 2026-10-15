@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, readFileSync, readdirSync, rmSync, existsSync, statSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync, existsSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 // @ts-expect-error Build tooling is a JavaScript module, not part of the library API.
-import { buildExamples, highlightJavaScript } from '../../scripts/build-examples.mjs';
+import { assertModuleGraph, buildExamples, highlightJavaScript } from '../../scripts/build-examples.mjs';
 // @ts-expect-error Publication tooling is tested with fake GitHub responses only.
 import { publishGists } from '../../scripts/publish-gists.mjs';
 // @ts-expect-error Documentation tooling is not part of the package API.
@@ -45,13 +45,32 @@ test('complete documentation and twelve tutorials build under a Pages subdirecto
       assert.ok(html.includes(`href="${stylesheet}"`), 'Each detail must use the fingerprinted stylesheet');
       assert.ok(gist.files['index.html'].includes(`href="${stylesheet}"`), 'Gist HTML must use the fingerprinted stylesheet');
       assert.match(html, /Gist not published yet/);
-      assert.match(html, /src="\.\/example\.js"/);
+      assert.match(html, /src="\.\/runtime-[0-9a-f]{12}\.js"/);
       assert.match(gist.files['shared.js'], /from 'https:\/\/example.github.io\/project\/dist\/index.js'/);
       assert.match(gist.files['index.html'], /data-gallery="https:\/\/example.github.io\/project\/"/);
       assert.match(gist.files['README.md'], /Gist itself does not execute HTML/);
       assert.deepEqual(Object.keys(gist.files).sort(), ['LICENSE', 'NOTICE', 'README.md', 'example.js', 'index.html', 'shared.js', 'style.css'].sort());
       assert.ok(new TextEncoder().encode(JSON.stringify(gist.files)).length < 128 * 1024);
     }
+    // Every example loads a content-fingerprinted module graph, so a cached copy
+    // (or a cached error) of one module can never mix with a fresh deploy. The
+    // plain example.js/shared.js stay for display and download, and the stable
+    // dist/ copy keeps published Gists and external links working.
+    const runtime = /src="\.\/(runtime-[0-9a-f]{12}\.js)"/.exec(readFileSync(join(site, 'examples', 'heatmap', 'index.html'), 'utf8'))?.[1];
+    assert.ok(runtime, 'The example page must load a fingerprinted runtime');
+    const runtimeSource = readFileSync(join(site, 'examples', 'heatmap', runtime), 'utf8');
+    const sharedRuntime = /from '\.\/(shared-[0-9a-f]{12}\.js)'/.exec(runtimeSource)?.[1];
+    assert.ok(sharedRuntime, 'The runtime must import a fingerprinted shared setup');
+    const sharedSource = readFileSync(join(site, 'examples', 'heatmap', sharedRuntime), 'utf8');
+    const distDirectory = /from '\.\.\/\.\.\/(dist-[0-9a-f]{12})\/index\.js'/.exec(sharedSource)?.[1];
+    assert.ok(distDirectory, 'The shared setup must import a fingerprinted library build');
+    assert.ok(existsSync(join(site, distDirectory, 'index.js')));
+    assert.ok(existsSync(join(site, distDirectory, 'plugins', 'heatmap.js')));
+    assert.ok(existsSync(join(site, 'dist', 'index.js')), 'The stable dist copy must stay for external consumers');
+    assert.ok(readFileSync(join(site, 'examples', 'heatmap', 'example.js'), 'utf8').includes("from './shared.js'"), 'Downloaded sources stay unversioned');
+    const galleryScript = /src="\.\/(gallery-[0-9a-f]{12}\.js)"/.exec(readFileSync(join(site, 'tutorials', 'index.html'), 'utf8'))?.[1];
+    assert.ok(galleryScript, 'The tutorial directory must load a fingerprinted gallery script');
+    assert.ok(existsSync(join(site, 'tutorials', galleryScript)));
     // Check every static local link and fragment independently of the builder.
     const documents: string[] = [];
     function collect(path: string) {
@@ -78,6 +97,22 @@ test('complete documentation and twelve tutorials build under a Pages subdirecto
     }
     assert.throws(() => buildExamples({ output: directory, baseUrl: 'file:///local/' }), /Pages base URL/);
     assert.throws(() => buildExamples({ output: directory, baseUrl: 'https://user:example@example.com/' }), /Pages base URL/);
+  } finally { rmSync(directory, { recursive: true, force: true }); }
+});
+
+test('the module graph check rejects missing modules and relative worker URLs', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'maplet-graph-test-'));
+  try {
+    mkdirSync(join(directory, 'dist'), { recursive: true });
+    writeFileSync(join(directory, 'dist', 'index.js'), "import './plugins/missing.js';\nexport { default as worker } from './worker-entry.js';\n");
+    assert.throws(() => assertModuleGraph(directory), /loads missing modules/);
+    writeFileSync(join(directory, 'dist', 'worker-entry.js'), "export const load = () => new Worker(new URL('./workers/import.worker.js', import.meta.url), { type: 'module' });\n");
+    assert.throws(() => assertModuleGraph(directory), /worker-entry\.js → \.\/workers\/import\.worker\.js/);
+    mkdirSync(join(directory, 'dist', 'plugins'), { recursive: true });
+    writeFileSync(join(directory, 'dist', 'plugins', 'missing.js'), 'export {};\n');
+    mkdirSync(join(directory, 'dist', 'workers'), { recursive: true });
+    writeFileSync(join(directory, 'dist', 'workers', 'import.worker.js'), 'export {};\n');
+    assert.doesNotThrow(() => assertModuleGraph(directory));
   } finally { rmSync(directory, { recursive: true, force: true }); }
 });
 

@@ -143,7 +143,7 @@ to the same offset), auto-pan (the marker moved 52 px down so an edge popup fits
 behind. Untouched layers, existing icon/media checks and the other 39
 scenarios/batteries are unchanged.
 
-The three built-in plugin additions pass **331 unit tests**, the same build/type/
+The three built-in plugin additions pass **332 unit tests**, the same build/type/
 distribution and consumer-type checks, and the complete default browser suite:
 **41/41 scenarios/batteries on each of WebGL 1, WebGPU and forced basic WebGL 1**.
 The `battery:plugins-builtin` battery runs eleven checks. It drives synthetic input
@@ -174,6 +174,10 @@ selected the modifier from its buttons. The heatmap tutorial was checked live
 too: 850 samples produced a graded field (183,273 painted pixels across five
 intensity bands), a ramp switch turned the hot core to the new color, a bigger
 radius grew the field, and the controls cleared, regenerated and removed it.
+The documentation build serves every module from a content-fingerprinted path
+and fails before deployment when any relative module or worker URL is missing, so
+one unavailable file cannot break every example and a cached copy — or a cached
+error — cannot outlive a deploy.
 
 The recorded browser environment was headless Chromium on an Apple M5 Pro,
 using ANGLE Metal for WebGL and `apple metal-3` for WebGPU. Pixel comparisons

@@ -61,6 +61,8 @@ declare module 'node:fs' {
   export function readFileSync(path: string, encoding: 'utf8'): string;
   export function readdirSync(path: string): string[];
   export function statSync(path: string): Stats;
+  export function mkdirSync(path: string, options?: { readonly recursive?: boolean }): void;
+  export function writeFileSync(path: string, contents: string): void;
   export function mkdtempSync(prefix: string): string;
   export function rmSync(path: string, options: { readonly recursive?: boolean; readonly force?: boolean }): void;
 }

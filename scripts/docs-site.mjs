@@ -247,7 +247,7 @@ function referencePages(root) {
   return { pages: result, groups, symbols: publicSymbols };
 }
 
-export function buildDocumentation({ root, site, catalog, version, css, cssHash, highlight }) {
+export function buildDocumentation({ root, site, catalog, version, css, cssHash, scriptHash, highlight }) {
   for (const entry of catalog) routes.set(`docs/tutorials/${entry.id}.md`, `examples/${entry.id}/`);
   const reference = referencePages(root);
   const referenceIndex = `<div class="reference-index">${reference.groups.map(([id, title, names]) => `<section><h3><a href="./${id}/">${title}</a></h3><p>${names.map(name => `<a href="./${id}/#${name}">${name}</a>`).join(' · ')}</p></section>`).join('')}</div>`;
@@ -259,14 +259,15 @@ export function buildDocumentation({ root, site, catalog, version, css, cssHash,
     const tutorials = route === 'tutorials/' ? `<section class="tutorial-directory"><h2 id="find-a-tutorial">Find a tutorial</h2><label for="search">Search tutorials</label><input id="search" type="search" placeholder="e.g. GeoJSON, labels, layers" autocomplete="off"><p id="result-count" aria-live="polite">${catalog.length} tutorials</p>${catalog.map(entry => `<article class="example-card" data-group="${escapeHtml(entry.group)}"><span class="card-group">${escapeHtml(entry.group)}</span><h3><a href="${home}examples/${entry.id}/">${escapeHtml(entry.title)}</a></h3><p>${escapeHtml(entry.summary)}</p></article>`).join('')}<p id="empty" hidden>No tutorials match. Try another search.</p></section>` : '';
     outputs.push({ route, title, html: rendered.html + (route === 'reference/' ? referenceIndex : '') + tutorials, headings: tutorials ? [...rendered.headings, { id: 'find-a-tutorial', title: 'Find a tutorial' }] : rendered.headings, source });
   }
+  const galleryScript = scriptHash ? `gallery-${scriptHash}.js` : 'gallery.js';
   for (const output of [...outputs, ...reference.pages]) {
     const home = output.route ? '../'.repeat(output.route.split('/').filter(Boolean).length) : './';
     const directory = join(site, output.route);
     mkdirSync(directory, { recursive: true });
     const section = output.route.startsWith('reference/') ? 'Reference' : output.route === 'tutorials/' ? 'Tutorials' : output.route === 'download/' ? 'Download' : output.route === 'plugins/' ? 'Plugins' : 'Overview';
-    writeFileSync(join(directory, 'index.html'), documentHtml({ title: output.title, description: `${output.title}: Maplet ${version} documentation.`, body: output.html, version, home, route: output.route, section, catalog, headings: output.headings, cssHash, script: output.route === 'tutorials/' ? 'gallery.js' : undefined }));
+    writeFileSync(join(directory, 'index.html'), documentHtml({ title: output.title, description: `${output.title}: Maplet ${version} documentation.`, body: output.html, version, home, route: output.route, section, catalog, headings: output.headings, cssHash, script: output.route === 'tutorials/' ? galleryScript : undefined }));
     writeFileSync(join(directory, 'style.css'), css);
-    if (output.route === 'tutorials/') writeFileSync(join(directory, 'gallery.js'), readFileSync(join(root, 'examples/gallery.js'), 'utf8'));
+    if (output.route === 'tutorials/') writeFileSync(join(directory, galleryScript), readFileSync(join(root, 'examples/gallery.js'), 'utf8'));
   }
   writeFileSync(join(site, 'api-symbols.json'), JSON.stringify(reference.symbols));
   return outputs.length + reference.pages.length;
