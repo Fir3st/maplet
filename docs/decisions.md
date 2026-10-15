@@ -177,6 +177,23 @@ The current public construction, object lifetime and migration contract is in
   removes the button and listener. The map resizes through its own container
   observer.
 
+## Heatmap plugin
+
+- `heatmap(options)` (HEAT-10) renders weighted points as a heat field on one
+  absolutely positioned canvas through the public after-frame hook, so it works
+  with every backend and never shares GPU state with the renderer. Samples come
+  from `setPoints`/`addPoint`/`addPoints`/`clear` and appearance from
+  `setOptions` (radius, blur, `max`, `minOpacity`/`maxOpacity`, `gradient`,
+  `zIndex`); both schedule a frame through `render.invalidate()`.
+- Every frame splats the samples inside the view with additive alpha into a
+  bounded field (≤1.5 device pixels per CSS pixel, ≤1M pixels) and colorizes it
+  through a 256-entry ramp whose alpha follows the accumulated intensity.
+  Positions use the normal coordinate rules, including `[lat, lng]` tuples on
+  geographic maps; non-positive weights are ignored.
+- The surface sits above the map canvas and below controls and DOM overlays by
+  default, so GPU-delivered points and labels show through faint areas and
+  disappear under hot cores.
+
 ## Raster and WMS
 
 - Tile zoom is `floor(zoom) + (retina ? 1 : 0)`, clamped to

@@ -9,6 +9,7 @@
 export { createMap } from './map.ts';
 export { gestureGuard, type GestureGuardApi, type GestureGuardOptions, type GestureModifier } from './plugins/gesture-guard.ts';
 export { fullscreenMode, type FullscreenApi, type FullscreenControlOptions, type FullscreenOptions } from './plugins/fullscreen.ts';
+export { heatmap, type HeatPoint, type HeatmapApi, type HeatmapOptions, type HeatmapUpdate } from './plugins/heatmap.ts';
 export type { GestureGate, GestureKind, GestureRequest } from './interaction/interaction.ts';
 export type { Plugin, PluginContext, PluginHandle } from './plugins.ts';
 export type { CustomRenderer, RenderFrame, RenderHandle } from './render/extensions.ts';

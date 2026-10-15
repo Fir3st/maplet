@@ -11,6 +11,11 @@
   sync (including browser-initiated exits), an optional corner button, boolean
   results instead of throwing, a CSS viewport fallback reported as
   `mode: 'fallback'` when the API is denied, and cleanup that exits fullscreen.
+- Add the built-in `heatmap` plugin (HEAT-10): weighted points render as a heat
+  field on one overlay canvas through the after-frame hook, defined with
+  `setPoints`/`addPoint`/`addPoints`/`clear` and tuned with `setOptions` (radius,
+  blur, intensity peak, opacity bounds, gradient, `zIndex`) over a bounded
+  per-frame field buffer.
 
 ## 0.1.0-alpha.6
 

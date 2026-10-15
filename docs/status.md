@@ -22,7 +22,7 @@ to use this repository.
 | Media | Sprites, anchor rotation, tinting, image/video bounds with placement rotation, partial uploads and cleanup; `demo/icons.html`, `demo/media.html` |
 | HTML UI | Optional controls, scale, attribution, geolocation, feature detail and bounded accessible lists; `test/ui/`, `demo/ui.html`, `demo/detail.html` |
 | Markers | Leaflet-style `addMarker`/`addMarkers` GPU pins with hover/permanent tooltips, one click popup with auto-pan, custom icons/tint and per-marker overrides; `demo/markers.html` |
-| Plugins | Plain setup functions, typed APIs, HTML access, abort/cleanup, render transforms, after-frame drawing, replaceable renderers and the built-in `gestureGuard`/`fullscreenMode` plugins; plugin tests, consumer types, the `plugins` scenario and `demo/plugins-builtin.html`; [guide](plugins.md) |
+| Plugins | Plain setup functions, typed APIs, HTML access, abort/cleanup, render transforms, after-frame drawing, replaceable renderers and the built-in `gestureGuard`/`fullscreenMode`/`heatmap` plugins; plugin tests, consumer types, the `plugins` scenario and `demo/plugins-builtin.html`; [guide](plugins.md) |
 | Worker imports | Compact columns/canonical line and polygon pools, owned metadata on the publishing thread, validation, copy/move, cancellation, bounded queue, crash/CSP fallback; import tests, `demo/import.html`, `demo/csp.html?csp=worker-none` |
 | Distribution | ESM/declaration/subpath/worker assets, archive audit and consumer types; `test/publish/`, `type-tests/` |
 | Lifecycle and scale | Repeated create/destroy, GC-stabilized memory checks, cancellation and 500,000-point example; `demo/soak.html`, `demo/scale.html` |
@@ -143,28 +143,37 @@ to the same offset), auto-pan (the marker moved 52 px down so an edge popup fits
 behind. Untouched layers, existing icon/media checks and the other 39
 scenarios/batteries are unchanged.
 
-The two built-in plugin additions pass **323 unit tests**, the same build/type/
+The three built-in plugin additions pass **331 unit tests**, the same build/type/
 distribution and consumer-type checks, and the complete default browser suite:
 **41/41 scenarios/batteries on each of WebGL 1, WebGPU and forced basic WebGL 1**.
-The new `battery:plugins-builtin` drives synthetic input through the real
-interaction layer: a one-finger touch pan and drag keep the view still while a
-two-finger pinch (zoom 13 → 13.51) and a two-finger drag move it; a mouse pan,
-wheel and double-click do nothing without the modifier — the blocked wheel is
-never `preventDefault`ed — and apply with Alt; a blocked attempt shows the hint
-overlay ("Hold Alt and scroll to zoom the map", "Use 2 fingers to move the map"),
-which an allowed gesture hides, which expires on its own and which stays silent
-with `overlay: false`; `unlock()`/`lock()`, `setModifier('control')` and
-`onChange` behave; removing the guard restores `touch-action: none` and
+The `battery:plugins-builtin` battery runs eleven checks. It drives synthetic input
+through the real interaction layer: a one-finger touch pan and drag keep the view
+still while a two-finger pinch (zoom 13 → 13.51) and a two-finger drag move it; a
+mouse pan, wheel and double-click do nothing without the modifier — the blocked
+wheel is never `preventDefault`ed — and apply with Alt; a blocked attempt shows
+the hint overlay ("Hold Alt and scroll to zoom the map", "Use 2 fingers to move
+the map"), which an allowed gesture hides, which expires on its own and which
+stays silent with `overlay: false`; `unlock()`/`lock()`, `setModifier('control')`
+and `onChange` behave; removing the guard restores `touch-action: none` and
 unguarded gestures. The fullscreen checks stub the API to cover native `enter`,
 `exit`, browser-initiated exits, the corner button and cleanup; a denied request
 reports `mode: 'fallback'`, covers the container (`position: fixed` plus a
 marker) and Escape exits and restores it, while `fallback: false` resolves
 `false`; an unsupported target resolves `false`; the map follows container
-resizes (640×480 → 520×360 → back). Live documentation checks additionally
-entered real fullscreen through a real click on the tutorial action and the
-corner button (the map auto-resized to 1476×987, Escape synced the state), and
-the gesture-guard tutorial gated a real wheel, showed the hint and selected the
-modifier from its buttons.
+resizes (640×480 → 520×360 → back). The heatmap checks render a real field from
+stacked weighted samples (5,044 painted pixels with a saturated red core), turn
+the core green after a gradient change, shrink the field with a smaller radius,
+follow `addPoint`/`clear` down to zero painted pixels and remove the overlay
+canvas; an empty plugin still sizes its transparent surface to the container and
+leaves container styles untouched; and a single-sample field moves within 2 px of
+the renderer's own projection after a view change. Live documentation checks
+additionally entered real fullscreen through a real click on the tutorial action
+and the corner button (the map auto-resized to 1476×987, Escape synced the
+state), and the gesture-guard tutorial gated a real wheel, showed the hint and
+selected the modifier from its buttons. The heatmap tutorial was checked live
+too: 850 samples produced a graded field (183,273 painted pixels across five
+intensity bands), a ramp switch turned the hot core to the new color, a bigger
+radius grew the field, and the controls cleared, regenerated and removed it.
 
 The recorded browser environment was headless Chromium on an Apple M5 Pro,
 using ANGLE Metal for WebGL and `apple metal-3` for WebGPU. Pixel comparisons
@@ -263,7 +272,10 @@ Canvas setup is still faster at 282 ms. One-second warm-pan outliers persist.
   Its hint overlay is DOM created on the first blocked attempt. Fullscreen needs
   browser support and a user gesture; requests resolve a boolean instead of
   throwing, and a denied request covers the window with the CSS fallback
-  (`mode: 'fallback'`) unless `fallback: false`.
+  (`mode: 'fallback'`) unless `fallback: false`. The heatmap plugin splats on the
+  CPU per rendered frame into a bounded buffer (≤1M pixels, ≤1.5 device pixels per
+  CSS pixel), draws above GPU-delivered features and skips samples outside the
+  view.
 - **Altitude:** preserved for points, multiPoints, circles and rectangles, but
   not for line/polygon geometry or its exported coordinates.
 - **MVT:** no antimeridian world wrapping. Residency follows the viewport rather

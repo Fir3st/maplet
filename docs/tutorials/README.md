@@ -24,6 +24,7 @@ JavaScript source. Start with a first map, then choose a topic.
 - [A plugin is a function](plugins.md) — installation, a custom API and cleanup.
 - [Gesture guard](gesture-guard.md) — two-finger touch and modifier-gated mouse gestures.
 - [Fullscreen mode](fullscreen.md) — a fullscreen toggle with a corner button.
+- [Heatmap](heatmap.md) — a weighted heat field drawn through the after-frame hook.
 
 <!-- /tutorial-directory -->
 

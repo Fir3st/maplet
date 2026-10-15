@@ -1,10 +1,11 @@
 /**
- * Built-in plugin battery (INPUT-09, FULLSCREEN): the gesture guard (two-finger
- * touch, modifier-gated mouse and page scroll through `touch-action`) and the
- * fullscreen mode plugin (state sync, corner button, cleanup, unavailability).
- * Results: `window.__builtinPluginCheckResult`.
+ * Built-in plugin battery (INPUT-09, FULLSCREEN, HEAT-10): the gesture guard
+ * (two-finger touch, modifier-gated mouse and page scroll through `touch-action`),
+ * the fullscreen mode plugin (state sync, corner button, cleanup, unavailability)
+ * and the heatmap plugin (weighted splats, ramp and radius updates, bounded field
+ * buffer, cleanup). Results: `window.__builtinPluginCheckResult`.
  */
-import { createMap, fullscreenMode, gestureGuard } from '../dist/index.js';
+import { createMap, fullscreenMode, gestureGuard, heatmap } from '../dist/index.js';
 
 const WIDTH = 640;
 const HEIGHT = 480;
@@ -20,7 +21,7 @@ function finalize() {
   if (finalized) return;
   finalized = true;
   result.ms = Math.round(performance.now() - started);
-  result.pass = result.errors.length === 0 && result.checks.length === 8 && result.checks.every((entry) => entry.pass);
+  result.pass = result.errors.length === 0 && result.checks.length === 11 && result.checks.every((entry) => entry.pass);
   window.__builtinPluginCheckResult = result;
   document.title = 'builtin-plugin-check-done';
   const summary = document.getElementById('summary');
@@ -421,6 +422,129 @@ await check('FULLSCREEN a denied request falls back to the viewport cover and Es
   } finally {
     element.requestFullscreen = realRequest;
   }
+});
+
+await check('HEAT-10 a weighted field renders, restyles and clears', async () => {
+  const field = (canvas) => {
+    const context = canvas.getContext('2d');
+    const { data } = context.getImageData(0, 0, canvas.width, canvas.height);
+    let painted = 0;
+    let strongest = { alpha: -1, color: [0, 0, 0, 0] };
+    for (let index = 0; index < data.length; index += 4) {
+      const alpha = data[index + 3];
+      if (!alpha) continue;
+      painted += 1;
+      if (alpha > strongest.alpha) {
+        strongest = { alpha, color: [data[index], data[index + 1], data[index + 2], alpha] };
+      }
+    }
+    return { painted, strongest };
+  };
+  // Earlier checks panned the map; the heat field needs a known view.
+  map.setView({ center: { lat: 50, lng: 14 }, zoom: 13 });
+  await map.whenRendered();
+  const heat = map.use(heatmap({
+    points: [
+      { position: [50.02, 14.02], weight: 1 },
+      { position: [50.02, 14.02], weight: 1 },
+      { position: [50.005, 14.03], weight: 0.4 },
+    ],
+    radius: 28,
+  }));
+  await map.whenRendered();
+  const canvas = element.querySelector('canvas[data-maplet-heatmap]');
+  if (!canvas) return { pass: false, detail: { reason: 'no overlay canvas' } };
+  const inert =
+    getComputedStyle(canvas).pointerEvents === 'none' &&
+    canvas.getAttribute('aria-hidden') === 'true' &&
+    canvas.dataset.mapletHeatmap === 'true';
+  const first = field(canvas);
+  const hot = first.painted > 400 && first.strongest.alpha > 200 && first.strongest.color[0] > first.strongest.color[2];
+  const count = heat.api.count;
+
+  // Appearance changes reach the next frame: the hot core turns green.
+  heat.api.setOptions({ gradient: [[0, '#3b0764'], [1, '#22ff22']] });
+  await map.whenRendered();
+  const second = field(canvas);
+  const ramp = second.strongest.color[1] > second.strongest.color[0] && second.strongest.color[1] > 200;
+
+  // A smaller radius shrinks the field; addPoint and clear() follow the data hook.
+  heat.api.setOptions({ radius: 10 });
+  await map.whenRendered();
+  const smaller = field(canvas).painted < first.painted;
+  heat.api.addPoint([50.01, 14.015], 1);
+  const grown = heat.api.count === count + 1;
+  heat.api.clear();
+  await map.whenRendered();
+  const cleared = field(canvas).painted === 0;
+  heat.remove();
+  const removed = element.querySelector('canvas[data-maplet-heatmap]') === null;
+  return {
+    pass: inert && hot && ramp && smaller && grown && cleared && removed,
+    detail: { inert, painted: first.painted, hot, ramp, smaller, grown, cleared, removed },
+  };
+});
+
+await check('HEAT-10 the field stays inert without data and follows the container', async () => {
+  const before = element.style.position;
+  const heat = map.use(heatmap());
+  await map.whenRendered();
+  const canvas = element.querySelector('canvas[data-maplet-heatmap]');
+  if (!canvas) return { pass: false, detail: { reason: 'no overlay canvas' } };
+  const empty = heat.api.count === 0 && canvas.width > 0 && canvas.height > 0;
+  const sized = canvas.style.width === `${element.clientWidth}px` && canvas.style.height === `${element.clientHeight}px`;
+  const untouched = element.style.position === before;
+  heat.api.addPoint([50, 14], 1);
+  await map.whenRendered();
+  const { data } = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
+  let painted = 0;
+  for (let index = 3; index < data.length; index += 4) {
+    if (data[index]) painted += 1;
+  }
+  heat.api.setOptions({ zIndex: 4 });
+  const zIndex = canvas.style.zIndex === '4';
+  heat.remove();
+  const removed = element.querySelector('canvas[data-maplet-heatmap]') === null;
+  return {
+    pass: empty && sized && untouched && painted > 300 && zIndex && removed,
+    detail: { empty, sized, untouched, painted, zIndex, removed },
+  };
+});
+
+await check('HEAT-10 the field follows the view through the renderer projection', async () => {
+  // Independent oracle: the renderer's own per-frame projection.
+  let projected = null;
+  const observer = map.use(({ render }) => {
+    render.onFrame((frame) => {
+      projected = frame.positionToScreen({ lat: 50, lng: 14 });
+    });
+  });
+  map.setView({ center: { lat: 50, lng: 14 }, zoom: 13 });
+  await map.whenRendered();
+  const projectedBefore = { x: projected.x, y: projected.y };
+  const heat = map.use(heatmap({ points: [{ position: [50, 14], weight: 1 }], radius: 28 }));
+  await map.whenRendered();
+  const canvas = element.querySelector('canvas[data-maplet-heatmap]');
+  const hottest = () => {
+    const { data } = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
+    let best = { alpha: -1, x: 0, y: 0 };
+    for (let index = 0; index < data.length; index += 4) {
+      const alpha = data[index + 3];
+      if (alpha > best.alpha) best = { alpha, x: (index / 4) % canvas.width, y: Math.floor(index / 4 / canvas.width) };
+    }
+    return best;
+  };
+  const splatBefore = hottest();
+  map.setView({ center: { lat: 50.01, lng: 14.01 }, zoom: 13 });
+  await map.whenRendered();
+  const splatAfter = hottest();
+  const projectedAfter = { x: projected.x, y: projected.y };
+  const oracle = { dx: projectedAfter.x - projectedBefore.x, dy: projectedAfter.y - projectedBefore.y };
+  const actual = { dx: splatAfter.x - splatBefore.x, dy: splatAfter.y - splatBefore.y };
+  const moved = Math.abs(actual.dx - oracle.dx) <= 2 && Math.abs(actual.dy - oracle.dy) <= 2;
+  heat.remove();
+  observer.remove();
+  return { pass: moved, detail: { oracle, actual, moved } };
 });
 
 result.ms = Math.round(performance.now() - started);

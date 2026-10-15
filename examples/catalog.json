@@ -86,5 +86,13 @@
     "hint": "Click the corner button · press Escape · remove the plugin",
     "note": "A built-in plugin; fullscreen requests need a user gesture and a browser that supports the API.",
     "origin": "demo/plugins-builtin.js"
+  },
+  {
+    "id": "heatmap", "title": "Heatmaps from weighted points", "group": "Extending Maplet", "kind": "heatmap",
+    "summary": "Render weighted samples as a smooth heat field with a built-in plugin.",
+    "learn": "heatmap() defines samples through setPoints/addPoint/setOptions and draws them on one absolutely positioned canvas through the after-frame hook. The field is recomputed only when the map renders, off-view samples are skipped and the buffer stays bounded.",
+    "hint": "Add a hotspot · switch the ramp · grow the splats · clear the field",
+    "note": "A built-in plugin example of the after-frame hook. Synthetic measurements; no basemap and no external data.",
+    "origin": "demo/plugins-builtin.js"
   }
 ]

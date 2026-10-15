@@ -104,15 +104,17 @@ cleanup immediately after acquiring each resource.
 
 ## Built-in plugins
 
-Two optional capabilities ship as ordinary plugins, so a map without them adds
+Three optional capabilities ship as ordinary plugins, so a map without them adds
 no listeners, DOM or CSS:
 
 ```ts
-import { fullscreenMode, gestureGuard } from '@fir3st/maplet';
+import { fullscreenMode, gestureGuard, heatmap } from '@fir3st/maplet';
 
 const guard = map.use(gestureGuard({ modifier: 'alt' }));
 const fullscreen = map.use(fullscreenMode({ control: true }));
+const heat = map.use(heatmap({ points: samples, radius: 30 }));
 await fullscreen.api.toggle();
+heat.api.setOptions({ gradient: [[0, '#312e81'], [1, '#f97316']], max: 2 });
 ```
 
 `gestureGuard` gates view-affecting gestures without stopping the pointer state
@@ -132,6 +134,14 @@ distinguishes the real Fullscreen API (`'native'`) from the CSS viewport fallbac
 (`'fallback'`) used when the API is missing or denied (`fallback: false` turns
 that off). Removing it exits fullscreen and removes the button. See the
 [fullscreen tutorial](tutorials/fullscreen.md).
+
+`heatmap` renders weighted points as a smooth heat field on one absolutely
+positioned canvas through the after-frame hook. `setPoints`, `addPoint`,
+`addPoints` and `clear` define the samples; `setOptions` tunes radius, blur, the
+intensity peak, opacity bounds, the color ramp and the surface `z-index`. It
+works with every backend — including `renderer: 'none'` and custom renderers —
+and skips samples outside the view. See the
+[heatmap tutorial](tutorials/heatmap.md).
 
 ## Change rendering
 
@@ -208,7 +218,9 @@ with the built-in renderer. `RenderFrame` includes `map`, `plan`, `time` and a
 `positionToScreen()` tied to **that frame's view**, even during async rendering.
 These callbacks are synchronous, run in order and finish before `whenRendered`
 resolves. Overlay content is not automatically included in GPU picking: bind
-DOM events or implement your own hit testing.
+DOM events or implement your own hit testing. The built-in `heatmap` plugin is a
+complete example of this hook: it owns one canvas, splats the samples inside the
+view into a bounded offscreen field and colorizes it through a ramp.
 
 ### 3. Replace the entire renderer
 
