@@ -42,7 +42,11 @@ protection use the built-in [gesture guard](plugins.md#built-in-plugins) plugin,
 or install your own policy through `map.interaction?.setGestureGate(gate)`; a
 blocked wheel is not prevented, so the page keeps scrolling.
 
-Use `draggable: true` on a vector collection. Selection is shared feature state:
+Use `draggable: true` on a vector collection, or per marker through
+`map.addMarker({ draggable: true })`. A per-feature style override
+(`setStyle({ draggable: true })` / `draggable: false`) opts one feature in or out
+of a draggable layer, which is how one pin drags while its neighbours keep
+panning the map. Selection is shared feature state:
 objects expose `select()`/`deselect()`, and `map.selection` provides
 `get`, `set`, `add`, `remove`, `clear` and `subscribe`. `map.state.set(ref, patch)`
 updates other state read by style expressions. Enable box selection through

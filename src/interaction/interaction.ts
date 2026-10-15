@@ -17,6 +17,7 @@ import type {
   ScreenPoint,
 } from '../api/types.ts';
 import type { Scene } from '../scene/scene.ts';
+import { featureIsDraggable } from '../scene/layers.ts';
 import type { ViewImpl } from '../view/view.ts';
 import type { MapBackend } from '../render/backends.ts';
 import type { PickResult } from '../render/picking.ts';
@@ -277,10 +278,10 @@ export class InteractionController {
     const hit =
       hits.find(
         (candidate) =>
-          this.scene.layers.get(candidate.layerId)?.draggable &&
+          this.isDraggableHit(candidate) &&
           this.scene.getSourceImpl(candidate.feature.sourceId) !== undefined,
       ) ?? null;
-    if (!hit || !this.scene.layers.get(hit.layerId)?.draggable) {
+    if (!hit) {
       if (this.options.pan) this.startPan(event.pointerId, point, event);
       return;
     }
@@ -302,6 +303,12 @@ export class InteractionController {
       dragFeature: { feature: hit.feature, layerId: hit.layerId, startPointer: position, origin },
       moved: false,
     };
+  }
+
+  /** Layer opt-in or a per-feature override, so one pin can drag alone (INPUT-10). */
+  private isDraggableHit(hit: PickResult): boolean {
+    const layer = this.scene.layers.get(hit.layerId);
+    return layer ? featureIsDraggable(layer, hit.feature) : false;
   }
 
   private onPointerMove = (event: PointerEvent): void => {
@@ -616,7 +623,7 @@ export class InteractionController {
       this.element.style.cursor = 'grab';
       return;
     }
-    this.element.style.cursor = this.scene.layers.get(hit.layerId)?.draggable ? 'move' : 'pointer';
+    this.element.style.cursor = this.isDraggableHit(hit) ? 'move' : 'pointer';
   }
 
   private async emitClick(point: ScreenPoint, originalEvent: Event): Promise<void> {

@@ -19,7 +19,7 @@ JavaScript source. Start with a first map, then choose a topic.
 ## Presentation and extensions
 
 - [Labels and image pins](labels.md) — reusable images, labels and shared data.
-- [Markers with tooltips and popups](markers.md) — pins, hover tooltips and one click popup per map.
+- [Markers with tooltips and popups](markers.md) — pins, hover tooltips, one click popup per map and drag to move a pin.
 - [Raster tiles](raster.md) — tile URLs, source updates and attribution.
 - [A plugin is a function](plugins.md) — installation, a custom API and cleanup.
 - [Gesture guard](gesture-guard.md) — two-finger touch and modifier-gated mouse gestures.

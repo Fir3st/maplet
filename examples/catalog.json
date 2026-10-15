@@ -49,9 +49,9 @@
   },
   {
     "id": "markers", "title": "Markers, tooltips & popups", "group": "Presentation", "kind": "markers",
-    "summary": "Add Leaflet-style pins with hover tooltips and click popups.",
-    "learn": "map.addMarker() and map.addMarkers() create GPU pins in one shared layer — no DOM element per marker. A hover tooltip and one click popup per map are DOM overlays that follow pan and zoom; auto-pan keeps an open popup inside the view.",
-    "hint": "Hover a pin · click it for the popup · move a pin and watch its popup follow",
+    "summary": "Add Leaflet-style pins with hover tooltips, click popups and an opt-in draggable pin.",
+    "learn": "map.addMarker() and map.addMarkers() create GPU pins in one shared layer — no DOM element per marker. A hover tooltip and one click popup per map are DOM overlays that follow pan and zoom; auto-pan keeps an open popup inside the view. A pin with draggable: true follows the pointer without panning the map and reports its position through dragstart/drag/dragend.",
+    "hint": "Hover a pin · click it for the popup · drag the purple crane pin",
     "note": "Pins are canvas sprites; only the open tooltip and popup use DOM. Content strings render as text; pass a Node for rich content.",
     "origin": "demo/markers.js"
   },

@@ -17,11 +17,59 @@ const [depot, market, river] = markers;
 // A permanent tooltip stays visible without hover.
 depot.setTooltip({ content: 'Freight depot · 12 platforms', permanent: true });
 
+// One pin is draggable: its tip follows the pointer while the map stays put,
+// and the drag survives icon edits because the override is rebuilt each time.
+const craneHome = { x: -0.42, y: 0.68 };
+const crane = map.addMarker({
+  id: 'crane',
+  position: craneHome,
+  iconTint: '#7c3aed',
+  draggable: true,
+  tooltip: 'Dock crane — drag me',
+  popup: 'Drag this pin: the tip follows the pointer while the map stays put.',
+});
+
+const panel = document.createElement('div');
+panel.className = 'panel';
+const heading = document.createElement('h3');
+heading.textContent = 'Draggable pin';
+const rows = document.createElement('dl');
+rows.className = 'rows';
+const row = (label) => {
+  const dt = document.createElement('dt');
+  dt.textContent = label;
+  const dd = document.createElement('dd');
+  rows.append(dt, dd);
+  return dd;
+};
+const craneAt = row('Crane at');
+const craneDrops = row('Drops');
+panel.append(heading, rows);
+document.querySelector('#example-extra').append(panel);
+const craneText = () => {
+  const at = crane.getPosition();
+  craneAt.textContent = `${at.x.toFixed(2)}, ${at.y.toFixed(2)}`;
+};
+let drops = 0;
+craneText();
+crane.on('dragstart', () => report('Dragging the dock crane — the map will not pan until you drop it.'));
+crane.on('dragend', () => {
+  drops += 1;
+  craneDrops.textContent = String(drops);
+  craneText();
+  report('Dock crane dropped — the map never panned and the tooltip followed the pin.');
+});
+
 let away = false, pinned = true, extra = null;
 action('Move the market pin', () => {
   away = !away;
   market.setPosition(away ? { x: 0.62, y: -0.55 } : spots[1].at);
   report(`Market square moved ${away ? 'south-east' : 'back'}; its open popup follows it.`);
+});
+action('Reset the crane pin', () => {
+  crane.setPosition(craneHome);
+  craneText();
+  report('Dock crane back at its home berth.');
 });
 action('Open the river popup', () => {
   river.openPopup();
@@ -47,4 +95,4 @@ action('Add / remove a pin', () => {
   });
   report('Extra pin added — hover it for a tooltip, click it for the popup.');
 });
-await ready(map, { markers, depot, market, river });
+await ready(map, { markers, depot, market, river, crane, craneHome });

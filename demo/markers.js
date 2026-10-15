@@ -1,8 +1,9 @@
 /**
- * Marker battery (MARKER-01..08): Leaflet-style pins with a hover/permanent
- * tooltip and a click popup. Pins are GPU sprites — never a DOM element per
- * marker — while the tooltip and popup are bounded DOM overlays with the UI-06
- * content contract (strings stay text). Results: `window.__markerCheckResult`.
+ * Marker battery (MARKER-01..09): Leaflet-style pins with a hover/permanent
+ * tooltip, a click popup and per-marker dragging. Pins are GPU sprites — never a
+ * DOM element per marker — while the tooltip and popup are bounded DOM overlays
+ * with the UI-06 content contract (strings stay text). Results:
+ * `window.__markerCheckResult`.
  */
 import { createMap } from '../dist/index.js';
 
@@ -20,7 +21,7 @@ function finalize() {
   if (finalized) return;
   finalized = true;
   result.ms = Math.round(performance.now() - started);
-  result.pass = result.errors.length === 0 && result.checks.length === 8 && result.checks.every((entry) => entry.pass);
+  result.pass = result.errors.length === 0 && result.checks.length === 9 && result.checks.every((entry) => entry.pass);
   window.__markerCheckResult = result;
   document.title = 'marker-check-done';
   const summary = document.getElementById('summary');
@@ -377,6 +378,144 @@ await check('MARKER-08 custom icons, tint, batch add, events and removal', async
       removedPixel: describe(removedPixel),
       perMarkerDom,
       openUi,
+    },
+  };
+});
+
+await check('MARKER-09 a draggable pin follows the pointer without panning; plain pins pan the map', async () => {
+  const markerG = map.addMarker({ id: 'g', position: screen(260, 320), draggable: true, tooltip: 'Drag me', popup: 'Moved' });
+  const markerH = map.addMarker({ id: 'h', position: screen(430, 300), tooltip: 'Fixed', popup: 'Fixed' });
+  await sleep(140);
+  const events = [];
+  const offs = [
+    markerG.on('dragstart', () => events.push('dragstart')),
+    markerG.on('drag', () => events.push('drag')),
+    markerG.on('dragend', (event) => events.push(`dragend:${event.screen.x.toFixed(1)},${event.screen.y.toFixed(1)}`)),
+  ];
+
+  // A draggable pin shows the move cursor; a plain pin keeps the pointer cursor.
+  const g0 = anchorOf(markerG);
+  await hover(Math.round(g0.x), Math.round(g0.y) - 22);
+  await poll(() => (element.style.cursor === 'move' ? true : null));
+  const moveCursor = element.style.cursor;
+  const h0 = anchorOf(markerH);
+  await hover(Math.round(h0.x), Math.round(h0.y) - 22);
+  await poll(() => (element.style.cursor === 'pointer' ? true : null));
+  const plainCursor = element.style.cursor;
+
+  // Drag the pin +90/-40 px from the press point; the view must not move.
+  const centerBefore = map.getCenter();
+  const press = { x: Math.round(g0.x), y: Math.round(g0.y) - 22 };
+  let px = press.x;
+  let py = press.y;
+  pointer('pointerdown', px, py);
+  await sleep(80);
+  for (const [dx, dy] of [[30, -14], [30, -13], [30, -13]]) {
+    px += dx;
+    py += dy;
+    pointer('pointermove', px, py);
+    await sleep(60);
+  }
+  pointer('pointerup', px, py);
+  await sleep(160);
+  const g1 = anchorOf(markerG);
+  const centerAfter = map.getCenter();
+  const movedBody = await sample(Math.round(g1.x), Math.round(g1.y) - 26);
+  const oldSpot = await sample(Math.round(g0.x), Math.round(g0.y) - 26);
+  const popupStayedShut = !markerG.popupOpen;
+
+  // Rebuilding the appearance override (setIcon) must keep the pin draggable.
+  markerG.setIcon(null);
+  await sleep(140);
+  const g2 = anchorOf(markerG);
+  pointer('pointerdown', Math.round(g2.x), Math.round(g2.y) - 22);
+  await sleep(80);
+  pointer('pointermove', Math.round(g2.x) + 24, Math.round(g2.y) - 32);
+  await sleep(60);
+  pointer('pointerup', Math.round(g2.x) + 24, Math.round(g2.y) - 32);
+  await sleep(160);
+  const g3 = anchorOf(markerG);
+
+  // A press without movement is still a click: the draggable pin opens its popup.
+  const gClick = anchorOf(markerG);
+  await click(Math.round(gClick.x), Math.round(gClick.y) - 22);
+  await sleep(200);
+  const clickOpenedPopup = markerG.popupOpen;
+  markerG.closePopup();
+  await sleep(100);
+
+  // Control: pressing a plain pin and moving pans the view, never the pin.
+  const hBefore = anchorOf(markerH);
+  const fixedPosition = markerH.getPosition();
+  const fixedCenter = map.getCenter();
+  pointer('pointerdown', Math.round(hBefore.x), Math.round(hBefore.y) - 22);
+  await sleep(80);
+  pointer('pointermove', Math.round(hBefore.x) + 40, Math.round(hBefore.y) + 20);
+  await sleep(60);
+  pointer('pointerup', Math.round(hBefore.x) + 40, Math.round(hBefore.y) + 20);
+  await sleep(160);
+  const hPosition = markerH.getPosition();
+  const pannedCenter = map.getCenter();
+  const plainUnmoved = Math.abs(hPosition.lat - fixedPosition.lat) < 1e-9 && Math.abs(hPosition.lng - fixedPosition.lng) < 1e-9;
+  const didPan = Math.abs(pannedCenter.lat - fixedCenter.lat) > 1e-7 || Math.abs(pannedCenter.lng - fixedCenter.lng) > 1e-7;
+
+  // setDraggable(false) turns dragging off at runtime: the cursor returns to
+  // pointer, the same gesture pans and the position stays put.
+  markerG.setDraggable(false);
+  await sleep(120);
+  const g4 = anchorOf(markerG);
+  await hover(Math.round(g4.x), Math.round(g4.y) - 22);
+  await poll(() => (element.style.cursor === 'pointer' ? true : null));
+  const cursorAfterOff = element.style.cursor;
+  const beforeOff = markerG.getPosition();
+  pointer('pointerdown', Math.round(g4.x), Math.round(g4.y) - 22);
+  await sleep(80);
+  pointer('pointermove', Math.round(g4.x) - 35, Math.round(g4.y) - 37);
+  await sleep(60);
+  pointer('pointerup', Math.round(g4.x) - 35, Math.round(g4.y) - 37);
+  await sleep(160);
+  const afterOff = markerG.getPosition();
+  const offUnmoved = Math.abs(afterOff.lat - beforeOff.lat) < 1e-9 && Math.abs(afterOff.lng - beforeOff.lng) < 1e-9;
+  for (const off of offs) off();
+
+  const noPanWhileDragging = Math.abs(centerAfter.lat - centerBefore.lat) < 1e-9 && Math.abs(centerAfter.lng - centerBefore.lng) < 1e-9;
+  return {
+    pass:
+      moveCursor === 'move' &&
+      plainCursor === 'pointer' &&
+      events.includes('dragstart') &&
+      events.filter((entry) => entry === 'drag').length >= 2 &&
+      events.some((entry) => entry.startsWith('dragend:')) &&
+      noPanWhileDragging &&
+      Math.abs(g1.x - (g0.x + 90)) <= 1.5 &&
+      Math.abs(g1.y - (g0.y - 40)) <= 1.5 &&
+      near(movedBody, PIN_BODY, 12) &&
+      oldSpot.a === 0 &&
+      Math.abs(g3.x - (g2.x + 24)) <= 1.5 &&
+      Math.abs(g3.y - (g2.y - 10)) <= 1.5 &&
+      popupStayedShut &&
+      clickOpenedPopup &&
+      plainUnmoved &&
+      didPan &&
+      cursorAfterOff === 'pointer' &&
+      offUnmoved,
+    detail: {
+      moveCursor,
+      plainCursor,
+      events,
+      noPanWhileDragging,
+      anchorAfterDrag: [Math.round(g1.x), Math.round(g1.y)],
+      expectedAfterDrag: [Math.round(g0.x + 90), Math.round(g0.y - 40)],
+      movedBody: describe(movedBody),
+      oldSpot: describe(oldSpot),
+      anchorAfterIconReset: [Math.round(g3.x), Math.round(g3.y)],
+      expectedAfterIconReset: [Math.round(g2.x + 24), Math.round(g2.y - 10)],
+      popupStayedShut,
+      clickOpenedPopup,
+      plainUnmoved,
+      didPan,
+      cursorAfterOff,
+      offUnmoved,
     },
   };
 });

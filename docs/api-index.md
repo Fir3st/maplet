@@ -40,7 +40,8 @@ Lifecycle: `batch`, `whenRendered`, `on`, `once`, `off`, `onFeature`,
 expose `addPoints`, `addLines`, `addPolygons`, `addLabels`, `addTiles`, `addWms`,
 `addImage`, `addVideo` and nested `addLayer`. Direct map additions share `map.base`.
 `addMarker(options)` and `addMarkers(options[])` create Leaflet-style pins in a
-shared internal layer; the handle exposes `getPosition`/`setPosition`, `setIcon`,
+shared internal layer; `draggable: true` opts a single pin into dragging. The
+handle exposes `getPosition`/`setPosition`, `setIcon`, `setDraggable`,
 `setTooltip`/`setPopup`, `openTooltip`/`closeTooltip`, `openPopup`/`closePopup`,
 `show`/`hide` and `remove`.
 

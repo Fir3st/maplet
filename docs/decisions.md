@@ -371,8 +371,15 @@ The current public construction, object lifetime and migration contract is in
   removal, unbinding (`setPopup(null)`/`setTooltip(null)`) or map destroy. A
   static container receives `position: relative` once, like Leaflet's stylesheet.
 - Content follows the UI-06 contract: a string renders as text, a `Node` renders
-  as-is. Marker dragging, keyboard focus on pins and clustering are not part of
-  this alpha; pins pick and emit feature events like any interactive point.
+  as-is. A pin is draggable with `draggable: true` (per marker, default false,
+  Leaflet parity): the drag starts after four CSS pixels, translates the position
+  rigidly, suppresses pan while it lasts, never opens the popup, emits
+  `dragstart`/`drag`/`dragend` like any other feature and survives later
+  appearance edits, because the controller rewrites the whole per-feature
+  override on every `setIcon`/`setDraggable` (INPUT-10). `setDraggable(false)`
+  stops it at runtime and returns the cursor to `pointer`. Keyboard focus on pins
+  and clustering are not part of this alpha; pins pick and emit feature events
+  like any interactive point.
 
 ## Fonts and text
 

@@ -1,0 +1,270 @@
+- generic [active] [ref=f6e1]:
+  - link "Skip to content" [ref=f6e2] [cursor=pointer]:
+    - /url: "#main"
+  - banner [ref=f6e3]:
+    - link "Maplet 0.1.0-alpha.7" [ref=f6e4] [cursor=pointer]:
+      - /url: ../../
+      - text: Maplet
+      - generic [ref=f6e7]: 0.1.0-alpha.7
+    - navigation "Main" [ref=f6e8]:
+      - link "Overview" [ref=f6e9] [cursor=pointer]:
+        - /url: ../../
+      - link "Tutorials" [ref=f6e10] [cursor=pointer]:
+        - /url: ../../tutorials/
+      - link "Reference" [ref=f6e11] [cursor=pointer]:
+        - /url: ../../reference/
+      - link "Download" [ref=f6e12] [cursor=pointer]:
+        - /url: ../../download/
+      - link "Plugins" [ref=f6e13] [cursor=pointer]:
+        - /url: ../../plugins/
+      - link "GitHub ↗" [ref=f6e14] [cursor=pointer]:
+        - /url: https://github.com/Fir3st/maplet
+  - generic [ref=f6e15]:
+    - complementary [ref=f6e16]:
+      - group [ref=f6e17]:
+        - navigation "Documentation" [ref=f6e18]:
+          - generic [ref=f6e19]:
+            - generic [ref=f6e20]: Start here
+            - link "Overview" [ref=f6e21] [cursor=pointer]:
+              - /url: ../../
+            - link "Tutorials" [ref=f6e22] [cursor=pointer]:
+              - /url: ../../tutorials/
+            - link "API reference" [ref=f6e23] [cursor=pointer]:
+              - /url: ../../reference/
+            - link "Download & installation" [ref=f6e24] [cursor=pointer]:
+              - /url: ../../download/
+          - generic [ref=f6e25]:
+            - generic [ref=f6e26]: Guides
+            - link "Maps & coordinates" [ref=f6e27] [cursor=pointer]:
+              - /url: ../../guides/maps/
+            - link "Layers & objects" [ref=f6e28] [cursor=pointer]:
+              - /url: ../../guides/layers/
+            - link "Data & transactions" [ref=f6e29] [cursor=pointer]:
+              - /url: ../../guides/data/
+            - link "Styles & rendering" [ref=f6e30] [cursor=pointer]:
+              - /url: ../../guides/rendering/
+            - link "Interaction & UI" [ref=f6e31] [cursor=pointer]:
+              - /url: ../../guides/interaction/
+            - link "Plugins" [ref=f6e32] [cursor=pointer]:
+              - /url: ../../plugins/
+          - generic [ref=f6e33]:
+            - generic [ref=f6e34]: Tutorials
+            - link "Your first map" [ref=f6e35] [cursor=pointer]:
+              - /url: ../../examples/basics/
+            - link "Points that change" [ref=f6e36] [cursor=pointer]:
+              - /url: ../../examples/points/
+            - link "Lines, fills & holes" [ref=f6e37] [cursor=pointer]:
+              - /url: ../../examples/geometry/
+            - link "Connected data" [ref=f6e38] [cursor=pointer]:
+              - /url: ../../examples/bindings/
+            - link "Bring your GeoJSON" [ref=f6e39] [cursor=pointer]:
+              - /url: ../../examples/geojson/
+            - link "Labels & image pins" [ref=f6e40] [cursor=pointer]:
+              - /url: ../../examples/labels/
+            - link "Markers, tooltips & popups" [ref=f6e41] [cursor=pointer]:
+              - /url: ../../examples/markers/
+            - link "Raster tiles" [ref=f6e42] [cursor=pointer]:
+              - /url: ../../examples/raster/
+            - link "A plugin is a function" [ref=f6e43] [cursor=pointer]:
+              - /url: ../../examples/plugins/
+            - link "Gesture guard" [ref=f6e44] [cursor=pointer]:
+              - /url: ../../examples/gesture-guard/
+            - link "Fullscreen mode" [ref=f6e45] [cursor=pointer]:
+              - /url: ../../examples/fullscreen/
+            - link "Heatmaps from weighted points" [ref=f6e46] [cursor=pointer]:
+              - /url: ../../examples/heatmap/
+          - generic [ref=f6e47]:
+            - generic [ref=f6e48]: Project
+            - link "API contracts" [ref=f6e49] [cursor=pointer]:
+              - /url: ../../guides/contracts/
+            - link "Status & limitations" [ref=f6e50] [cursor=pointer]:
+              - /url: ../../guides/status/
+            - link "Development" [ref=f6e51] [cursor=pointer]:
+              - /url: ../../guides/development/
+            - link "Website publication" [ref=f6e52] [cursor=pointer]:
+              - /url: ../../guides/website/
+            - link "Background" [ref=f6e53] [cursor=pointer]:
+              - /url: ../../guides/background/
+    - main [ref=f6e54]:
+      - link "Tutorials / Extending Maplet" [ref=f6e55] [cursor=pointer]:
+        - /url: ../../tutorials/
+      - heading [level=1] [ref=f6e56]:
+        - text: Gesture guard
+        - link "Link to Gesture guard" [ref=f6e57] [cursor=pointer]:
+          - /url: "#gesture-guard"
+          - text: "#"
+      - paragraph [ref=f6e58]:
+        - text: The
+        - code [ref=f6e59]: gestureGuard
+        - text: "plugin keeps a map embedded in a page from panning or zooming by accident: touch gestures need two fingers, mouse gestures need a modifier key, and a one-finger drag scrolls the page instead of moving the map."
+      - heading [level=2] [ref=f6e60]:
+        - text: Install it
+        - link "Link to Install it" [ref=f6e61] [cursor=pointer]:
+          - /url: "#install-it"
+          - text: "#"
+      - generic "ts example" [ref=f6e62]:
+        - code [ref=f6e63]: "import { gestureGuard } from '@fir3st/maplet'; const guard = map.use(gestureGuard({ modifier: 'alt', touchPointers: 2 })); guard.api.unlock(); // allow everything until lock(), e.g. from a button guard.api.setModifier('control'); guard.remove(); // restores touch-action and clears the gate map.use(gestureGuard()); // installing again starts a fresh, guarded instance"
+      - region "Reference table" [ref=f6e64]:
+        - table [ref=f6e65]:
+          - rowgroup [ref=f6e66]:
+            - row [ref=f6e67]:
+              - columnheader "Option" [ref=f6e68]
+              - columnheader "Default" [ref=f6e69]
+              - columnheader "Meaning" [ref=f6e70]
+          - rowgroup [ref=f6e71]:
+            - row [ref=f6e72]:
+              - cell [ref=f6e73]:
+                - code [ref=f6e74]: modifier
+              - cell [ref=f6e75]:
+                - code [ref=f6e76]: "'alt'"
+              - cell [ref=f6e77]:
+                - code [ref=f6e78]: alt
+                - text: ","
+                - code [ref=f6e79]: control
+                - text: ","
+                - code [ref=f6e80]: shift
+                - text: ","
+                - code [ref=f6e81]: meta
+                - text: or
+                - code [ref=f6e82]: none
+                - text: for mouse/pen gestures
+            - row [ref=f6e83]:
+              - cell [ref=f6e84]:
+                - code [ref=f6e85]: touchPointers
+              - cell [ref=f6e86]:
+                - code [ref=f6e87]: "2"
+              - cell "Fingers required before a touch gesture applies" [ref=f6e88]
+            - row [ref=f6e89]:
+              - cell [ref=f6e90]:
+                - code [ref=f6e91]: touchAction
+              - cell [ref=f6e92]:
+                - code [ref=f6e93]: "'pan-y'"
+              - cell [ref=f6e94]:
+                - text: Container
+                - code [ref=f6e95]: touch-action
+                - text: while the plugin is installed
+            - row [ref=f6e96]:
+              - cell [ref=f6e97]:
+                - code [ref=f6e98]: unlocked
+              - cell [ref=f6e99]:
+                - code [ref=f6e100]: "false"
+              - cell [ref=f6e101]:
+                - text: Start with every gesture allowed;
+                - code [ref=f6e102]: lock()
+                - text: still applies
+            - row [ref=f6e103]:
+              - cell [ref=f6e104]:
+                - code [ref=f6e105]: overlay
+              - cell "on" [ref=f6e106]
+              - cell [ref=f6e107]:
+                - text: Explain blocked attempts with a hint overlay, or
+                - code [ref=f6e108]: "false"
+                - text: to stay silent
+            - row [ref=f6e109]:
+              - cell [ref=f6e110]:
+                - code [ref=f6e111]: onChange
+              - cell "—" [ref=f6e112]
+              - cell [ref=f6e113]:
+                - text: Notified whenever
+                - code [ref=f6e114]: unlock()
+                - text: /
+                - code [ref=f6e115]: lock()
+                - text: change the state
+      - paragraph [ref=f6e116]:
+        - text: A blocked attempt shows a short hint over the map — *Use 2 fingers to move the map*, *Hold Alt and scroll to zoom the map* — following the same pattern as Leaflet's gesture-handling plugins. It disappears on its own (default after 2.2 s), on the next allowed gesture, or on
+        - code [ref=f6e117]: unlock()
+        - text: ;
+        - code [ref=f6e118]: "overlay: { durationMs, message }"
+        - text: changes the timing or the wording.
+      - heading [level=2] [ref=f6e119]:
+        - text: Live example
+        - link "Link to Live example" [ref=f6e120] [cursor=pointer]:
+          - /url: "#live-example"
+          - text: "#"
+      - paragraph [ref=f6e121]: Hold Alt (or ⌥) while dragging or scrolling, unlock the map with the button, or switch the modifier. *Toggle the guard off* removes the plugin, and toggling it back on installs a fresh instance; *Reset view* restores the view together with the guarded state. A blocked attempt shows the hint overlay over the map; on a touch device one finger scrolls the page and two fingers pan and pinch.
+      - region "Interactive example" [ref=f6e122]:
+        - generic [ref=f6e123]:
+          - generic [ref=f6e124]:
+            - generic [ref=f6e125]:
+              - text: Renderer
+              - combobox "Renderer" [ref=f6e126]:
+                - option "WebGL 1" [selected]
+                - option "WebGPU + fallback"
+            - button "Reset view" [ref=f6e127] [cursor=pointer]
+          - generic "Gesture guard interactive map" [ref=f6e128]:
+            - generic [ref=f6e130]:
+              - button "Zoom in" [ref=f6e131] [cursor=pointer]: +
+              - button "Zoom out" [ref=f6e132] [cursor=pointer]: −
+          - generic [ref=f6e133]:
+            - generic [ref=f6e134]: Hold Alt while dragging · unlock the map · switch the modifier
+            - status [ref=f6e135]: webgl1 · 53 features · revision 6
+        - complementary [ref=f6e136]:
+          - heading "Try it" [level=2] [ref=f6e137]
+          - generic [ref=f6e138]:
+            - button "Unlock / lock the map" [ref=f6e139] [cursor=pointer]
+            - button "Switch modifier" [ref=f6e140] [cursor=pointer]
+            - button "Toggle the guard off" [ref=f6e141] [cursor=pointer]
+          - status [ref=f6e142]: Ready — try the controls or interact with the map.
+          - paragraph [ref=f6e143]: A built-in plugin built on the public interaction gate; no CSS file or external asset.
+      - group [ref=f6e144]:
+        - generic "Complete example source" [ref=f6e145] [cursor=pointer]
+        - generic [ref=f6e146]:
+          - button "Copy source" [ref=f6e147] [cursor=pointer]
+          - link "Download JavaScript" [ref=f6e148] [cursor=pointer]:
+            - /url: ./example.js
+          - generic [ref=f6e149]: Gist not published yet
+        - generic "JavaScript source" [ref=f6e150]:
+          - code [ref=f6e151]: "import { openExample, action, ready, report, gestureGuard } from './shared.js'; const map = await openExample(); map.addPoints([ { id: 'p1', position: { x: -0.7, y: 0.35 }, properties: { name: 'North yard' } }, { id: 'p2', position: { x: 0.15, y: -0.4 }, properties: { name: 'Workshop' } }, { id: 'p3', position: { x: 0.85, y: 0.5 }, properties: { name: 'Gate' } }, ], { style: { minZoom: -1, radiusPx: 8, color: '#2563eb', strokeColor: '#ffffff', strokeWidthPx: 2 } }); // The guard blocks accidental gestures: hold Alt while dragging or scrolling, // or unlock the map with the button below. Touch needs two fingers. Removal is // reversible: toggling back on installs a fresh, guarded instance. const options = { onChange: (state) => report(state.unlocked ? 'Every gesture is allowed now.' : 'Gestures are guarded again.'), }; let guard = map.use(gestureGuard(options)); let ctrl = false; const install = () => { guard = map.use(gestureGuard(options)); ctrl = false; toggle.textContent = 'Toggle the guard off'; }; action('Unlock / lock the map', () => { if (!guard) { report('The guard is removed; \"Toggle the guard on\" installs it again.'); return; } if (guard.api.unlocked) guard.api.lock(); else guard.api.unlock(); report(guard.api.unlocked ? 'Unlocked: pan, wheel zoom and double-click work without a modifier.' : 'Guarded: hold Alt to interact.'); }); action('Switch modifier', () => { if (!guard) { report('The guard is removed; \"Toggle the guard on\" installs it again.'); return; } ctrl = !ctrl; guard.api.setModifier(ctrl ? 'control' : 'alt'); report(ctrl ? 'Hold Ctrl (or ⌘ with meta) to interact.' : 'Hold Alt (⌥) to interact.'); }); const toggle = action('Toggle the guard off', () => { if (!guard) { install(); report('The guard is installed again: hold Alt to interact, or unlock the map with the button.'); return; } guard.remove(); guard = null; toggle.textContent = 'Toggle the guard on'; report('The plugin is removed; the map behaves as before and touch-action is restored.'); }); // Reset restores the whole demo, not only the view: a removed plugin would // otherwise be a one-way door. document.querySelector('#reset-view').addEventListener('click', () => { if (!guard) install(); ctrl = false; guard.api.setModifier('alt'); guard.api.lock(); report('View reset; the guard is installed and guarded again (modifier Alt).'); }); await ready(map, { guard });"
+        - paragraph [ref=f6e152]:
+          - text: The shared
+          - link "page setup" [ref=f6e153] [cursor=pointer]:
+            - /url: ./shared.js
+          - text: creates the map and controls. In your application, import from
+          - code [ref=f6e154]: "@fir3st/maplet"
+          - text: .
+          - link "Original diagnostic demo ↗" [ref=f6e155] [cursor=pointer]:
+            - /url: https://github.com/Fir3st/maplet/blob/main/demo/plugins-builtin.js
+      - heading [level=2] [ref=f6e156]:
+        - text: What stays available
+        - link "Link to What stays available" [ref=f6e157] [cursor=pointer]:
+          - /url: "#what-stays-available"
+          - text: "#"
+      - list [ref=f6e158]:
+        - listitem [ref=f6e159]: Wheel and double-click zoom need the modifier; a blocked wheel is not prevented, so the page keeps scrolling normally.
+        - listitem [ref=f6e160]:
+          - text: Keyboard panning and zooming (arrow keys,
+          - code [ref=f6e161]: +
+          - text: /
+          - code [ref=f6e162]: "-"
+          - text: ) are never gated, and box selection keeps its explicit Shift requirement.
+        - listitem [ref=f6e163]: On touch, a two-finger drag pans, a two-finger pinch zooms, and dragging a feature needs the same two-finger rule.
+        - listitem [ref=f6e164]:
+          - code [ref=f6e165]: map.interaction?.setGestureGate(gate)
+          - text: is the underlying hook if you need a custom policy without this plugin.
+      - paragraph [ref=f6e166]:
+        - text: See
+        - link "interaction" [ref=f6e167] [cursor=pointer]:
+          - /url: ../../guides/interaction/#gestures-and-selection
+        - text: and the
+        - link "plugins guide" [ref=f6e168] [cursor=pointer]:
+          - /url: ../../plugins/#built-in-plugins
+        - text: .
+      - navigation "Other tutorials" [ref=f6e169]:
+        - link "← A plugin is a function" [ref=f6e170] [cursor=pointer]:
+          - /url: ../../examples/plugins/
+        - link "Fullscreen mode →" [ref=f6e171] [cursor=pointer]:
+          - /url: ../../examples/fullscreen/
+    - complementary [ref=f6e172]:
+      - navigation "On this page" [ref=f6e173]:
+        - link "Install it" [ref=f6e175] [cursor=pointer]:
+          - /url: "#install-it"
+        - link "Live example" [ref=f6e176] [cursor=pointer]:
+          - /url: "#live-example"
+        - link "What stays available" [ref=f6e177] [cursor=pointer]:
+          - /url: "#what-stays-available"
+  - contentinfo [ref=f6e178]:
+    - generic [ref=f6e179]: Maplet · 0.1.0-alpha.7 · Apache-2.0
+    - link "Alpha limitations" [ref=f6e180] [cursor=pointer]:
+      - /url: ../../guides/status/#known-limitations
+    - link "Report an issue ↗" [ref=f6e181] [cursor=pointer]:
+      - /url: https://github.com/Fir3st/maplet/issues

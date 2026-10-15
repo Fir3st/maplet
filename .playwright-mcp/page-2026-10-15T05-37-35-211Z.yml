@@ -1,0 +1,192 @@
+- generic [active] [ref=f1e1]:
+  - link "Skip to content" [ref=f1e2] [cursor=pointer]:
+    - /url: "#main"
+  - banner [ref=f1e3]:
+    - link "Maplet 0.1.0-alpha.7" [ref=f1e4] [cursor=pointer]:
+      - /url: ../../
+      - text: Maplet
+      - generic [ref=f1e7]: 0.1.0-alpha.7
+    - navigation "Main" [ref=f1e8]:
+      - link "Overview" [ref=f1e9] [cursor=pointer]:
+        - /url: ../../
+      - link "Tutorials" [ref=f1e10] [cursor=pointer]:
+        - /url: ../../tutorials/
+      - link "Reference" [ref=f1e11] [cursor=pointer]:
+        - /url: ../../reference/
+      - link "Download" [ref=f1e12] [cursor=pointer]:
+        - /url: ../../download/
+      - link "Plugins" [ref=f1e13] [cursor=pointer]:
+        - /url: ../../plugins/
+      - link "GitHub ↗" [ref=f1e14] [cursor=pointer]:
+        - /url: https://github.com/Fir3st/maplet
+  - generic [ref=f1e15]:
+    - complementary [ref=f1e16]:
+      - group [ref=f1e17]:
+        - navigation "Documentation" [ref=f1e18]:
+          - generic [ref=f1e19]:
+            - generic [ref=f1e20]: Start here
+            - link "Overview" [ref=f1e21] [cursor=pointer]:
+              - /url: ../../
+            - link "Tutorials" [ref=f1e22] [cursor=pointer]:
+              - /url: ../../tutorials/
+            - link "API reference" [ref=f1e23] [cursor=pointer]:
+              - /url: ../../reference/
+            - link "Download & installation" [ref=f1e24] [cursor=pointer]:
+              - /url: ../../download/
+          - generic [ref=f1e25]:
+            - generic [ref=f1e26]: Guides
+            - link "Maps & coordinates" [ref=f1e27] [cursor=pointer]:
+              - /url: ../../guides/maps/
+            - link "Layers & objects" [ref=f1e28] [cursor=pointer]:
+              - /url: ../../guides/layers/
+            - link "Data & transactions" [ref=f1e29] [cursor=pointer]:
+              - /url: ../../guides/data/
+            - link "Styles & rendering" [ref=f1e30] [cursor=pointer]:
+              - /url: ../../guides/rendering/
+            - link "Interaction & UI" [ref=f1e31] [cursor=pointer]:
+              - /url: ../../guides/interaction/
+            - link "Plugins" [ref=f1e32] [cursor=pointer]:
+              - /url: ../../plugins/
+          - generic [ref=f1e33]:
+            - generic [ref=f1e34]: Tutorials
+            - link "Your first map" [ref=f1e35] [cursor=pointer]:
+              - /url: ../../examples/basics/
+            - link "Points that change" [ref=f1e36] [cursor=pointer]:
+              - /url: ../../examples/points/
+            - link "Lines, fills & holes" [ref=f1e37] [cursor=pointer]:
+              - /url: ../../examples/geometry/
+            - link "Connected data" [ref=f1e38] [cursor=pointer]:
+              - /url: ../../examples/bindings/
+            - link "Bring your GeoJSON" [ref=f1e39] [cursor=pointer]:
+              - /url: ../../examples/geojson/
+            - link "Labels & image pins" [ref=f1e40] [cursor=pointer]:
+              - /url: ../../examples/labels/
+            - link "Markers, tooltips & popups" [ref=f1e41] [cursor=pointer]:
+              - /url: ../../examples/markers/
+            - link "Raster tiles" [ref=f1e42] [cursor=pointer]:
+              - /url: ../../examples/raster/
+            - link "A plugin is a function" [ref=f1e43] [cursor=pointer]:
+              - /url: ../../examples/plugins/
+            - link "Gesture guard" [ref=f1e44] [cursor=pointer]:
+              - /url: ../../examples/gesture-guard/
+            - link "Fullscreen mode" [ref=f1e45] [cursor=pointer]:
+              - /url: ../../examples/fullscreen/
+            - link "Heatmaps from weighted points" [ref=f1e46] [cursor=pointer]:
+              - /url: ../../examples/heatmap/
+          - generic [ref=f1e47]:
+            - generic [ref=f1e48]: Project
+            - link "API contracts" [ref=f1e49] [cursor=pointer]:
+              - /url: ../../guides/contracts/
+            - link "Status & limitations" [ref=f1e50] [cursor=pointer]:
+              - /url: ../../guides/status/
+            - link "Development" [ref=f1e51] [cursor=pointer]:
+              - /url: ../../guides/development/
+            - link "Website publication" [ref=f1e52] [cursor=pointer]:
+              - /url: ../../guides/website/
+            - link "Background" [ref=f1e53] [cursor=pointer]:
+              - /url: ../../guides/background/
+    - main [ref=f1e54]:
+      - link "Tutorials / Data & styling" [ref=f1e55] [cursor=pointer]:
+        - /url: ../../tutorials/
+      - heading [level=1] [ref=f1e56]:
+        - text: Bring your GeoJSON
+        - link "Link to Bring your GeoJSON" [ref=f1e57] [cursor=pointer]:
+          - /url: "#bring-your-geojson"
+          - text: "#"
+      - paragraph [ref=f1e58]: Import a FeatureCollection into a source and export the stored result. Input stays in your browser; this tutorial accepts up to 64 KiB and 100 point features.
+      - heading [level=2] [ref=f1e59]:
+        - text: Coordinate order
+        - link "Link to Coordinate order" [ref=f1e60] [cursor=pointer]:
+          - /url: "#coordinate-order"
+          - text: "#"
+      - paragraph [ref=f1e61]:
+        - text: GeoJSON uses
+        - strong [ref=f1e62]: "[longitude, latitude]"
+        - text: ", the reverse of Maplet's geographic tuples."
+      - generic "js example" [ref=f1e63]:
+        - code [ref=f1e64]: "const data = { type: 'FeatureCollection', features: [ { type: 'Feature', id: 'prague', properties: { name: 'Prague' }, geometry: { type: 'Point', coordinates: [14.44, 50.08] } }, ] }; await points.source.importGeoJson(data);"
+      - paragraph [ref=f1e65]: This example uses a point collection. For mixed geometry, create an explicit shared source and separate point, line and fill render passes.
+      - heading [level=2] [ref=f1e66]:
+        - text: Live example
+        - link "Link to Live example" [ref=f1e67] [cursor=pointer]:
+          - /url: "#live-example"
+          - text: "#"
+      - paragraph [ref=f1e68]: Edit the coordinates and import. Export writes the accepted source data back into the editor. Invalid input reports an error without replacing the previous data.
+      - region "Interactive example" [ref=f1e69]:
+        - generic [ref=f1e70]:
+          - generic [ref=f1e71]:
+            - generic [ref=f1e72]:
+              - text: Renderer
+              - combobox "Renderer" [ref=f1e73]:
+                - option "WebGL 1" [selected]
+                - option "WebGPU + fallback"
+            - button "Reset view" [disabled] [ref=f1e74]
+          - generic "Bring your GeoJSON interactive map" [ref=f1e75]:
+            - generic [ref=f1e77]:
+              - button "Zoom in" [ref=f1e78] [cursor=pointer]: +
+              - button "Zoom out" [ref=f1e79] [cursor=pointer]: −
+          - generic [ref=f1e80]:
+            - generic [ref=f1e81]: Edit the GeoJSON · import · export to inspect the result
+            - status [ref=f1e82]: Initializing renderer…
+        - complementary [ref=f1e83]:
+          - heading "Try it" [level=2] [ref=f1e84]
+          - generic [ref=f1e85]:
+            - generic [ref=f1e86]: GeoJSON FeatureCollection
+            - textbox "GeoJSON FeatureCollection" [ref=f1e87]: "{ \"type\": \"FeatureCollection\", \"features\": [ { \"type\": \"Feature\", \"id\": \"a\", \"properties\": { \"name\": \"West\" }, \"geometry\": { \"type\": \"Point\", \"coordinates\": [ 14.415, 50.08 ] } }, { \"type\": \"Feature\", \"id\": \"b\", \"properties\": { \"name\": \"East\" }, \"geometry\": { \"type\": \"Point\", \"coordinates\": [ 14.445, 50.082 ] } } ] }"
+          - generic [ref=f1e88]:
+            - button "Import GeoJSON" [disabled] [ref=f1e89]
+            - button "Export current data" [disabled] [ref=f1e90]
+          - status [ref=f1e91]: Starting the map…
+          - paragraph [ref=f1e92]: Input stays in your browser. This example accepts at most 64 KiB and 100 point features.
+      - group [ref=f1e93]:
+        - generic "Complete example source" [ref=f1e94] [cursor=pointer]
+        - generic [ref=f1e95]:
+          - button "Copy source" [ref=f1e96] [cursor=pointer]
+          - link "Download JavaScript" [ref=f1e97] [cursor=pointer]:
+            - /url: ./example.js
+          - generic [ref=f1e98]: Gist not published yet
+        - generic "JavaScript source" [ref=f1e99]:
+          - code [ref=f1e100]: "import { openExample, action, ready, report } from './shared.js'; const map = await openExample({ geographic: true }); const places = map.addPoints([], { style: { radiusPx: 10, color: '#16724c', strokeColor: '#fff', strokeWidthPx: 3 } }); const label = document.createElement('label'); label.htmlFor = 'geojson-input'; label.textContent = 'GeoJSON FeatureCollection'; const input = document.createElement('textarea'); input.id = 'geojson-input'; input.rows = 9; input.spellcheck = false; input.value = JSON.stringify({ type: 'FeatureCollection', features: [ { type: 'Feature', id: 'a', properties: { name: 'West' }, geometry: { type: 'Point', coordinates: [14.415, 50.08] } }, { type: 'Feature', id: 'b', properties: { name: 'East' }, geometry: { type: 'Point', coordinates: [14.445, 50.082] } }, ] }, null, 2); document.querySelector('#example-extra').append(label, input); async function importInput() { if (new TextEncoder().encode(input.value).length > 65536) throw new Error('Keep the example input below 64 KiB.'); const data = JSON.parse(input.value); if (data.type !== 'FeatureCollection' || !Array.isArray(data.features) || data.features.length > 100 || data.features.some(feature => feature.geometry?.type !== 'Point')) { throw new Error('Use a FeatureCollection with at most 100 Point features.'); } await places.source.importGeoJson(data); await map.whenRendered(); report(`Imported ${places.count()} places. GeoJSON coordinates are [longitude, latitude].`); } action('Import GeoJSON', importInput); action('Export current data', () => { input.value = JSON.stringify(places.source.exportGeoJson(), null, 2); report('The editor now contains an export of the accepted source data.'); }); await importInput(); await ready(map, { places });"
+        - paragraph [ref=f1e101]:
+          - text: The shared
+          - link "page setup" [ref=f1e102] [cursor=pointer]:
+            - /url: ./shared.js
+          - text: creates the map and controls. In your application, import from
+          - code [ref=f1e103]: "@fir3st/maplet"
+          - text: .
+          - link "Original diagnostic demo ↗" [ref=f1e104] [cursor=pointer]:
+            - /url: https://github.com/Fir3st/maplet/blob/main/demo/import.js
+      - heading [level=2] [ref=f1e105]:
+        - text: Canonical export
+        - link "Link to Canonical export" [ref=f1e106] [cursor=pointer]:
+          - /url: "#canonical-export"
+          - text: "#"
+      - generic "ts example" [ref=f1e107]:
+        - code [ref=f1e108]: const exported = points.source.exportGeoJson();
+      - paragraph [ref=f1e109]:
+        - text: Exported geometry is canonical, not clipped to the viewport. Normalization and projection can cause tiny floating-point differences. See
+        - link "imports" [ref=f1e110] [cursor=pointer]:
+          - /url: ../../guides/data/#geojson
+        - text: and
+        - link "columnar data" [ref=f1e111] [cursor=pointer]:
+          - /url: ../../guides/data/#columnar-imports
+        - text: .
+      - navigation "Other tutorials" [ref=f1e112]:
+        - link "← Connected data" [ref=f1e113] [cursor=pointer]:
+          - /url: ../../examples/bindings/
+        - link "Labels & image pins →" [ref=f1e114] [cursor=pointer]:
+          - /url: ../../examples/labels/
+    - complementary [ref=f1e115]:
+      - navigation "On this page" [ref=f1e116]:
+        - link "Coordinate order" [ref=f1e118] [cursor=pointer]:
+          - /url: "#coordinate-order"
+        - link "Live example" [ref=f1e119] [cursor=pointer]:
+          - /url: "#live-example"
+        - link "Canonical export" [ref=f1e120] [cursor=pointer]:
+          - /url: "#canonical-export"
+  - contentinfo [ref=f1e121]:
+    - generic [ref=f1e122]: Maplet · 0.1.0-alpha.7 · Apache-2.0
+    - link "Alpha limitations" [ref=f1e123] [cursor=pointer]:
+      - /url: ../../guides/status/#known-limitations
+    - link "Report an issue ↗" [ref=f1e124] [cursor=pointer]:
+      - /url: https://github.com/Fir3st/maplet/issues

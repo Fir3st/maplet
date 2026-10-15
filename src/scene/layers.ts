@@ -154,6 +154,8 @@ export interface FeatureOverride {
   readonly widthPx?: number;
   readonly visible?: boolean;
   readonly interactive?: boolean;
+  /** Per-feature dragging; `interaction.draggable` already covers a whole layer. */
+  readonly draggable?: boolean;
   readonly zIndex?: number;
 }
 
@@ -168,6 +170,17 @@ export type MoveTarget =
   | { readonly after: string }
   | { readonly index: number }
   | { readonly into: string | null; readonly index?: number };
+
+/**
+ * True when the pointer can drag this feature: either the whole layer opted in
+ * with `interaction.draggable`, or the feature carries its own override — the
+ * shared marker layer uses the override so one pin can drag while others pan
+ * the map (INPUT-10). A feature override wins in both directions, so a single
+ * feature can opt out of a draggable layer.
+ */
+export function featureIsDraggable(layer: LayerImpl, ref: FeatureRef): boolean {
+  return layer.overrides.get(layer.overrideKey(ref))?.draggable ?? layer.draggable;
+}
 
 export class LayerImpl {
   readonly id: string;

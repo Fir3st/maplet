@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.0-alpha.9
+
+- Marker dragging: `map.addMarker({ draggable: true })` makes a pin follow the
+  pointer without panning the map. The drag starts after four CSS pixels, emits
+  `dragstart`/`drag`/`dragend` like any feature, keeps a press without movement
+  a click, and `handle.setDraggable(false)` turns it off at runtime.
+- Per-feature dragging override: `setStyle({ draggable: true | false })` (and
+  `draggable` inside a `FeatureOverride`) opts a single feature in or out of a
+  layer that is draggable with `interaction.draggable`, which is how one pin
+  drags inside the shared marker layer.
+
 ## 0.1.0-alpha.8
 
 - Redraw the built-in marker pin (MARKER-01): a slimmer flat teardrop with a

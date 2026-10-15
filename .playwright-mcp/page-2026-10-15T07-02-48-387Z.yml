@@ -1,0 +1,204 @@
+- generic [active] [ref=f9e1]:
+  - link "Skip to content" [ref=f9e2] [cursor=pointer]:
+    - /url: "#main"
+  - banner [ref=f9e3]:
+    - link "Maplet 0.1.0-alpha.7" [ref=f9e4] [cursor=pointer]:
+      - /url: ../../
+      - text: Maplet
+      - generic [ref=f9e7]: 0.1.0-alpha.7
+    - navigation "Main" [ref=f9e8]:
+      - link "Overview" [ref=f9e9] [cursor=pointer]:
+        - /url: ../../
+      - link "Tutorials" [ref=f9e10] [cursor=pointer]:
+        - /url: ../../tutorials/
+      - link "Reference" [ref=f9e11] [cursor=pointer]:
+        - /url: ../../reference/
+      - link "Download" [ref=f9e12] [cursor=pointer]:
+        - /url: ../../download/
+      - link "Plugins" [ref=f9e13] [cursor=pointer]:
+        - /url: ../../plugins/
+      - link "GitHub ↗" [ref=f9e14] [cursor=pointer]:
+        - /url: https://github.com/Fir3st/maplet
+  - generic [ref=f9e15]:
+    - complementary [ref=f9e16]:
+      - group [ref=f9e17]:
+        - navigation "Documentation" [ref=f9e18]:
+          - generic [ref=f9e19]:
+            - generic [ref=f9e20]: Start here
+            - link "Overview" [ref=f9e21] [cursor=pointer]:
+              - /url: ../../
+            - link "Tutorials" [ref=f9e22] [cursor=pointer]:
+              - /url: ../../tutorials/
+            - link "API reference" [ref=f9e23] [cursor=pointer]:
+              - /url: ../../reference/
+            - link "Download & installation" [ref=f9e24] [cursor=pointer]:
+              - /url: ../../download/
+          - generic [ref=f9e25]:
+            - generic [ref=f9e26]: Guides
+            - link "Maps & coordinates" [ref=f9e27] [cursor=pointer]:
+              - /url: ../../guides/maps/
+            - link "Layers & objects" [ref=f9e28] [cursor=pointer]:
+              - /url: ../../guides/layers/
+            - link "Data & transactions" [ref=f9e29] [cursor=pointer]:
+              - /url: ../../guides/data/
+            - link "Styles & rendering" [ref=f9e30] [cursor=pointer]:
+              - /url: ../../guides/rendering/
+            - link "Interaction & UI" [ref=f9e31] [cursor=pointer]:
+              - /url: ../../guides/interaction/
+            - link "Plugins" [ref=f9e32] [cursor=pointer]:
+              - /url: ../../plugins/
+          - generic [ref=f9e33]:
+            - generic [ref=f9e34]: Tutorials
+            - link "Your first map" [ref=f9e35] [cursor=pointer]:
+              - /url: ../../examples/basics/
+            - link "Points that change" [ref=f9e36] [cursor=pointer]:
+              - /url: ../../examples/points/
+            - link "Lines, fills & holes" [ref=f9e37] [cursor=pointer]:
+              - /url: ../../examples/geometry/
+            - link "Connected data" [ref=f9e38] [cursor=pointer]:
+              - /url: ../../examples/bindings/
+            - link "Bring your GeoJSON" [ref=f9e39] [cursor=pointer]:
+              - /url: ../../examples/geojson/
+            - link "Labels & image pins" [ref=f9e40] [cursor=pointer]:
+              - /url: ../../examples/labels/
+            - link "Markers, tooltips & popups" [ref=f9e41] [cursor=pointer]:
+              - /url: ../../examples/markers/
+            - link "Raster tiles" [ref=f9e42] [cursor=pointer]:
+              - /url: ../../examples/raster/
+            - link "A plugin is a function" [ref=f9e43] [cursor=pointer]:
+              - /url: ../../examples/plugins/
+            - link "Gesture guard" [ref=f9e44] [cursor=pointer]:
+              - /url: ../../examples/gesture-guard/
+            - link "Fullscreen mode" [ref=f9e45] [cursor=pointer]:
+              - /url: ../../examples/fullscreen/
+            - link "Heatmaps from weighted points" [ref=f9e46] [cursor=pointer]:
+              - /url: ../../examples/heatmap/
+          - generic [ref=f9e47]:
+            - generic [ref=f9e48]: Project
+            - link "API contracts" [ref=f9e49] [cursor=pointer]:
+              - /url: ../../guides/contracts/
+            - link "Status & limitations" [ref=f9e50] [cursor=pointer]:
+              - /url: ../../guides/status/
+            - link "Development" [ref=f9e51] [cursor=pointer]:
+              - /url: ../../guides/development/
+            - link "Website publication" [ref=f9e52] [cursor=pointer]:
+              - /url: ../../guides/website/
+            - link "Background" [ref=f9e53] [cursor=pointer]:
+              - /url: ../../guides/background/
+    - main [ref=f9e54]:
+      - link "Tutorials / Getting started" [ref=f9e55] [cursor=pointer]:
+        - /url: ../../tutorials/
+      - heading [level=1] [ref=f9e56]:
+        - text: Your first map
+        - link "Link to Your first map" [ref=f9e57] [cursor=pointer]:
+          - /url: "#your-first-map"
+          - text: "#"
+      - paragraph [ref=f9e58]: Create a map, put points and labels in a layer, then open a detail when a point is clicked. This tutorial uses three real city positions without an external basemap.
+      - heading [level=2] [ref=f9e59]:
+        - text: Prepare the page
+        - link "Link to Prepare the page" [ref=f9e60] [cursor=pointer]:
+          - /url: "#prepare-the-page"
+          - text: "#"
+      - paragraph [ref=f9e61]:
+        - text: Install
+        - link "Maplet" [ref=f9e62] [cursor=pointer]:
+          - /url: ../../download/
+        - text: "and give its container a height:"
+      - generic "html example" [ref=f9e63]:
+        - code [ref=f9e64]: "<div id=\"map\" style=\"height: 400px\"></div>"
+      - heading [level=2] [ref=f9e65]:
+        - text: Create the map and layer
+        - link "Link to Create the map and layer" [ref=f9e66] [cursor=pointer]:
+          - /url: "#create-the-map-and-layer"
+          - text: "#"
+      - generic "ts example" [ref=f9e67]:
+        - code [ref=f9e68]: "import { createMap } from '@fir3st/maplet'; const map = await createMap('map', { center: [49.7, 15.2], zoom: 7, controls: ['zoom'] }); const places = map.addLayer({ id: 'places' }); const points = places.addPoints([ { id: 'prague', position: [50.08, 14.44], properties: { name: 'Prague' } }, ]); places.addLabels(points.source);"
+      - paragraph [ref=f9e69]:
+        - code [ref=f9e70]: createMap()
+        - text: is asynchronous; later object edits are synchronous commits. Geographic tuples use latitude first. Labels share the point source, so an edit does not require maintaining a second copy of the data.
+      - heading [level=2] [ref=f9e71]:
+        - text: Live example
+        - link "Link to Live example" [ref=f9e72] [cursor=pointer]:
+          - /url: "#live-example"
+          - text: "#"
+      - paragraph [ref=f9e73]:
+        - text: Use
+        - strong [ref=f9e74]: Fit all places
+        - text: ", or click a point to open its detail. The source below also includes the other two cities and the detail callback."
+      - region "Interactive example" [ref=f9e75]:
+        - generic [ref=f9e76]:
+          - generic [ref=f9e77]:
+            - generic [ref=f9e78]:
+              - text: Renderer
+              - combobox "Renderer" [ref=f9e79]:
+                - option "WebGL 1" [selected]
+                - option "WebGPU + fallback"
+            - button "Reset view" [ref=f9e80] [cursor=pointer]
+          - generic "Your first map interactive map" [ref=f9e81]:
+            - generic [ref=f9e83]:
+              - button "Zoom in" [ref=f9e84] [cursor=pointer]: +
+              - button "Zoom out" [ref=f9e85] [cursor=pointer]: −
+          - generic [ref=f9e86]:
+            - generic [ref=f9e87]: Click a place · drag to pan · scroll to zoom
+            - status [ref=f9e88]: webgl1 · 3 features · revision 4
+        - complementary [ref=f9e89]:
+          - heading "Try it" [level=2] [ref=f9e90]
+          - generic [ref=f9e91]:
+            - button "Fit all places" [ref=f9e92] [cursor=pointer]
+            - button "Inspect Praha" [ref=f9e93] [cursor=pointer]
+          - status [ref=f9e94]: Ready — try the controls or interact with the map.
+          - paragraph [ref=f9e95]: Real city coordinates, without a basemap. No external tile requests.
+      - group [ref=f9e96]:
+        - generic "Complete example source" [ref=f9e97] [cursor=pointer]
+        - generic [ref=f9e98]:
+          - button "Copy source" [ref=f9e99] [cursor=pointer]
+          - link "Download JavaScript" [ref=f9e100] [cursor=pointer]:
+            - /url: ./example.js
+          - generic [ref=f9e101]: Gist not published yet
+        - generic "JavaScript source" [ref=f9e102]:
+          - code [ref=f9e103]: "import { openExample, action, ready, report } from './shared.js'; const map = await openExample({ geographic: true, center: [49.7, 15.2], zoom: 7 }); const placesLayer = map.addLayer({ id: 'places' }); const places = placesLayer.addPoints([ { id: 'praha', position: [50.08, 14.44], properties: { name: 'Praha' } }, { id: 'brno', position: [49.19, 16.61], properties: { name: 'Brno' } }, { id: 'plzen', position: [49.74, 13.37], properties: { name: 'Plzeň' } }, ], { style: { color: '#16724c', radiusPx: 10, strokeColor: '#ffffff', strokeWidthPx: 3 } }); placesLayer.addLabels(places.source, { style: { sizePx: 15, color: '#263e33', offsetPx: { x: 0, y: -23 } } }); places.on('click', event => { map.detail.open(event.feature, { content: feature => String(feature.properties.name) }); report(`Selected ${event.feature.id}. Its details are anchored to the feature.`); }); action('Fit all places', () => { map.fitBounds(places.getBounds(), { padding: 60, maxZoom: 8 }); report('The view now contains all three places.'); }); action('Inspect Praha', () => { map.detail.open(places.get('praha').ref, { content: feature => String(feature.properties.name) }); report('Opened the Praha detail through the same API used by map clicks.'); }); await ready(map, { places, placesLayer });"
+        - paragraph [ref=f9e104]:
+          - text: The shared
+          - link "page setup" [ref=f9e105] [cursor=pointer]:
+            - /url: ./shared.js
+          - text: creates the map and controls. In your application, import from
+          - code [ref=f9e106]: "@fir3st/maplet"
+          - text: .
+          - link "Original diagnostic demo ↗" [ref=f9e107] [cursor=pointer]:
+            - /url: https://github.com/Fir3st/maplet/blob/main/demo/demo.js
+      - heading [level=2] [ref=f9e108]:
+        - text: Respond to a click
+        - link "Link to Respond to a click" [ref=f9e109] [cursor=pointer]:
+          - /url: "#respond-to-a-click"
+          - text: "#"
+      - generic "ts example" [ref=f9e110]:
+        - code [ref=f9e111]: "points.on('click', event => { map.detail.open(event.feature, { content: feature => String(feature.properties.name) }); }); map.fitBounds(points.getBounds(), { padding: 40, maxZoom: 8 });"
+      - paragraph [ref=f9e112]:
+        - text: Details render strings as text and follow the feature's position. Destroy the map when leaving the page. Continue with
+        - link "editable points" [ref=f9e113] [cursor=pointer]:
+          - /url: ../../examples/points/
+        - text: or see
+        - link "maps and coordinates" [ref=f9e114] [cursor=pointer]:
+          - /url: ../../guides/maps/
+        - text: .
+      - navigation "Other tutorials" [ref=f9e115]:
+        - link "← All tutorials" [ref=f9e116] [cursor=pointer]:
+          - /url: ../../tutorials/
+        - link "Points that change →" [ref=f9e117] [cursor=pointer]:
+          - /url: ../../examples/points/
+    - complementary [ref=f9e118]:
+      - navigation "On this page" [ref=f9e119]:
+        - link "Prepare the page" [ref=f9e121] [cursor=pointer]:
+          - /url: "#prepare-the-page"
+        - link "Create the map and layer" [ref=f9e122] [cursor=pointer]:
+          - /url: "#create-the-map-and-layer"
+        - link "Live example" [ref=f9e123] [cursor=pointer]:
+          - /url: "#live-example"
+        - link "Respond to a click" [ref=f9e124] [cursor=pointer]:
+          - /url: "#respond-to-a-click"
+  - contentinfo [ref=f9e125]:
+    - generic [ref=f9e126]: Maplet · 0.1.0-alpha.7 · Apache-2.0
+    - link "Alpha limitations" [ref=f9e127] [cursor=pointer]:
+      - /url: ../../guides/status/#known-limitations
+    - link "Report an issue ↗" [ref=f9e128] [cursor=pointer]:
+      - /url: https://github.com/Fir3st/maplet/issues

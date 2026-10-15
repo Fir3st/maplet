@@ -1,6 +1,6 @@
 # Implementation status
 
-Maplet is an alpha library (`0.1.0-alpha.8`). This document describes the
+Maplet is an alpha library (`0.1.0-alpha.9`). This document describes the
 implementation, reproducible checks and known gaps. It replaces the internal
 development log; no external planning documents or saved screenshots are needed
 to use this repository.
@@ -16,12 +16,12 @@ to use this repository.
 | Rendering | WebGPU and WebGL 1, retained mixed-vector buffers with local uploads, indexed polygon meshes and spatial geometry blocks, expansion without instancing/wide indices, shared frame plan and loss recovery; `test/render/`, parity/loss batteries, `retained-point-buffers` and `retained-mixed-scene` E2E |
 | Raster | XYZ/TMS/retina, decoded parent/child fallback, previous-bitmap retention, WMS axis/CRS semantics; raster tests, `demo/tiles.html`, `demo/wms.html` |
 | MVT | Decoder, source-layer namespaces, exact large IDs, fragments, unload/reload, overzoom and attribution; vector-tile tests, `demo/mvt.html` |
-| Interaction | Pan, zoom, hover/click/drag, pinch, keyboard, selection, bubbling; `demo/interaction.html` and real-input E2E scenarios |
+| Interaction | Pan, zoom, hover/click/drag, pinch, keyboard, selection, bubbling; dragging comes from a layer opt-in or a per-feature override, so a draggable marker and a plain one share one layer; `demo/interaction.html` and real-input E2E scenarios |
 | Picking | Shape-aware GPU queries, revision/generation checks, measured blocking/async readback; `demo/pick.html` |
 | Text and fonts | Labels, multi-line text, collisions, rotation, atlas eviction, font loading/fallback, platform shaping, bidi; `demo/labels.html`, `demo/fonts.html` |
 | Media | Sprites, anchor rotation, tinting, image/video bounds with placement rotation, partial uploads and cleanup; `demo/icons.html`, `demo/media.html` |
 | HTML UI | Optional controls, scale, attribution, geolocation, feature detail and bounded accessible lists; `test/ui/`, `demo/ui.html`, `demo/detail.html` |
-| Markers | Leaflet-style `addMarker`/`addMarkers` GPU pins with hover/permanent tooltips, one click popup with auto-pan, custom icons/tint and per-marker overrides; `demo/markers.html` |
+| Markers | Leaflet-style `addMarker`/`addMarkers` GPU pins with hover/permanent tooltips, one click popup with auto-pan, custom icons/tint, per-marker overrides and opt-in per-pin dragging; `demo/markers.html` |
 | Plugins | Plain setup functions, typed APIs, HTML access, abort/cleanup, render transforms, after-frame drawing, replaceable renderers and the built-in `gestureGuard`/`fullscreenMode`/`heatmap` plugins; plugin tests, consumer types, the `plugins` scenario and `demo/plugins-builtin.html`; [guide](plugins.md) |
 | Worker imports | Compact columns/canonical line and polygon pools, owned metadata on the publishing thread, validation, copy/move, cancellation, bounded queue, crash/CSP fallback; import tests, `demo/import.html`, `demo/csp.html?csp=worker-none` |
 | Distribution | ESM/declaration/subpath/worker assets, archive audit and consumer types; `test/publish/`, `type-tests/` |
@@ -198,6 +198,19 @@ and clear removed the objects and the panel readouts. All sixteen example pages
 boot without page errors when tiles are blocked, and tile responses during the
 live checks were all HTTP 200.
 
+Marker dragging was verified through the real input path. The marker battery
+gained a drag check on synthetic pointer events: the pin drops on the exact
+expected anchor, the rendered body sits at the new position with the old spot
+empty, the cursor is `move` over the draggable pin and `pointer` over a plain
+one, `dragstart`/`drag`/`dragend` arrive, the view centre never moves while
+dragging, a press without movement still opens the popup, the drag survives an
+appearance rebuild (`setIcon`) and `setDraggable(false)` returns the pin to
+panning while the same gesture pans the map. The same flow ran with real mouse
+input on the built markers page: press, three moves and release moved the crane
+pin to its expected position with the map centre unchanged, the panel readout
+and drop counter updated, the reset action returned the pin home, and the unit
+suite covers the override precedence (`INPUT-10`).
+
 The built-in marker pin was redrawn (MARKER-01): a slimmer flat teardrop with a
 white rim and an inner dot replaces the earlier stocky pin, so pins stay legible
 on busy basemaps and overlapping pins keep their edges. The artwork was checked
@@ -298,8 +311,9 @@ Canvas setup is still faster at 282 ms. One-second warm-pan outliers persist.
 - **Markers:** pins are GPU sprites with no per-marker DOM; tooltips and popups are
   DOM overlays (at most one popup and one hover tooltip at a time, while a
   permanent tooltip owns one element per marker). Strings render as text (UI-06)
-  rather than Leaflet-style HTML; pass a `Node` for rich content. Marker dragging,
-  cluster grouping and DOM focus on pins are not part of this alpha.
+  rather than Leaflet-style HTML; pass a `Node` for rich content. Dragging is
+  opt-in per pin (`draggable`, `setDraggable`); cluster grouping and DOM focus on
+  pins are not part of this alpha.
 - **Plugins:** the gesture guard blocks one-finger touch feature drags and touch
   double-tap zoom (a touch double-click reports `mouse`); with
   `touch-action: pan-y` a two-finger vertical drag can still scroll the page.

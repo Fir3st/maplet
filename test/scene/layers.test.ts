@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { style as expr, isMapletError } from '../../src/index.ts';
+import { style as expr, isMapletError, type FeatureRef } from '../../src/index.ts';
+import { LayerImpl, featureIsDraggable } from '../../src/scene/layers.ts';
 import { makeMap } from '../helpers/fixture.ts';
 
 const items = (n: number) =>
@@ -82,6 +83,22 @@ test('LAYER-06: per-layer overrides do not leak into other layers or the source'
   a.clearFeatureStyle(ref);
   assert.equal(map.debug.layerColor('a'), '#ff0000');
   map.destroy();
+});
+
+test('INPUT-10: a feature is draggable through the layer flag or its own override', () => {
+  const layer = new LayerImpl({ id: 'points', type: 'points', source: 'stations' });
+  const ref = { sceneId: 'scene', sourceId: 'stations', id: 'p1', generation: 1 } as FeatureRef;
+  assert.equal(featureIsDraggable(layer, ref), false, 'nothing is draggable by default');
+  layer.setOverride(ref, { draggable: true });
+  assert.equal(featureIsDraggable(layer, ref), true);
+  layer.setOverride(ref, { color: '#00ff00' });
+  assert.equal(featureIsDraggable(layer, ref), false, 'a rebuilt override drops dragging with it');
+  layer.setOverride(ref, { draggable: false });
+  assert.equal(featureIsDraggable(layer, ref), false);
+  layer.draggable = true;
+  assert.equal(featureIsDraggable(layer, ref), false, 'a feature override opts out of a draggable layer');
+  layer.clearOverride(ref);
+  assert.equal(featureIsDraggable(layer, ref), true, 'without an override the layer flag covers every feature');
 });
 
 test('LAYER-07/08/09: logical layers toggle descendants, reject cycles and release membership', async () => {

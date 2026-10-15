@@ -103,6 +103,12 @@ export interface MarkerOptions<P = FeatureProperties> {
   readonly iconAnchor?: { readonly x: number; readonly y: number };
   /** RGBA multiplier over the icon texture; default white (no tint). */
   readonly iconTint?: ColorValue;
+  /**
+   * Drag the pin with the pointer; default `false` (Leaflet parity). A drag
+   * moves the position, emits `dragstart`/`drag`/`dragend` and suppresses pan,
+   * while a press without movement stays a click.
+   */
+  readonly draggable?: boolean;
   readonly properties?: P;
   /** Hover tooltip by default; pass an init object for a permanent tooltip. */
   readonly tooltip?: MarkerTooltipInit | MarkerContent | null;
@@ -118,6 +124,8 @@ export interface MarkerHandle<P = FeatureProperties> extends FeatureEvents {
   setPosition(position: PositionInput): Commit;
   /** Replace the icon asset; `null` restores the layer default (built-in pin). */
   setIcon(icon: string | null): void;
+  /** Enable or disable dragging; a drag in progress is not affected mid-gesture. */
+  setDraggable(draggable: boolean): void;
   /** Bind content (or `null` to unbind); an open tooltip updates in place. */
   setTooltip(tooltip: MarkerTooltipInit | MarkerContent | null): void;
   /** Bind content (or `null` to unbind); an open popup updates in place. */
@@ -192,6 +200,7 @@ interface MarkerRecord {
   iconSize: number | null;
   iconAnchor: { x: number; y: number } | null;
   iconTint: ColorValue | null;
+  draggable: boolean;
   tooltip: MarkerTooltipInit | null;
   popup: MarkerPopupInit | null;
   tooltipElement: HTMLElement | null;
@@ -267,6 +276,7 @@ export class MarkerController {
         iconSize: option.iconSize ?? null,
         iconAnchor: option.iconAnchor === undefined ? null : { ...option.iconAnchor },
         iconTint: option.iconTint ?? null,
+        draggable: option.draggable === true,
         tooltip: option.tooltip === null || option.tooltip === undefined ? null : markerTooltip(option.tooltip),
         popup: option.popup === null || option.popup === undefined ? null : markerPopup(option.popup),
         tooltipElement: null,
@@ -298,6 +308,7 @@ export class MarkerController {
       getPosition: () => point.getPosition(),
       setPosition: (position) => point.setPosition(position),
       setIcon: (icon) => this.setIcon(record, icon),
+      setDraggable: (draggable) => this.setDraggable(record, draggable),
       setTooltip: (tooltip) => this.setTooltip(record, tooltip),
       setPopup: (popup) => this.setPopup(record, popup),
       openTooltip: () => {
@@ -325,6 +336,12 @@ export class MarkerController {
   private setIcon(record: MarkerRecord, icon: string | null): void {
     this.assertLive(record);
     record.icon = icon;
+    this.applyAppearance(record);
+  }
+
+  private setDraggable(record: MarkerRecord, draggable: boolean): void {
+    this.assertLive(record);
+    record.draggable = draggable === true;
     this.applyAppearance(record);
   }
 
@@ -364,6 +381,7 @@ export class MarkerController {
       ...(record.iconSize === null ? {} : { iconSize: record.iconSize }),
       ...(record.iconAnchor === null ? {} : { iconAnchor: { ...record.iconAnchor } }),
       ...(record.iconTint === null ? {} : { iconTint: record.iconTint }),
+      ...(record.draggable ? { draggable: true } : {}),
     };
     record.point.clearStyle();
     if (Object.keys(applied).length > 0) record.point.setStyle(applied);

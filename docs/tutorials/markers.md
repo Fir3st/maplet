@@ -28,10 +28,32 @@ makes category colours read, as the city guide recipe does.
 
 ## Live example
 
-Hover a pin for its tooltip, click it for the popup, move a pin and watch its
+Hover a pin for its tooltip, click it for the popup, drag the purple crane pin
+(a draggable pin — the map stays put), move a pin with the button and watch its
 popup follow, and toggle the permanent tooltip.
 
 <!-- example -->
+
+## Drag a pin
+
+`draggable: true` opts one pin into dragging; the pins around it keep panning
+the map.
+
+```ts
+const crane = map.addMarker({
+  position: { x: -0.42, y: 0.68 },
+  draggable: true,
+  tooltip: 'Dock crane — drag me',
+});
+crane.on('dragend', event => console.log(event.screen));
+crane.setDraggable(false); // turn dragging off again at runtime
+```
+
+A drag starts after four CSS pixels, translates the position rigidly and
+suppresses pan, so the pin and the map never move together. A press without
+movement stays a click and a drag never opens the popup. `dragstart`, `drag` and
+`dragend` arrive as ordinary feature events, so their `screen` and `position`
+carry the pointer state and the overlays follow the pin for free.
 
 ## Tooltips and popups
 
@@ -50,7 +72,7 @@ popup follow, and toggle the permanent tooltip.
 
 Pins are canvas sprites — there is no DOM element per marker — and they are not
 zoom-gated: unlike data layers, whose default `minZoom` is 0, a marker stays
-visible at the negative zooms planar maps can use. Marker dragging, clustering
-and DOM focus are not part of this alpha. See the
+visible at the negative zooms planar maps can use. Dragging is opt-in per pin
+(`draggable: true`); clustering and DOM focus are not part of this alpha. See the
 [marker contracts](../decisions.md#markers) and
 [rendering guide](../rendering.md#markers).
