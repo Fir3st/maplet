@@ -13,6 +13,7 @@ const guard = map.use(gestureGuard({ modifier: 'alt', touchPointers: 2 }));
 guard.api.unlock();            // allow everything until lock(), e.g. from a button
 guard.api.setModifier('control');
 guard.remove();                // restores touch-action and clears the gate
+map.use(gestureGuard());       // installing again starts a fresh, guarded instance
 ```
 
 | Option | Default | Meaning |
@@ -33,7 +34,9 @@ message }` changes the timing or the wording.
 ## Live example
 
 Hold Alt (or ⌥) while dragging or scrolling, unlock the map with the button, or
-switch the modifier. A blocked attempt shows the hint overlay over the map; on a
+switch the modifier. *Toggle the guard off* removes the plugin, and toggling it
+back on installs a fresh instance; *Reset view* restores the view together with
+the guarded state. A blocked attempt shows the hint overlay over the map; on a
 touch device one finger scrolls the page and two fingers pan and pinch.
 
 <!-- example -->
