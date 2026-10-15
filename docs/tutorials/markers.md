@@ -41,9 +41,10 @@ the map.
 
 ```ts
 const crane = map.addMarker({
-  position: { x: -0.42, y: 0.68 },
+  position: { x: -0.42, y: 0.4 },
   draggable: true,
-  tooltip: 'Dock crane — drag me',
+  // A permanent tooltip advertises the pin without hover.
+  tooltip: { content: 'Dock crane — drag me', permanent: true },
 });
 crane.on('dragend', event => console.log(event.screen));
 crane.setDraggable(false); // turn dragging off again at runtime
@@ -59,7 +60,10 @@ carry the pointer state and the overlays follow the pin for free.
 
 - A tooltip shows on hover. `{ content, permanent: true }` keeps it visible and
   `offsetPx` moves it; `setTooltip(null)` unbinds it and `openTooltip()` opens a
-  sticky tooltip that survives `mouseout` until `closeTooltip()`.
+  sticky tooltip that survives `mouseout` until `closeTooltip()`. A permanent
+  tooltip sits exactly above its pin and is parked while the pin is outside the
+  view; a hover tooltip stays clamped to the container edge so its text remains
+  readable there.
 - One popup exists per map at a time. A marker click or `openPopup()` opens it;
   its × button, a background click, `closePopup()` or removing the marker closes
   it. `autoPan` (default true) moves the map by the minimum amount that keeps the

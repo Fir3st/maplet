@@ -430,16 +430,34 @@ export class MarkerController {
         this.closeTooltipElement(record);
         continue;
       }
-      const tooltip = record.tooltip;
-      if (record.tooltipElement && tooltip) {
-        this.place(record.tooltipElement, screen, tooltip.offsetPx ?? this.aboveOffset(record), true);
-      }
+      this.placeTooltip(record, screen);
     }
   }
 
   private screenOf(record: MarkerRecord): ScreenPoint | null {
     if (record.point.removed) return null;
     return this.engine.view.positionToScreen(record.point.getPosition());
+  }
+
+  /**
+   * A permanent tooltip tracks its pin exactly (its arrow must keep pointing at
+   * the icon); a hover tooltip is clamped horizontally so its text stays
+   * readable at an edge. Either way an overlay whose anchor left the container
+   * is parked instead of detached from the marker (MARKER-06).
+   */
+  private placeTooltip(record: MarkerRecord, screen: ScreenPoint): void {
+    const element = record.tooltipElement;
+    const tooltip = record.tooltip;
+    if (!element || !tooltip) return;
+    const permanent = tooltip.permanent === true;
+    element.style.visibility = permanent && !this.anchorInside(screen) ? 'hidden' : '';
+    this.place(element, screen, tooltip.offsetPx ?? this.aboveOffset(record), !permanent);
+  }
+
+  private anchorInside(point: ScreenPoint): boolean {
+    const bounds = this.container?.getBoundingClientRect();
+    if (!bounds) return true;
+    return point.x >= 0 && point.y >= 0 && point.x <= bounds.width && point.y <= bounds.height;
   }
 
   /** Bottom-centre offset that sits just above the icon (and its anchor). */
@@ -467,7 +485,7 @@ export class MarkerController {
     record.tooltipSticky = sticky;
     this.openTooltips.add(record);
     const screen = this.screenOf(record);
-    if (screen) this.place(element, screen, record.tooltip.offsetPx ?? this.aboveOffset(record), true);
+    if (screen) this.placeTooltip(record, screen);
   }
 
   private closeTooltipElement(record: MarkerRecord): void {
@@ -522,6 +540,7 @@ export class MarkerController {
   private placePopup(entry: PopupEntry, screen: ScreenPoint): void {
     const popup = entry.record.popup;
     if (!popup) return;
+    entry.element.style.visibility = this.anchorInside(screen) ? '' : 'hidden';
     this.place(entry.element, screen, popup.offsetPx ?? this.aboveOffset(entry.record), false);
   }
 

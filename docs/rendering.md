@@ -78,7 +78,8 @@ pin.openPopup();
 ```
 
 A marker is a GPU sprite in one shared layer — no DOM element per marker. The
-tooltip is a DOM overlay (hover by default, `permanent` supported) and the popup
+tooltip is a DOM overlay (hover by default, `permanent` supported, tracking its
+pin exactly) and the popup
 is one dialog per map: a marker click or `openPopup()` opens it, its button, a
 background click or `closePopup()` closes it, and `autoPan` keeps it inside the
 container. Strings render as text (UI-06); pass a `Node` for rich content. Pass

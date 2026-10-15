@@ -1,6 +1,7 @@
 node_modules/
 dist/
 .example-build/
+.playwright-mcp/
 demo/tiles/
 demo/tiles-providers/
 demo/checks/

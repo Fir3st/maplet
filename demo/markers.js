@@ -1,5 +1,5 @@
 /**
- * Marker battery (MARKER-01..09): Leaflet-style pins with a hover/permanent
+ * Marker battery (MARKER-01..10): Leaflet-style pins with a hover/permanent
  * tooltip, a click popup and per-marker dragging. Pins are GPU sprites — never a
  * DOM element per marker — while the tooltip and popup are bounded DOM overlays
  * with the UI-06 content contract (strings stay text). Results:
@@ -21,7 +21,7 @@ function finalize() {
   if (finalized) return;
   finalized = true;
   result.ms = Math.round(performance.now() - started);
-  result.pass = result.errors.length === 0 && result.checks.length === 9 && result.checks.every((entry) => entry.pass);
+  result.pass = result.errors.length === 0 && result.checks.length === 10 && result.checks.every((entry) => entry.pass);
   window.__markerCheckResult = result;
   document.title = 'marker-check-done';
   const summary = document.getElementById('summary');
@@ -517,6 +517,60 @@ await check('MARKER-09 a draggable pin follows the pointer without panning; plai
       cursorAfterOff,
       offUnmoved,
     },
+  };
+});
+
+await check('MARKER-10 a permanent tooltip tracks its pin exactly and parks off-view', async () => {
+  const markerI = map.addMarker({ id: 'i', position: screen(30, 240), popup: 'Edge' });
+  await sleep(140);
+  markerI.setTooltip({ content: 'Edge pin', permanent: true });
+  await sleep(180);
+  const read = () => {
+    const node = markerI.tooltipElement();
+    if (!node) return null;
+    const frame = element.getBoundingClientRect();
+    const box = node.getBoundingClientRect();
+    const anchor = anchorOf(markerI);
+    return {
+      dx: Math.round((box.left + box.right) / 2 - frame.left - anchor.x),
+      dy: Math.round(anchor.y - (box.bottom - frame.top)),
+      anchorX: Math.round(anchor.x),
+      visibility: node.style.visibility,
+    };
+  };
+  const pan = async (dx, dy) => {
+    const startX = 330;
+    const startY = 440;
+    pointer('pointerdown', startX, startY);
+    await sleep(90);
+    pointer('pointermove', startX + dx / 2, startY + dy / 2);
+    await sleep(70);
+    pointer('pointermove', startX + dx, startY + dy);
+    await sleep(70);
+    pointer('pointerup', startX + dx, startY + dy);
+    await sleep(240);
+  };
+
+  const before = read();
+  // The tooltip used to clamp to the container edge, so panning slid it away
+  // from its pin; the offset must stay the same as the view moves.
+  await pan(60, -20);
+  const after = read();
+  // Push the pin out of the container: the overlay parks instead of sticking
+  // to the edge with an arrow pointing at nothing.
+  await pan(-520, 0);
+  const parked = read();
+  await pan(520, 0);
+  const returned = read();
+  markerI.remove();
+  await sleep(80);
+  return {
+    pass:
+      before !== null && Math.abs(before.dx) <= 1 && Math.abs(before.dy - 36) <= 1 &&
+      after !== null && Math.abs(after.dx - before.dx) <= 1 && Math.abs(after.dy - before.dy) <= 1 &&
+      parked !== null && parked.visibility === 'hidden' && parked.anchorX < 0 &&
+      returned !== null && returned.visibility === '' && Math.abs(returned.dx) <= 1 && Math.abs(returned.dy - 36) <= 1,
+    detail: { before, after, parked, returned },
   };
 });
 

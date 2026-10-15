@@ -222,6 +222,17 @@ object and now stays visible at the negative zooms planar maps can use, which a
 narrow markers page demonstrated before the fix (pins present at zoom −0.02
 after it, with the constant asserted in the marker defaults test).
 
+A reported overlay defect was fixed and measured: a permanent tooltip used to be
+clamped horizontally like a hover one, so panning slid it along the container
+edge away from its pin (offset to the pin grew from 76 px to 116 px in the
+measurement) and then left it on screen after the pin had gone. Now a permanent
+tooltip and a popup track their anchor exactly — the arrow keeps pointing at the
+icon — while a hover tooltip still clamps for readability at an edge, and any
+overlay whose anchor leaves the container is parked until the pin returns. The
+marker battery's `MARKER-10` asserts the offset stays at 0/36 px across pans,
+that the overlay parks with a negative anchor x and that it comes back
+visible.
+
 The recorded browser environment was headless Chromium on an Apple M5 Pro,
 using ANGLE Metal for WebGL and `apple metal-3` for WebGPU. Pixel comparisons
 against decoded source bitmaps and between backends found zero differences at

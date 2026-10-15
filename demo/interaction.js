@@ -174,7 +174,12 @@ await check('hover drives state, style and cursor', async () => {
 await check('PICK-09 last hover wins', async () => {
   pointer('pointermove', posA);
   pointer('pointermove', posB);
-  await sleep(500);
+  // Hover lands through async picks (WebGL 1 readback), so wait for the last
+  // one to settle instead of assuming a fixed budget; the check itself still
+  // asserts that only the last hover survives.
+  const deadline = Date.now() + 5000;
+  while (Date.now() < deadline && !map.state.get(refB).hovered) await sleep(100);
+  await sleep(120);
   const a = map.state.get(refA).hovered;
   const b = map.state.get(refB).hovered;
   return { pass: !a && b, detail: { aHovered: a, bHovered: b } };

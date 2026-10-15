@@ -367,9 +367,14 @@ The current public construction, object lifetime and migration contract is in
   popup and its anchor inside the container with an 8 px margin; the anchor clamp
   wins, so a popup larger than the viewport overflows instead.
 - Overlays are re-placed from the marker's current screen position on every
-  `commit`/`viewchange`, clamped horizontally for tooltips, and removed on marker
-  removal, unbinding (`setPopup(null)`/`setTooltip(null)`) or map destroy. A
-  static container receives `position: relative` once, like Leaflet's stylesheet.
+  `commit`/`viewchange`, and removed on marker removal, unbinding
+  (`setPopup(null)`/`setTooltip(null)`) or map destroy. A **hover** tooltip is
+  clamped horizontally so its text stays readable at an edge; a **permanent**
+  tooltip and a popup track their pin exactly, because their arrow must keep
+  pointing at the icon, and an overlay whose anchor leaves the container is
+  parked (`visibility: hidden`) until the pin returns instead of sticking to
+  the container edge (MARKER-06). A static container receives
+  `position: relative` once, like Leaflet's stylesheet.
 - Content follows the UI-06 contract: a string renders as text, a `Node` renders
   as-is. A pin is draggable with `draggable: true` (per marker, default false,
   Leaflet parity): the drag starts after four CSS pixels, translates the position
