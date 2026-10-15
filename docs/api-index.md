@@ -21,7 +21,7 @@ its ID, or `null` with `renderer: 'none'` for a headless scene.
 | `size` | `800 × 600` | Initial size; a sized DOM container takes precedence |
 | `clock` | `defaultClock()` | Animation clock |
 | `interactive` | `true` for DOM maps | Pointer, wheel and keyboard interaction |
-| `interaction` | Per-gesture defaults | Gesture settings, including opt-in box selection |
+| `interaction` | Per-gesture defaults | Gesture settings, opt-in box selection and the `setGestureGate` hook |
 | `plugins` | `[]` | Synchronous setup functions installed in order |
 
 Gesture options `pan`, `wheelZoom`, `doubleClickZoom`, `pinchZoom`, `hover`,

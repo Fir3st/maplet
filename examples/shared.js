@@ -1,5 +1,5 @@
-import { createMap, crs, style } from '../../dist/index.js';
-export { style };
+import { createMap, crs, style, gestureGuard, fullscreenMode } from '../../dist/index.js';
+export { style, gestureGuard, fullscreenMode };
 
 const status = document.querySelector('#status');
 const tools = document.querySelector('#example-tools');

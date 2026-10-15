@@ -22,7 +22,7 @@ to use this repository.
 | Media | Sprites, anchor rotation, tinting, image/video bounds with placement rotation, partial uploads and cleanup; `demo/icons.html`, `demo/media.html` |
 | HTML UI | Optional controls, scale, attribution, geolocation, feature detail and bounded accessible lists; `test/ui/`, `demo/ui.html`, `demo/detail.html` |
 | Markers | Leaflet-style `addMarker`/`addMarkers` GPU pins with hover/permanent tooltips, one click popup with auto-pan, custom icons/tint and per-marker overrides; `demo/markers.html` |
-| Plugins | Plain setup functions, typed APIs, HTML access, abort/cleanup, render transforms, after-frame drawing and replaceable renderers; `test/scene/plugins.test.ts`, consumer types and `plugins` browser scenario; [guide](plugins.md) |
+| Plugins | Plain setup functions, typed APIs, HTML access, abort/cleanup, render transforms, after-frame drawing, replaceable renderers and the built-in `gestureGuard`/`fullscreenMode` plugins; plugin tests, consumer types, the `plugins` scenario and `demo/plugins-builtin.html`; [guide](plugins.md) |
 | Worker imports | Compact columns/canonical line and polygon pools, owned metadata on the publishing thread, validation, copy/move, cancellation, bounded queue, crash/CSP fallback; import tests, `demo/import.html`, `demo/csp.html?csp=worker-none` |
 | Distribution | ESM/declaration/subpath/worker assets, archive audit and consumer types; `test/publish/`, `type-tests/` |
 | Lifecycle and scale | Repeated create/destroy, GC-stabilized memory checks, cancellation and 500,000-point example; `demo/soak.html`, `demo/scale.html` |
@@ -142,6 +142,24 @@ to the same offset), auto-pan (the marker moved 52 px down so an edge popup fits
 `setIcon(null)` restoring the built-in pin and removal leaving no DOM overlay
 behind. Untouched layers, existing icon/media checks and the other 39
 scenarios/batteries are unchanged.
+
+The two built-in plugin additions pass **320 unit tests**, the same build/type/
+distribution and consumer-type checks, and the complete default browser suite:
+**41/41 scenarios/batteries on each of WebGL 1, WebGPU and forced basic WebGL 1**.
+The new `battery:plugins-builtin` drives synthetic input through the real
+interaction layer: a one-finger touch pan and drag keep the view still while a
+two-finger pinch (zoom 13 → 13.51) and a two-finger drag move it; a mouse pan,
+wheel and double-click do nothing without the modifier — the blocked wheel is
+never `preventDefault`ed — and apply with Alt; `unlock()`/`lock()`,
+`setModifier('control')` and `onChange` behave; removing the guard restores
+`touch-action: none` and unguarded gestures. The fullscreen checks stub the API
+to cover `enter`, `exit`, browser-initiated exits, the corner button and
+cleanup, verify an unsupported target resolves `false`, and confirm the map
+follows container resizes (640×480 → 520×360 → back). Live documentation checks
+additionally entered real fullscreen through a real click on the tutorial action
+and the corner button (the map auto-resized to 1476×987, Escape synced the
+state), and the gesture-guard tutorial gated a real wheel: not prevented while
+blocked, zooming with Alt and after `unlock()`.
 
 The recorded browser environment was headless Chromium on an Apple M5 Pro,
 using ANGLE Metal for WebGL and `apple metal-3` for WebGPU. Pixel comparisons

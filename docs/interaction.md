@@ -37,7 +37,10 @@ aggregate feature-only stream; `pointer` observes map pointer events.
 Map interaction supports pan, wheel zoom, pinch and keyboard navigation. A draggable
 feature starts dragging after four CSS pixels and does not also pan the map.
 Set `interactive: false` on a map to disable interaction, or update individual
-gesture options through `map.interaction?.setOptions()`.
+gesture options through `map.interaction?.setOptions()`. For accidental-gesture
+protection use the built-in [gesture guard](plugins.md#built-in-plugins) plugin,
+or install your own policy through `map.interaction?.setGestureGate(gate)`; a
+blocked wheel is not prevented, so the page keeps scrolling.
 
 Use `draggable: true` on a vector collection. Selection is shared feature state:
 objects expose `select()`/`deselect()`, and `map.selection` provides

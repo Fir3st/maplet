@@ -1,9 +1,9 @@
 # Documentation website and publication
 
 The public website includes an overview, installation, guides, API reference and
-nine tutorials with live maps. Tutorials cover first maps, editable points,
+eleven tutorials with live maps. Tutorials cover first maps, editable points,
 lines/polygon holes, bindings, GeoJSON, labels/image pins, markers with tooltips
-and popups, raster tiles and plugins.
+and popups, the gesture guard and fullscreen plugins, raster tiles and plugins.
 Diagnostic pages, benchmarks and server-dependent fixtures remain in `demo/`.
 
 ## Local preview

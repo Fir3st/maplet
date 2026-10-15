@@ -35,6 +35,7 @@ export const batteries = [
   { name: 'battery:ui', page: 'ui.html', hook: '__uiCheckResult' },
   { name: 'battery:detail', page: 'detail.html', hook: '__detailCheckResult' },
   { name: 'battery:markers', page: 'markers.html', hook: '__markerCheckResult' },
+  { name: 'battery:plugins-builtin', page: 'plugins-builtin.html', hook: '__builtinPluginCheckResult' },
   { name: 'battery:fonts', page: 'fonts.html', hook: '__fontCheckResult' },
   { name: 'battery:media', page: 'media.html', hook: '__mediaCheckResult' },
   { name: 'battery:import', page: 'import.html', hook: '__importCheckResult' },

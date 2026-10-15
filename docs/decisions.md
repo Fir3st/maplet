@@ -151,6 +151,27 @@ The current public construction, object lifetime and migration contract is in
 - Each pinch starts with its own baseline distance. Lifting one finger continues
   as a pan without jumping.
 - Keyboard handling does not steal input from `INPUT`, `TEXTAREA` or `contenteditable`.
+- `interaction.setGestureGate(gate)` filters view-affecting gestures
+  (`pan`, `pinch`, `wheel`, `doubleClick`, `featureDrag`) without stopping the
+  pointer state machine: a blocked pan keeps its reference point, a blocked
+  pinch drops its baselines, a blocked drag emits no drag events but suppresses
+  the follow-up click, and a blocked wheel is not prevented so the page keeps
+  scrolling (INPUT-09).
+
+## Built-in plugins
+
+- `gestureGuard(options)` installs an INPUT-09 gate: touch gestures need
+  `touchPointers` fingers (default 2), mouse/pen gestures need the configured
+  modifier (default Alt), and the container keeps `touch-action: pan-y` so a
+  one-finger drag scrolls the page. `unlock()`/`lock()` override the gate from
+  application UI, and removal restores the previous `touch-action` and clears
+  the gate.
+- `fullscreenMode(options)` toggles the container (or an explicit `target`)
+  through the Fullscreen API. State follows `fullscreenchange`, including
+  browser-initiated exits; `enter`/`exit`/`toggle` resolve a boolean instead of
+  pretending success; the optional corner button mirrors the state; removing
+  the plugin exits fullscreen and removes the button and listener. The map
+  resizes through its own container observer.
 
 ## Raster and WMS
 

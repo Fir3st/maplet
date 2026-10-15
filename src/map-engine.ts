@@ -62,7 +62,7 @@ import {
   type LocateWatch,
   type LocateWatchOptions,
 } from './ui/locate.ts';
-import { InteractionController, type InteractionOptions } from './interaction/interaction.ts';
+import { InteractionController, type GestureGate, type InteractionOptions } from './interaction/interaction.ts';
 import type { SceneEventMap } from './scene/scene.ts';
 import {
   buildFramePlan,
@@ -107,6 +107,8 @@ export interface EngineOptions {
 export interface InteractionHandle {
   setOptions(options: Partial<InteractionOptions>): void;
   options(): Required<InteractionOptions>;
+  /** Installs the gate consulted before view-affecting gestures apply (INPUT-09). */
+  setGestureGate(gate: GestureGate | null): void;
   destroy(): void;
 }
 
@@ -1667,6 +1669,9 @@ function buildHandle(
           },
           options() {
             return controller.allOptions();
+          },
+          setGestureGate(gate) {
+            controller.setGestureGate(gate);
           },
           destroy() {
             controller.destroy();

@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+- Add the built-in `gestureGuard` plugin: touch gestures need two fingers,
+  mouse/pen gestures need a modifier (default Alt), one-finger drags scroll the
+  page instead of panning, and `unlock()`/`lock()` override the gate from
+  application UI. The interaction layer gains the public `setGestureGate()` hook
+  behind it (INPUT-09).
+- Add the built-in `fullscreenMode` plugin: a Fullscreen API toggle with state
+  sync (including browser-initiated exits), an optional corner button, boolean
+  results instead of throwing, and cleanup that exits fullscreen.
+
 ## 0.1.0-alpha.6
 
 - Add `map.addMarker(options)` / `map.addMarkers(options[])`: Leaflet-style pins

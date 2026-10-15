@@ -70,5 +70,21 @@
     "hint": "Install the plugin · add a pin · remove it and watch its resources disappear",
     "note": "A focused version of the existing plugin playground. No external assets or runtime dependencies.",
     "origin": "demo/plugins.js"
+  },
+  {
+    "id": "gesture-guard", "title": "Gesture guard", "group": "Extending Maplet", "kind": "gesture-guard",
+    "summary": "Keep accidental drags, wheel zooms and double-clicks from moving the map.",
+    "learn": "The guard gates view-affecting gestures: touch needs two fingers, the desktop needs a modifier key, and a blocked wheel keeps scrolling the page. unlock()/lock() override the gate from your own UI, and removal restores the previous touch-action.",
+    "hint": "Hold Alt while dragging · unlock the map · switch the modifier",
+    "note": "A built-in plugin built on the public interaction gate; no CSS file or external asset.",
+    "origin": "demo/plugins-builtin.js"
+  },
+  {
+    "id": "fullscreen", "title": "Fullscreen mode", "group": "Extending Maplet", "kind": "fullscreen",
+    "summary": "Toggle the map in and out of the browser's fullscreen with a corner button.",
+    "learn": "The plugin keeps its state in sync with fullscreenchange, including Escape and browser exits, and resolves enter/exit with a boolean instead of pretending success. The map follows the container resize through its own observer.",
+    "hint": "Click the corner button · press Escape · remove the plugin",
+    "note": "A built-in plugin; fullscreen requests need a user gesture and a browser that supports the API.",
+    "origin": "demo/plugins-builtin.js"
   }
 ]

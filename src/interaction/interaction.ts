@@ -23,6 +23,26 @@ import type { PickResult } from '../render/picking.ts';
 
 export type { MapFeatureEvent, MapPointerEvent } from '../api/types.ts';
 
+/** View-affecting gestures that a gate may filter (INPUT-09). */
+export type GestureKind = 'pan' | 'pinch' | 'wheel' | 'doubleClick' | 'featureDrag';
+
+/**
+ * A gesture about to affect the view or a dragged feature. A gate returns
+ * `false` to ignore it; the interaction keeps tracking its pointers, so a later
+ * allowed moment resumes without applying the skipped movement at once.
+ */
+export interface GestureRequest {
+  readonly kind: GestureKind;
+  /** `mouse`, `touch` or `pen`; wheel and double-click report `mouse`. */
+  readonly pointerType: string;
+  /** Pointers in the active gesture (1 for pan/wheel, 2+ for pinch). */
+  readonly pointers: number;
+  /** The input event, so gates can read modifier flags from it. */
+  readonly originalEvent: Event;
+}
+
+export type GestureGate = (request: GestureRequest) => boolean;
+
 export interface InteractionOptions {
   readonly pan?: boolean;
   readonly wheelZoom?: boolean;
@@ -73,6 +93,7 @@ export class InteractionController {
   /** Press whose draggable-target pick is still pending (used to start pinch). */
   private pendingDrag: { pointerId: number; point: ScreenPoint } | null = null;
   private destroyed = false;
+  private gestureGate: GestureGate | null = null;
 
   constructor(
     element: HTMLElement,
@@ -137,6 +158,18 @@ export class InteractionController {
       keyboard: this.options.keyboard ?? true,
       boxSelection: this.options.boxSelection ?? false,
     };
+  }
+
+  /** Installs the gate consulted before a view-affecting gesture applies (INPUT-09). */
+  setGestureGate(gate: GestureGate | null): void {
+    this.gestureGate = gate;
+  }
+
+  private allowGesture(kind: GestureKind, event: Event, pointerType: string, pointers: number): boolean {
+    return (
+      this.gestureGate === null ||
+      this.gestureGate({ kind, pointerType, pointers, originalEvent: event }) !== false
+    );
   }
 
   destroy(): void {
@@ -285,17 +318,36 @@ export class InteractionController {
     if (gesture.kind === 'pan' && gesture.pointers.size === 1) {
       const previous = this.lastPointer;
       gesture.moved ||= Math.hypot(point.x - previous.x, point.y - previous.y) > 0;
+      if (!this.allowGesture('pan', event, event.pointerType, 1)) {
+        // Blocked: keep the reference point so a later allowed move resumes
+        // without applying the skipped delta.
+        this.lastPointer = point;
+        return;
+      }
       this.panBy(point.x - previous.x, point.y - previous.y);
       this.lastPointer = point;
       return;
     }
     if (gesture.kind === 'pinch' && gesture.pointers.size >= 2) {
+      if (!this.allowGesture('pinch', event, event.pointerType, gesture.pointers.size)) {
+        // Drop the baselines so an allowed moment starts fresh instead of
+        // applying the whole skipped distance and midpoint change at once.
+        this.pinchDistance = undefined;
+        this.pinchMidpoint = undefined;
+        return;
+      }
       this.handlePinch();
       return;
     }
     if (gesture.kind === 'drag' && gesture.dragFeature) {
       const drag = gesture.dragFeature;
       const downPoint = gesture.startPoint;
+      if (!this.allowGesture('featureDrag', event, event.pointerType, 1)) {
+        // A blocked drag never emits dragstart/drag; it still counts as moved so
+        // releasing does not turn it into a click.
+        if (Math.hypot(point.x - downPoint.x, point.y - downPoint.y) >= DRAG_THRESHOLD_PX) gesture.moved = true;
+        return;
+      }
       if (!gesture.moved) {
         if (Math.hypot(point.x - downPoint.x, point.y - downPoint.y) < DRAG_THRESHOLD_PX) return;
         gesture.moved = true;
@@ -447,6 +499,9 @@ export class InteractionController {
 
   private onWheel = (event: WheelEvent): void => {
     if (this.destroyed || !this.options.wheelZoom) return;
+    // A blocked wheel must keep scrolling the page, so the check runs before
+    // `preventDefault` (INPUT-09).
+    if (!this.allowGesture('wheel', event, 'mouse', 1)) return;
     event.preventDefault();
     const point = this.pointOf(event);
     const delta = -event.deltaY / 1000;
@@ -457,6 +512,7 @@ export class InteractionController {
 
   private onDoubleClick = (event: MouseEvent): void => {
     if (this.destroyed || !this.options.doubleClickZoom) return;
+    if (!this.allowGesture('doubleClick', event, 'mouse', 1)) return;
     this.view.zoomAround(this.pointOf(event), 1);
   };
 
