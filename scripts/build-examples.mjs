@@ -100,7 +100,7 @@ function exampleHtml(entry, catalog, version, source, tutorial, { home = '../../
   <details class="source" open><summary>Complete example source</summary>
     <div class="source-toolbar"><button type="button" id="copy-source">Copy source</button><a href="./example.js" download>Download JavaScript</a><a id="gist-link" aria-disabled="true">Gist not published yet</a></div>
     <pre tabindex="0" aria-label="JavaScript source"><code id="source-code">${highlightJavaScript(source)}</code></pre>
-    <p class="source-note">The shared <a href="./shared.js">page setup</a> creates the map and controls. In your application, import from <code>@fir3st/maplet</code>. <a href="https://github.com/${repository}/blob/main/${entry.origin}">Original diagnostic demo ↗</a></p>
+    <p class="source-note">The shared <a href="./shared.js">page setup</a> creates the map and controls. In your application, import from <code>@fir3st/maplet</code>.${entry.origin ? ` <a href="https://github.com/${repository}/blob/main/${entry.origin}">Original diagnostic demo ↗</a>` : ''}</p>
   </details>${after.html}
   <nav class="example-nav" aria-label="Other tutorials">${previous ? `<a href="${home}examples/${previous.id}/">← ${escapeHtml(previous.title)}</a>` : `<a href="${home}tutorials/">← All tutorials</a>`}${next ? `<a href="${home}examples/${next.id}/">${escapeHtml(next.title)} →</a>` : `<a href="${home}reference/">API reference →</a>`}</nav>`;
   return documentHtml({ title: entry.title, description: entry.summary, body, version, home, route: `examples/${entry.id}/`, section: 'Tutorials', catalog, headings: [...before.headings, ...after.headings], cssHash: stylesheetHash, script, attributes: `data-example="${entry.id}" data-gallery="${escapeHtml(home)}"` });
@@ -164,14 +164,14 @@ export function buildExamples({ output = resolve(root, '.example-build'), baseUr
       'example.js': source,
       'shared.js': shared,
       [runtime]: source.replace("from './shared.js'", `from './${sharedRuntime}'`),
-      [sharedRuntime]: shared.replace("from '../../dist/index.js'", `from '../../${distDirectory}/index.js'`),
+      [sharedRuntime]: shared.replace(/from '\.\.\/\.\.\/dist\/([^']+)'/g, (match, path) => `from '../../${distDirectory}/${path}'`),
       'style.css': css,
     };
     for (const [name, content] of Object.entries(files)) writeFileSync(join(directory, name), content);
     gists.push({ id: entry.id, title: entry.title, files: {
       'index.html': exampleHtml(entry, catalog, version, source, tutorial, { home: base.href }),
       'example.js': source,
-      'shared.js': shared.replace("from '../../dist/index.js'", `from '${new URL('dist/index.js', base).href}'`),
+      'shared.js': shared.replace(/from '\.\.\/\.\.\/dist\/([^']+)'/g, (match, path) => `from '${new URL(`dist/${path}`, base).href}'`),
       'style.css': css,
       'README.md': `# ${entry.title}\n\n${entry.summary}\n\n[Read the live tutorial](${new URL(`examples/${entry.id}/`, base).href}) · [Documentation](${base.href})\n\n${entry.learn}\n\n${entry.note}\n\nDownload all files into one directory and serve it over HTTP (for example with Python's http.server). The example loads the compiled Maplet library from ${base.href}; an internet connection is required for that hosted library. Gist itself does not execute HTML.\n\nGenerated from [${repository}](https://github.com/${repository}/tree/main/examples), version ${version}. Edit the repository sources rather than this generated Gist.\n\nApache-2.0; see LICENSE and NOTICE.\n`,
       LICENSE: license, NOTICE: notice,

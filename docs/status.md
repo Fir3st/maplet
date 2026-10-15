@@ -179,6 +179,25 @@ and fails before deployment when any relative module or worker URL is missing, s
 one unavailable file cannot break every example and a cached copy — or a cached
 error — cannot outlive a deploy.
 
+The four real-world recipes were checked live in the same browser session, on
+real OpenStreetMap tiles with real pointer input. City guide: markers rendered
+with the three category tints sampled exactly (`#2563eb`, `#7c3aed`, `#16724c`),
+a list click flew to the record and opened its popup, the category filter and the
+offline demo-tile switch changed the visible markers and stopped further tile
+requests, and `map.locate()` reported the granted position and centred on it.
+Tracking: the vehicle committed at its bounded feed cadence (925 m of a 2.55 km
+route in one sample), pausing froze the position, follow mode kept the vehicle
+centred, and skip/reset reached and left the end of the route. Field explorer:
+a real click selected a site and opened its detail, hover and selection styles
+rendered, the filter drove the dots **and** their labels through one shared
+`disabled` state (zero labels with everything disabled; every code visible under
+a filter belonged to a matching site), and the in-view counter agreed with an
+independent bounds oracle. Measure: four background clicks became vertices, the
+path appeared with the second point, closing produced a 19.88 ha ring, and undo
+and clear removed the objects and the panel readouts. All sixteen example pages
+boot without page errors when tiles are blocked, and tile responses during the
+live checks were all HTTP 200.
+
 The recorded browser environment was headless Chromium on an Apple M5 Pro,
 using ANGLE Metal for WebGL and `apple metal-3` for WebGPU. Pixel comparisons
 against decoded source bitmaps and between backends found zero differences at

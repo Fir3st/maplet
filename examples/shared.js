@@ -1,5 +1,6 @@
-import { createMap, crs, style, gestureGuard, fullscreenMode, heatmap } from '../../dist/index.js';
-export { style, gestureGuard, fullscreenMode, heatmap };
+import { createMap, crs, style, gestureGuard, fullscreenMode, heatmap, haversineMeters } from '../../dist/index.js';
+import { boundsFromPositions } from '../../dist/math/index.js';
+export { style, gestureGuard, fullscreenMode, heatmap, haversineMeters, boundsFromPositions };
 
 const status = document.querySelector('#status');
 const tools = document.querySelector('#example-tools');

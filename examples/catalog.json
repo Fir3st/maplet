@@ -94,5 +94,37 @@
     "hint": "Add a hotspot · switch the ramp · grow the splats · clear the field",
     "note": "A built-in plugin example of the after-frame hook. Synthetic measurements; no basemap and no external data.",
     "origin": "demo/plugins-builtin.js"
+  },
+  {
+    "id": "city-guide", "title": "A city guide on real tiles", "group": "Real-world recipes", "kind": "city-guide",
+    "summary": "Pins, popups, a list and a category filter over live OpenStreetMap tiles.",
+    "learn": "One array of records drives the markers, the keyboard-reachable list and the filter; a marker click keeps the list in sync. Popups take caller-owned Nodes, flyTo moves between places, map.locate() adds a position, and the offline switch replaces the tile URL and its attribution in one update.",
+    "hint": "Click a pin or a list entry · filter by category · try Where am I?",
+    "note": "OpenStreetMap needs an internet connection and follows its tile usage policy; the offline switch keeps the example usable without it. Landmark coordinates are approximate.",
+    "origin": "demo/markers.js"
+  },
+  {
+    "id": "tracking", "title": "Track a vehicle on a route", "group": "Real-world recipes", "kind": "tracking",
+    "summary": "A simulated GPS feed moves a vehicle along a real street route.",
+    "learn": "The vehicle is one point whose icon rotation follows a heading property, and the travelled line commits with it so both can never disagree. Follow mode recentres with setView, the feed commits at a bounded cadence, and the loop pauses when the tab is hidden.",
+    "hint": "Play the feed · change the simulated speed · switch follow mode off",
+    "note": "Simulated telemetry through the public API on live OpenStreetMap tiles; route waypoints are approximate street positions and a following view requests tiles as it moves.",
+    "origin": "demo/e2e/retained-points.mjs"
+  },
+  {
+    "id": "field-explorer", "title": "Filter and inspect a field dataset", "group": "Real-world recipes", "kind": "field-explorer",
+    "summary": "Filter sites by kind and state, inspect them and count what is in view.",
+    "learn": "Style expressions read properties and hover/selection state together; filtering writes one shared disabled flag that both the dots and their labels read, so hidden sites leave no floating code behind. Labels cull collisions under a minZoom, clicking opens map.detail, and query.area() drives an in-view counter that follows the map.",
+    "hint": "Filter by category · tick Only sites open now · click a site",
+    "note": "Synthetic sites on live OpenStreetMap tiles; the filter, query and detail calls are the ones an internal tool uses.",
+    "origin": "demo/pick.js"
+  },
+  {
+    "id": "measure", "title": "Measure a route and an area", "group": "Real-world recipes", "kind": "measure",
+    "summary": "Click the map to measure distances and close a ring for an area.",
+    "learn": "map.on('click') reports background clicks with a canonical position. Every click writes through the public API — a vertex is added, the path's positions are replaced — and haversineMeters() provides the geodesic segment lengths.",
+    "hint": "Click the map to add points · close the area · undo the last point",
+    "note": "Live OpenStreetMap tiles; distances are geodesic and the area is a planar approximation at city scale.",
+    "origin": "demo/interaction.js"
   }
 ]

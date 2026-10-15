@@ -1,10 +1,12 @@
 # Documentation website and publication
 
 The public website includes an overview, installation, guides, API reference and
-eleven tutorials with live maps. Tutorials cover first maps, editable points,
+sixteen tutorials with live maps. Tutorials cover first maps, editable points,
 lines/polygon holes, bindings, GeoJSON, labels/image pins, markers with tooltips
-and popups, the gesture guard and fullscreen plugins, raster tiles and plugins.
-Diagnostic pages, benchmarks and server-dependent fixtures remain in `demo/`.
+and popups, the gesture guard and fullscreen plugins, raster tiles and plugins,
+plus four real-world recipes: a city guide, vehicle tracking, a filterable site
+explorer and a measuring tool. Diagnostic pages, benchmarks and server-dependent
+fixtures remain in `demo/`.
 
 ## Local preview
 
@@ -19,11 +21,14 @@ Each tutorial combines explanatory prose, a map, controls, renderer selection,
 complete source and links to the relevant guides and reference. WebGL 1 is the default; WebGPU can fall back
 to WebGL 1. Unsupported GPU initialization is reported in the example's status.
 
-The examples do not download basemaps by default. The raster example requests
-OpenStreetMap only after its button is selected; it includes attribution and
-does not prefetch or cache tiles. GeoJSON input is local to the browser and
-bounded to 64 KiB / 100 points. The website is static HTML; maps load only on
-the tutorial pages, not on overview, guide or reference pages.
+Most examples do not download basemaps by default. The raster tutorial requests
+OpenStreetMap only after its button is selected; the real-world recipes load
+OpenStreetMap tiles directly because a real basemap is their subject. They all
+carry the source attribution, request tiles only for the visible view, and never
+prefetch or cache tiles; the city guide can switch to inline demo tiles for
+offline work. GeoJSON input is local to the browser and bounded to 64 KiB /
+100 points. The website is static HTML; maps load only on the tutorial pages,
+not on overview, guide or reference pages.
 
 ## GitHub Pages
 

@@ -26,6 +26,13 @@ JavaScript source. Start with a first map, then choose a topic.
 - [Fullscreen mode](fullscreen.md) — a fullscreen toggle with a corner button.
 - [Heatmap](heatmap.md) — a weighted heat field drawn through the after-frame hook.
 
+## Real-world recipes
+
+- [A city guide on real tiles](city-guide.md) — markers, popups, a list and a filter over OpenStreetMap.
+- [Track a vehicle on a route](tracking.md) — a simulated GPS feed, a travelled path and follow mode.
+- [Filter and inspect a field dataset](field-explorer.md) — style expressions, filters, detail and in-view queries.
+- [Measure a route and an area](measure.md) — background clicks, geodesic distances and a closed ring.
+
 <!-- /tutorial-directory -->
 
 For exact signatures, use the [API reference](../api-index.md). For additional
