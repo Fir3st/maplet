@@ -39,10 +39,16 @@ export const DEFAULT_MARKER_SIZE = 32;
 /** Default sprite centre offset: the pin tip sits on the marker position. */
 export const DEFAULT_MARKER_ANCHOR = { x: 0, y: -16 } as const;
 
+/**
+ * Built-in pin artwork: one flat teardrop with a white rim and an inner dot.
+ * The rim is what keeps the marker readable on a busy basemap and separates
+ * overlapping pins; the tip sits at the bottom of the box so the default
+ * `iconAnchor` puts it on the feature position.
+ */
 const PIN_SVG =
   '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">' +
-  '<path d="M16 31.5C16 31.5 4 22.4 4 13.5C4 6.6 9.4 1 16 1C22.6 1 28 6.6 28 13.5C28 22.4 16 31.5 16 31.5Z" fill="#2563eb"/>' +
-  '<circle cx="16" cy="13.5" r="4.6" fill="#ffffff"/></svg>';
+  '<path d="M16 31.2C13.9 27.1 6.7 20.6 6.7 12.2A9.3 9.3 0 1 1 25.3 12.2C25.3 20.6 18.1 27.1 16 31.2Z" fill="#2563eb" stroke="#ffffff" stroke-width="1.5" stroke-linejoin="round"/>' +
+  '<circle cx="16" cy="12.2" r="3.7" fill="#ffffff"/></svg>';
 /** Ready-to-register data URL of the default pin. */
 export const MARKER_PIN_URL = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(PIN_SVG);
 
@@ -53,6 +59,9 @@ export const MARKER_LAYER_STYLE: PointsLayerStyle = {
   iconAnchor: { ...DEFAULT_MARKER_ANCHOR },
   radiusPx: 6,
   color: '#2563eb',
+  // A pin is a UI object, not a data layer: it stays visible at every zoom,
+  // including the negative zooms planar maps can use (MARKER-01).
+  minZoom: -Infinity,
 };
 
 /** Tooltip or popup content: a string renders as text, a `Node` as-is. */

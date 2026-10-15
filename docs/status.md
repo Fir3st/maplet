@@ -198,6 +198,17 @@ and clear removed the objects and the panel readouts. All sixteen example pages
 boot without page errors when tiles are blocked, and tile responses during the
 live checks were all HTTP 200.
 
+The built-in marker pin was redrawn (MARKER-01): a slimmer flat teardrop with a
+white rim and an inner dot replaces the earlier stocky pin, so pins stay legible
+on busy basemaps and overlapping pins keep their edges. The artwork was checked
+pixel by pixel at 8× (body exactly `#2563eb`, white dot and rim, transparent
+outside, 32×32 natural size), and the city-guide tints still sampled exactly
+`#2563eb` / `#7c3aed` / `#16724c` through the white-bodied asset. The marker
+layer also stopped inheriting the data-layer `minZoom: 0` default: a pin is a UI
+object and now stays visible at the negative zooms planar maps can use, which a
+narrow markers page demonstrated before the fix (pins present at zoom −0.02
+after it, with the constant asserted in the marker defaults test).
+
 The recorded browser environment was headless Chromium on an Apple M5 Pro,
 using ANGLE Metal for WebGL and `apple metal-3` for WebGPU. Pixel comparisons
 against decoded source bitmaps and between backends found zero differences at

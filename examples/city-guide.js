@@ -15,12 +15,13 @@ const KINDS = {
   museum: { label: 'Museum', tint: '#7c3aed' },
   park: { label: 'Park', tint: '#16724c' },
 };
-// The built-in pin is blue and `iconTint` multiplies the texture, so a white
-// pin asset is what makes per-category tints read as the intended colours.
+// The built-in pin is blue and `iconTint` multiplies the texture, so category
+// colours need a white-bodied asset with the same silhouette and a translucent
+// dark rim and dot that survive tinting.
 const PIN = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(
   '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">' +
-  '<path d="M16 31.5C16 31.5 4 22.4 4 13.5C4 6.6 9.4 1 16 1C22.6 1 28 6.6 28 13.5C28 22.4 16 31.5 16 31.5Z" fill="#ffffff" stroke="rgba(0,0,0,0.28)" stroke-width="1"/>' +
-  '<circle cx="16" cy="13.5" r="4.6" fill="rgba(0,0,0,0.35)"/></svg>');
+  '<path d="M16 31.2C13.9 27.1 6.7 20.6 6.7 12.2A9.3 9.3 0 1 1 25.3 12.2C25.3 20.6 18.1 27.1 16 31.2Z" fill="#ffffff" stroke="rgba(15,23,42,0.30)" stroke-width="1.2" stroke-linejoin="round"/>' +
+  '<circle cx="16" cy="12.2" r="3.7" fill="rgba(15,23,42,0.30)"/></svg>');
 map.assets.addImage({ id: 'guide-pin', src: PIN });
 // Approximate coordinates of well-known places: enough for a guide, and the
 // basemap underneath is real. An application would read them from its CMS.

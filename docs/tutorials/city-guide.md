@@ -42,9 +42,9 @@ use the offline demo tiles to work without a network connection.
   from a CMS or an API never becomes active HTML.
 - `map.flyTo()` moves the view to a record, and the popup follows its pin while
   you pan because markers re-place their overlays on view and commit changes.
-- `iconTint` multiplies the pin texture, so category colours need a white pin
-  asset: the example registers one SVG with `map.assets.addImage()` and every
-  marker references it by id.
+- `iconTint` multiplies the pin texture, so category colours need a white-bodied
+  asset with the same silhouette: the example registers one SVG with
+  `map.assets.addImage()` and every marker references it by id.
 - The **offline demo tiles** switch replaces the tile URL together with its
   attribution in one `source.update()` call — the same call a theme or a
   language switch would use. Attribution always describes the active source.

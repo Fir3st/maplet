@@ -70,5 +70,6 @@ test('MARKER-01: the marker layer defaults match the built-in pin constants', ()
   assert.equal(MARKER_LAYER_STYLE.iconSize, DEFAULT_MARKER_SIZE);
   assert.deepEqual(MARKER_LAYER_STYLE.iconAnchor, { ...DEFAULT_MARKER_ANCHOR });
   assert.equal(MARKER_LAYER_STYLE.radiusPx, 6);
+  assert.equal(MARKER_LAYER_STYLE.minZoom, -Infinity, 'pins are not zoom-gated like data layers');
   assert.match(MARKER_PIN_URL, /^data:image\/svg\+xml/);
 });

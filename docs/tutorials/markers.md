@@ -19,9 +19,12 @@ map.addMarkers([
 ]);
 ```
 
-The built-in pin needs no asset. Per-marker `icon`, `iconSize`, `iconAnchor` and
-`iconTint` override the layer defaults; `iconSize` is a square CSS size and the
-tint multiplies the texture (default white).
+The built-in pin needs no asset: it is a flat teardrop with a white rim and an
+inner dot, so it stays legible on a busy basemap and overlapping pins keep their
+edges. Per-marker `icon`, `iconSize`, `iconAnchor` and `iconTint` override the
+layer defaults; `iconSize` is a square CSS size and the tint multiplies the
+texture (default white) — a white-bodied asset with the same silhouette is what
+makes category colours read, as the city guide recipe does.
 
 ## Live example
 
@@ -45,7 +48,9 @@ popup follow, and toggle the permanent tooltip.
   visibility (`show`/`hide`), emits feature events (`on('click')`,
   `on('mouseover')`) and removes itself (`remove`).
 
-Pins are canvas sprites — there is no DOM element per marker — so marker
-dragging, clustering and DOM focus are not part of this alpha. See the
+Pins are canvas sprites — there is no DOM element per marker — and they are not
+zoom-gated: unlike data layers, whose default `minZoom` is 0, a marker stays
+visible at the negative zooms planar maps can use. Marker dragging, clustering
+and DOM focus are not part of this alpha. See the
 [marker contracts](../decisions.md#markers) and
 [rendering guide](../rendering.md#markers).
