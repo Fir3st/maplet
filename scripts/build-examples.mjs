@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync, mkdirSync, writeFileSync, copyFileSync, existsSync } from 'node:fs';
+import { readFileSync, readdirSync, mkdirSync, rmSync, writeFileSync, copyFileSync, existsSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
@@ -129,6 +129,9 @@ export function buildExamples({ output = resolve(root, '.example-build'), baseUr
   }
   const { version } = JSON.parse(read('package.json'));
   const site = join(output, 'site');
+  // Building on top of an older run would leave replaced files behind; the CI
+  // workspace is fresh, so a clean build here keeps local output identical.
+  rmSync(site, { recursive: true, force: true });
   mkdirSync(site, { recursive: true });
   copyBuild(join(root, 'dist'), join(site, 'dist'));
   const css = read('examples/style.css'), shared = read('examples/shared.js');
