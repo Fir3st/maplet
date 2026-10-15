@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.0-alpha.7
 
 - Add the built-in `gestureGuard` plugin: touch gestures need two fingers,
   mouse/pen gestures need a modifier (default Alt), one-finger drags scroll the
