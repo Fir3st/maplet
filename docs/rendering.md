@@ -83,7 +83,8 @@ is one dialog per map: a marker click or `openPopup()` opens it, its button, a
 background click or `closePopup()` closes it, and `autoPan` keeps it inside the
 container. Strings render as text (UI-06); pass a `Node` for rich content. The
 handle also exposes `setIcon`, `setTooltip`, `setPopup`, `openTooltip`, `show`,
-`hide` and `remove`. See [marker contracts](decisions.md#markers).
+`hide` and `remove`. See [marker contracts](decisions.md#markers) and the
+[markers tutorial](tutorials/markers.md).
 
 ## Raster tiles and WMS
 

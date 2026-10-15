@@ -48,6 +48,14 @@
     "origin": "demo/icons.js"
   },
   {
+    "id": "markers", "title": "Markers, tooltips & popups", "group": "Presentation", "kind": "markers",
+    "summary": "Add Leaflet-style pins with hover tooltips and click popups.",
+    "learn": "map.addMarker() and map.addMarkers() create GPU pins in one shared layer — no DOM element per marker. A hover tooltip and one click popup per map are DOM overlays that follow pan and zoom; auto-pan keeps an open popup inside the view.",
+    "hint": "Hover a pin · click it for the popup · move a pin and watch its popup follow",
+    "note": "Pins are canvas sprites; only the open tooltip and popup use DOM. Content strings render as text; pass a Node for rich content.",
+    "origin": "demo/markers.js"
+  },
+  {
     "id": "raster", "title": "Raster tiles", "group": "Presentation", "kind": "raster",
     "summary": "Add an XYZ tile source and switch between demo tiles and OpenStreetMap.",
     "learn": "A raster source requests tiles for the visible view. The default grid is an inline SVG tile; live OpenStreetMap is requested only after you choose it. Attribution follows the active source.",
