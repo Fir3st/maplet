@@ -1,6 +1,11 @@
 /**
  * Fullscreen mode plugin: an opt-in toggle for the browser's Fullscreen API.
  *
+ * The module file is `display-mode.ts`, not `fullscreen.ts`: script URLs ending
+ * in `fullscreen.js` are blocked by some content filters and security suites
+ * (fullscreen-overlay adware uses that name), which took every example page down
+ * for those browsers. The exported plugin and its API keep their names.
+ *
  * The plugin keeps its state in sync with `fullscreenchange` (including exits
  * started by the browser, Escape or the user), optionally adds a corner button,
  * and reports failed or unsupported requests instead of pretending the mode

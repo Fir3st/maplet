@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { fullscreenMode, type FullscreenApi } from '../../src/plugins/fullscreen.ts';
+import { fullscreenMode, type FullscreenApi } from '../../src/plugins/display-mode.ts';
 import type { PluginContext } from '../../src/plugins.ts';
 
 function fakeDocument() {
