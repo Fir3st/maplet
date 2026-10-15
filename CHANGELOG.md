@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.0-alpha.6
 
 - Add `map.addMarker(options)` / `map.addMarkers(options[])`: Leaflet-style pins
   drawn as GPU sprites with hover/permanent tooltips and one click popup per map
@@ -20,7 +20,7 @@
   override. Only the ready sprite is tinted; per-feature tint edits patch their
   quads without an atlas or layout rebuild.
 - Replace the example gallery with a documentation website: overview, installation,
-  thematic guides, declaration-generated API reference and eight tutorials with
+  thematic guides, declaration-generated API reference and nine tutorials with
   embedded live examples. Preserve existing example URLs and standalone Gist output.
 - Reduce README to a package overview, installation and a short start; move project,
   development and architecture details into documentation.
