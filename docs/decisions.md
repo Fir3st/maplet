@@ -163,15 +163,19 @@ The current public construction, object lifetime and migration contract is in
 - `gestureGuard(options)` installs an INPUT-09 gate: touch gestures need
   `touchPointers` fingers (default 2), mouse/pen gestures need the configured
   modifier (default Alt), and the container keeps `touch-action: pan-y` so a
-  one-finger drag scrolls the page. `unlock()`/`lock()` override the gate from
-  application UI, and removal restores the previous `touch-action` and clears
-  the gate.
+  one-finger drag scrolls the page. A blocked attempt shows a short hint overlay
+  (`overlay: false` silences it) that expires, disappears on an allowed gesture
+  or on `unlock()`. `unlock()`/`lock()` override the gate from application UI,
+  and removal restores the previous `touch-action` and clears the gate.
 - `fullscreenMode(options)` toggles the container (or an explicit `target`)
   through the Fullscreen API. State follows `fullscreenchange`, including
   browser-initiated exits; `enter`/`exit`/`toggle` resolve a boolean instead of
-  pretending success; the optional corner button mirrors the state; removing
-  the plugin exits fullscreen and removes the button and listener. The map
-  resizes through its own container observer.
+  pretending success; `api.mode` reports `'native'` or `'fallback'`, where the
+  fallback covers the window with CSS when the API is missing or denied
+  (`fallback: false` disables it) and listens for Escape itself. The optional
+  corner button mirrors the state; removing the plugin exits fullscreen and
+  removes the button and listener. The map resizes through its own container
+  observer.
 
 ## Raster and WMS
 

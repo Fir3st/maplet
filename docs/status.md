@@ -143,23 +143,28 @@ to the same offset), auto-pan (the marker moved 52 px down so an edge popup fits
 behind. Untouched layers, existing icon/media checks and the other 39
 scenarios/batteries are unchanged.
 
-The two built-in plugin additions pass **320 unit tests**, the same build/type/
+The two built-in plugin additions pass **323 unit tests**, the same build/type/
 distribution and consumer-type checks, and the complete default browser suite:
 **41/41 scenarios/batteries on each of WebGL 1, WebGPU and forced basic WebGL 1**.
 The new `battery:plugins-builtin` drives synthetic input through the real
 interaction layer: a one-finger touch pan and drag keep the view still while a
 two-finger pinch (zoom 13 → 13.51) and a two-finger drag move it; a mouse pan,
 wheel and double-click do nothing without the modifier — the blocked wheel is
-never `preventDefault`ed — and apply with Alt; `unlock()`/`lock()`,
-`setModifier('control')` and `onChange` behave; removing the guard restores
-`touch-action: none` and unguarded gestures. The fullscreen checks stub the API
-to cover `enter`, `exit`, browser-initiated exits, the corner button and
-cleanup, verify an unsupported target resolves `false`, and confirm the map
-follows container resizes (640×480 → 520×360 → back). Live documentation checks
-additionally entered real fullscreen through a real click on the tutorial action
-and the corner button (the map auto-resized to 1476×987, Escape synced the
-state), and the gesture-guard tutorial gated a real wheel: not prevented while
-blocked, zooming with Alt and after `unlock()`.
+never `preventDefault`ed — and apply with Alt; a blocked attempt shows the hint
+overlay ("Hold Alt and scroll to zoom the map", "Use 2 fingers to move the map"),
+which an allowed gesture hides, which expires on its own and which stays silent
+with `overlay: false`; `unlock()`/`lock()`, `setModifier('control')` and
+`onChange` behave; removing the guard restores `touch-action: none` and
+unguarded gestures. The fullscreen checks stub the API to cover native `enter`,
+`exit`, browser-initiated exits, the corner button and cleanup; a denied request
+reports `mode: 'fallback'`, covers the container (`position: fixed` plus a
+marker) and Escape exits and restores it, while `fallback: false` resolves
+`false`; an unsupported target resolves `false`; the map follows container
+resizes (640×480 → 520×360 → back). Live documentation checks additionally
+entered real fullscreen through a real click on the tutorial action and the
+corner button (the map auto-resized to 1476×987, Escape synced the state), and
+the gesture-guard tutorial gated a real wheel, showed the hint and selected the
+modifier from its buttons.
 
 The recorded browser environment was headless Chromium on an Apple M5 Pro,
 using ANGLE Metal for WebGL and `apple metal-3` for WebGPU. Pixel comparisons
@@ -252,6 +257,13 @@ Canvas setup is still faster at 282 ms. One-second warm-pan outliers persist.
   permanent tooltip owns one element per marker). Strings render as text (UI-06)
   rather than Leaflet-style HTML; pass a `Node` for rich content. Marker dragging,
   cluster grouping and DOM focus on pins are not part of this alpha.
+- **Plugins:** the gesture guard blocks one-finger touch feature drags and touch
+  double-tap zoom (a touch double-click reports `mouse`); with
+  `touch-action: pan-y` a two-finger vertical drag can still scroll the page.
+  Its hint overlay is DOM created on the first blocked attempt. Fullscreen needs
+  browser support and a user gesture; requests resolve a boolean instead of
+  throwing, and a denied request covers the window with the CSS fallback
+  (`mode: 'fallback'`) unless `fallback: false`.
 - **Altitude:** preserved for points, multiPoints, circles and rectangles, but
   not for line/polygon geometry or its exported coordinates.
 - **MVT:** no antimeridian world wrapping. Residency follows the viewport rather

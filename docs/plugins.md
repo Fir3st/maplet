@@ -118,15 +118,19 @@ await fullscreen.api.toggle();
 `gestureGuard` gates view-affecting gestures without stopping the pointer state
 machine: touch needs two fingers (default), mouse and pen need the modifier
 (default Alt), and the container keeps `touch-action: pan-y` so one-finger drags
-scroll the page. A blocked wheel is not prevented, a blocked drag does not turn
-into a click, and `unlock()`/`lock()` allow everything from your own UI. See the
+scroll the page. A blocked wheel is not prevented and a blocked drag does not
+turn into a click; each blocked attempt shows a short hint overlay that explains
+what to do (`overlay: false` silences it), and `unlock()`/`lock()` allow
+everything from your own UI. See the
 [gesture guard tutorial](tutorials/gesture-guard.md).
 
 `fullscreenMode` toggles the container (or an explicit `target`) through the
 Fullscreen API, follows `fullscreenchange` — including Escape and
 browser-initiated exits — optionally adds a corner button, and resolves
-`enter`/`exit`/`toggle` with a boolean instead of throwing. Removing it exits
-fullscreen and removes the button. See the
+`enter`/`exit`/`toggle` with a boolean instead of throwing. `api.mode`
+distinguishes the real Fullscreen API (`'native'`) from the CSS viewport fallback
+(`'fallback'`) used when the API is missing or denied (`fallback: false` turns
+that off). Removing it exits fullscreen and removes the button. See the
 [fullscreen tutorial](tutorials/fullscreen.md).
 
 ## Change rendering

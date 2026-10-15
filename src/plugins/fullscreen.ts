@@ -2,10 +2,12 @@
  * Fullscreen mode plugin: an opt-in toggle for the browser's Fullscreen API.
  *
  * The plugin keeps its state in sync with `fullscreenchange` (including exits
- * started by the browser or the user), optionally adds a corner button, and
- * reports failed or unsupported requests instead of pretending the mode
- * changed. The engine resizes the map through its container observer, so no
- * manual resize call is needed. Removing the plugin exits fullscreen.
+ * started by the browser, Escape or the user), optionally adds a corner button,
+ * and reports failed or unsupported requests instead of pretending the mode
+ * changed. `api.mode` distinguishes the real Fullscreen API (`'native'`) from
+ * the viewport fallback (`'fallback'`), which covers the window with CSS when
+ * the API is missing or denied. The engine resizes the map through its container
+ * observer, so no manual resize call is needed. Removing the plugin exits.
  */
 
 import { fail } from '../api/errors.ts';
@@ -24,14 +26,20 @@ export interface FullscreenOptions {
   readonly target?: HTMLElement;
   /** Add a corner button; `true` uses the default corner. */
   readonly control?: boolean | FullscreenControlOptions;
+  /** Cover the viewport with CSS when the API is missing or denied; default true. */
+  readonly fallback?: boolean;
   /** Called on every state change, including browser-initiated exits. */
   readonly onChange?: (active: boolean) => void;
 }
 
+/** `'native'` uses the Fullscreen API, `'fallback'` covers the viewport with CSS. */
+export type FullscreenMode = 'native' | 'fallback' | null;
+
 export interface FullscreenApi {
   readonly supported: boolean;
   readonly active: boolean;
-  /** Resolves true when the target is fullscreen afterwards. */
+  readonly mode: FullscreenMode;
+  /** Resolves true when the target is fullscreen (either mode) afterwards. */
   enter(): Promise<boolean>;
   /** Resolves true when the target is not fullscreen afterwards. */
   exit(): Promise<boolean>;
@@ -47,6 +55,13 @@ const CORNER_OFFSET: Record<ControlPosition, string> = {
   'bottom-right': 'bottom:10px;right:10px;',
 };
 const BLOCKED_EVENTS = ['pointerdown', 'mousedown', 'click', 'dblclick', 'wheel', 'contextmenu'];
+const FALLBACK_STYLE = {
+  position: 'fixed',
+  inset: '0',
+  zIndex: '2147483647',
+  overflow: 'hidden',
+  background: '#ffffff',
+} as const;
 // Trusted constants: never built from user input.
 const ICON_ENTER =
   '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 2H2v4M10 2h4v4M6 14H2v-4M10 14h4v-4"/></svg>';
@@ -59,53 +74,102 @@ export function fullscreenMode(options: FullscreenOptions = {}): Plugin<Fullscre
     if (!container) fail('unsupported-capability', 'fullscreenMode requires a map container', {});
     const target = options.target ?? container;
     const doc = target.ownerDocument;
-    const supported =
-      typeof target.requestFullscreen === 'function' && typeof doc.exitFullscreen === 'function';
-    let active = supported && doc.fullscreenElement === target;
+    const supported = typeof target.requestFullscreen === 'function' && typeof doc.exitFullscreen === 'function';
+    const fallbackAllowed = options.fallback !== false;
+    let mode: FullscreenMode = doc.fullscreenElement === target ? 'native' : null;
+    let fallback = false;
+    let previousStyles: Record<string, string> | null = null;
     let button: HTMLButtonElement | null = null;
     let restorePosition: (() => void) | null = null;
 
     const updateButton = (): void => {
       if (!button) return;
-      button.innerHTML = active ? ICON_EXIT : ICON_ENTER;
-      button.setAttribute('aria-label', active ? 'Exit fullscreen' : 'Enter fullscreen');
-      button.title = active ? 'Exit fullscreen' : 'Enter fullscreen';
+      button.innerHTML = mode === null ? ICON_ENTER : ICON_EXIT;
+      button.setAttribute('aria-label', mode === null ? 'Enter fullscreen' : 'Exit fullscreen');
+      button.title =
+        mode === 'fallback'
+          ? 'Exit fullscreen (viewport fallback)'
+          : mode === 'native'
+            ? 'Exit fullscreen'
+            : 'Enter fullscreen';
     };
-    const sync = (notify: boolean): boolean => {
-      const next = supported && doc.fullscreenElement === target;
-      if (next === active) return active;
-      active = next;
+    const currentMode = (): FullscreenMode =>
+      doc.fullscreenElement === target ? 'native' : fallback ? 'fallback' : null;
+    const sync = (notify: boolean): FullscreenMode => {
+      const next = currentMode();
+      if (next === mode) return mode;
+      mode = next;
       updateButton();
-      if (notify) options.onChange?.(active);
-      return active;
+      if (notify) options.onChange?.(mode !== null);
+      return mode;
     };
     const onFullscreenChange = (): void => {
       sync(true);
     };
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape' && fallback) void exit();
+    };
     doc.addEventListener('fullscreenchange', onFullscreenChange);
 
-    const enter = async (): Promise<boolean> => {
-      if (!supported) return false;
-      if (doc.fullscreenElement === target) return sync(true) || true;
-      try {
-        await target.requestFullscreen();
-      } catch {
-        return false;
+    const enterFallback = (): void => {
+      if (fallback) return;
+      previousStyles = {};
+      for (const key of Object.keys(FALLBACK_STYLE)) {
+        previousStyles[key] = target.style[key as keyof CSSStyleDeclaration] as string;
       }
-      return sync(true);
+      target.dataset.mapletFullscreenFallback = 'true';
+      target.style.position = FALLBACK_STYLE.position;
+      target.style.inset = FALLBACK_STYLE.inset;
+      target.style.zIndex = FALLBACK_STYLE.zIndex;
+      target.style.overflow = FALLBACK_STYLE.overflow;
+      target.style.background = FALLBACK_STYLE.background;
+      fallback = true;
+      doc.addEventListener('keydown', onKeyDown);
+    };
+    const exitFallback = (): void => {
+      if (!fallback) return;
+      fallback = false;
+      doc.removeEventListener('keydown', onKeyDown);
+      if (previousStyles) {
+        target.style.position = previousStyles['position']!;
+        target.style.inset = previousStyles['inset']!;
+        target.style.zIndex = previousStyles['zIndex']!;
+        target.style.overflow = previousStyles['overflow']!;
+        target.style.background = previousStyles['background']!;
+        previousStyles = null;
+      }
+      delete target.dataset.mapletFullscreenFallback;
+    };
+
+    const enter = async (): Promise<boolean> => {
+      if (mode !== null) return true;
+      if (supported) {
+        try {
+          await target.requestFullscreen();
+        } catch {
+          /* denied or unavailable: fall through to the fallback */
+        }
+        if (sync(true) === 'native') return true;
+      }
+      if (!fallbackAllowed) return false;
+      enterFallback();
+      sync(true);
+      return true;
     };
     const exit = async (): Promise<boolean> => {
-      if (!supported || doc.fullscreenElement !== target) {
+      if (mode === 'native') {
+        try {
+          await doc.exitFullscreen();
+        } catch {
+          return false;
+        }
         sync(true);
-        return !active;
       }
-      try {
-        await doc.exitFullscreen();
-      } catch {
-        return false;
+      if (fallback) {
+        exitFallback();
+        sync(true);
       }
-      sync(true);
-      return !active;
+      return mode === null;
     };
 
     if (options.control) {
@@ -130,7 +194,7 @@ export function fullscreenMode(options: FullscreenOptions = {}): Plugin<Fullscre
         button.addEventListener(type, (event) => event.stopPropagation());
       }
       button.addEventListener('click', () => {
-        void (active ? exit() : enter());
+        void (mode === null ? enter() : exit());
       });
       if (control.label) {
         button.setAttribute('aria-label', control.label);
@@ -142,9 +206,10 @@ export function fullscreenMode(options: FullscreenOptions = {}): Plugin<Fullscre
 
     context.onCleanup(() => {
       doc.removeEventListener('fullscreenchange', onFullscreenChange);
+      exitFallback();
       button?.remove();
       restorePosition?.();
-      if (active) void doc.exitFullscreen();
+      if (mode === 'native') void doc.exitFullscreen();
     });
 
     return {
@@ -152,12 +217,15 @@ export function fullscreenMode(options: FullscreenOptions = {}): Plugin<Fullscre
         return supported;
       },
       get active() {
-        return active;
+        return mode !== null;
+      },
+      get mode() {
+        return mode;
       },
       enter,
       exit,
-      toggle: () => (active ? exit() : enter()),
-      element: () => (active ? target : null),
+      toggle: () => (mode === null ? enter() : exit()),
+      element: () => (mode === null ? null : target),
     };
   };
 }

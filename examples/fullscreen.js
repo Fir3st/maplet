@@ -11,12 +11,25 @@ map.addPoints([
 // A real request needs a user gesture, so the buttons below are the way in.
 const fullscreen = map.use(fullscreenMode({
   control: true,
-  onChange: (active) => report(active ? 'Fullscreen is on; the map resized itself.' : 'Back to the page layout.'),
+  onChange: () => {
+    const mode = fullscreen.api.mode;
+    report(mode === 'native'
+      ? 'Fullscreen is on (Fullscreen API); the map resized itself.'
+      : mode === 'fallback'
+        ? 'Fullscreen is on (viewport fallback — the browser did not grant the API).'
+        : 'Back to the page layout.');
+  },
 }));
 
 action('Toggle fullscreen', async () => {
   const active = await fullscreen.api.toggle();
-  report(active ? 'Fullscreen is on.' : fullscreen.api.supported ? 'The browser denied fullscreen (a direct click or tap is required).' : 'This browser has no Fullscreen API.');
+  report(active
+    ? fullscreen.api.mode === 'native'
+      ? 'Fullscreen is on (Fullscreen API).'
+      : 'Fullscreen is on (viewport fallback — the browser denied the API).'
+    : fullscreen.api.supported
+      ? 'The browser denied fullscreen (a direct click or tap is required).'
+      : 'Fullscreen is off.');
 });
 action('Exit fullscreen', async () => {
   await fullscreen.api.exit();

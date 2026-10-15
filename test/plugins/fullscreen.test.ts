@@ -5,7 +5,7 @@ import { fullscreenMode, type FullscreenApi } from '../../src/plugins/fullscreen
 import type { PluginContext } from '../../src/plugins.ts';
 
 function fakeDocument() {
-  const listeners = new Set<(event: Event) => void>();
+  const listeners = new Map<string, Set<(event: Event) => void>>();
   const doc = {
     fullscreenElement: null as unknown,
     exitCalls: 0,
@@ -14,33 +14,48 @@ function fakeDocument() {
       doc.exitCalls += 1;
     },
     addEventListener: (type: string, fn: (event: Event) => void) => {
-      if (type === 'fullscreenchange') listeners.add(fn);
+      let set = listeners.get(type);
+      if (!set) listeners.set(type, (set = new Set()));
+      set.add(fn);
     },
     removeEventListener: (type: string, fn: (event: Event) => void) => {
-      if (type === 'fullscreenchange') listeners.delete(fn);
+      listeners.get(type)?.delete(fn);
     },
     dispatchChange: () => {
-      for (const fn of [...listeners]) fn(new Event('fullscreenchange'));
+      for (const fn of [...(listeners.get('fullscreenchange') ?? [])]) fn(new Event('fullscreenchange'));
     },
-    listenerCount: () => listeners.size,
+    dispatchKey: (key: string) => {
+      for (const fn of [...(listeners.get('keydown') ?? [])]) fn({ key } as unknown as Event);
+    },
+    listenerCount: (type: string) => listeners.get(type)?.size ?? 0,
   };
   return doc;
 }
 
-function fakeTarget(doc: ReturnType<typeof fakeDocument>, supported = true) {
+function fakeTarget(doc: ReturnType<typeof fakeDocument>, request: 'ok' | 'reject' | 'missing' = 'ok') {
   const target = {
+    style: { position: '', inset: '', zIndex: '', overflow: '', background: '' } as Record<string, string>,
+    dataset: {} as Record<string, string>,
     ownerDocument: doc,
-    requestFullscreen: supported
-      ? async () => {
-          doc.fullscreenElement = target;
-          doc.dispatchChange();
-        }
-      : undefined,
+    requestFullscreen:
+      request === 'ok'
+        ? async () => {
+            doc.fullscreenElement = target;
+            doc.dispatchChange();
+          }
+        : request === 'reject'
+          ? async () => {
+              throw new Error('denied');
+            }
+          : undefined,
   };
   return target;
 }
 
-function install(target: unknown): {
+function install(
+  target: unknown,
+  options: { readonly fallback?: boolean } = {},
+): {
   api: FullscreenApi;
   doc: ReturnType<typeof fakeDocument>;
   changes: boolean[];
@@ -57,20 +72,26 @@ function install(target: unknown): {
   } as unknown as PluginContext;
   const changes: boolean[] = [];
   const doc = (target as { ownerDocument: ReturnType<typeof fakeDocument> }).ownerDocument;
-  const api = fullscreenMode({ target: target as HTMLElement, onChange: (active) => changes.push(active) })(context);
+  const api = fullscreenMode({
+    target: target as HTMLElement,
+    ...(options.fallback === undefined ? {} : { fallback: options.fallback }),
+    onChange: (active) => changes.push(active),
+  })(context);
   return { api, doc, changes, cleanups };
 }
 
-test('FULLSCREEN: enter, exit and browser-initiated exits stay in sync', async () => {
+test('FULLSCREEN: native enter, exit and browser-initiated exits stay in sync', async () => {
   const doc = fakeDocument();
   const target = fakeTarget(doc);
   const { api, changes } = install(target);
   assert.equal(api.supported, true);
   assert.equal(api.active, false);
+  assert.equal(api.mode, null);
   assert.equal(api.element(), null);
 
   assert.equal(await api.enter(), true);
   assert.equal(api.active, true);
+  assert.equal(api.mode, 'native');
   assert.equal(api.element(), target);
   assert.deepEqual(changes, [true]);
 
@@ -78,37 +99,79 @@ test('FULLSCREEN: enter, exit and browser-initiated exits stay in sync', async (
   doc.fullscreenElement = null;
   doc.dispatchChange();
   assert.equal(api.active, false);
+  assert.equal(api.mode, null);
   assert.deepEqual(changes, [true, false]);
 
   assert.equal(await api.toggle(), true);
-  assert.equal(api.active, true);
+  assert.equal(api.mode, 'native');
   assert.equal(await api.toggle(), true);
-  assert.equal(api.active, false);
+  assert.equal(api.mode, null);
   assert.deepEqual(changes, [true, false, true, false]);
 });
 
-test('FULLSCREEN: unsupported targets report false instead of pretending', async () => {
+test('FULLSCREEN: a denied or missing API falls back to the viewport cover', async () => {
   const doc = fakeDocument();
-  const target = fakeTarget(doc, false);
+  const target = fakeTarget(doc, 'reject');
   const { api, changes } = install(target);
-  assert.equal(api.supported, false);
-  assert.equal(await api.enter(), false);
-  assert.equal(await api.exit(), true);
+  assert.equal(api.supported, true);
+  assert.equal(await api.enter(), true);
+  assert.equal(api.mode, 'fallback');
+  assert.equal(api.active, true);
+  assert.equal(api.element(), target);
+  assert.equal(target.dataset.mapletFullscreenFallback, 'true');
+  assert.equal(target.style.position, 'fixed');
+  assert.equal(target.style.inset, '0');
+  assert.equal(doc.listenerCount('keydown'), 1);
+  assert.deepEqual(changes, [true]);
+
+  // Escape leaves the fallback because the browser has nothing to exit here.
+  doc.dispatchKey('Escape');
+  await Promise.resolve();
+  await Promise.resolve();
+  assert.equal(api.mode, null);
   assert.equal(api.active, false);
-  assert.equal(api.element(), null);
-  assert.deepEqual(changes, []);
+  assert.equal(target.dataset.mapletFullscreenFallback, undefined);
+  assert.equal(target.style.position, '');
+  assert.equal(doc.listenerCount('keydown'), 0);
+  assert.deepEqual(changes, [true, false]);
 });
 
-test('FULLSCREEN: removing the plugin stops listening and leaves fullscreen', async () => {
+test('FULLSCREEN: fallback can be disabled and unsupported targets report false', async () => {
+  const denied = install(fakeTarget(fakeDocument(), 'reject'), { fallback: false });
+  assert.equal(await denied.api.enter(), false);
+  assert.equal(denied.api.active, false);
+  assert.equal(denied.api.mode, null);
+  assert.deepEqual(denied.changes, []);
+
+  const missingDoc = fakeDocument();
+  const missing = fakeTarget(missingDoc, 'missing');
+  const withoutFallback = install(missing, { fallback: false });
+  assert.equal(withoutFallback.api.supported, false);
+  assert.equal(await withoutFallback.api.enter(), false);
+  assert.equal(withoutFallback.api.mode, null);
+  // The viewport fallback still gives a usable fullscreen without the API.
+  const withFallback = install(missing);
+  assert.equal(await withFallback.api.enter(), true);
+  assert.equal(withFallback.api.mode, 'fallback');
+  assert.equal(await withFallback.api.exit(), true);
+  assert.equal(withFallback.api.mode, null);
+});
+
+test('FULLSCREEN: removing the plugin stops listening, restores styles and leaves fullscreen', async () => {
   const doc = fakeDocument();
   const target = fakeTarget(doc);
-  const { api, doc: sameDoc, cleanups } = install(target);
-  assert.equal(sameDoc, doc);
+  const { api, cleanups } = install(target);
   assert.equal(await api.enter(), true);
-  assert.equal(doc.listenerCount(), 1);
+  assert.equal(doc.listenerCount('fullscreenchange'), 1);
   for (const cleanup of cleanups) cleanup();
-  assert.equal(doc.listenerCount(), 0);
+  assert.equal(doc.listenerCount('fullscreenchange'), 0);
   assert.equal(doc.exitCalls, 1);
-  doc.dispatchChange();
-  assert.equal(api.active, true, 'a removed plugin no longer updates its snapshot');
+
+  const fallbackDoc = fakeDocument();
+  const fallbackTarget = fakeTarget(fallbackDoc, 'reject');
+  const fallbackInstall = install(fallbackTarget);
+  assert.equal(await fallbackInstall.api.enter(), true);
+  for (const cleanup of fallbackInstall.cleanups) cleanup();
+  assert.equal(fallbackTarget.style.position, '');
+  assert.equal(fallbackDoc.listenerCount('keydown'), 0);
 });

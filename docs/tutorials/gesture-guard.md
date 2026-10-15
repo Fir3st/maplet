@@ -21,13 +21,20 @@ guard.remove();                // restores touch-action and clears the gate
 | `touchPointers` | `2` | Fingers required before a touch gesture applies |
 | `touchAction` | `'pan-y'` | Container `touch-action` while the plugin is installed |
 | `unlocked` | `false` | Start with every gesture allowed; `lock()` still applies |
+| `overlay` | on | Explain blocked attempts with a hint overlay, or `false` to stay silent |
 | `onChange` | — | Notified whenever `unlock()`/`lock()` change the state |
+
+A blocked attempt shows a short hint over the map — *Use 2 fingers to move the
+map*, *Hold Alt and scroll to zoom the map* — following the same pattern as
+Leaflet's gesture-handling plugins. It disappears on its own (default after
+2.2 s), on the next allowed gesture, or on `unlock()`; `overlay: { durationMs,
+message }` changes the timing or the wording.
 
 ## Live example
 
 Hold Alt (or ⌥) while dragging or scrolling, unlock the map with the button, or
-switch the modifier. On a touch device one finger scrolls the page and two
-fingers pan and pinch.
+switch the modifier. A blocked attempt shows the hint overlay over the map; on a
+touch device one finger scrolls the page and two fingers pan and pinch.
 
 <!-- example -->
 

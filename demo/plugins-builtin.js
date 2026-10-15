@@ -20,7 +20,7 @@ function finalize() {
   if (finalized) return;
   finalized = true;
   result.ms = Math.round(performance.now() - started);
-  result.pass = result.errors.length === 0 && result.checks.length === 6 && result.checks.every((entry) => entry.pass);
+  result.pass = result.errors.length === 0 && result.checks.length === 8 && result.checks.every((entry) => entry.pass);
   window.__builtinPluginCheckResult = result;
   document.title = 'builtin-plugin-check-done';
   const summary = document.getElementById('summary');
@@ -207,6 +207,49 @@ await check('INPUT-09 removing the guard restores touch-action and gestures', as
   };
 });
 
+await check('INPUT-09 a blocked attempt explains itself with a hint that expires', async () => {
+  const hintAt = () => element.querySelector('[data-maplet-gesture-hint]');
+  const handle = map.use(gestureGuard({ overlay: { durationMs: 350 } }));
+  const blockedWheel = wheel(320, 240, -240);
+  const hint = hintAt();
+  const visible = hint?.dataset.visible === 'true' && hint?.style.opacity === '1';
+  const wheelText = hint?.textContent ?? '';
+  const notPrevented = !blockedWheel.defaultPrevented;
+  // A blocked touch drag switches the hint to the finger guidance.
+  touch('pointerdown', 21, 300, 220);
+  await sleep(80);
+  touch('pointermove', 21, 360, 250);
+  const touchText = hintAt()?.textContent ?? '';
+  touch('pointerup', 21, 360, 250);
+  // An allowed gesture hides it, and it also expires on its own.
+  wheel(320, 240, -240, { altKey: true });
+  const hiddenByAllowed = hintAt()?.dataset.visible === 'false';
+  wheel(320, 240, -240);
+  const shownAgain = hintAt()?.dataset.visible === 'true';
+  await sleep(450);
+  const expired = hintAt()?.dataset.visible === 'false';
+  handle.remove();
+  const removed = hintAt() === null;
+  // The overlay can be turned off and then never appears.
+  const quiet = map.use(gestureGuard({ overlay: false }));
+  wheel(320, 240, -240);
+  const silent = hintAt() === null;
+  quiet.remove();
+  return {
+    pass:
+      visible &&
+      notPrevented &&
+      /Hold Alt and scroll/.test(wheelText) &&
+      /2 fingers/.test(touchText) &&
+      hiddenByAllowed &&
+      shownAgain &&
+      expired &&
+      removed &&
+      silent,
+    detail: { visible, notPrevented, wheelText, touchText, hiddenByAllowed, shownAgain, expired, removed, silent },
+  };
+});
+
 await check('FULLSCREEN enter, exit, browser exits and the corner button stay in sync', async () => {
   // Stub the Fullscreen API so the battery does not depend on a user gesture.
   const store = { element: null, exitCalls: 0 };
@@ -230,6 +273,7 @@ await check('FULLSCREEN enter, exit, browser exits and the corner button stay in
     const button = element.querySelector('[data-maplet-control="fullscreen"]');
     const entered = await fullscreenApi.enter();
     const activeAfterEnter = fullscreenApi.active && fullscreenApi.element() === element;
+    const nativeMode = fullscreenApi.mode === 'native';
     const buttonExit = button?.getAttribute('aria-label') === 'Exit fullscreen';
     // A browser or user exit is picked up from the event alone.
     store.element = null;
@@ -250,6 +294,7 @@ await check('FULLSCREEN enter, exit, browser exits and the corner button stay in
         !!button &&
         entered &&
         activeAfterEnter &&
+        nativeMode &&
         buttonExit &&
         browserExit &&
         buttonEntered &&
@@ -257,7 +302,7 @@ await check('FULLSCREEN enter, exit, browser exits and the corner button stay in
         toggled &&
         changes[0] === true &&
         changes.includes(false),
-      detail: { supported, hasButton: !!button, entered, activeAfterEnter, buttonExit, browserExit, buttonEntered, buttonExited, toggled, changes },
+      detail: { supported, hasButton: !!button, entered, activeAfterEnter, nativeMode, buttonExit, browserExit, buttonEntered, buttonExited, toggled, changes },
     };
   } finally {
     fullscreenHandle?.remove();
@@ -308,8 +353,10 @@ await check('FULLSCREEN cleanup exits and the map follows container resizes', as
       restored = map.size();
       if (restored.width === WIDTH) break;
     }
-    // An unsupported target reports false instead of pretending.
-    const unsupported = map.use(fullscreenMode({ target: { ownerDocument: document } }));
+    // An unsupported target reports false instead of pretending (fallback off).
+    const unsupportedTarget = document.createElement('div');
+    unsupportedTarget.requestFullscreen = undefined;
+    const unsupported = map.use(fullscreenMode({ target: unsupportedTarget, fallback: false }));
     const unsupportedApi = unsupported.api;
     const refused = await unsupportedApi.enter();
     unsupported.remove();
@@ -337,6 +384,42 @@ await check('FULLSCREEN cleanup exits and the map follows container resizes', as
     element.requestFullscreen = realRequest;
     document.exitFullscreen = realExit;
     delete document.fullscreenElement;
+  }
+});
+
+await check('FULLSCREEN a denied request falls back to the viewport cover and Escape exits', async () => {
+  const realRequest = element.requestFullscreen;
+  element.requestFullscreen = async () => {
+    throw new Error('denied by a stub');
+  };
+  try {
+    const handle = map.use(fullscreenMode({ control: true, fallback: true }));
+    const api = handle.api;
+    const entered = await api.enter();
+    const fallbackMode = api.mode === 'fallback' && api.active;
+    const covered =
+      element.dataset.mapletFullscreenFallback === 'true' &&
+      element.style.position === 'fixed' &&
+      element.style.inset !== '';
+    const button = element.querySelector('[data-maplet-control="fullscreen"]');
+    const buttonTitle = button?.title.includes('viewport fallback') === true;
+    // Escape leaves the CSS fallback because the browser has nothing to exit here.
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await sleep(80);
+    const escaped = api.mode === null && !api.active;
+    const restored = element.style.position === '' && element.dataset.mapletFullscreenFallback === undefined;
+    handle.remove();
+    // The fallback is optional: without it a denied request reports false.
+    const strict = map.use(fullscreenMode({ fallback: false }));
+    const refused = await strict.api.enter();
+    const strictState = strict.api.mode === null && !strict.api.active && element.style.position === '';
+    strict.remove();
+    return {
+      pass: entered && fallbackMode && covered && buttonTitle && escaped && restored && refused === false && strictState,
+      detail: { entered, fallbackMode, covered, buttonTitle, escaped, restored, refused, strictState },
+    };
+  } finally {
+    element.requestFullscreen = realRequest;
   }
 });
 
