@@ -1323,6 +1323,12 @@ export class WebGpuBackend implements MapBackend {
   private uploadMedia(entry: MediaEntry, source: MediaSourceImpl): boolean {
     const element = source.element;
     if (!element || source.width === 0 || source.height === 0) return false;
+    // Between video loads (URL switch, decode error) the element has no
+    // decodable frame: keep the previous texture instead of importing blank
+    // pixels (MEDIA-09).
+    if (source.kind === 'video' && (element as HTMLVideoElement).readyState < 2) {
+      return entry.texture !== null;
+    }
     const created = entry.texture === null;
     if (!entry.texture) {
       entry.texture = this.device.createTexture({

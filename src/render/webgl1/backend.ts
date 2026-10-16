@@ -1291,6 +1291,12 @@ export class WebGl1Backend implements MapBackend {
     const gl = this.gl;
     const element = source.element;
     if (!element || source.width === 0 || source.height === 0) return false;
+    // Between video loads (URL switch, decode error) the element has no
+    // decodable frame: keep the previous texture instead of importing blank
+    // pixels (MEDIA-09).
+    if (source.kind === 'video' && (element as HTMLVideoElement).readyState < 2) {
+      return entry.texture !== null;
+    }
     const created = entry.texture === null;
     if (!entry.texture) entry.texture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, entry.texture);

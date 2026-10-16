@@ -9,6 +9,10 @@
   ffmpeg. Two visually unambiguous frames make a stopped frame pump and a lost
   final frame visible; regeneration is skipped when the file exists unless
   `--force` is given.
+- `green-yellow.mp4`: a green frame then a yellow frame at 1 fps. A second feed
+  for the runtime URL-change checks (MEDIA-09): after a switch the first frame
+  is green and a resumed pump advances to yellow, so a restart and a resumed
+  playback are both visible in one sample.
 
     python3 demo/generate-media.py [--force]
 """
@@ -61,32 +65,31 @@ def quadrant_pixel(size: int, colors):
     return pixel
 
 
-def write_video(force: bool) -> None:
-    target = OUT / "two-frames.mp4"
+def write_video(name: str, colors: list[str], force: bool) -> None:
+    target = OUT / name
     if target.exists() and not force:
         print(f"{target} already exists; use --force to regenerate")
         return
     ffmpeg = shutil.which("ffmpeg")
     if not ffmpeg:
         raise SystemExit(
-            "ffmpeg is required to generate demo/media/two-frames.mp4 "
+            f"ffmpeg is required to generate demo/media/{name} "
             "(install it or copy an existing fixture into demo/media/)"
         )
+    inputs: list[str] = []
+    for color in colors:
+        inputs += ["-f", "lavfi", "-i", f"color=c={color}:s=96x64:r=1:d=1"]
+    filter_complex = "".join(f"[{index}:v]" for index in range(len(colors))) + (
+        f"concat=n={len(colors)}:v=1:a=0[out]"
+    )
     command = [
         ffmpeg,
         "-y",
         "-loglevel",
         "error",
-        "-f",
-        "lavfi",
-        "-i",
-        "color=c=red:s=96x64:r=1:d=1",
-        "-f",
-        "lavfi",
-        "-i",
-        "color=c=blue:s=96x64:r=1:d=1",
+        *inputs,
         "-filter_complex",
-        "[0:v][1:v]concat=n=2:v=1:a=0[out]",
+        filter_complex,
         "-map",
         "[out]",
         "-c:v",
@@ -105,6 +108,13 @@ def write_video(force: bool) -> None:
     print(f"wrote {target} ({target.stat().st_size} bytes)")
 
 
+VIDEOS = {
+    # A restart is unambiguous: the first frame differs from the second.
+    "two-frames.mp4": ["red", "blue"],
+    "green-yellow.mp4": ["green", "yellow"],
+}
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--force", action="store_true", help="regenerate even when files exist")
@@ -118,7 +128,8 @@ def main() -> None:
             continue
         target.write_bytes(png(8, 8, quadrant_pixel(8, colors)))
         print(f"wrote {target} ({target.stat().st_size} bytes)")
-    write_video(args.force)
+    for name, colors in VIDEOS.items():
+        write_video(name, colors, args.force)
 
 
 if __name__ == "__main__":

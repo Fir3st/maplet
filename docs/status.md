@@ -19,7 +19,7 @@ to use this repository.
 | Interaction | Pan, zoom, hover/click/drag, pinch, keyboard, selection, bubbling; dragging comes from a layer opt-in or a per-feature override, so a draggable marker and a plain one share one layer; `demo/interaction.html` and real-input E2E scenarios |
 | Picking | Shape-aware GPU queries, revision/generation checks, measured blocking/async readback; `demo/pick.html` |
 | Text and fonts | Labels, multi-line text, collisions, rotation, atlas eviction, font loading/fallback, platform shaping, bidi; `demo/labels.html`, `demo/fonts.html` |
-| Media | Sprites, anchor rotation, tinting, image/video bounds with placement rotation, partial uploads and cleanup; `demo/icons.html`, `demo/media.html` |
+| Media | Sprites, anchor rotation, tinting, image/video bounds with placement rotation, runtime image/video URL changes, partial uploads and cleanup; `demo/icons.html`, `demo/media.html` |
 | HTML UI | Optional controls, scale, attribution, geolocation, feature detail and bounded accessible lists; `test/ui/`, `demo/ui.html`, `demo/detail.html` |
 | Markers | Leaflet-style `addMarker`/`addMarkers` GPU pins with hover/permanent tooltips, one click popup with auto-pan, custom icons/tint, per-marker overrides and opt-in per-pin dragging; `demo/markers.html` |
 | Plugins | Plain setup functions, typed APIs, HTML access, abort/cleanup, render transforms, after-frame drawing, replaceable renderers and the built-in `gestureGuard`/`fullscreenMode`/`heatmap` plugins; plugin tests, consumer types, the `plugins` scenario and `demo/plugins-builtin.html`; [guide](plugins.md) |
@@ -297,6 +297,27 @@ forced basic WebGL 1**. The new [Elevation on a route](tutorials/elevation.md)
 tutorial draws its profile and readouts from `exportGeoJson()`, and all
 eighteen example pages boot without page errors when tiles are blocked.
 
+The video-URL addition passes **346 unit tests**, the same build/type/
+distribution and consumer-type checks, and the complete default browser suite:
+**41/41 scenarios/batteries on each of WebGL 1, WebGPU and forced basic WebGL 1**.
+The `battery:media` battery now runs eleven checks; the new one switches a paused
+two-frame loop to a second fixture (the descriptor update bumps `revision` and
+reports `loading` without touching the uploaded pixels, then the new green frame
+arrives with a bumped `pixelVersion`), switches while playing and lets the new
+loop advance to yellow **without** a manual `play()`, supersedes an in-flight
+load with a rapid second update, keeps the last decoded frame on screen when a
+missing URL reports `error`, refuses an empty URL before any change, and
+recovers through red and blue. Frame callbacks queued before a pause or a switch
+are discarded by a pump epoch, so a late callback can no longer repaint after a
+pause or a source removal (the unmodified code still applied one such frame in
+this environment), and both backends keep the previous texture while a video
+element has no decodable frame instead of importing blank pixels (WebGPU
+rejected such an import outright). The existing video polls and the pause settle
+in MEDIA-05 and LIFE-05 were given headroom for slow headless presentation
+instead of assuming a 150 ms final-update render. The additional fixture is
+deterministic (`green-yellow.mp4`, green then yellow at 1 fps, with
+`generate-media.py`).
+
 The recorded browser environment was headless Chromium on an Apple M5 Pro,
 using ANGLE Metal for WebGL and `apple metal-3` for WebGPU. Pixel comparisons
 against decoded source bitmaps and between backends found zero differences at
@@ -377,8 +398,8 @@ Canvas setup is still faster at 282 ms. One-second warm-pan outliers persist.
   not promise identical pixels across browsers/OSes.
 - **Media:** overlays are placed into axis-aligned bounds; `rotate` turns a
   placement clockwise about its centre, without skew or color filters. Opacity
-  is supported; custom blending modes are not. Runtime URL updates are supported
-  for images, not video.
+  is supported; custom blending modes are not. Image and video URLs can change
+  at runtime.
 - **Icons:** size is square via `iconSize` or natural size/DPR. `iconTint` multiplies
   the icon atlas RGB (default white); the shape fallback of a loading/failed icon
   keeps `color` and is not tinted. Shape fallbacks and ordinary point shapes do not

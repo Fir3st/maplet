@@ -251,10 +251,11 @@ The current public construction, object lifetime and migration contract is in
   `map.addVideo({ url, bounds, loop })` place data in a geographic or planar
   rectangle (`southwest`/`northeast`). Raster layers provide opacity and order.
   Raw `pixels` are copied RGBA data.
-- Descriptor changes (image URL, bounds) increment `revision` and rebuild the
-  scene plan. Pixel changes (decode, `updateRegion`, video frames) increment
-  `pixelVersion` and request a frame without rebuilding the plan.
-- Load failures expose `error` and retain the last decoded pixels.
+- Descriptor changes (image URL, video URL, bounds) increment `revision` and
+  rebuild the scene plan. Pixel changes (decode, `updateRegion`, video frames)
+  increment `pixelVersion` and request a frame without rebuilding the plan.
+- Load failures expose `error` and retain the last decoded pixels. A video URL
+  change keeps the uploaded frame on screen until the new source decodes.
 - `updateRegion(region, pixels, { stride })` validates bounds, stride and buffer
   length before writing (`invalid-region`). Uploads are partial, with
   premultiplied rows: `texSubImage2D` or `writeTexture` with `origin`.
@@ -264,9 +265,16 @@ The current public construction, object lifetime and migration contract is in
   and `pixelVersion` are untouched. Picking and culling use the turned quad
   (MEDIA-07).
 - Video uses `requestVideoFrameCallback` (rAF fallback) only while playing.
-  `pause()` uploads the final frame once and stops the pump. Remove/destroy
-  releases the video and textures and ignores late frames. Only images support
-  runtime URL changes.
+  `pause()` uploads the final frame once and stops the pump. A runtime URL
+  change on a video enters `loading` and reloads the element; the requested
+  playback state survives, so a playing video resumes when the new source is
+  ready while a `pause()` during the load keeps it paused. Load listeners
+  belong to exactly one load, so an aborted load can never fail its successor,
+  and frame callbacks queued before a pause or a switch are discarded. While
+  the element has no decodable frame (before the first decode, across a reload,
+  after a failure), the backends keep the previous texture instead of importing
+  blank pixels. Remove/destroy releases the video and textures and ignores late
+  frames (MEDIA-09).
 - Each media source has one pick record (its source ID) for the whole quad,
   with normal event bubbling. Feature dragging applies only to vector sources.
 

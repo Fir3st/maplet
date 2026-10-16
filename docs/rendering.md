@@ -140,7 +140,10 @@ Skew and color filters are not supported.
 
 Image sources also accept copied RGBA pixels and `updateRegion()` for partial
 updates. Videos expose play/pause; the frame pump stops while paused and releases
-resources on removal. Image URLs can change at runtime; video URLs cannot.
+resources on removal. Image and video URLs can change at runtime: a video
+reloads its element, a requested playback resumes when the new source is ready,
+and the last decoded frame stays on screen until then (a failed load reports
+`error` and keeps it).
 
 ## Backend recovery
 

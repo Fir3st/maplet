@@ -211,6 +211,12 @@ export class MediaSourceImpl {
   private canvas: HTMLCanvasElement | null = null;
   private context: CanvasRenderingContext2D | null = null;
   private playing = false;
+  /** Invalidates queued frame callbacks when the pump stops or restarts (MEDIA-05/09). */
+  private pumpEpoch = 0;
+  /** Video load generation: a stale play() or load event never wins (MEDIA-09). */
+  private loadSeq = 0;
+  /** Detaches the current video load's listeners; one load owns the element at a time. */
+  private videoCleanup: (() => void) | null = null;
   private frameToken: number | null = null;
   private rafToken: number | null = null;
   private dirty: MediaRegion[] = [];
@@ -237,33 +243,15 @@ export class MediaSourceImpl {
       video.playsInline = true;
       video.preload = 'auto';
       video.loop = (options as VideoSourceOptions).loop ?? false;
-      video.addEventListener('loadeddata', () => {
-        if (this.destroyed) return;
-        this.width = video.videoWidth;
-        this.height = video.videoHeight;
-        if (this.width === 0 || this.height === 0) {
-          this.failState('decoded video has no intrinsic size');
-          return;
-        }
-        this.element = video;
-        this.state = 'ready';
-        this.error = null;
-        this.pixelVersion++;
-        this.emitter.emit('change', this.snapshot());
-      });
-      video.addEventListener('error', () => {
-        if (this.destroyed) return;
-        this.failState(`failed to load video ${url}`);
-      });
       video.addEventListener('ended', () => {
-        if (this.destroyed || !this.playing) return;
+        if (this.destroyed || !this.playing || this.state !== 'ready') return;
         this.stopPump();
         this.playing = false;
         // No lost final update: the last decoded frame is re-uploaded once.
         this.pixelVersion++;
         this.emitter.emit('frame', this.snapshot());
       });
-      video.src = url;
+      this.beginVideoLoad(url);
       return;
     }
     const pixels = (options as ImageSourceOptions).pixels;
@@ -315,7 +303,7 @@ export class MediaSourceImpl {
     return this.playing;
   }
 
-  /** Descriptor update: URL (images), bounds and rotation. Pixel updates use `updateRegion`. */
+  /** Descriptor update: URL (images and video), bounds and rotation. Pixel updates use `updateRegion`. */
   update(patch: { readonly url?: string; readonly bounds?: MediaBounds; readonly rotate?: number }): void {
     if (this.destroyed) fail('destroyed', 'the media source has been destroyed', { sourceId: this.id });
     if (patch.bounds) {
@@ -327,19 +315,70 @@ export class MediaSourceImpl {
       this.revision++;
     }
     if (patch.url !== undefined) {
-      if (this.kind !== 'image') {
-        fail('invalid-state', `media source ${this.id} is a video source; only images can change URL`, {
-          sourceId: this.id,
-        });
-      }
       if (typeof patch.url !== 'string' || patch.url.length === 0) {
         fail('invalid-argument', 'media url must be a non-empty string', { sourceId: this.id });
       }
       this.url = patch.url;
       this.revision++;
-      this.loadImage(patch.url);
+      if (this.kind === 'video') this.beginVideoLoad(patch.url);
+      else this.loadImage(patch.url);
     }
     this.emitter.emit('change', this.snapshot());
+  }
+
+  /**
+   * Starts a video load (construction or a URL update, MEDIA-09). Load
+   * listeners belong to exactly one load: starting the next load removes them
+   * first, so an aborted load can never report an error for its successor.
+   * The requested playback state survives: a video that was playing resumes
+   * when the new source is ready, while a `pause()` during the load keeps it
+   * paused. Until then the previous pixels stay uploaded: no `pixelVersion`
+   * changes, so the backends keep the last decoded frame on screen.
+   */
+  private beginVideoLoad(url: string): void {
+    const video = this.video;
+    if (!video) return; // no DOM: the constructor already reported the environment error
+    this.loadSeq++;
+    this.videoCleanup?.();
+    this.videoCleanup = null;
+    this.stopPump();
+    video.pause();
+    this.url = url;
+    this.state = 'loading';
+    this.error = null;
+    const onLoaded = (): void => {
+      cleanup();
+      if (this.destroyed) return;
+      this.width = video.videoWidth;
+      this.height = video.videoHeight;
+      if (this.width === 0 || this.height === 0) {
+        this.playing = false;
+        this.failState('decoded video has no intrinsic size');
+        return;
+      }
+      this.element = video;
+      this.state = 'ready';
+      this.error = null;
+      this.pixelVersion++;
+      this.emitter.emit('change', this.snapshot());
+      if (this.playing) this.play();
+    };
+    const onError = (): void => {
+      cleanup();
+      if (this.destroyed) return;
+      this.playing = false;
+      this.stopPump();
+      this.failState(`failed to load video ${url}`);
+    };
+    const cleanup = (): void => {
+      video.removeEventListener('loadeddata', onLoaded);
+      video.removeEventListener('error', onError);
+      if (this.videoCleanup === cleanup) this.videoCleanup = null;
+    };
+    video.addEventListener('loadeddata', onLoaded);
+    video.addEventListener('error', onError);
+    this.videoCleanup = cleanup;
+    video.src = url;
   }
 
   private loadImage(url: string): void {
@@ -441,16 +480,18 @@ export class MediaSourceImpl {
       fail('invalid-state', `media source ${this.id} is not a video source`, { sourceId: this.id });
     }
     this.playing = true;
+    const seq = this.loadSeq;
     const promise = video.play() as Promise<void> | undefined;
     if (promise && typeof promise.then === 'function') {
       void promise
         .then(() => {
-          if (this.destroyed) return;
+          // A superseded load interrupted this request; its own ready handler resumes.
+          if (this.destroyed || seq !== this.loadSeq) return;
           this.playError = null;
           this.startPump();
         })
         .catch((error: unknown) => {
-          if (this.destroyed) return;
+          if (this.destroyed || seq !== this.loadSeq) return;
           this.playing = false;
           this.playError = String(error);
           this.emitter.emit('change', this.snapshot());
@@ -470,8 +511,11 @@ export class MediaSourceImpl {
     this.stopPump();
     video.pause();
     // No lost final update: the current frame is re-uploaded once, then idle.
-    this.pixelVersion++;
-    this.emitter.emit('frame', this.snapshot());
+    // During a URL load there is no decoded frame; the uploaded pixels stay.
+    if (this.state === 'ready') {
+      this.pixelVersion++;
+      this.emitter.emit('frame', this.snapshot());
+    }
   }
 
   /**
@@ -482,15 +526,18 @@ export class MediaSourceImpl {
   private startPump(): void {
     const video = this.video;
     if (!video || this.destroyed) return;
+    const epoch = ++this.pumpEpoch;
+    const live = (): boolean =>
+      !this.destroyed && this.playing && this.state === 'ready' && epoch === this.pumpEpoch;
     const frameCallback = (video as HTMLVideoElement & {
       requestVideoFrameCallback?: (callback: () => void) => number;
     }).requestVideoFrameCallback;
     if (typeof frameCallback === 'function') {
       const step = (): void => {
-        if (this.destroyed || !this.playing) return;
+        if (!live()) return;
         this.frameToken = frameCallback.call(video, () => {
           this.frameToken = null;
-          if (this.destroyed) return;
+          if (!live()) return;
           this.onFrame();
           step();
         });
@@ -500,7 +547,7 @@ export class MediaSourceImpl {
     }
     if (typeof requestAnimationFrame !== 'function') return;
     const step = (): void => {
-      if (this.destroyed || !this.playing) return;
+      if (!live()) return;
       this.onFrame();
       this.rafToken = requestAnimationFrame(step);
     };
@@ -508,6 +555,10 @@ export class MediaSourceImpl {
   }
 
   private stopPump(): void {
+    // Invalidate queued callbacks first: a cancelled rVFC token is best-effort
+    // (older browsers lack cancelVideoFrameCallback) and a stale callback must
+    // not upload a frame from before a pause or a URL switch.
+    this.pumpEpoch++;
     const video = this.video;
     if (this.frameToken !== null && video) {
       (video as HTMLVideoElement & { cancelVideoFrameCallback?: (token: number) => void })
@@ -553,6 +604,8 @@ export class MediaSourceImpl {
     this.destroyed = true;
     this.playing = false;
     this.stopPump();
+    this.videoCleanup?.();
+    this.videoCleanup = null;
     const video = this.video;
     if (video) {
       video.pause();
@@ -631,7 +684,7 @@ export interface MediaSourceHandle {
   snapshot(): MediaSourceSnapshot;
   /** Resolves once the media is usable or failed. */
   ready(): Promise<MediaSourceSnapshot>;
-  /** Descriptor update: `url` (images only), `bounds` and `rotate`. */
+  /** Descriptor update: `url` (images and video), `bounds` and `rotate`. */
   update(patch: { readonly url?: string; readonly bounds?: MediaBounds; readonly rotate?: number }): void;
   /** Image pixel update; validation rejects invalid regions before any change. */
   updateRegion(region: MediaRegion, pixels: Uint8Array | Uint8ClampedArray, options?: { readonly stride?: number }): void;

@@ -1,10 +1,12 @@
 /**
- * Media battery (MEDIA-01..07, LIFE-05): an image with four known corners in
- * explicit bounds (order/opacity against other layers), URL/bounds changes that
- * touch exactly one source, placement rotation (texture corners, picking and
- * revision), partial `updateRegion` uploads with validation, a two-frame video
- * whose pump idles on pause while keeping the final frame, and clean
- * removal/destroy during playback. Results: `window.__mediaCheckResult`.
+ * Media battery (MEDIA-01..07, MEDIA-09, LIFE-05): an image with four known
+ * corners in explicit bounds (order/opacity against other layers), URL/bounds
+ * changes that touch exactly one source, placement rotation (texture corners,
+ * picking and revision), partial `updateRegion` uploads with validation, a
+ * two-frame video whose pump idles on pause while keeping the final frame,
+ * runtime video URL changes (loading lifecycle, playback resume, last-frame
+ * retention on failure, stale loads) and clean removal/destroy during
+ * playback. Results: `window.__mediaCheckResult`.
  */
 import { createMap } from '../dist/index.js';
 
@@ -23,7 +25,7 @@ function finalize() {
   if (finalized) return;
   finalized = true;
   result.ms = Math.round(performance.now() - started);
-  result.pass = result.errors.length === 0 && result.checks.length === 10 && result.checks.every((entry) => entry.pass);
+  result.pass = result.errors.length === 0 && result.checks.length === 11 && result.checks.every((entry) => entry.pass);
   window.__mediaCheckResult = result;
   document.title = 'media-check-done';
   const summary = document.getElementById('summary');
@@ -131,6 +133,9 @@ async function check(name, fn) {
 
 const red = (pixel) => pixel.r > 180 && pixel.g < 80 && pixel.b < 80;
 const blue = (pixel) => pixel.b > 180 && pixel.r < 80 && pixel.g < 80;
+// The green-yellow feed (MEDIA-09): CSS green (0,128,0) and full yellow.
+const green = (pixel) => pixel.g > 90 && pixel.r < 70 && pixel.b < 70;
+const yellow = (pixel) => pixel.r > 180 && pixel.g > 180 && pixel.b < 80;
 
 const startedMark = performance.now();
 started = startedMark;
@@ -434,8 +439,8 @@ await check('MEDIA-05 video frames update the texture and pause stops the pump',
   const ready = video.snapshot();
   videoRevision = ready.revision;
   video.play();
-  const first = await pollSample(136, 484, red);
-  const second = await pollSample(136, 484, blue);
+  const first = await pollSample(136, 484, red, 5000);
+  const second = await pollSample(136, 484, blue, 5000);
   video.pause();
   const versionAtPause = video.snapshot().pixelVersion;
   const framesAtPause = map.stats().frames;
@@ -465,14 +470,107 @@ await check('MEDIA-05 video frames update the texture and pause stops the pump',
   };
 });
 
+await check('MEDIA-09 video URL changes reload the feed, resume playback and keep pixels on failure', async () => {
+  // Park the loop on its second frame so a restart is unambiguous.
+  video.play();
+  await pollSample(136, 484, blue, 5000);
+  video.pause();
+  const boundsBefore = video.snapshot().bounds;
+  const revisionBefore = video.snapshot().revision;
+  const pixelVersionBefore = video.snapshot().pixelVersion;
+  // Paused switch: the descriptor update enters loading without touching the
+  // uploaded pixels, then the new feed's first frame (green) arrives.
+  video.update({ url: './media/green-yellow.mp4' });
+  const loading = video.snapshot();
+  const loaded = await video.ready();
+  const firstFrame = await pollSample(136, 484, green, 5000);
+  // A switch while playing keeps the requested state: the pump resumes on its
+  // own and the loop advances to its second frame (yellow).
+  video.play();
+  await pollSample(136, 484, yellow, 5000);
+  video.update({ url: './media/green-yellow.mp4' });
+  const restarted = await pollSample(136, 484, green, 5000);
+  const resumed = await pollSample(136, 484, yellow, 5000);
+  const playingAfterSwitch = video.playing;
+  video.pause();
+  // A rapid second update supersedes the in-flight load: the last one wins.
+  video.update({ url: './media/two-frames.mp4' });
+  video.update({ url: './media/green-yellow.mp4' });
+  await video.ready();
+  const lastWins = await pollSample(136, 484, green, 5000);
+  video.pause();
+  // A failed URL is an explicit error and the last uploaded frame stays.
+  video.update({ url: './media/missing.mp4' });
+  const failed = await video.ready();
+  const retained = await sample(136, 484);
+  // An empty URL is refused before any change; a valid switch recovers.
+  let emptyUrl = null;
+  try {
+    video.update({ url: '' });
+  } catch (error) {
+    emptyUrl = error?.code ?? String(error);
+  }
+  const refused = video.snapshot();
+  video.update({ url: './media/two-frames.mp4' });
+  const recovered = await video.ready();
+  video.play();
+  const redAgain = await pollSample(136, 484, red, 5000);
+  const blueAgain = await pollSample(136, 484, blue, 5000);
+  video.pause();
+  const final = video.snapshot();
+  return {
+    pass:
+      loading.state === 'loading' &&
+      loading.pixelVersion === pixelVersionBefore &&
+      loaded.state === 'ready' &&
+      loaded.revision > revisionBefore &&
+      loaded.pixelVersion > pixelVersionBefore &&
+      video.playing === false &&
+      green(firstFrame) &&
+      playingAfterSwitch === true &&
+      green(restarted) &&
+      yellow(resumed) &&
+      green(lastWins) &&
+      failed.state === 'error' &&
+      /missing\.mp4/.test(failed.error ?? '') &&
+      green(retained) &&
+      emptyUrl === 'invalid-argument' &&
+      refused.state === 'error' &&
+      refused.revision === failed.revision &&
+      recovered.state === 'ready' &&
+      red(redAgain) &&
+      blue(blueAgain) &&
+      final.playError === null &&
+      final.bounds.southwest.lat === boundsBefore.southwest.lat &&
+      final.bounds.southwest.lng === boundsBefore.southwest.lng &&
+      final.bounds.northeast.lat === boundsBefore.northeast.lat &&
+      final.bounds.northeast.lng === boundsBefore.northeast.lng,
+    detail: {
+      loading: { state: loading.state, pixelVersion: loading.pixelVersion },
+      loaded: { state: loaded.state, revision: loaded.revision, pixelVersion: loaded.pixelVersion },
+      pausedSwitch: { first: describe(firstFrame), playing: video.playing },
+      playingSwitch: { restart: describe(restarted), resumed: describe(resumed), playing: playingAfterSwitch },
+      lastWins: describe(lastWins),
+      failure: { state: failed.state, error: failed.error, retained: describe(retained) },
+      refused: { code: emptyUrl, state: refused.state },
+      recovered: { state: recovered.state, red: describe(redAgain), blue: describe(blueAgain) },
+      revisions: [revisionBefore, final.revision],
+      pixelVersions: [pixelVersionBefore, final.pixelVersion],
+    },
+  };
+});
+
 await check('LIFE-05 the scheduler draws while playing and returns to idle', async () => {
   video.play();
-  const firstFrame = await pollSample(136, 484, red);
+  const firstFrame = await pollSample(136, 484, red, 5000);
   const playingBaseline = map.stats().frames;
   await sleep(1300);
   const playingFrames = map.stats().frames - playingBaseline;
   video.pause();
-  await sleep(150); // the pause final-update frame is applied here
+  // Headless presentation can delay the pause's single final-update render
+  // (measured up to ~250 ms quiet, longer under load); the idle window after
+  // this settle must still draw nothing while paused.
+  await sleep(1200);
   const idleBaseline = map.stats().frames;
   await sleep(700);
   const idleFrames = map.stats().frames - idleBaseline;
