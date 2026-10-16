@@ -5,11 +5,11 @@ Release archives are available without registry authentication.
 
 ## Release archive
 
-Download `fir3st-maplet-0.1.0-alpha.10.tgz` from
-[GitHub Releases](https://github.com/Fir3st/maplet/releases/tag/v0.1.0-alpha.10), then run:
+Download `fir3st-maplet-0.1.0-alpha.11.tgz` from
+[GitHub Releases](https://github.com/Fir3st/maplet/releases/tag/v0.1.0-alpha.11), then run:
 
 ```sh
-npm install ./fir3st-maplet-0.1.0-alpha.10.tgz
+npm install ./fir3st-maplet-0.1.0-alpha.11.tgz
 ```
 
 Import the package from your application:

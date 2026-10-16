@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.1.0-alpha.11
+
+- Add marker clustering: `map.setMarkerClustering({ radiusPx, minCount,
+  disableAtZoom })` replaces pins whose screen distance is within the radius with
+  one count badge, and `getMarkerClustering()` reports the options with defaults
+  applied (`null` shows every pin again). Grouping is resolved in screen space at
+  the current zoom, so panning never re-clusters while a zoom or a pin change
+  re-resolves. A badge carries the count in three size tiers (exact to 999, then
+  `1.2k`), hovers a `N pins` tooltip and fits the member bounds on click so the
+  pins separate. `cluster: false` keeps a pin individual, a grouped pin's
+  permanent tooltip and open popup park and return with it, and a dragged pin
+  joins or leaves a group at `dragend`.
+- Fix pin visibility ownership: `handle.hide()` now survives later `setIcon` or
+  `setDraggable` edits (the appearance rebuild used to clear it), and pins
+  grouped in an earlier pass are revealed when clustering stops or
+  `disableAtZoom` is reached.
+- Add the "Cluster nearby pins" tutorial with a live example, bringing the
+  documentation to seventeen tutorials. The Gist payload cap was raised
+  deliberately from 1 MiB to 1.25 MiB because every tutorial carries its own
+  copy of the shared files; the build now reports the measured size when it
+  exceeds the cap.
+
 ## 0.1.0-alpha.10
 
 - Fix permanent tooltip and popup tracking: both used to be clamped
