@@ -91,6 +91,10 @@ The handle also exposes `setIcon`, `setDraggable`, `setTooltip`, `setPopup`,
 `radiusPx` (default 64) into one count badge; `null` shows every pin again.
 A badge is an internal sprite (reserved `maplet-cluster:` id prefix) that hovers
 a `N pins` tooltip and fits the member bounds on click, so the pins separate.
+Keyboard users reach the pins through one hidden focus stop inside the
+container: Tab enters it, arrows move a ring cursor (announced through a polite
+live region), Enter activates the focused pin like a click, and Escape closes
+the popup then leaves the cursor.
 See [marker contracts](decisions.md#markers), the
 [markers tutorial](tutorials/markers.md) and the
 [clustering tutorial](tutorials/clusters.md).

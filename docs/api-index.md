@@ -40,13 +40,18 @@ Lifecycle: `batch`, `whenRendered`, `on`, `once`, `off`, `onFeature`,
 expose `addPoints`, `addLines`, `addPolygons`, `addLabels`, `addTiles`, `addWms`,
 `addImage`, `addVideo` and nested `addLayer`. Direct map additions share `map.base`.
 `addMarker(options)` and `addMarkers(options[])` create Leaflet-style pins in a
-shared internal layer; `draggable: true` opts a single pin into dragging and
-`cluster: false` keeps it out of a cluster badge. The
+shared internal layer; `draggable: true` opts a single pin into dragging,
+`cluster: false` keeps it out of a cluster badge and `keyboard: false` keeps it
+out of the keyboard cursor. The
 handle exposes `getPosition`/`setPosition`, `setIcon`, `setDraggable`,
 `setTooltip`/`setPopup`, `openTooltip`/`closeTooltip`, `openPopup`/`closePopup`,
 `show`/`hide` and `remove`. `setMarkerClustering({ radiusPx, minCount,
 disableAtZoom })` groups nearby pins into count badges and
 `getMarkerClustering()` reports the active options (`null` while it is off).
+Tab into the map reaches one hidden pin stop; arrows walk a ring cursor
+(announced with `alt`, then the tooltip, then `Pin`), Enter or Space activates
+the focused pin exactly like a click, and Escape closes the popup then leaves
+the cursor.
 
 | Handle | Main operations |
 | --- | --- |

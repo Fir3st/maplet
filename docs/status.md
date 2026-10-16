@@ -253,6 +253,25 @@ cap was raised deliberately from 1 MiB to 1.25 MiB, because the seventeenth
 tutorial adds its own copy of the shared files, and the build now reports the
 measured size when it exceeds the cap.
 
+Keyboard access to pins (MARKER-15) was verified through the real input path.
+The marker battery gained three checks: MARKER-15 reaches the hidden stop, walks
+the cursor with arrow keys (names come from `alt`, then the tooltip, then
+`Pin`; the ring sits on the focused pin's sprite box to the pixel), asserts that
+arrows do not pan the map and that Tab is never intercepted, opens the focused
+pin's popup with Enter, closes it with the first Escape and leaves the cursor
+with the second (focus back on the container, ring hidden); MARKER-16 keeps
+hidden pins, `keyboard: false` pins and clustered members out of the cycle, has
+the badge visited in the place of its first reachable member and moved-to when
+the focused pin is hidden; MARKER-17 asserts that Enter delivers a real click
+event (`originalEvent` is the KeyboardEvent, the screen point is the sprite
+centre) to both handle and map listeners, and that the stop leaves the tab order
+once no pin is reachable. In a real browser on the built page, Tab from the
+container focused the stop, ArrowRight announced `Market square, 2 of 4` with
+the ring on that pin and without panning or scrolling, Enter opened the popup,
+the first Escape closed it, the second returned focus to the container with the
+ring hidden, ArrowRight then panned the map again, and Tab from the stop left to
+the zoom button.
+
 The recorded browser environment was headless Chromium on an Apple M5 Pro,
 using ANGLE Metal for WebGL and `apple metal-3` for WebGPU. Pixel comparisons
 against decoded source bitmaps and between backends found zero differences at
@@ -345,8 +364,10 @@ Canvas setup is still faster at 282 ms. One-second warm-pan outliers persist.
   rather than Leaflet-style HTML; pass a `Node` for rich content. Dragging is
   opt-in per pin (`draggable`, `setDraggable`) and clustering collapses dense
   pins into count badges (`setMarkerClustering`, MARKER-11); pins that share one
-  position stay one badge at the maximum zoom (no spiderfy), and DOM focus on
-  pins is not part of this alpha.
+  position stay one badge at the maximum zoom (no spiderfy). Keyboard access
+  uses one hidden focus stop inside the container and a ring cursor
+  (MARKER-15): hidden pins, `keyboard: false` pins and clustered members stay
+  out of the cycle, and only pins inside the container are reachable.
 - **Plugins:** the gesture guard blocks one-finger touch feature drags and touch
   double-tap zoom (a touch double-click reports `mouse`); with
   `touch-action: pan-y` a two-finger vertical drag can still scroll the page.

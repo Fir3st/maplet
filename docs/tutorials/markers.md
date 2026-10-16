@@ -74,11 +74,27 @@ carry the pointer state and the overlays follow the pin for free.
   visibility (`show`/`hide`), emits feature events (`on('click')`,
   `on('mouseover')`) and removes itself (`remove`).
 
+## Keyboard
+
+Pins are canvas sprites, so the map holds one hidden focus stop instead of a DOM
+node per pin. Tab into the map reaches it and Tab leaves it again:
+
+- **Left/Right/Up/Down** (or **Home/End**) walk a ring from pin to pin in layer
+  order and wrap around; clustered pins are visited as their badge.
+- **Enter** or **Space** activates the focused pin exactly like a click: the
+  popup opens (a badge zooms its members apart) and `click` listeners fire with
+  the keyboard event as `originalEvent`.
+- **Escape** closes the popup first, then leaves the cursor — the map keeps
+  focus, so arrows pan again.
+- A screen reader hears `<name>, 2 of 12`, where the name is `alt`, then the
+  tooltip text, then `Pin` (or `N pins` for a badge).
+- Pins with `keyboard: false`, hidden pins and clustered members stay out of the
+  cursor; panning or zooming the map moves the cursor with the pins.
+
 Pins are canvas sprites — there is no DOM element per marker — and they are not
 zoom-gated: unlike data layers, whose default `minZoom` is 0, a marker stays
 visible at the negative zooms planar maps can use. Dragging is opt-in per pin
-(`draggable: true`); dense pins can collapse into count badges with
-`setMarkerClustering` (see the [clustering tutorial](clusters.md)), while DOM
-focus on pins is not part of this alpha. See the
+(`draggable: true`) and dense pins can collapse into count badges with
+`setMarkerClustering` (see the [clustering tutorial](clusters.md)). See the
 [marker contracts](../decisions.md#markers) and
 [rendering guide](../rendering.md#markers).

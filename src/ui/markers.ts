@@ -48,6 +48,14 @@ import {
   type MarkerClusteringOptions,
   type ResolvedMarkerClustering,
 } from './marker-clusters.ts';
+import {
+  focusAnnouncement,
+  pinFocusBox,
+  pinFocusVisible,
+  pinsStopLabel,
+  stepFocusIndex,
+  type FocusStep,
+} from './pin-keyboard.ts';
 
 /** Built-in pin asset id; replace it by registering your own asset id instead. */
 export const MARKER_PIN_ICON_ID = 'maplet-marker-pin';
@@ -131,6 +139,16 @@ export interface MarkerOptions<P = FeatureProperties> {
    * `cluster: false` keeps one pin individual (a pinned landmark, say).
    */
   readonly cluster?: boolean;
+  /**
+   * Include the pin in the keyboard cursor (MARKER-15); default `true`.
+   * `keyboard: false` keeps it out of the tab-reachable pin stop.
+   */
+  readonly keyboard?: boolean;
+  /**
+   * Accessible name for keyboard announcements (Leaflet parity); default is the
+   * tooltip text, then `Pin` (`N pins` for a cluster badge).
+   */
+  readonly alt?: string;
   readonly properties?: P;
   /** Hover tooltip by default; pass an init object for a permanent tooltip. */
   readonly tooltip?: MarkerTooltipInit | MarkerContent | null;
@@ -235,10 +253,16 @@ interface MarkerRecord {
   clustered: boolean;
   /** Non-null on internal count badges; carries the members and last screen centre. */
   badge: { members: MarkerRecord[]; x: number; y: number } | null;
+  /** Badge standing in for this pin; the keyboard cursor visits it in the pin's place. */
+  clusterBadge: MarkerRecord | null;
   /** Mid-drag pins stay individual so the pointer always owns the sprite. */
   dragging: boolean;
   /** A sticky/permanent tooltip closed by clustering; reopened with the pin. */
   tooltipParked: boolean;
+  /** Accessible name for keyboard announcements (MARKER-15). */
+  alt: string | null;
+  /** Reachable by the keyboard pin cursor (MARKER-15). */
+  keyboard: boolean;
 }
 
 interface PopupEntry {
@@ -265,6 +289,13 @@ const CLUSTER_FEATURE_PREFIX = 'maplet-cluster:';
 const CLUSTER_ASSET_PREFIX = 'maplet-cluster-asset:';
 /** Badge artwork cache bound; unused labels are evicted in insertion order. */
 const MAX_BADGE_ART = 64;
+/** Keyboard focus DOM (MARKER-15): both clipped helpers leave no layout trace. */
+const CLIPPED_STYLE =
+  'position:absolute;left:0;top:0;width:1px;height:1px;padding:0;margin:0;border:0;' +
+  'overflow:hidden;clip-path:inset(50%);white-space:nowrap;pointer-events:none;';
+const PIN_FOCUS_STYLE =
+  'position:absolute;display:none;pointer-events:none;box-sizing:border-box;border-radius:10px;' +
+  'box-shadow:0 0 0 2px #1d4ed8, 0 0 0 4px #ffffff;';
 
 /** Marker UI controller: shared GPU layer plus the bounded DOM overlays. */
 export class MarkerController {
@@ -287,6 +318,13 @@ export class MarkerController {
   /** Zoom of the last grouping pass; panning never changes the grouping. */
   private lastClusterZoom: number | null = null;
   private applyingClusters = false;
+  /** Keyboard pin focus (MARKER-15): the hidden stop, the announcer and the ring. */
+  private pinsStop: HTMLElement | null = null;
+  private pinAnnouncer: HTMLElement | null = null;
+  private pinRing: HTMLElement | null = null;
+  /** Remembered cursor target (a record key); kept while it stays reachable. */
+  private focusedKey: string | null = null;
+  private pinFocusActive = false;
 
   constructor(engine: MapEngine, layer: PointsLayerHandle<FeatureProperties>, container: HTMLElement | null) {
     this.engine = engine;
@@ -298,6 +336,7 @@ export class MarkerController {
         if (event.type === 'click') this.closePopupElement();
       }),
       engine.on('viewchange', () => this.onViewChange()),
+      engine.on('viewend', () => this.refreshPinsStop()),
       engine.on('commit', () => this.reposition()),
       engine.on('destroy', () => this.destroy()),
     );
@@ -336,8 +375,11 @@ export class MarkerController {
         clusterable: option.cluster !== false,
         clustered: false,
         badge: null,
+        clusterBadge: null,
         dragging: false,
         tooltipParked: false,
+        alt: option.alt ?? null,
+        keyboard: option.keyboard !== false,
       };
       this.records.set(featureRefKey(record.point.ref), record);
       this.applyAppearance(record);
@@ -345,6 +387,7 @@ export class MarkerController {
       return this.handle(record, point);
     });
     if (this.clustering) this.recomputeClusters();
+    this.refreshPinsStop();
     return handles;
   }
 
@@ -416,6 +459,7 @@ export class MarkerController {
     if (hidden) this.parkMemberOverlays(record);
     else this.restoreMemberOverlays(record);
     if (this.clustering) this.recomputeClusters();
+    this.refreshPinsStop();
   }
 
   private setTooltip(record: MarkerRecord, value: MarkerTooltipInit | MarkerContent | null): void {
@@ -447,12 +491,15 @@ export class MarkerController {
   }
 
   private removeRecord(record: MarkerRecord): void {
+    const key = featureRefKey(record.point.ref);
+    if (this.focusedKey === key) this.focusedKey = null;
     this.closeTooltipElement(record);
     if (this.popup?.record === record) this.closePopupElement();
     record.point.remove();
-    this.records.delete(featureRefKey(record.point.ref));
+    this.records.delete(key);
     this.clusteredRecords.delete(record);
     if (this.clustering) this.recomputeClusters();
+    this.refreshPinsStop();
   }
 
   private assertLive(record: MarkerRecord): void {
@@ -561,11 +608,12 @@ export class MarkerController {
         : { clusters: [] as ClusterPartition['clusters'], singles: [] as ClusterPartition['singles'] };
     this.applyingClusters = true;
     try {
-      const grouped = new Set<string>();
+      const badgeOf = new Map<string, MarkerRecord>();
       partition.clusters.forEach((group, index) => {
+        const badge = this.badgeAt(index);
         const members = group.members.map((key) => records.get(key)!);
-        for (const member of members) grouped.add(featureRefKey(member.point.ref));
-        this.updateBadge(this.badgeAt(index), members, group.x, group.y);
+        for (const member of members) badgeOf.set(featureRefKey(member.point.ref), badge);
+        this.updateBadge(badge, members, group.x, group.y);
       });
       for (let index = partition.clusters.length; index < this.badges.length; index++) {
         this.parkBadge(this.badges[index]!);
@@ -575,9 +623,11 @@ export class MarkerController {
       const touched = new Set<MarkerRecord>(records.values());
       for (const record of this.clusteredRecords) touched.add(record);
       for (const record of touched) {
-        const clustered = grouped.has(featureRefKey(record.point.ref));
-        if (record.clustered === clustered) continue;
+        const badge = badgeOf.get(featureRefKey(record.point.ref)) ?? null;
+        const clustered = badge !== null;
+        if (record.clustered === clustered && record.clusterBadge === badge) continue;
         record.clustered = clustered;
+        record.clusterBadge = badge;
         if (clustered) this.clusteredRecords.add(record);
         else this.clusteredRecords.delete(record);
         this.applyAppearance(record);
@@ -587,6 +637,7 @@ export class MarkerController {
     } finally {
       this.applyingClusters = false;
     }
+    this.refreshPinsStop();
   }
 
   /** Lazily allocates the pool slot for a cluster; ids stay reserved. */
@@ -613,8 +664,11 @@ export class MarkerController {
       clusterable: false,
       clustered: false,
       badge: { members: [], x: 0, y: 0 },
+      clusterBadge: null,
       dragging: false,
       tooltipParked: false,
+      alt: null,
+      keyboard: true,
     };
     this.records.set(featureRefKey(record.point.ref), record);
     this.badges.push(record);
@@ -710,6 +764,260 @@ export class MarkerController {
     if (record.tooltip) this.openTooltipElement(record, true);
   }
 
+  /* ----------------------------- keyboard focus ----------------------------- */
+
+  /**
+   * Keyboard access to pins (MARKER-15). Pins are GPU sprites without DOM
+   * nodes, so the controller installs one visually hidden focus stop inside the
+   * container instead: Tab reaches it, arrows walk a ring from pin to pin,
+   * Enter activates the focused pin (a real click event) and Escape leaves.
+   * The stop consumes the arrow keys before they bubble, so panning keeps
+   * working whenever the map container itself is focused (INPUT-07).
+   */
+  private ensurePinsStop(): HTMLElement | null {
+    if (this.pinsStop) return this.pinsStop;
+    const container = this.container;
+    if (!container) return null;
+    const stop = document.createElement('div');
+    stop.dataset.mapletPins = 'true';
+    stop.setAttribute('role', 'group');
+    stop.tabIndex = -1;
+    stop.style.cssText = CLIPPED_STYLE;
+    const announcer = document.createElement('div');
+    announcer.dataset.mapletPinAnnouncer = 'true';
+    announcer.setAttribute('role', 'status');
+    announcer.setAttribute('aria-live', 'polite');
+    announcer.setAttribute('aria-atomic', 'true');
+    announcer.style.cssText = CLIPPED_STYLE;
+    const ring = document.createElement('div');
+    ring.dataset.mapletPinFocus = 'true';
+    ring.setAttribute('aria-hidden', 'true');
+    ring.style.cssText = PIN_FOCUS_STYLE;
+    container.prepend(stop, announcer);
+    container.appendChild(ring);
+    stop.addEventListener('keydown', this.onPinsStopKeyDown);
+    stop.addEventListener('focus', this.onPinsStopFocus);
+    stop.addEventListener('blur', this.onPinsStopBlur);
+    this.unsubscribes.push(() => {
+      stop.removeEventListener('keydown', this.onPinsStopKeyDown);
+      stop.removeEventListener('focus', this.onPinsStopFocus);
+      stop.removeEventListener('blur', this.onPinsStopBlur);
+      stop.remove();
+      announcer.remove();
+      ring.remove();
+    });
+    this.pinsStop = stop;
+    this.pinAnnouncer = announcer;
+    this.pinRing = ring;
+    return stop;
+  }
+
+  /** Keeps the stop's reachability and label in step with what the cursor sees. */
+  private refreshPinsStop(): void {
+    if (this.destroyed) return;
+    if (this.records.size === 0 && !this.pinsStop) return;
+    const stop = this.ensurePinsStop();
+    if (!stop) return;
+    const reachable = this.focusableRecords().length;
+    stop.tabIndex = reachable > 0 ? 0 : -1;
+    stop.setAttribute('aria-label', pinsStopLabel(reachable));
+    if (this.pinFocusActive) this.settlePinCursor('current');
+  }
+
+  /**
+   * Records the cursor can reach: drawn, allowed by `keyboard` and inside the
+   * view. A badge is visited in the place of its first reachable member, so the
+   * cycle keeps the layer's order instead of trailing every cluster at the end.
+   */
+  private focusableRecords(): MarkerRecord[] {
+    const container = this.container;
+    if (!container) return [];
+    const bounds = container.getBoundingClientRect();
+    const records: MarkerRecord[] = [];
+    const visited = new Set<MarkerRecord>();
+    for (const record of this.records.values()) {
+      if (record.badge) continue;
+      if (this.pinReachable(record, bounds)) {
+        records.push(record);
+        continue;
+      }
+      const badge = record.clusterBadge;
+      if (!badge || visited.has(badge)) continue;
+      visited.add(badge);
+      if (this.pinReachable(badge, bounds)) records.push(badge);
+    }
+    return records;
+  }
+
+  private pinReachable(record: MarkerRecord, bounds: DOMRect): boolean {
+    if (record.point.removed || record.hidden || record.clustered || !record.keyboard) return false;
+    return this.pinCentre(record, bounds) !== null;
+  }
+
+  /** Sprite centre while it lies inside the container; null once it left the view. */
+  private pinCentre(record: MarkerRecord, bounds: DOMRect): ScreenPoint | null {
+    const screen = this.screenOf(record);
+    if (!screen) return null;
+    const anchor = record.iconAnchor ?? DEFAULT_MARKER_ANCHOR;
+    const centre = { x: screen.x + anchor.x, y: screen.y + anchor.y };
+    return pinFocusVisible(centre, bounds) ? centre : null;
+  }
+
+  private focusedRecord(): MarkerRecord | null {
+    if (this.focusedKey === null) return null;
+    return this.records.get(this.focusedKey) ?? null;
+  }
+
+  private onPinsStopFocus = (): void => {
+    this.pinFocusActive = true;
+    this.settlePinCursor('current');
+  };
+
+  private onPinsStopBlur = (): void => {
+    this.pinFocusActive = false;
+    if (this.pinRing) this.pinRing.style.display = 'none';
+    if (this.pinAnnouncer) this.pinAnnouncer.textContent = '';
+  };
+
+  /**
+   * Moves the cursor; `current` keeps the remembered pin, so tabbing back into
+   * the stop continues where the user left off.
+   */
+  private settlePinCursor(step: FocusStep | 'current'): void {
+    const records = this.focusableRecords();
+    const current =
+      this.focusedKey === null
+        ? -1
+        : records.findIndex((record) => featureRefKey(record.point.ref) === this.focusedKey);
+    const index =
+      step === 'current'
+        ? current >= 0
+          ? current
+          : records.length > 0
+            ? 0
+            : -1
+        : stepFocusIndex(current, records.length, step);
+    if (index < 0) {
+      this.clearPinCursor();
+      return;
+    }
+    const record = records[index]!;
+    this.focusedKey = featureRefKey(record.point.ref);
+    this.placePinRing();
+    if (this.pinAnnouncer) {
+      this.pinAnnouncer.textContent = focusAnnouncement(this.pinNameOf(record), index, records.length);
+    }
+  }
+
+  private clearPinCursor(): void {
+    this.focusedKey = null;
+    if (this.pinRing) this.pinRing.style.display = 'none';
+    if (this.pinAnnouncer) this.pinAnnouncer.textContent = '';
+  }
+
+  /** Ring around the focused sprite; parked with the pin when it leaves the view. */
+  private placePinRing(): void {
+    const ring = this.pinRing;
+    if (!ring) return;
+    const record = this.focusedRecord();
+    const container = this.container;
+    if (!this.pinFocusActive || !record || !container) {
+      ring.style.display = 'none';
+      return;
+    }
+    const screen = this.screenOf(record);
+    if (!screen) {
+      ring.style.display = 'none';
+      return;
+    }
+    const anchor = record.iconAnchor ?? DEFAULT_MARKER_ANCHOR;
+    const size = record.iconSize ?? DEFAULT_MARKER_SIZE;
+    const box = pinFocusBox({ x: screen.x + anchor.x, y: screen.y + anchor.y }, size, container.getBoundingClientRect());
+    if (!box.visible) {
+      ring.style.display = 'none';
+      return;
+    }
+    ring.style.display = 'block';
+    ring.style.left = `${box.left}px`;
+    ring.style.top = `${box.top}px`;
+    ring.style.width = `${box.size}px`;
+    ring.style.height = `${box.size}px`;
+  }
+
+  private onPinsStopKeyDown = (event: KeyboardEvent): void => {
+    if (this.destroyed || event.key === 'Tab') return; // Tab always leaves the map
+    if (event.key === 'Escape') {
+      // First Escape closes the popup, a second one leaves the pin cursor.
+      if (this.popup) this.closePopupElement();
+      else this.leavePinFocus();
+      return;
+    }
+    const step: FocusStep | null =
+      event.key === 'ArrowRight' || event.key === 'ArrowDown'
+        ? 'next'
+        : event.key === 'ArrowLeft' || event.key === 'ArrowUp'
+          ? 'previous'
+          : event.key === 'Home'
+            ? 'first'
+            : event.key === 'End'
+              ? 'last'
+              : null;
+    if (step) {
+      // Consumed here so the container's pan keys never see it (INPUT-07).
+      event.preventDefault();
+      event.stopPropagation();
+      this.settlePinCursor(step);
+      return;
+    }
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      event.stopPropagation();
+      this.activatePinCursor(event);
+    }
+  };
+
+  private leavePinFocus(): void {
+    if (this.pinsStop && document.activeElement === this.pinsStop) {
+      this.container?.focus({ preventScroll: true });
+    }
+    this.pinFocusActive = false;
+    if (this.pinRing) this.pinRing.style.display = 'none';
+    if (this.pinAnnouncer) this.pinAnnouncer.textContent = '';
+  }
+
+  /** Enter/Space fires a real click so listeners and the popup agree (MARKER-15). */
+  private activatePinCursor(originalEvent: Event): void {
+    const record = this.focusedRecord();
+    const container = this.container;
+    if (!record || !container) return;
+    const centre = this.pinCentre(record, container.getBoundingClientRect());
+    if (!centre) return;
+    this.engine.dispatchFeature({
+      type: 'click',
+      feature: record.point.ref,
+      layerId: this.layer.id,
+      screen: centre,
+      originalEvent,
+    });
+  }
+
+  /** Accessible name: `alt`, then tooltip text, then the kind and member count. */
+  private pinNameOf(record: MarkerRecord): string {
+    const alt = record.alt?.trim();
+    if (alt) return alt;
+    const content = record.tooltip?.content;
+    if (typeof content === 'string') {
+      const text = content.trim();
+      if (text) return text;
+    } else if (content && typeof Node !== 'undefined' && content instanceof Node) {
+      const text = content.textContent?.trim();
+      if (text) return text;
+    }
+    const members = record.badge?.members.length ?? 0;
+    if (record.badge && members > 0) return `${members} pin${members === 1 ? '' : 's'}`;
+    return 'Pin';
+  }
+
   /** Re-places every open overlay from the marker's current screen position. */
   private reposition(): void {
     if (this.destroyed) return;
@@ -726,6 +1034,7 @@ export class MarkerController {
       }
       this.placeTooltip(record, screen);
     }
+    this.placePinRing();
   }
 
   private screenOf(record: MarkerRecord): ScreenPoint | null {

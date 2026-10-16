@@ -1,9 +1,10 @@
 /**
- * Marker battery (MARKER-01..14): Leaflet-style pins with a hover/permanent
- * tooltip, a click popup, per-marker dragging and optional clustering into
- * count badges. Pins are GPU sprites — never a DOM element per marker — while
- * the tooltip and popup are bounded DOM overlays with the UI-06 content
- * contract (strings stay text). Results: `window.__markerCheckResult`.
+ * Marker battery (MARKER-01..17): Leaflet-style pins with a hover/permanent
+ * tooltip, a click popup, per-marker dragging, optional clustering into count
+ * badges and keyboard focus with a ring cursor. Pins are GPU sprites — never a
+ * DOM element per marker — while tooltips, popups and the keyboard ring are
+ * bounded DOM overlays with the UI-06 content contract (strings stay text).
+ * Results: `window.__markerCheckResult`.
  */
 import { createMap } from '../dist/index.js';
 
@@ -21,7 +22,7 @@ function finalize() {
   if (finalized) return;
   finalized = true;
   result.ms = Math.round(performance.now() - started);
-  result.pass = result.errors.length === 0 && result.checks.length === 14 && result.checks.every((entry) => entry.pass);
+  result.pass = result.errors.length === 0 && result.checks.length === 17 && result.checks.every((entry) => entry.pass);
   window.__markerCheckResult = result;
   document.title = 'marker-check-done';
   const summary = document.getElementById('summary');
@@ -55,6 +56,16 @@ const markerLayerId = () =>
 const badgeSprites = () =>
   map.debug.layerSprites(markerLayerId()).filter((sprite) => String(sprite.assetId).startsWith('maplet-cluster-asset:'));
 const badgeLabel = (sprite) => String(sprite.assetId).split(':').pop();
+/** Keyboard pin focus (MARKER-15): the hidden stop, its announcer and the ring. */
+const pinsStop = () => element.querySelector('[data-maplet-pins]');
+const pinsLabel = () => pinsStop()?.getAttribute('aria-label') ?? null;
+const announced = () => element.querySelector('[data-maplet-pin-announcer]')?.textContent ?? null;
+const focusRing = () => element.querySelector('[data-maplet-pin-focus]');
+const key = (keyName) => {
+  const event = new KeyboardEvent('keydown', { key: keyName, bubbles: true, cancelable: true });
+  pinsStop().dispatchEvent(event);
+  return event;
+};
 
 const rect = element.getBoundingClientRect();
 /** DOM box in container-relative coordinates (the same space as positionToScreen). */
@@ -755,6 +766,168 @@ await check('MARKER-14 a grouped member parks overlays and a dragged pin joins t
       joined.atTarget && joined.badges.join() === '3' && joined.hidden &&
       returned.tooltip && returned.badges === 0 && returned.pins,
     detail: { overlayBefore, parked, joined, returned },
+  };
+});
+
+await check('MARKER-15 Tab reaches the pin stop; arrows move the ring, Enter opens the popup', async () => {
+  const pinA = map.addMarker({ id: 'kb1', position: screen(200, 150), tooltip: 'Alpha pin', popup: { content: 'Alpha popup', autoPan: false } });
+  const pinB = map.addMarker({ id: 'kb2', position: screen(320, 200), alt: 'Beta service gate', tooltip: 'Never announced', popup: { content: 'Beta popup', autoPan: false } });
+  const pinC = map.addMarker({ id: 'kb3', position: screen(440, 150), popup: { content: 'Gamma popup', autoPan: false } });
+  await sleep(260);
+  const stop = pinsStop();
+  const label = pinsLabel();
+  const stopBox = stop ? domBox(stop) : null;
+  const tabIndex = stop ? stop.tabIndex : null;
+  const clipped = !!stopBox && stopBox.width <= 2 && stopBox.height <= 2;
+  stop.focus();
+  await sleep(80);
+  const ringBox = focusRing() ? domBox(focusRing()) : null;
+  const a = anchorOf(pinA);
+  const ringOnA = !!ringBox && Math.abs(ringBox.cx - a.x) <= 1 && Math.abs(ringBox.bottom - a.y) <= 1 && ringBox.width === 32;
+  const entered = {
+    active: document.activeElement === stop,
+    announced: announced(),
+    ringOnA,
+  };
+  // The synthetic Tab must stay untouched: the stop never traps focus.
+  stop.focus();
+  const tabFree = key('Tab').defaultPrevented === false;
+  // Arrows walk the cursor and must not pan the map (INPUT-07 is not stolen).
+  const centerBefore = map.getCenter();
+  key('ArrowRight');
+  await sleep(60);
+  const b = anchorOf(pinB);
+  const second = {
+    announced: announced(),
+    ringOnB: (() => { const box = focusRing() ? domBox(focusRing()) : null; return !!box && Math.abs(box.cx - b.x) <= 1 && Math.abs(box.bottom - b.y) <= 1; })(),
+    panned: JSON.stringify(map.getCenter()) !== JSON.stringify(centerBefore),
+  };
+  key('ArrowDown');
+  await sleep(60);
+  const third = announced();
+  key('End');
+  await sleep(60);
+  const end = announced();
+  key('Home');
+  await sleep(60);
+  const home = announced();
+  key('ArrowRight');
+  await sleep(60);
+  const wrapped = announced();
+  // Enter opens the focused pin's popup through the normal click path.
+  key('Home');
+  await sleep(60);
+  key('Enter');
+  const popup = await poll(() => element.querySelector('[data-maplet-popup]'));
+  const popupOpened = popup !== null && pinA.popupOpen;
+  // The first Escape closes the popup and keeps the cursor, the second leaves it.
+  key('Escape');
+  await sleep(120);
+  const afterEscape = { open: pinA.popupOpen, announced: announced(), active: document.activeElement === stop };
+  key('Escape');
+  await sleep(120);
+  const left = { active: document.activeElement === element, ringHidden: focusRing() !== null && focusRing().style.display === 'none' };
+  // Blur clears the ring and the live region as well.
+  stop.focus();
+  await sleep(60);
+  stop.blur();
+  await sleep(60);
+  const blurred = { ringHidden: focusRing().style.display === 'none', announced: announced() };
+  [pinA, pinB, pinC].forEach((marker) => marker.remove());
+  await sleep(140);
+  return {
+    pass:
+      tabIndex === 0 && clipped && label === 'Map pins (3). Arrow keys move between pins, Enter activates.' &&
+      entered.active && entered.announced === 'Alpha pin, 1 of 3' && entered.ringOnA && tabFree &&
+      second.announced === 'Beta service gate, 2 of 3' && second.ringOnB && !second.panned &&
+      third === 'Pin, 3 of 3' && end === 'Pin, 3 of 3' && home === 'Alpha pin, 1 of 3' && wrapped === 'Beta service gate, 2 of 3' &&
+      popupOpened &&
+      !afterEscape.open && afterEscape.active && afterEscape.announced === 'Alpha pin, 1 of 3' &&
+      left.active && left.ringHidden && blurred.ringHidden && blurred.announced === '',
+    detail: { tabIndex, clipped, label, entered, tabFree, second, third, end, home, wrapped, popupOpened, afterEscape, left, blurred },
+  };
+});
+
+await check('MARKER-16 the cursor covers drawn pins only: clusters and hidden pins make way', async () => {
+  const near1 = map.addMarker({ id: 'kc1', position: screen(220, 300) });
+  const near2 = map.addMarker({ id: 'kc2', position: screen(240, 310) });
+  const far = map.addMarker({ id: 'kc3', position: screen(500, 300), tooltip: 'Far pin' });
+  const optedOut = map.addMarker({ id: 'kc4', position: screen(120, 300), keyboard: false, tooltip: 'Mouse only' });
+  await sleep(260);
+  const loose = pinsLabel();
+  map.setMarkerClustering({ radiusPx: 80 });
+  await sleep(300);
+  const grouped = pinsLabel();
+  pinsStop().focus();
+  await sleep(80);
+  const onBadge = announced();
+  const centroid = { x: (anchorOf(near1).x + anchorOf(near2).x) / 2, y: (anchorOf(near1).y + anchorOf(near2).y) / 2 };
+  const badgeRing = (() => {
+    const box = focusRing() ? domBox(focusRing()) : null;
+    if (!box) return false;
+    const cy = (box.top + box.bottom) / 2;
+    return Math.abs(box.cx - centroid.x) <= 1 && Math.abs(cy - centroid.y) <= 1;
+  })();
+  key('ArrowRight');
+  await sleep(60);
+  const secondOnFar = announced();
+  // Hiding the focused pin moves the cursor to the next reachable one.
+  far.hide();
+  await sleep(220);
+  const afterHide = { label: pinsLabel(), announced: announced() };
+  far.show();
+  await sleep(220);
+  const afterShow = pinsLabel();
+  map.setMarkerClustering(null);
+  await sleep(240);
+  const ungrouped = pinsLabel();
+  [near1, near2, far, optedOut].forEach((marker) => marker.remove());
+  await sleep(140);
+  return {
+    pass:
+      loose === 'Map pins (3). Arrow keys move between pins, Enter activates.' &&
+      grouped === 'Map pins (2). Arrow keys move between pins, Enter activates.' &&
+      onBadge === '2 pins, 1 of 2' && badgeRing && secondOnFar === 'Far pin, 2 of 2' &&
+      afterHide.label === 'Map pins (1). Arrow keys move between pins, Enter activates.' && afterHide.announced === '2 pins, 1 of 1' &&
+      afterShow === 'Map pins (2). Arrow keys move between pins, Enter activates.' &&
+      ungrouped === 'Map pins (3). Arrow keys move between pins, Enter activates.',
+    detail: { loose, grouped, onBadge, badgeRing, secondOnFar, afterHide, afterShow, ungrouped },
+  };
+});
+
+await check('MARKER-17 Enter delivers a real click to listeners and the stop leaves the tab order', async () => {
+  const pin = map.addMarker({ id: 'kd1', position: screen(260, 220), popup: { content: 'Keyboard popup', autoPan: false } });
+  const plain = map.addMarker({ id: 'kd2', position: screen(400, 220) });
+  await sleep(240);
+  const seen = [];
+  const mapSeen = [];
+  const offHandle = pin.on('click', (event) => seen.push({
+    type: event.type,
+    fromKeyboard: event.originalEvent instanceof KeyboardEvent,
+    key: event.originalEvent?.key ?? null,
+    screen: `${Math.round(event.screen.x)},${Math.round(event.screen.y)}`,
+  }));
+  const offMap = map.on('click', (event) => { if (event.feature) mapSeen.push(String(event.feature.id)); });
+  pinsStop().focus();
+  await sleep(60);
+  key('Enter');
+  const popup = await poll(() => element.querySelector('[data-maplet-popup]'));
+  const a = anchorOf(pin);
+  const expectedScreen = `${Math.round(a.x)},${Math.round(a.y - 16)}`;
+  const popupOpened = popup !== null && pin.popupOpen;
+  offHandle();
+  offMap();
+  pin.closePopup();
+  pin.remove();
+  plain.remove();
+  await sleep(240);
+  const emptyStop = pinsStop();
+  return {
+    pass:
+      seen.length === 1 && seen[0].type === 'click' && seen[0].fromKeyboard && seen[0].key === 'Enter' &&
+      seen[0].screen === expectedScreen && mapSeen.join() === 'kd1' && popupOpened &&
+      !!emptyStop && emptyStop.tabIndex === -1,
+    detail: { seen, mapSeen, expectedScreen, popupOpened, emptyTabIndex: emptyStop ? emptyStop.tabIndex : null },
   };
 });
 

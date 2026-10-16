@@ -13,6 +13,7 @@ import type {
   BackendKind,
   Capabilities,
   Commit,
+  FeatureEventType,
   FeatureRef,
   FeatureSnapshot,
   MapFeatureEvent,
@@ -406,6 +407,18 @@ export interface MapEngine {
   readonly locate: LocateHandle;
   /** Read-only diagnostics; used by tests and the demo statistics panel. */
   readonly debug: DebugHandle;
+  /**
+   * Dispatches a feature event for an already resolved target (MARKER-15): a
+   * keyboard activation must reach the same listeners as a pointer click. The
+   * engine fills in the position, the source id and the rendered revision.
+   */
+  dispatchFeature(input: {
+    readonly type: FeatureEventType;
+    readonly feature: FeatureRef;
+    readonly layerId: string;
+    readonly screen: ScreenPoint;
+    readonly originalEvent: Event;
+  }): void;
   batch<T>(fn: () => T): Commit;
   whenRendered(revision?: number, options?: { readonly signal?: AbortSignal }): Promise<void>;
   capabilities(): Capabilities;
@@ -1662,6 +1675,25 @@ function buildHandle(
     relations,
     bindings,
     query,
+    dispatchFeature(input) {
+      let stopped = false;
+      scene.emitFeatureEvent({
+        type: input.type,
+        feature: input.feature,
+        layerId: input.layerId,
+        sourceId: input.feature.sourceId,
+        position: view.screenToPosition(input.screen),
+        screen: input.screen,
+        revision: scene.renderedRevision,
+        originalEvent: input.originalEvent,
+        stopPropagation: () => {
+          stopped = true;
+        },
+        get propagationStopped() {
+          return stopped;
+        },
+      });
+    },
     interaction: controller
       ? {
           setOptions(options) {

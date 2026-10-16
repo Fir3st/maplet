@@ -404,9 +404,31 @@ The current public construction, object lifetime and migration contract is in
   for the gesture, joining or leaving a group at `dragend`. Badges pick and emit
   feature events like any sprite, so raw `onFeature` listeners and
   `query.rendered` can return their reserved ids. Pins that share one position
-  stay one badge at the maximum zoom (no spiderfy in this alpha). Keyboard focus
-  on pins is not part of this alpha; pins pick and emit feature events like any
-  interactive point.
+  stay one badge at the maximum zoom (no spiderfy in this alpha).
+- Keyboard focus (MARKER-15): pins are GPU sprites without DOM nodes, so the
+  controller installs one visually hidden focus stop inside the container
+  (`data-maplet-pins`, `role="group"`, label `Map pins (n)`). Tab reaches and
+  leaves it like any focusable element; while it is focused, Left/Right/Up/Down
+  step a cursor through the drawn pins in layer order (a badge stands in for its
+  first reachable member), Home/End jump to the cycle's ends, and those keys are
+  consumed before the container's pan handler, so arrow panning keeps working
+  whenever the container itself is focused (INPUT-07). Enter or Space activates
+  the cursor: the engine dispatches a real `click` feature event
+  (`dispatchFeature`), so popups, badge zooming and external listeners behave
+  exactly like a pointer click, with the keyboard event as `originalEvent`.
+  Escape closes an open marker popup first and leaves the cursor on the second
+  press, returning focus to the container. Focusable means drawn and reachable:
+  `handle.hide()` and clustered members stay out (their badge is visited
+  instead), `keyboard: false` excludes a pin, and pins outside the container
+  leave the cycle.
+- The cursor draws a ring (`data-maplet-pin-focus`: a blue inner and white outer
+  shadow around the sprite box) that follows the pin and parks off-view, and it
+  announces through a polite live region (`data-maplet-pin-announcer`):
+  `<name>, <i> of <n>`, where the name is `alt`, then the tooltip text (string
+  or Node text), then `Pin` (`N pins` on a badge). `MarkerOptions` gains
+  `keyboard` (default true) and `alt` (Leaflet parity). The stop is independent
+  of `interaction.keyboard`, which only governs the map's own pan and zoom
+  keys; pins pick and emit feature events like any interactive point.
 
 ## Fonts and text
 

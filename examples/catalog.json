@@ -51,7 +51,7 @@
     "id": "markers", "title": "Markers, tooltips & popups", "group": "Presentation", "kind": "markers",
     "summary": "Add Leaflet-style pins with hover tooltips, click popups and an opt-in draggable pin.",
     "learn": "map.addMarker() and map.addMarkers() create GPU pins in one shared layer — no DOM element per marker. A hover tooltip and one click popup per map are DOM overlays that follow pan and zoom; auto-pan keeps an open popup inside the view. A pin with draggable: true follows the pointer without panning the map and reports its position through dragstart/drag/dragend.",
-    "hint": "Hover a pin · click it for the popup · drag the purple crane pin",
+    "hint": "Hover a pin · click it for the popup · drag the purple crane pin · Tab into the map for the keyboard cursor",
     "note": "Pins are canvas sprites; only the open tooltip and popup use DOM. Content strings render as text; pass a Node for rich content.",
     "origin": "demo/markers.js"
   },
@@ -59,7 +59,7 @@
     "id": "clusters", "title": "Cluster nearby pins", "group": "Presentation", "kind": "clusters",
     "summary": "Group dense pins into count badges that stay readable and split apart as you zoom in.",
     "learn": "map.setMarkerClustering({ radiusPx, minCount, disableAtZoom }) replaces pins whose screen distance is within the radius with one badge carrying the member count. Hovering a badge shows its count, clicking fits the member bounds so the pins separate, and getMarkerClustering() reports the active options. A pin with cluster: false stays individual, handle.hide() takes a pin out of the count, and a drag joins or leaves a group.",
-    "hint": "Hover a badge for its count · click it to zoom the pins apart · change the radius or add a burst",
+    "hint": "Hover a badge for its count · click it to zoom the pins apart · change the radius or add a burst · Tab walks the badges",
     "note": "Grouping is resolved in screen space at the current zoom, so panning never re-clusters. Badges are internal sprites with the reserved maplet-cluster: id prefix.",
     "origin": "demo/markers.js"
   },
