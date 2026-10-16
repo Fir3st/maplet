@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.1.0-alpha.10
+
+- Fix permanent tooltip and popup tracking: both used to be clamped
+  horizontally like a hover tooltip, so panning the map slid a permanent
+  tooltip along the container edge away from its pin (a measured offset grew
+  from 76 px to 116 px) and then left it on screen after the pin had gone. A
+  permanent tooltip and a popup now sit exactly above their anchor — the arrow
+  keeps pointing at the icon — a hover tooltip keeps its clamp so its text
+  stays readable at an edge, and an overlay whose anchor leaves the container
+  is parked with `visibility: hidden` until the pin returns.
+- The markers example now advertises its draggable pin: the dock crane carries
+  a permanent "drag me" tooltip instead of a hover one, so the gesture is
+  visible without hovering, and both it and the depot sit clear of the
+  container edges where a label would be clipped.
+
 ## 0.1.0-alpha.9
 
 - Marker dragging: `map.addMarker({ draggable: true })` makes a pin follow the
