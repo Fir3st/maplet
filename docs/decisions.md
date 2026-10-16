@@ -52,6 +52,12 @@ The current public construction, object lifetime and migration contract is in
   over projected Float64 pools. Prepared geometry enters only through internal
   bindings, tiles or validated import jobs, never by detecting public object keys
   such as `bbox` or `payload`.
+- Altitudes are per-vertex geographic metadata (`NaN` = absent); they are never
+  projected and never affect bounds, rendering or picking. Lines and polygon
+  rings keep one altitude per stored vertex through both kernels: merging
+  consecutive duplicate positions keeps the first vertex's value, an auto-closed
+  ring repeats the first vertex's value on the closing vertex, and a winding flip
+  reverses the altitude column together with its ring. A planar CRS carries none.
 
 ## Missing inputs, deletion and ownership
 
@@ -273,9 +279,9 @@ The current public construction, object lifetime and migration contract is in
   creates no listener.
 - Event emission iterates a listener snapshot; listeners added during an
   emission do not receive that emission.
-- Export returns canonical geometry, not clipped fragments. Geographic numeric
-  round trips tolerate `1e-9` degrees, not bit identity. This alpha does not
-  preserve line/polygon altitude.
+- Export returns canonical geometry, not clipped fragments, and reconstructs the
+  stored altitude on every line, polygon and multi geometry vertex that has one.
+  Geographic numeric round trips tolerate `1e-9` degrees, not bit identity.
 - `query.area` cursors contain offset and revision; a changed revision causes
   `invalid-state`, never silently mixed snapshots.
 
@@ -285,8 +291,9 @@ The current public construction, object lifetime and migration contract is in
   `point` maps each vertex to a feature. `lineString`/`polygon` use `partOffsets`
   and `featurePartOffsets`; without the latter, each part is one feature.
   A polygon feature has one exterior part followed by holes.
-- `altitudes` (geographic only, `NaN` = absent), `ids` and `properties` are
-  indexed by feature.
+- `altitudes` (geographic only, one value per vertex, `NaN` = absent), `ids` and
+  `properties` (the latter two indexed by feature) are validated before
+  projection.
 - The entire structure is validated before the first vertex is read: array
   types, lengths, monotonic offsets and bounds. Failure is `import-invalid`.
   The store owns prepared copies, not caller data.

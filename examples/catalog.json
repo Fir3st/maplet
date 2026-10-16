@@ -40,6 +40,14 @@
     "origin": "demo/import.js"
   },
   {
+    "id": "elevation", "title": "Elevation on a route", "group": "Data & styling", "kind": "elevation",
+    "summary": "Import a route whose coordinates carry altitude and read the profile back from the exported data.",
+    "learn": "A GeoJSON position accepts a third value for altitude ([lng, lat, altitude]). Maplet stores it on every line and polygon vertex and returns it from features.get() and exportGeoJson(), so an elevation profile or a climbing readout needs no side table. A vertex without an altitude simply exports two coordinates.",
+    "hint": "Move over the profile or scrub the slider · toggle the exported coordinates",
+    "note": "An illustrative ridge trail near Sněžka. Altitude is metadata: it never changes where a vertex is projected.",
+    "origin": "demo/demo.js"
+  },
+  {
     "id": "labels", "title": "Labels & image pins", "group": "Presentation", "kind": "labels",
     "summary": "Reuse one SVG pin and label places from their feature properties.",
     "learn": "Register an image once, reference it from a point layer, then add a label layer over the same source. Toggle labels and move pins without creating one DOM element per symbol.",

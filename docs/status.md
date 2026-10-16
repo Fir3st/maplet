@@ -272,6 +272,31 @@ the first Escape closed it, the second returned focus to the container with the
 ring hidden, ArrowRight then panned the map again, and Tab from the stop left to
 the zoom button.
 
+Line and polygon altitudes were verified through unit and browser checks. The
+public `prepareGeometry` kernel, the binary `prepareParts` kernel and
+`exportGeoJson` now share one per-vertex altitude column: a geometry whose
+vertices carry no altitude stores none, the prepared-parts trust boundary
+rejects a column whose length does not match the vertex count, and the worker
+transfers the prepared altitude buffer instead of cloning it. The unit suite
+of 346 tests gained three checks: the public and binary kernels produce
+identical payloads for lines and polygons with mixed present/absent altitudes,
+a Float32 column is widened once into the canonical Float64 payload and an
+altitude-free batch stores no column; a GeoJSON round trip keeps altitudes
+through normalization — a collapsed duplicate keeps the first vertex's
+altitude, an auto-closed ring repeats the first one, a winding flip carries
+altitudes with their vertices, and a vertex without one exports two
+coordinates — and a columnar line/polygon batch matches ordinary CRUD geometry
+and export on both Web Mercator and EPSG:4326. The `battery:import` battery
+gained a ninth check: a real module worker prepared a detached (`copy: false`)
+trail and a ridge, `features.get()` returned every per-vertex altitude, the
+exported coordinates kept `[lng, lat, altitude]` where one exists and two
+coordinates where not, the polyline's sampled pixel stayed the line colour and
+`debug.imports()` reported the two worker preparations. The complete default
+browser suite passes **41/41 scenarios/batteries on each of WebGL 1, WebGPU and
+forced basic WebGL 1**. The new [Elevation on a route](tutorials/elevation.md)
+tutorial draws its profile and readouts from `exportGeoJson()`, and all
+eighteen example pages boot without page errors when tiles are blocked.
+
 The recorded browser environment was headless Chromium on an Apple M5 Pro,
 using ANGLE Metal for WebGL and `apple metal-3` for WebGPU. Pixel comparisons
 against decoded source bitmaps and between backends found zero differences at
@@ -378,8 +403,9 @@ Canvas setup is still faster at 282 ms. One-second warm-pan outliers persist.
   CPU per rendered frame into a bounded buffer (≤1M pixels, ≤1.5 device pixels per
   CSS pixel), draws above GPU-delivered features and skips samples outside the
   view.
-- **Altitude:** preserved for points, multiPoints, circles and rectangles, but
-  not for line/polygon geometry or its exported coordinates.
+- **Altitude:** preserved for every geometry type, per vertex, and returned by
+  `get`/`exportGeoJson`; geographic-only metadata (`NaN` = absent) that never
+  affects projection, bounds, rendering or picking.
 - **MVT:** no antimeridian world wrapping. Residency follows the viewport rather
   than a temporal tile cache. One clamped source zoom is requested at a time;
   higher view zooms scale existing geometry. Edits require a mutable overlay.

@@ -54,8 +54,8 @@ scope.onmessage = (event: MessageEvent) => {
         for (const geometry of features.geometries) {
           add(geometry.bbox);
           const payload = geometry.payload;
-          if ('vertices' in payload) { add(payload.vertices); add(payload.parts); }
-          if ('ringVertices' in payload) { add(payload.ringVertices); add(payload.rings); add(payload.ringOuter); }
+          if ('vertices' in payload) { add(payload.vertices); add(payload.parts); add(payload.altitudes); }
+          if ('ringVertices' in payload) { add(payload.ringVertices); add(payload.rings); add(payload.ringOuter); add(payload.altitudes); }
         }
       } else {
         const batch = features.kind === 'raw-parts' ? features.batch : features;

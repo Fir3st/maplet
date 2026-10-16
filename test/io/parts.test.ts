@@ -33,8 +33,27 @@ test('binary worker schema rejects nonfinite, missing, overlapping and out-of-bo
     (value: typeof good) => { (value.geometries[0]!.payload as { rings: Uint32Array }).rings[0] = 1; },
     (value: typeof good) => { (value.geometries[0]!.payload as { rings: Uint32Array }).rings[1] = 0xffffffff; },
     (value: typeof good) => { delete (value.geometries[0]!.payload as unknown as { ringOuter?: unknown }).ringOuter; },
+    (value: typeof good) => { (value.geometries[0]!.payload as { altitudes?: unknown }).altitudes = Float64Array.of(1); },
+    (value: typeof good) => { (value.geometries[0]!.payload as { altitudes?: unknown }).altitudes = [1, 2, 3, 4]; },
   ];
   for (const mutate of mutations) { const bad = structuredClone(good); mutate(bad); assert.equal(validPreparedParts(bad), false); }
+});
+
+test('binary worker schema accepts a matching altitude column and drops it when vertices change', () => {
+  const batch: ColumnarPartsBatch = { kind: 'lineString', positions: Float64Array.of(14, 50, 14.1, 50.1, 14.2, 50),
+    altitudes: Float64Array.of(100, Number.NaN, 300), partOffsets: Uint32Array.of(0, 3) };
+  const prepared = prepareParts(batch, crs.webMercator());
+  assert.equal(validPreparedParts(prepared), true);
+  assert.deepEqual((prepared.geometries[0]!.payload as { altitudes: Float64Array }).altitudes, Float64Array.of(100, Number.NaN, 300));
+  // A Float32 input column is widened once into the canonical Float64 payload.
+  const narrow = prepareParts({ ...batch, altitudes: Float32Array.of(50, 60, 70) }, crs.webMercator());
+  const widened = (narrow.geometries[0]!.payload as { altitudes: Float64Array }).altitudes;
+  assert.ok(widened instanceof Float64Array);
+  assert.deepEqual(widened, Float64Array.of(50, 60, 70));
+  const { altitudes: _altitudes, ...withoutAltitudesBatch } = batch;
+  const withoutAltitudes = prepareParts(withoutAltitudesBatch, crs.webMercator());
+  assert.equal(validPreparedParts(withoutAltitudes), true);
+  assert.ok(!('altitudes' in withoutAltitudes.geometries[0]!.payload), 'an altitude-free batch stores no column');
 });
 
 test('custom CRS callbacks cannot be serialized just by using a built-in code', () => {
@@ -46,7 +65,7 @@ test('custom CRS callbacks cannot be serialized just by using a built-in code', 
   assert.deepEqual((binary.geometries[0]!.payload as { vertices: Float64Array }).vertices, Float64Array.of(512, 1024, 1536, 2048));
 });
 
-test('binary custom-CRS projection preserves altitude inputs even though exported lines are XY', () => {
+test('binary custom-CRS projection preserves altitude inputs in payloads', () => {
   const projection = { ...crs.webMercator(), toWorld: (position: Position) => {
     const geo = position as GeoPosition;
     return { x: geo.lng + (geo.altitude ?? 0), y: geo.lat };
@@ -54,8 +73,10 @@ test('binary custom-CRS projection preserves altitude inputs even though exporte
   const batch: ColumnarPartsBatch = { kind: 'lineString', positions: Float64Array.of(14, 50, 15, 51), altitudes: Float64Array.of(5, NaN), partOffsets: Uint32Array.of(0, 2) };
   const legacy = columnarToFeatures(batch, { positionKind: 'geographic' }).map(input => prepareGeometry(projection, input.geometry));
   const binary = prepareParts(batch, projection);
-  assert.deepEqual(binary.geometries, legacy);
-  assert.deepEqual((binary.geometries[0]!.payload as { vertices: Float64Array }).vertices, Float64Array.of(19, 50, 15, 51));
+  assert.deepEqual(binary.geometries, legacy, 'both paths keep identical canonical payloads and altitudes');
+  const payload = binary.geometries[0]!.payload as { vertices: Float64Array; altitudes: Float64Array };
+  assert.deepEqual(payload.vertices, Float64Array.of(19, 50, 15, 51));
+  assert.deepEqual(payload.altitudes, Float64Array.of(5, Number.NaN));
 });
 
 test('binary initial publication and subsequent replace preserve refs, properties and rollback', async () => {

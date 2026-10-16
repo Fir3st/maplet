@@ -293,6 +293,48 @@ test('IO-01: GeoJSON point import/export keeps [lng, lat, alt] and metadata', as
   map.destroy();
 });
 
+test('IO-01: GeoJSON line and polygon altitudes survive normalization and export', async () => {
+  const { map } = await makeMap();
+  const source = map.data.vector({ id: 's' });
+  await source.importGeoJson({
+    type: 'FeatureCollection',
+    features: [
+      { type: 'Feature', id: 'trail', properties: {}, geometry: { type: 'LineString', coordinates: [
+        [14, 50, 200], [14, 50, 999], [14.1, 50.1, 260], [14.2, 50.05],
+      ] } },
+      { type: 'Feature', id: 'ridge', properties: {}, geometry: { type: 'Polygon', coordinates: [[
+        [14.3, 50, 10], [14.5, 50, 20], [14.5, 50.1, 30], [14.3, 50.1, 40],
+      ]] } },
+    ],
+  });
+  const trail = source.features.get('trail')!.geometry as
+    { type: string; positions: { lng: number; lat: number; altitude?: number }[] };
+  assert.equal(trail.type, 'lineString');
+  assert.equal(trail.positions.length, 3, 'the duplicate position collapses to its first vertex');
+  assert.deepEqual(trail.positions.map((position) => position.altitude ?? null), [200, 260, null]);
+  const ridge = source.features.get('ridge')!.geometry as
+    { type: string; rings: { lng: number; lat: number; altitude?: number }[][] };
+  assert.equal(ridge.type, 'polygon');
+  const ring = ridge.rings[0]!;
+  assert.equal(ring.length, 5, 'the ring is closed');
+  assert.ok(Math.abs(ring[4]!.lng - ring[0]!.lng) < 1e-9 && Math.abs(ring[4]!.lat - ring[0]!.lat) < 1e-9);
+  assert.equal(ring[4]!.altitude, ring[0]!.altitude, 'the appended closing vertex repeats the first altitude');
+  // Winding normalization flipped this ring; altitudes stay on their vertices.
+  assert.deepEqual(ring.map((position) => position.altitude ?? null), [10, 40, 30, 20, 10]);
+  assert.ok(Math.abs(ring[1]!.lat - 50.1) < 1e-9, 'each altitude moved with its vertex');
+  const exported = source.exportGeoJson();
+  const coordinatesOf = (id: string): unknown =>
+    exported.features.find((feature) => feature.id === id)!.geometry!.coordinates;
+  const trailCoordinates = coordinatesOf('trail') as number[][];
+  assert.equal(trailCoordinates[0]!.length, 3);
+  assert.equal(trailCoordinates[0]![2], 200);
+  assert.equal(trailCoordinates[1]![2], 260);
+  assert.equal(trailCoordinates[2]!.length, 2, 'a vertex without an altitude exports two coordinates');
+  const ringCoordinates = (coordinatesOf('ridge') as number[][][])[0]!;
+  assert.deepEqual(ringCoordinates.map((coordinate) => coordinate[2]), [10, 40, 30, 20, 10]);
+  map.destroy();
+});
+
 test('IO-02: multi geometries keep their parts and rings under one identity', async () => {
   const { map } = await makeMap();
   const source = map.data.vector({ id: 's' });

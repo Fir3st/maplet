@@ -133,23 +133,56 @@ export function positionToWorldChecked(
   return { wx: world.x, wy: world.y, alt, position: normalized };
 }
 
-function collapseConsecutive(points: Float64Array): Float64Array {
-  let n = points.length / 2;
-  const out = new Float64Array(points.length);
+/** A vertex pool with optional per-vertex altitudes; `NaN` marks an absent value. */
+interface VertexSet {
+  readonly vertices: Float64Array;
+  readonly altitudes: Float32Array | Float64Array | null;
+}
+
+function collapseConsecutive(
+  vertices: Float64Array,
+  altitudes: Float32Array | Float64Array | null,
+): { vertices: Float64Array; altitudes: Float64Array | null } {
+  let n = vertices.length / 2;
+  const out = new Float64Array(vertices.length);
+  const outAltitudes = altitudes ? new Float64Array(n) : null;
   let o = 0;
   let prevX = NaN;
   let prevY = NaN;
   for (let i = 0; i < n; i++) {
-    const x = points[i * 2]!;
-    const y = points[i * 2 + 1]!;
+    const x = vertices[i * 2]!;
+    const y = vertices[i * 2 + 1]!;
     if (x === prevX && y === prevY) continue;
     out[o * 2] = x;
     out[o * 2 + 1] = y;
+    // The first position of a collapsed run wins, with its altitude.
+    if (outAltitudes) outAltitudes[o] = altitudes![i]!;
     o++;
     prevX = x;
     prevY = y;
   }
-  return out.subarray(0, o * 2);
+  return { vertices: out.subarray(0, o * 2), altitudes: outAltitudes ? outAltitudes.subarray(0, o) : null };
+}
+
+/**
+ * Concatenates stored parts into exact-size pools; parts without altitudes get
+ * `NaN`, and a geometry whose kept vertices all lack one stores none at all.
+ */
+function concatVertexSets(sets: readonly VertexSet[]): { vertices: Float64Array; altitudes: Float64Array | null } {
+  const vertices = new Float64Array(sets.reduce((total, set) => total + set.vertices.length, 0));
+  const altitudes = sets.some((set) => set.altitudes !== null)
+    ? new Float64Array(vertices.length / 2).fill(Number.NaN)
+    : null;
+  let offset = 0;
+  for (const set of sets) {
+    vertices.set(set.vertices, offset);
+    if (altitudes && set.altitudes) altitudes.set(set.altitudes, offset / 2);
+    offset += set.vertices.length;
+  }
+  if (altitudes && !altitudes.some((value) => !Number.isNaN(value))) {
+    return { vertices, altitudes: null };
+  }
+  return { vertices, altitudes };
 }
 
 function ringSignedArea(points: Float64Array): number {
@@ -216,14 +249,27 @@ function ringSelfIntersects(points: Float64Array): boolean {
   return false;
 }
 
-function normalizeRing(points: Float64Array, outer: boolean, context: string): Float64Array {
-  let ring = collapseConsecutive(points);
+function normalizeRing(
+  vertices: Float64Array,
+  altitudes: Float32Array | Float64Array | null,
+  outer: boolean,
+  context: string,
+): { vertices: Float64Array; altitudes: Float64Array | null } {
+  let { vertices: ring, altitudes: ringAltitudes } = collapseConsecutive(vertices, altitudes);
   if (!ringIsClosed(ring)) {
     const closed = new Float64Array(ring.length + 2);
     closed.set(ring);
     closed[ring.length] = ring[0]!;
     closed[ring.length + 1] = ring[1]!;
     ring = closed;
+    if (ringAltitudes) {
+      // The appended closing vertex repeats the first position, so it repeats
+      // its altitude too (possibly an absent one).
+      const closedAltitudes = new Float64Array(ringAltitudes.length + 1);
+      closedAltitudes.set(ringAltitudes);
+      closedAltitudes[ringAltitudes.length] = ringAltitudes[0]!;
+      ringAltitudes = closedAltitudes;
+    }
   }
   const distinct = ring.length / 2 - 1;
   if (distinct < 3) {
@@ -247,8 +293,13 @@ function normalizeRing(points: Float64Array, outer: boolean, context: string): F
       reversed[i * 2 + 1] = ring[(n - 1 - i) * 2 + 1]!;
     }
     ring = reversed;
+    if (ringAltitudes) {
+      const reversedAltitudes = new Float64Array(n);
+      for (let i = 0; i < n; i++) reversedAltitudes[i] = ringAltitudes[n - 1 - i]!;
+      ringAltitudes = reversedAltitudes;
+    }
   }
-  return ring;
+  return { vertices: ring, altitudes: ringAltitudes };
 }
 
 function circlesWorldRadii(
@@ -296,7 +347,6 @@ function bboxOf(vertices: Float64Array, from = 0, to = vertices.length): Float64
 
 function preparePositions(crs: Crs): {
   read: (position: Position, context: string) => { wx: number; wy: number; alt: number | undefined };
-  readList: (positions: readonly Position[], context: string) => Float64Array;
   readListWithAltitudes: (
     positions: readonly Position[],
     context: string,
@@ -308,9 +358,6 @@ function preparePositions(crs: Crs): {
   ): { wx: number; wy: number; alt: number | undefined } => {
     const { wx, wy, alt } = positionToWorldChecked(crs, position, context);
     return { wx, wy, alt };
-  };
-  const readList = (positions: readonly Position[], context: string): Float64Array => {
-    return readListWithAltitudes(positions, context).vertices;
   };
   const readListWithAltitudes = (
     positions: readonly Position[],
@@ -333,7 +380,7 @@ function preparePositions(crs: Crs): {
     }
     return { vertices: out, altitudes: anyAltitude ? altitudes : null };
   };
-  return { read, readList, readListWithAltitudes };
+  return { read, readListWithAltitudes };
 }
 
 export function prepareGeometry(
@@ -499,52 +546,52 @@ function prepareLineParts(
   crs: Crs,
   lines: readonly (readonly Position[])[],
   context: string,
-): { vertices: Float64Array; parts: Uint32Array } {
-  const { readList } = preparePositions(crs);
-  return prepareWorldLineParts(lines.map((line, i) => readList(line, `${context}.lines[${i}]`)), context);
+): { vertices: Float64Array; parts: Uint32Array; altitudes?: Float64Array } {
+  const { readListWithAltitudes } = preparePositions(crs);
+  return prepareWorldLineParts(
+    lines.map((line, i) => readListWithAltitudes(line, `${context}.lines[${i}]`)),
+    context,
+  );
 }
 
-function prepareWorldLineParts(lines: readonly Float64Array[], context: string): { vertices: Float64Array; parts: Uint32Array } {
-  const chunks: Float64Array[] = [];
+function prepareWorldLineParts(
+  lines: readonly VertexSet[],
+  context: string,
+): { vertices: Float64Array; parts: Uint32Array; altitudes?: Float64Array } {
+  const kept: VertexSet[] = [];
   const parts: number[] = [];
   let start = 0;
-  for (let i = 0; i < lines.length; i++) {
-    const raw = lines[i]!;
-    const collapsed = collapseConsecutive(raw);
-    const count = collapsed.length / 2;
+  for (const line of lines) {
+    const collapsed = collapseConsecutive(line.vertices, line.altitudes);
+    const count = collapsed.vertices.length / 2;
     if (count < 2) continue;
-    chunks.push(collapsed);
+    kept.push(collapsed);
     parts.push(start, count);
     start += count;
   }
-  if (chunks.length === 0) {
+  if (kept.length === 0) {
     fail('invalid-argument', `${context}: a line needs at least 2 distinct positions`, {});
   }
-  const vertices = new Float64Array(start * 2);
-  let offset = 0;
-  for (const chunk of chunks) {
-    vertices.set(chunk, offset);
-    offset += chunk.length;
-  }
-  return { vertices, parts: Uint32Array.from(parts) };
+  const { vertices, altitudes } = concatVertexSets(kept);
+  return { vertices, parts: Uint32Array.from(parts), ...(altitudes === null ? {} : { altitudes }) };
 }
 
 function preparePolygonRings(
   crs: Crs,
   polygons: readonly (readonly (readonly Position[])[])[],
   context: string,
-): { ringVertices: Float64Array; rings: Uint32Array; ringOuter: Uint8Array } {
-  const { readList } = preparePositions(crs);
+): { ringVertices: Float64Array; rings: Uint32Array; ringOuter: Uint8Array; altitudes?: Float64Array } {
+  const { readListWithAltitudes } = preparePositions(crs);
   return prepareWorldPolygonRings(polygons.map((polygon, p) => {
     if (!Array.isArray(polygon) || polygon.length === 0) fail('invalid-argument', `${context}: polygon ${p} needs at least one ring`, {});
-    return polygon.map((ring, r) => readList(ring, `${context}.polygons[${p}].rings[${r}]`));
+    return polygon.map((ring, r) => readListWithAltitudes(ring, `${context}.polygons[${p}].rings[${r}]`));
   }), context);
 }
 
-function prepareWorldPolygonRings(polygons: readonly (readonly Float64Array[])[], context: string): {
-  ringVertices: Float64Array; rings: Uint32Array; ringOuter: Uint8Array;
+function prepareWorldPolygonRings(polygons: readonly (readonly VertexSet[])[], context: string): {
+  ringVertices: Float64Array; rings: Uint32Array; ringOuter: Uint8Array; altitudes?: Float64Array;
 } {
-  const ringChunks: Float64Array[] = [];
+  const ringSets: VertexSet[] = [];
   const ringOffsets: number[] = [];
   const outerFlags: number[] = [];
   let start = 0;
@@ -556,32 +603,34 @@ function prepareWorldPolygonRings(polygons: readonly (readonly Float64Array[])[]
     for (let r = 0; r < polygon.length; r++) {
       const raw = polygon[r]!;
       const outer = r === 0;
-      const ring = normalizeRing(raw, outer, `${context}.polygons[${p}].rings[${r}]`);
-      ringChunks.push(ring);
-      ringOffsets.push(start, ring.length / 2);
+      const ring = normalizeRing(raw.vertices, raw.altitudes, outer, `${context}.polygons[${p}].rings[${r}]`);
+      ringSets.push(ring);
+      ringOffsets.push(start, ring.vertices.length / 2);
       outerFlags.push(outer ? 1 : 0);
-      start += ring.length / 2;
+      start += ring.vertices.length / 2;
     }
   }
-  const ringVertices = new Float64Array(start * 2);
-  let offset = 0;
-  for (const chunk of ringChunks) {
-    ringVertices.set(chunk, offset);
-    offset += chunk.length;
-  }
+  const { vertices: ringVertices, altitudes } = concatVertexSets(ringSets);
   return {
     ringVertices,
     rings: Uint32Array.from(ringOffsets),
     ringOuter: Uint8Array.from(outerFlags),
+    ...(altitudes === null ? {} : { altitudes }),
   };
 }
 
 /** Internal binary ingest shares the public normalization/topology kernel. */
-export function prepareWorldParts(kind: 'lineString' | 'polygon', parts: readonly Float64Array[], context: string): PreparedFeatureGeometry {
+export function prepareWorldParts(
+  kind: 'lineString' | 'polygon',
+  parts: readonly Float64Array[],
+  context: string,
+  altitudeParts?: readonly (Float32Array | Float64Array | null)[],
+): PreparedFeatureGeometry {
+  const sets: VertexSet[] = parts.map((vertices, i) => ({ vertices, altitudes: altitudeParts?.[i] ?? null }));
   const payload: LinePayload | PolygonPayload = kind === 'polygon'
-    ? { kind: GEOMETRY_KIND.polygon, ...prepareWorldPolygonRings([parts], context) }
+    ? { kind: GEOMETRY_KIND.polygon, ...prepareWorldPolygonRings([sets], context) }
     : { kind: parts.length === 1 ? GEOMETRY_KIND.lineString : GEOMETRY_KIND.multiLineString,
-        ...prepareWorldLineParts(parts, context) };
+        ...prepareWorldLineParts(sets, context) };
   const vertices = 'vertices' in payload ? payload.vertices : payload.ringVertices;
   const bbox = bboxOf(vertices);
   return { kind: payload.kind, payload, bbox, anchorX: (bbox[0]! + bbox[2]!) / 2, anchorY: (bbox[1]! + bbox[3]!) / 2 };
@@ -593,6 +642,12 @@ export function geometryPositions(crs: Crs, prepared: PreparedFeatureGeometry): 
     const base = crs.fromWorld({ x, y });
     return altitude === undefined ? base : ({ ...base, altitude } as Position);
   };
+  /** Stored per-vertex altitude; `NaN` (or a missing store) means "no altitude". */
+  const altitudeOf = (altitudes: Float64Array | undefined, index: number): number | undefined => {
+    if (altitudes === undefined) return undefined;
+    const value = altitudes[index]!;
+    return Number.isNaN(value) ? undefined : value;
+  };
   const payload = prepared.payload;
   switch (payload.kind) {
     case GEOMETRY_KIND.point:
@@ -600,13 +655,8 @@ export function geometryPositions(crs: Crs, prepared: PreparedFeatureGeometry): 
     case GEOMETRY_KIND.multiPoint: {
       const positions: Position[] = [];
       for (let i = 0; i < payload.points.length; i += 2) {
-        const altitude = payload.altitudes ? payload.altitudes[i / 2] : undefined;
         positions.push(
-          toPosition(
-            payload.points[i]!,
-            payload.points[i + 1]!,
-            altitude !== undefined && Number.isNaN(altitude) ? undefined : altitude,
-          ),
+          toPosition(payload.points[i]!, payload.points[i + 1]!, altitudeOf(payload.altitudes, i / 2)),
         );
       }
       return { type: 'multiPoint', positions };
@@ -620,7 +670,7 @@ export function geometryPositions(crs: Crs, prepared: PreparedFeatureGeometry): 
         const line: Position[] = [];
         for (let i = 0; i < count; i++) {
           const at = (start + i) * 2;
-          line.push(toPosition(payload.vertices[at]!, payload.vertices[at + 1]!));
+          line.push(toPosition(payload.vertices[at]!, payload.vertices[at + 1]!, altitudeOf(payload.altitudes, start + i)));
         }
         lines.push(line);
       }
@@ -634,7 +684,7 @@ export function geometryPositions(crs: Crs, prepared: PreparedFeatureGeometry): 
         const ring: Position[] = [];
         for (let i = 0; i < count; i++) {
           const at = (start + i) * 2;
-          ring.push(toPosition(payload.ringVertices[at]!, payload.ringVertices[at + 1]!));
+          ring.push(toPosition(payload.ringVertices[at]!, payload.ringVertices[at + 1]!, altitudeOf(payload.altitudes, start + i)));
         }
         return ring;
       };

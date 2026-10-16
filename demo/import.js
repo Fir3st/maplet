@@ -2,8 +2,9 @@
  * Import battery (IO-05..IO-11, LIFE-09): a real module worker prepares
  * columnar batches and GeoJSON; the page verifies strict validation before
  * publication, copy/move buffer ownership, abort before and during the worker
- * flight (late replies never publish), bounded queue backpressure, and that
- * imported identity drives get, hit-testing, update and export. Results:
+ * flight (late replies never publish), bounded queue backpressure, that
+ * imported identity drives get, hit-testing, update and export, and that
+ * line/polygon altitudes survive preparation, rendering and export. Results:
  * `window.__importCheckResult`.
  */
 import { createMap } from '../dist/index.js';
@@ -22,7 +23,7 @@ function finalize() {
   finalized = true;
   result.ms = Math.round(performance.now() - started);
   result.pass =
-    result.errors.length === 0 && result.checks.length === 8 && result.checks.every((entry) => entry.pass);
+    result.errors.length === 0 && result.checks.length === 9 && result.checks.every((entry) => entry.pass);
   window.__importCheckResult = result;
   document.title = 'import-check-done';
   const summary = document.getElementById('summary');
@@ -49,6 +50,12 @@ map.addLayer({
   style: { radiusPx: 7, color: '#2563eb' },
   interactive: true ,
 });
+map.addLayer({
+  id: 'marks-lines',
+  type: 'lines',
+  source: marks,
+  style: { color: '#16724c', widthPx: 3 },
+});
 
 /* --------------------------------- helpers -------------------------------- */
 
@@ -65,6 +72,7 @@ async function check(name, fn) {
 const sample = (x, y) => map.debug.samplePixel({ x, y });
 const describe = (pixel) => `rgba(${pixel.r},${pixel.g},${pixel.b},${pixel.a})`;
 const blue = (pixel) => pixel.b > 180 && pixel.r < 90 && pixel.g < 160;
+const green = (pixel) => pixel.g > 80 && pixel.r < 90 && pixel.b < 130;
 const pixelAt = async (position) => {
   const screen = map.positionToScreen(position);
   return sample(Math.round(screen.x), Math.round(screen.y));
@@ -334,6 +342,54 @@ await check('imported identity drives get, query.at, update and export', async (
       exported: exported.features[0],
       oldPixel: describe(oldPixel),
       newPixel: describe(newPixel),
+    },
+  };
+});
+
+await check('IO-05 line and polygon altitudes survive the worker round trip', async () => {
+  const before = map.debug.imports().used.worker;
+  const trail = {
+    kind: 'lineString',
+    positions: Float64Array.of(13.98, 49.98, 14.0, 50.0, 14.02, 49.98),
+    altitudes: Float64Array.of(210, Number.NaN, 240),
+    partOffsets: Int32Array.of(0, 3),
+    ids: ['trail'],
+  };
+  const commit = await marks.importColumnar(trail, { copy: false });
+  const trailDetached = trail.positions.byteLength === 0 && trail.altitudes.byteLength === 0;
+  // Up, right, down, left: the world-space winding keeps this order and its altitudes.
+  const ridge = {
+    kind: 'polygon',
+    positions: Float64Array.of(14.06, 49.98, 14.06, 50.0, 14.08, 50.0, 14.08, 49.98),
+    altitudes: Float64Array.of(300, 320, 340, 360),
+    partOffsets: Int32Array.of(0, 4),
+    ids: ['ridge'],
+  };
+  await marks.importColumnar(ridge, { mode: 'append' });
+  await map.whenRendered(map.stats().revision);
+  const trailGeometry = marks.features.get('trail').geometry;
+  const ridgeGeometry = marks.features.get('ridge').geometry;
+  const exported = marks.exportGeoJson();
+  const trailCoordinates = exported.features.find((feature) => feature.id === 'trail').geometry.coordinates;
+  const ridgeCoordinates = exported.features.find((feature) => feature.id === 'ridge').geometry.coordinates;
+  const imports = map.debug.imports();
+  const pixel = await pixelAt({ lat: 50.0, lng: 14.0 });
+  const trailAltitudes = trailGeometry.positions.map((position) => position.altitude ?? null);
+  const ridgeAltitudes = ridgeGeometry.rings[0].map((position) => position.altitude ?? null);
+  return {
+    pass:
+      imports.backend === 'worker' && imports.used.worker === before + 2 &&
+      String(commit.revision).length > 0 &&
+      trailDetached &&
+      trailAltitudes.join(',') === '210,,240' &&
+      ridgeAltitudes.join(',') === '300,320,340,360,300' &&
+      trailCoordinates[0].length === 3 && trailCoordinates[0][2] === 210 &&
+      trailCoordinates[1].length === 2 && trailCoordinates[2][2] === 240 &&
+      ridgeCoordinates[0][0][2] === 300 && ridgeCoordinates[0][4][2] === 300 &&
+      green(pixel),
+    detail: {
+      imports, served: imports.used.worker - before, trailDetached, trailAltitudes, ridgeAltitudes,
+      trailCoordinates, ridgeCoordinates, pixel: describe(pixel),
     },
   };
 });

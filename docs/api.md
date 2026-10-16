@@ -22,7 +22,9 @@ container can also be supplied with `renderer: 'none'` for a custom renderer.
 Creation remains async because GPU acquisition is async; ordinary object edits
 are synchronous commits, not fire-and-forget work.
 
-Geographic inputs accept `[lat, lng]` or `{ lat, lng, altitude? }`. Planar maps
+Geographic inputs accept `[lat, lng]` or `{ lat, lng, altitude? }`; the optional
+altitude is metadata kept on every vertex — points, line vertices and polygon
+ring vertices alike. Planar maps
 use `projection: crs.simple()` and `{ x, y }`; tuples are rejected rather than
 silently interpreted in a different order. GeoJSON and columnar imports keep
 their existing **longitude/latitude** order. Read methods return canonical

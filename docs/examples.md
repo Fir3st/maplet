@@ -1,12 +1,12 @@
 # Documentation website and publication
 
 The public website includes an overview, installation, guides, API reference and
-seventeen tutorials with live maps. Tutorials cover first maps, editable points,
-lines/polygon holes, bindings, GeoJSON, labels/image pins, markers with tooltips,
-popups and dragging, pin clustering, the gesture guard and fullscreen plugins,
-raster tiles and plugins, plus four real-world recipes: a city guide, vehicle
-tracking, a filterable site explorer and a measuring tool. Diagnostic pages,
-benchmarks and server-dependent fixtures remain in `demo/`.
+eighteen tutorials with live maps. Tutorials cover first maps, editable points,
+lines/polygon holes, bindings, GeoJSON, route elevation, labels/image pins,
+markers with tooltips, popups and dragging, pin clustering, the gesture guard
+and fullscreen plugins, raster tiles and plugins, plus four real-world recipes:
+a city guide, vehicle tracking, a filterable site explorer and a measuring tool.
+Diagnostic pages, benchmarks and server-dependent fixtures remain in `demo/`.
 
 ## Local preview
 
@@ -107,7 +107,7 @@ a fresh site without Gist links; it does not delete previously published Gists.
   and assembles allowlisted standalone Gist payloads. Existing `/examples/<id>/`
   URLs remain valid.
 - `scripts/publish-gists.mjs` owns discovery and idempotent Gist publication.
-- Gist payloads are bounded to 1 MiB total and 128 KiB per example. Discovery is
+- Gist payloads are bounded to 1.25 MiB total and 128 KiB per example. Discovery is
   limited to 2,000 public Gists and fails before any writes if it cannot finish.
   Writes are sequential and limited to one per changed example plus its index.
 

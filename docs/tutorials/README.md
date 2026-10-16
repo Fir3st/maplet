@@ -15,6 +15,7 @@ JavaScript source. Start with a first map, then choose a topic.
 - [Lines, fills and holes](geometry.md) — mixed content and nested layer visibility.
 - [Connected data](bindings.md) — stable references and derived route geometry.
 - [Bring your GeoJSON](geojson.md) — atomic import and canonical export.
+- [Elevation on a route](elevation.md) — altitude per vertex, read back from the exported data.
 
 ## Presentation and extensions
 

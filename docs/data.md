@@ -43,10 +43,13 @@ await points.source.importGeoJson(featureCollection);
 const exported = points.source.exportGeoJson();
 ```
 
-GeoJSON keeps its standard **[longitude, latitude]** order. Invalid imports leave
-accepted data unchanged. Exports contain canonical data, not clipped screen
-fragments; floating-point round trips are approximate, not bit-identical.
-See the [GeoJSON tutorial](tutorials/geojson.md).
+GeoJSON keeps its standard **[longitude, latitude]** order. A third value is the
+vertex altitude: it is metadata, preserved per vertex on points, lines and
+polygons and returned by `exportGeoJson()` (a vertex without one exports two
+coordinates). Invalid imports leave accepted data unchanged. Exports contain
+canonical data, not clipped screen fragments; floating-point round trips are
+approximate, not bit-identical. See the [GeoJSON tutorial](tutorials/geojson.md)
+and the [altitude tutorial](tutorials/elevation.md).
 
 ## Columnar imports
 
@@ -59,8 +62,10 @@ await source.importColumnar({
 ```
 
 Positions are flat longitude/latitude or planar x/y pairs. Lines and polygons add
-`partOffsets` and `featurePartOffsets`. The entire structure is validated before
-publication. Worker preparation is separate from the main-thread transaction.
+`partOffsets` and `featurePartOffsets`; the optional `altitudes` column holds one
+value per vertex (`NaN` = absent) for geographic CRSs. The entire structure is
+validated before publication. Worker preparation is separate from the
+main-thread transaction.
 
 The default copies buffers. `copy: false` transfers and detaches unique buffers
 when a worker is available; inline preparation still copies. Imports accept an

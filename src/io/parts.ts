@@ -18,8 +18,13 @@ export function prepareParts(batch: ColumnarPartsBatch, projection: Crs, context
     const first = batch.featurePartOffsets?.[feature] ?? feature;
     const last = batch.featurePartOffsets?.[feature + 1] ?? feature + 1;
     const parts: Float64Array[] = [];
-    for (let part = first; part < last; part++) parts.push(projected.subarray(batch.partOffsets[part]! * 2, batch.partOffsets[part + 1]! * 2));
-    geometries[feature] = prepareWorldParts(batch.kind, parts, `${context}[${feature}]`);
+    const altitudeParts: (Float32Array | Float64Array | null)[] = [];
+    for (let part = first; part < last; part++) {
+      const from = batch.partOffsets[part]!, to = batch.partOffsets[part + 1]!;
+      parts.push(projected.subarray(from * 2, to * 2));
+      altitudeParts.push(batch.altitudes ? batch.altitudes.subarray(from, to) : null);
+    }
+    geometries[feature] = prepareWorldParts(batch.kind, parts, `${context}[${feature}]`, altitudeParts);
   }
   return { kind: 'prepared-parts', geometries, ...(batch.ids === undefined ? {} : { ids: batch.ids }),
     ...(batch.properties === undefined ? {} : { properties: batch.properties }) };
@@ -41,6 +46,9 @@ export function validPreparedParts(value: unknown): value is PreparedPartsImport
     const offsets = 'rings' in payload ? payload.rings : 'parts' in payload ? payload.parts : null;
     if (!(vertices instanceof Float64Array) || vertices.length < 4 || vertices.length % 2 ||
       !(offsets instanceof Uint32Array) || offsets.length === 0 || offsets.length % 2) return false;
+    const altitudes = (payload as { altitudes?: unknown }).altitudes;
+    if (altitudes !== undefined &&
+      (!(altitudes instanceof Float64Array) || altitudes.length !== vertices.length / 2)) return false;
     let end = 0, minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
     for (let at = 0; at < vertices.length; at += 2) {
       const x = vertices[at]!, y = vertices[at + 1]!;

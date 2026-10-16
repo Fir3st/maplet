@@ -423,6 +423,46 @@ test('bulk columns match ordinary CRUD across CRS, wrapping, generated IDs and a
   }
 });
 
+test('line and polygon columns match ordinary CRUD with altitudes', async () => {
+  for (const projection of [crs.webMercator(), crs.epsg4326()]) {
+    const { map } = await makeMap({ projection, center: { lat: 50, lng: 14 }, zoom: 8 });
+    const bulk = map.data.vector({ id: 'bulk' });
+    const direct = map.data.vector({ id: 'direct' });
+    await bulk.importColumnar({
+      kind: 'lineString',
+      positions: Float64Array.of(14, 50, 14.1, 50.05, 14.2, 50),
+      altitudes: Float64Array.of(100, Number.NaN, 300),
+      partOffsets: Uint32Array.of(0, 3),
+      ids: ['trail'],
+    });
+    await bulk.importColumnar({
+      kind: 'polygon',
+      positions: Float64Array.of(14.3, 50, 14.5, 50, 14.5, 50.1, 14.3, 50.1),
+      altitudes: Float64Array.of(10, 20, 30, 40),
+      partOffsets: Uint32Array.of(0, 4),
+      ids: ['ridge'],
+    }, { mode: 'append' });
+    direct.features.add([
+      { id: 'trail', geometry: { type: 'lineString', positions: [
+        { lng: 14, lat: 50, altitude: 100 },
+        { lng: 14.1, lat: 50.05 },
+        { lng: 14.2, lat: 50, altitude: 300 },
+      ] } },
+      { id: 'ridge', geometry: { type: 'polygon', rings: [[
+        { lng: 14.3, lat: 50, altitude: 10 },
+        { lng: 14.5, lat: 50, altitude: 20 },
+        { lng: 14.5, lat: 50.1, altitude: 30 },
+        { lng: 14.3, lat: 50.1, altitude: 40 },
+      ]] } },
+    ]);
+    for (const id of ['trail', 'ridge']) {
+      assert.deepEqual(bulk.features.get(id)!.geometry, direct.features.get(id)!.geometry);
+    }
+    assert.deepEqual(bulk.exportGeoJson(), direct.exportGeoJson());
+    map.destroy();
+  }
+});
+
 test('an abort during bulk CRS conversion never publishes even the final row', async () => {
   const controller = new AbortController();
   let conversions = 0;

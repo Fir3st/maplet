@@ -32,5 +32,7 @@ const exported = points.source.exportGeoJson();
 ```
 
 Exported geometry is canonical, not clipped to the viewport. Normalization and
-projection can cause tiny floating-point differences. See
+projection can cause tiny floating-point differences. A third coordinate
+(altitude) is kept on every point, line and polygon vertex; see
+[Elevation on a route](elevation.md). See
 [imports](../data.md#geojson) and [columnar data](../data.md#columnar-imports).
