@@ -1,6 +1,6 @@
 {
   "name": "@fir3st/maplet",
-  "version": "0.1.0-alpha.12",
+  "version": "0.1.0-alpha.13",
   "description": "Standalone GPU map library for WebGPU and WebGL 1 - sources, stable feature references, relations, bindings, raster and vector layers",
   "type": "module",
   "license": "Apache-2.0",

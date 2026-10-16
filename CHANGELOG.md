@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.1.0-alpha.13
+
+- Preserve line and polygon altitudes. The public normalization kernel, the
+  binary worker kernel and `exportGeoJson` share one per-vertex altitude column
+  (`NaN` = absent): GeoJSON, object and columnar imports keep the third
+  coordinate on every line, multi-line, polygon and multi-polygon vertex, and
+  `features.get()` and `exportGeoJson()` return it — a vertex without one
+  exports two coordinates. Collapsing consecutive duplicate positions keeps the
+  first vertex's altitude, an auto-closed ring repeats the first vertex's
+  altitude, and a winding flip reverses the altitude column together with its
+  ring. The prepared-parts worker trust boundary validates the column length and
+  transfers the altitude buffer instead of cloning it; a geometry whose
+  vertices carry no altitude stores no column. Adds the `elevation`
+  tutorial/example, whose profile is drawn from `exportGeoJson()`.
+
 ## 0.1.0-alpha.12
 
 - Add keyboard focus on pins (MARKER-15). One hidden focus stop inside the map
