@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.1.0-alpha.12
+
+- Add keyboard focus on pins (MARKER-15). One hidden focus stop inside the map
+  is reached with Tab (and left with Tab); arrow keys and Home/End walk a ring
+  cursor over the drawn pins in layer order, Enter or Space activates the
+  focused pin exactly like a click through a new engine `dispatchFeature` seam
+  (popups open, badges zoom their members apart, and `click` listeners see the
+  KeyboardEvent as `originalEvent`), and Escape closes the popup before leaving
+  the cursor back on the container. An open cursor announces `<name>, 2 of 12`
+  through a polite live region, where the name is the new `MarkerOptions.alt`,
+  then the tooltip text, then `Pin` (`N pins` on a badge). The arrow keys are
+  consumed before the container's pan handler (`interaction.keyboard` keeps its
+  own pan and zoom keys), and `MarkerOptions.keyboard: false` keeps a pin out of
+  the cycle. The ring follows the focused pin and parks off-view; only pins
+  inside the container are reachable, and a cluster badge is visited in the
+  place of its first reachable member, so the cycle keeps the layer's order.
+
 ## 0.1.0-alpha.11
 
 - Add marker clustering: `map.setMarkerClustering({ radiusPx, minCount,
