@@ -46,6 +46,7 @@ export type {
   MarkerTooltipInit,
   MarkerTooltipOptions,
 } from './ui/markers.ts';
+export type { MarkerClusteringOptions, ResolvedMarkerClustering } from './ui/marker-clusters.ts';
 export type {
   AreaQueryOptions,
   AreaQueryResult,

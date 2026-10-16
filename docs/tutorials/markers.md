@@ -77,6 +77,8 @@ carry the pointer state and the overlays follow the pin for free.
 Pins are canvas sprites — there is no DOM element per marker — and they are not
 zoom-gated: unlike data layers, whose default `minZoom` is 0, a marker stays
 visible at the negative zooms planar maps can use. Dragging is opt-in per pin
-(`draggable: true`); clustering and DOM focus are not part of this alpha. See the
+(`draggable: true`); dense pins can collapse into count badges with
+`setMarkerClustering` (see the [clustering tutorial](clusters.md)), while DOM
+focus on pins is not part of this alpha. See the
 [marker contracts](../decisions.md#markers) and
 [rendering guide](../rendering.md#markers).

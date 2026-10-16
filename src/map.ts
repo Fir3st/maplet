@@ -27,6 +27,7 @@ import {
   type MarkerHandle,
   type MarkerOptions,
 } from './ui/markers.ts';
+import type { MarkerClusteringOptions, ResolvedMarkerClustering } from './ui/marker-clusters.ts';
 
 export type MapOptions = Omit<EngineOptions, 'container' | 'view' | 'renderer'> & {
   readonly center?: PositionInput;
@@ -103,6 +104,14 @@ export interface MapHandle extends LayerContent, Pick<MapEngine,
   /** Leaflet-style marker with a tooltip and a click popup (MARKER-01..08). */
   addMarker<P = FeatureProperties>(options: MarkerOptions<P>): MarkerHandle<P>;
   addMarkers<P = FeatureProperties>(options: readonly MarkerOptions<P>[]): MarkerHandle<P>[];
+  /**
+   * Groups pins whose screen distance is within the radius into one count badge
+   * that hovers and clicks as a single sprite; `null` shows every pin again
+   * (MARKER-11). Badge features use the reserved `maplet-cluster:` id prefix.
+   */
+  setMarkerClustering(options: MarkerClusteringOptions | null): void;
+  /** Active clustering with defaults applied, or `null` while it is off. */
+  getMarkerClustering(): ResolvedMarkerClustering | null;
   readonly layers: LayersHandle;
   /** Lazily created shared layer for all map.addPoints/addLines/etc. calls. */
   readonly base: LayerHandle;
@@ -456,6 +465,11 @@ function buildMap(engine: MapEngine, projection: Crs): MapHandle {
     layers: registry(),
     addMarker: <P = FeatureProperties>(options: MarkerOptions<P>) => markers().add(options),
     addMarkers: <P = FeatureProperties>(options: readonly MarkerOptions<P>[]) => markers().addMany(options),
+    setMarkerClustering: (options) => {
+      if (options === null && !markerController) return;
+      markers().setClustering(options);
+    },
+    getMarkerClustering: () => markerController?.getClustering() ?? null,
     get base() { return getBase(); },
     controls: {
       get: (id) => engine.controls?.get(id), list: () => engine.controls?.list() ?? [],

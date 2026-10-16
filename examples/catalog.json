@@ -56,6 +56,14 @@
     "origin": "demo/markers.js"
   },
   {
+    "id": "clusters", "title": "Cluster nearby pins", "group": "Presentation", "kind": "clusters",
+    "summary": "Group dense pins into count badges that stay readable and split apart as you zoom in.",
+    "learn": "map.setMarkerClustering({ radiusPx, minCount, disableAtZoom }) replaces pins whose screen distance is within the radius with one badge carrying the member count. Hovering a badge shows its count, clicking fits the member bounds so the pins separate, and getMarkerClustering() reports the active options. A pin with cluster: false stays individual, handle.hide() takes a pin out of the count, and a drag joins or leaves a group.",
+    "hint": "Hover a badge for its count · click it to zoom the pins apart · change the radius or add a burst",
+    "note": "Grouping is resolved in screen space at the current zoom, so panning never re-clusters. Badges are internal sprites with the reserved maplet-cluster: id prefix.",
+    "origin": "demo/markers.js"
+  },
+  {
     "id": "raster", "title": "Raster tiles", "group": "Presentation", "kind": "raster",
     "summary": "Add an XYZ tile source and switch between demo tiles and OpenStreetMap.",
     "learn": "A raster source requests tiles for the visible view. The default grid is an inline SVG tile; live OpenStreetMap is requested only after you choose it. Attribution follows the active source.",

@@ -1,12 +1,12 @@
 # Documentation website and publication
 
 The public website includes an overview, installation, guides, API reference and
-sixteen tutorials with live maps. Tutorials cover first maps, editable points,
+seventeen tutorials with live maps. Tutorials cover first maps, editable points,
 lines/polygon holes, bindings, GeoJSON, labels/image pins, markers with tooltips,
-popups and dragging, the gesture guard and fullscreen plugins, raster tiles and plugins,
-plus four real-world recipes: a city guide, vehicle tracking, a filterable site
-explorer and a measuring tool. Diagnostic pages, benchmarks and server-dependent
-fixtures remain in `demo/`.
+popups and dragging, pin clustering, the gesture guard and fullscreen plugins,
+raster tiles and plugins, plus four real-world recipes: a city guide, vehicle
+tracking, a filterable site explorer and a measuring tool. Diagnostic pages,
+benchmarks and server-dependent fixtures remain in `demo/`.
 
 ## Local preview
 

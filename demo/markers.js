@@ -1,9 +1,9 @@
 /**
- * Marker battery (MARKER-01..10): Leaflet-style pins with a hover/permanent
- * tooltip, a click popup and per-marker dragging. Pins are GPU sprites — never a
- * DOM element per marker — while the tooltip and popup are bounded DOM overlays
- * with the UI-06 content contract (strings stay text). Results:
- * `window.__markerCheckResult`.
+ * Marker battery (MARKER-01..14): Leaflet-style pins with a hover/permanent
+ * tooltip, a click popup, per-marker dragging and optional clustering into
+ * count badges. Pins are GPU sprites — never a DOM element per marker — while
+ * the tooltip and popup are bounded DOM overlays with the UI-06 content
+ * contract (strings stay text). Results: `window.__markerCheckResult`.
  */
 import { createMap } from '../dist/index.js';
 
@@ -21,7 +21,7 @@ function finalize() {
   if (finalized) return;
   finalized = true;
   result.ms = Math.round(performance.now() - started);
-  result.pass = result.errors.length === 0 && result.checks.length === 10 && result.checks.every((entry) => entry.pass);
+  result.pass = result.errors.length === 0 && result.checks.length === 14 && result.checks.every((entry) => entry.pass);
   window.__markerCheckResult = result;
   document.title = 'marker-check-done';
   const summary = document.getElementById('summary');
@@ -49,6 +49,12 @@ const near = (pixel, [r, g, b, a], tolerance = 8) =>
   (a === undefined || Math.abs(pixel.a - a) <= tolerance);
 const describe = (pixel) => `rgba(${pixel.r},${pixel.g},${pixel.b},${pixel.a})`;
 const anchorOf = (marker) => map.positionToScreen(marker.getPosition());
+const markerLayerId = () =>
+  map.layers.list({ recursive: true }).find((layer) => String(layer.id).startsWith('markers:')).id;
+/** Internal count badges as frame-plan sprites; the asset id carries the label. */
+const badgeSprites = () =>
+  map.debug.layerSprites(markerLayerId()).filter((sprite) => String(sprite.assetId).startsWith('maplet-cluster-asset:'));
+const badgeLabel = (sprite) => String(sprite.assetId).split(':').pop();
 
 const rect = element.getBoundingClientRect();
 /** DOM box in container-relative coordinates (the same space as positionToScreen). */
@@ -97,6 +103,14 @@ const SQUARE_GREEN = [22, 163, 74, 255];
 let markerA;
 let markerB;
 let markerC;
+// Kept reachable so the clustering checks can start from a clean layer.
+let markerD;
+let markerD2;
+let markerE;
+let markerF;
+let markerG;
+let markerH;
+let markerI;
 
 started = performance.now();
 
@@ -279,26 +293,26 @@ await check('MARKER-06 tooltip and popup follow pan and zoom', async () => {
 
 await check('MARKER-07 auto-pan brings an edge popup into view; autoPan: false does not', async () => {
   const popupAt = () => element.querySelector('[data-maplet-popup]');
-  const d = map.addMarker({ id: 'd', position: screen(320, 30), popup: 'Nahoru' });
+  markerD = map.addMarker({ id: 'd', position: screen(320, 30), popup: 'Nahoru' });
   await sleep(80);
-  const beforeY = anchorOf(d).y;
-  d.openPopup();
+  const beforeY = anchorOf(markerD).y;
+  markerD.openPopup();
   await sleep(120);
-  const afterY = anchorOf(d).y;
+  const afterY = anchorOf(markerD).y;
   const box = popupAt() ? domBox(popupAt()) : null;
   const fits = box ? box.top >= 4 && box.bottom <= HEIGHT - 4 && box.left >= 4 && box.right <= WIDTH - 4 : false;
   const pannedDown = afterY - beforeY >= 30;
-  d.closePopup();
+  markerD.closePopup();
   // Placed after the pan so its screen position is deterministic; auto-pan off.
-  const d2 = map.addMarker({ id: 'd2', position: screen(520, 30), popup: { content: 'Bez autopanu', autoPan: false } });
+  markerD2 = map.addMarker({ id: 'd2', position: screen(520, 30), popup: { content: 'Bez autopanu', autoPan: false } });
   await sleep(80);
-  const d2Before = anchorOf(d2).y;
-  d2.openPopup();
+  const d2Before = anchorOf(markerD2).y;
+  markerD2.openPopup();
   await sleep(120);
   const d2Box = popupAt() ? domBox(popupAt()) : null;
   const overflowed = d2Box ? d2Box.top < 0 : false;
-  const notPanned = Math.abs(anchorOf(d2).y - d2Before) <= 1;
-  d2.closePopup();
+  const notPanned = Math.abs(anchorOf(markerD2).y - d2Before) <= 1;
+  markerD2.closePopup();
   return {
     pass: pannedDown && fits && overflowed && notPanned,
     detail: { beforeY: Math.round(beforeY), afterY: Math.round(afterY), fits, overflowed, notPanned },
@@ -317,7 +331,8 @@ await check('MARKER-08 custom icons, tint, batch add, events and removal', async
     { id: 'f', position: screen(420, 380), iconTint: '#00ff00' },
   ]);
   await sleep(120);
-  const [markerE, markerF] = batch;
+  markerE = batch[0];
+  markerF = batch[1];
   const e = anchorOf(markerE);
   const square = await sample(Math.round(e.x), Math.round(e.y) - 8);
   const beforeIcon = await sample(Math.round(e.x), Math.round(e.y) - 5);
@@ -383,8 +398,8 @@ await check('MARKER-08 custom icons, tint, batch add, events and removal', async
 });
 
 await check('MARKER-09 a draggable pin follows the pointer without panning; plain pins pan the map', async () => {
-  const markerG = map.addMarker({ id: 'g', position: screen(260, 320), draggable: true, tooltip: 'Drag me', popup: 'Moved' });
-  const markerH = map.addMarker({ id: 'h', position: screen(430, 300), tooltip: 'Fixed', popup: 'Fixed' });
+  markerG = map.addMarker({ id: 'g', position: screen(260, 320), draggable: true, tooltip: 'Drag me', popup: 'Moved' });
+  markerH = map.addMarker({ id: 'h', position: screen(430, 300), tooltip: 'Fixed', popup: 'Fixed' });
   await sleep(140);
   const events = [];
   const offs = [
@@ -521,7 +536,7 @@ await check('MARKER-09 a draggable pin follows the pointer without panning; plai
 });
 
 await check('MARKER-10 a permanent tooltip tracks its pin exactly and parks off-view', async () => {
-  const markerI = map.addMarker({ id: 'i', position: screen(30, 240), popup: 'Edge' });
+  markerI = map.addMarker({ id: 'i', position: screen(30, 240), popup: 'Edge' });
   await sleep(140);
   markerI.setTooltip({ content: 'Edge pin', permanent: true });
   await sleep(180);
@@ -571,6 +586,175 @@ await check('MARKER-10 a permanent tooltip tracks its pin exactly and parks off-
       parked !== null && parked.visibility === 'hidden' && parked.anchorX < 0 &&
       returned !== null && returned.visibility === '' && Math.abs(returned.dx) <= 1 && Math.abs(returned.dy - 36) <= 1,
     detail: { before, after, parked, returned },
+  };
+});
+
+await check('MARKER-11 nearby pins become one count badge; a badge click zooms them apart', async () => {
+  // The earlier checks leave their pins on the shared layer; the grouping
+  // checks want a clean set, so remove every pin they created.
+  for (const marker of [markerA, markerB, markerC, markerD, markerD2, markerE, markerF, markerG, markerH, markerI]) {
+    if (marker && !marker.removed) marker.remove();
+  }
+  await sleep(200);
+  const pinSprites = () =>
+    map.debug.layerSprites(markerLayerId()).filter((sprite) => String(sprite.assetId) === 'maplet-marker-pin');
+  const group = map.addMarkers([
+    { id: 'j1', position: screen(200, 260) },
+    { id: 'j2', position: screen(222, 274) },
+    { id: 'j3', position: screen(236, 252) },
+  ]);
+  const far = map.addMarker({ id: 'j4', position: screen(520, 120) });
+  await sleep(240);
+  // Control: with clustering off every pin draws its own sprite.
+  const drawnBefore = pinSprites().length;
+  map.setMarkerClustering({ radiusPx: 64 });
+  const options = map.getMarkerClustering();
+  await sleep(280);
+  const sprites = badgeSprites();
+  const badge = sprites[0] ?? null;
+  const spots = group.map(anchorOf);
+  const centroid = {
+    x: spots.reduce((sum, point) => sum + point.x, 0) / spots.length,
+    y: spots.reduce((sum, point) => sum + point.y, 0) / spots.length,
+  };
+  const paints = {
+    atCentroid: badge ? Math.abs(badge.sx - centroid.x) <= 1 && Math.abs(badge.sy - centroid.y) <= 1 : false,
+    label: badge ? badgeLabel(badge) : null,
+    size: badge ? badge.sizePx : null,
+    // The badge replaces the pinned sprites: only the distant pin still draws.
+    onlyFarPin: pinSprites().length === 1,
+    farDrawn: near(await sample(520, 120 - 26), PIN_BODY),
+  };
+  await hover(Math.round(centroid.x), Math.round(centroid.y));
+  const tooltip = await poll(() => element.querySelector('[data-maplet-tooltip]'));
+  const tooltipText = tooltip?.querySelector('[data-maplet-tooltip-content]')?.textContent ?? null;
+  const zoomBefore = map.getZoom();
+  await click(Math.round(centroid.x), Math.round(centroid.y));
+  await sleep(320);
+  await hover(20, 440);
+  const zoomAfter = map.getZoom();
+  const badgesAfter = badgeSprites().length;
+  const spread = group.map(anchorOf);
+  const drawn = await Promise.all(spread.map((point) => sample(Math.round(point.x), Math.round(point.y) - 26)));
+  const pinsDrawn = drawn.every((pixel) => near(pixel, PIN_BODY));
+  group.forEach((marker) => marker.remove());
+  far.remove();
+  map.setMarkerClustering(null);
+  await sleep(160);
+  return {
+    pass:
+      drawnBefore === 4 &&
+      options?.radiusPx === 64 && options?.minCount === 2 && options?.disableAtZoom === null &&
+      sprites.length === 1 && paints.atCentroid && paints.label === '3' && paints.size === 34 &&
+      paints.onlyFarPin && paints.farDrawn &&
+      tooltipText === '3 pins' &&
+      zoomAfter > zoomBefore + 1 && badgesAfter === 0 && pinsDrawn,
+    detail: {
+      drawnBefore, options, badges: sprites.length, ...paints, tooltipText,
+      zoomBefore, zoomAfter: Math.round(zoomAfter * 100) / 100, badgesAfter, pinsDrawn,
+    },
+  };
+});
+
+await check('MARKER-12 cluster: false stays individual and hide() drops a member from the badge', async () => {
+  map.setMarkerClustering({ radiusPx: 80 });
+  const left = map.addMarker({ id: 'k1', position: screen(240, 300) });
+  const middle = map.addMarker({ id: 'k2', position: screen(260, 310), cluster: false });
+  const right = map.addMarker({ id: 'k3', position: screen(278, 296) });
+  await sleep(260);
+  const sprites = badgeSprites();
+  const middleAnchor = anchorOf(middle);
+  const leftAnchor = anchorOf(left);
+  const middleDrawn = near(await sample(Math.round(middleAnchor.x), Math.round(middleAnchor.y) - 26), PIN_BODY);
+  const leftHidden = (await sample(Math.round(leftAnchor.x), Math.round(leftAnchor.y) - 26)).a === 0;
+  const label = sprites[0] ? badgeLabel(sprites[0]) : null;
+  right.hide();
+  await sleep(220);
+  const afterHide = badgeSprites().map(badgeLabel);
+  const rightGone = (await sample(Math.round(anchorOf(right).x), Math.round(anchorOf(right).y) - 26)).a === 0;
+  right.show();
+  await sleep(220);
+  const afterShow = badgeSprites().map(badgeLabel);
+  [left, middle, right].forEach((marker) => marker.remove());
+  map.setMarkerClustering(null);
+  await sleep(160);
+  return {
+    pass: sprites.length === 1 && label === '2' && middleDrawn && leftHidden &&
+      afterHide.length === 0 && rightGone && afterShow.join() === '2',
+    detail: { badges: sprites.length, label, middleDrawn, leftHidden, afterHide, rightGone, afterShow },
+  };
+});
+
+await check('MARKER-13 radius and disableAtZoom bound the grouping', async () => {
+  const left = map.addMarker({ id: 'm1', position: screen(280, 300) });
+  const right = map.addMarker({ id: 'm2', position: screen(340, 300) });
+  map.setMarkerClustering({ radiusPx: 40 });
+  await sleep(240);
+  const tight = badgeSprites().length;
+  const tightDrawn = (await sample(280, 300 - 26)).a !== 0 && (await sample(340, 300 - 26)).a !== 0;
+  map.setMarkerClustering({ radiusPx: 80 });
+  await sleep(240);
+  const wide = badgeSprites().map(badgeLabel);
+  map.setMarkerClustering({ radiusPx: 80, disableAtZoom: map.getZoom() });
+  await sleep(240);
+  const disabled = badgeSprites().length;
+  const disabledDrawn = (await sample(280, 300 - 26)).a !== 0;
+  map.setMarkerClustering({ radiusPx: 80, disableAtZoom: map.getZoom() + 1 });
+  await sleep(240);
+  const below = badgeSprites().length;
+  [left, right].forEach((marker) => marker.remove());
+  map.setMarkerClustering(null);
+  await sleep(160);
+  return {
+    pass: tight === 0 && tightDrawn && wide.join() === '2' && disabled === 0 && disabledDrawn && below === 1,
+    detail: { tight, tightDrawn, wide, disabled, disabledDrawn, below, zoom: Math.round(map.getZoom() * 100) / 100 },
+  };
+});
+
+await check('MARKER-14 a grouped member parks overlays and a dragged pin joins the count', async () => {
+  const host = map.addMarker({ id: 'n1', position: screen(300, 300), popup: 'Host popup' });
+  const partner = map.addMarker({ id: 'n2', position: screen(320, 308) });
+  const rover = map.addMarker({ id: 'n3', position: screen(500, 380), draggable: true });
+  await sleep(200);
+  host.setTooltip({ content: 'Host pin', permanent: true });
+  host.openPopup();
+  await sleep(160);
+  const overlayBefore = host.tooltipElement() !== null && host.popupOpen;
+  map.setMarkerClustering({ radiusPx: 80 });
+  await sleep(260);
+  const parked = { tooltip: host.tooltipElement() === null, popup: !host.popupOpen, badges: badgeSprites().map(badgeLabel) };
+  // Drag the rover onto the group: at dragend it joins the badge and disappears.
+  const from = anchorOf(rover);
+  const to = anchorOf(partner);
+  pointer('pointerdown', Math.round(from.x), Math.round(from.y) - 22);
+  await sleep(90);
+  pointer('pointermove', Math.round((from.x + to.x) / 2), Math.round((from.y - 22 + to.y - 22) / 2));
+  await sleep(70);
+  pointer('pointermove', Math.round(to.x), Math.round(to.y - 22));
+  await sleep(70);
+  pointer('pointerup', Math.round(to.x), Math.round(to.y - 22));
+  await sleep(300);
+  const joined = {
+    atTarget: Math.abs(anchorOf(rover).x - to.x) <= 1.5 && Math.abs(anchorOf(rover).y - to.y) <= 1.5,
+    badges: badgeSprites().map(badgeLabel),
+    hidden: (await sample(Math.round(anchorOf(rover).x), Math.round(anchorOf(rover).y) - 26)).a === 0,
+  };
+  map.setMarkerClustering(null);
+  await sleep(220);
+  const returned = {
+    tooltip: host.tooltipElement() !== null,
+    badges: badgeSprites().length,
+    pins: (await sample(Math.round(anchorOf(host).x), Math.round(anchorOf(host).y) - 26)).a !== 0 &&
+      (await sample(Math.round(to.x), Math.round(to.y) - 26)).a !== 0,
+  };
+  [host, partner, rover].forEach((marker) => marker.remove());
+  await sleep(140);
+  return {
+    pass:
+      overlayBefore && parked.tooltip && parked.popup && parked.badges.join() === '2' &&
+      joined.atTarget && joined.badges.join() === '3' && joined.hidden &&
+      returned.tooltip && returned.badges === 0 && returned.pins,
+    detail: { overlayBefore, parked, joined, returned },
   };
 });
 

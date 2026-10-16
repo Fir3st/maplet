@@ -194,7 +194,7 @@ rendered, the filter drove the dots **and** their labels through one shared
 a filter belonged to a matching site), and the in-view counter agreed with an
 independent bounds oracle. Measure: four background clicks became vertices, the
 path appeared with the second point, closing produced a 19.88 ha ring, and undo
-and clear removed the objects and the panel readouts. All sixteen example pages
+and clear removed the objects and the panel readouts. All seventeen example pages
 boot without page errors when tiles are blocked, and tile responses during the
 live checks were all HTTP 200.
 
@@ -232,6 +232,26 @@ overlay whose anchor leaves the container is parked until the pin returns. The
 marker battery's `MARKER-10` asserts the offset stays at 0/36 px across pans,
 that the overlay parks with a negative anchor x and that it comes back
 visible.
+
+Marker clustering (MARKER-11) groups nearby pins into count badges. Grouping is
+resolved in screen space at the current zoom, so panning never re-clusters while
+a zoom or a pin change re-resolves. The marker battery gained four checks: three
+close pins become one `3` badge at their centroid with no member sprite left in
+the frame plan, hovering it shows `3 pins`, clicking it fits the member bounds
+(zoom 14.0 → 17.96 in the check) and dissolves the badge, `cluster: false` stays
+individual, `hide()` removes a pin from the count and `show()` returns it,
+radius and `disableAtZoom` bound the grouping, a grouped pin's permanent tooltip
+and open popup park and come back, and a pin dragged onto a group joins its
+badge at `dragend` (2 → 3 in the check). On the built example page real mouse
+input hovered a badge (`18 pins`, cursor `pointer`) and clicked it (zoom −0.02 →
+3.33, the group split into its 18 pins). A 2000-pin measurement on the built
+page (planar, WebGL 1) added the pins in 12.5 ms and grouped them in a 5.0 ms
+first pass into the expected 20 badges of 100 members; a zoom-step recompute
+cost about 3 ms against 0 ms with clustering off, panning cost 0 ms with
+clustering on, and disabling clustering restored all 2000 pins. The Gist payload
+cap was raised deliberately from 1 MiB to 1.25 MiB, because the seventeenth
+tutorial adds its own copy of the shared files, and the build now reports the
+measured size when it exceeds the cap.
 
 The recorded browser environment was headless Chromium on an Apple M5 Pro,
 using ANGLE Metal for WebGL and `apple metal-3` for WebGPU. Pixel comparisons
@@ -323,8 +343,10 @@ Canvas setup is still faster at 282 ms. One-second warm-pan outliers persist.
   DOM overlays (at most one popup and one hover tooltip at a time, while a
   permanent tooltip owns one element per marker). Strings render as text (UI-06)
   rather than Leaflet-style HTML; pass a `Node` for rich content. Dragging is
-  opt-in per pin (`draggable`, `setDraggable`); cluster grouping and DOM focus on
-  pins are not part of this alpha.
+  opt-in per pin (`draggable`, `setDraggable`) and clustering collapses dense
+  pins into count badges (`setMarkerClustering`, MARKER-11); pins that share one
+  position stay one badge at the maximum zoom (no spiderfy), and DOM focus on
+  pins is not part of this alpha.
 - **Plugins:** the gesture guard blocks one-finger touch feature drags and touch
   double-tap zoom (a touch double-click reports `mouse`); with
   `touch-action: pan-y` a two-finger vertical drag can still scroll the page.

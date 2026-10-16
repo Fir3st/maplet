@@ -1,12 +1,18 @@
 /**
- * Leaflet-style markers (MARKER-01..08): a pin at a position with a tooltip and
- * a popup.
+ * Leaflet-style markers (MARKER-01..11): a pin at a position with a tooltip and
+ * a popup, optionally grouped into count badges.
  *
  * A marker is one point feature in a shared internal points layer, drawn as a
  * GPU sprite from the icon atlas — there is no DOM element per marker. The
  * tooltip and popup are bounded DOM overlays (the same pattern as the feature
  * detail): one popup per map at a time and one element per open tooltip,
  * positioned in the map container and re-placed on view and commit changes.
+ *
+ * With clustering on, nearby pins are replaced by one badge: an internal point
+ * feature in the same layer carrying the member count, so it picks, hovers and
+ * clicks like any other sprite. Grouping is resolved in screen space at the
+ * current zoom (see `marker-clusters.ts`), which leaves it untouched by panning
+ * and dissolves it as the view zooms in.
  *
  * Content follows the UI-06 contract: a string renders as **text** (never
  * parsed as active HTML); a caller-supplied `Node` is appended as-is.
@@ -29,8 +35,19 @@ import {
   type Unsubscribe,
 } from '../api/types.ts';
 import type { MapEngine } from '../map-engine.ts';
+import { boundsFromPositions } from '../math/bounds.ts';
 import type { ColorValue } from '../scene/expression.ts';
 import type { FeatureOverride, PointsLayerStyle } from '../scene/layers.ts';
+import {
+  clusterBadge,
+  clusterByProximity,
+  resolveMarkerClustering,
+  type ClusterBadgeArt,
+  type ClusterCandidate,
+  type ClusterPartition,
+  type MarkerClusteringOptions,
+  type ResolvedMarkerClustering,
+} from './marker-clusters.ts';
 
 /** Built-in pin asset id; replace it by registering your own asset id instead. */
 export const MARKER_PIN_ICON_ID = 'maplet-marker-pin';
@@ -109,6 +126,11 @@ export interface MarkerOptions<P = FeatureProperties> {
    * while a press without movement stays a click.
    */
   readonly draggable?: boolean;
+  /**
+   * Let the pin join a cluster badge while clustering is on; default `true`.
+   * `cluster: false` keeps one pin individual (a pinned landmark, say).
+   */
+  readonly cluster?: boolean;
   readonly properties?: P;
   /** Hover tooltip by default; pass an init object for a permanent tooltip. */
   readonly tooltip?: MarkerTooltipInit | MarkerContent | null;
@@ -205,6 +227,18 @@ interface MarkerRecord {
   popup: MarkerPopupInit | null;
   tooltipElement: HTMLElement | null;
   tooltipSticky: boolean;
+  /** Hidden through `handle.hide()`; survives appearance rebuilds (MARKER-11). */
+  hidden: boolean;
+  /** Allowed to join a badge; `cluster: false` pins and badges opt out. */
+  clusterable: boolean;
+  /** Currently replaced by a badge; its markers are hidden with it. */
+  clustered: boolean;
+  /** Non-null on internal count badges; carries the members and last screen centre. */
+  badge: { members: MarkerRecord[]; x: number; y: number } | null;
+  /** Mid-drag pins stay individual so the pointer always owns the sprite. */
+  dragging: boolean;
+  /** A sticky/permanent tooltip closed by clustering; reopened with the pin. */
+  tooltipParked: boolean;
 }
 
 interface PopupEntry {
@@ -226,6 +260,12 @@ const TIP_STYLE =
   'position:absolute;left:50%;bottom:-3px;width:8px;height:8px;margin-left:-4px;' +
   'background:inherit;transform:rotate(45deg);';
 
+/** Reserved id prefix of internal cluster badges and of their artwork. */
+const CLUSTER_FEATURE_PREFIX = 'maplet-cluster:';
+const CLUSTER_ASSET_PREFIX = 'maplet-cluster-asset:';
+/** Badge artwork cache bound; unused labels are evicted in insertion order. */
+const MAX_BADGE_ART = 64;
+
 /** Marker UI controller: shared GPU layer plus the bounded DOM overlays. */
 export class MarkerController {
   private readonly records = new Map<string, MarkerRecord>();
@@ -236,6 +276,17 @@ export class MarkerController {
   private readonly engine: MapEngine;
   private readonly layer: PointsLayerHandle<FeatureProperties>;
   private readonly container: HTMLElement | null;
+  private clustering: ResolvedMarkerClustering | null = null;
+  /** Pool of internal badge records, reused across recomputes (MARKER-11). */
+  private readonly badges: MarkerRecord[] = [];
+  /** Member records currently replaced by a badge, so stopping grouping reveals them. */
+  private readonly clusteredRecords = new Set<MarkerRecord>();
+  /** Badge artwork per count label; bounded so long sessions cannot grow it. */
+  private readonly badgeArt = new Map<string, { id: string; size: number }>();
+  private badgeSerial = 0;
+  /** Zoom of the last grouping pass; panning never changes the grouping. */
+  private lastClusterZoom: number | null = null;
+  private applyingClusters = false;
 
   constructor(engine: MapEngine, layer: PointsLayerHandle<FeatureProperties>, container: HTMLElement | null) {
     this.engine = engine;
@@ -246,7 +297,7 @@ export class MarkerController {
       engine.on('pointer', (event) => {
         if (event.type === 'click') this.closePopupElement();
       }),
-      engine.on('viewchange', () => this.reposition()),
+      engine.on('viewchange', () => this.onViewChange()),
       engine.on('commit', () => this.reposition()),
       engine.on('destroy', () => this.destroy()),
     );
@@ -263,7 +314,7 @@ export class MarkerController {
 
   addMany<P = FeatureProperties>(options: readonly MarkerOptions<P>[]): MarkerHandle<P>[] {
     if (this.destroyed || this.layer.removed) fail('destroyed', 'the marker layer has been removed');
-    return options.map((option) => {
+    const handles = options.map((option) => {
       const input = {
         ...(option.id === undefined ? {} : { id: option.id }),
         position: option.position,
@@ -281,12 +332,20 @@ export class MarkerController {
         popup: option.popup === null || option.popup === undefined ? null : markerPopup(option.popup),
         tooltipElement: null,
         tooltipSticky: false,
+        hidden: false,
+        clusterable: option.cluster !== false,
+        clustered: false,
+        badge: null,
+        dragging: false,
+        tooltipParked: false,
       };
       this.records.set(featureRefKey(record.point.ref), record);
       this.applyAppearance(record);
       if (record.tooltip?.permanent) this.openTooltipElement(record, true);
       return this.handle(record, point);
     });
+    if (this.clustering) this.recomputeClusters();
+    return handles;
   }
 
   destroy(): void {
@@ -296,6 +355,7 @@ export class MarkerController {
     for (const record of [...this.openTooltips]) this.closeTooltipElement(record);
     for (const off of this.unsubscribes.splice(0)) off();
     this.records.clear();
+    this.clusteredRecords.clear();
   }
 
   private handle<P>(record: MarkerRecord, point: PointHandle<P>): MarkerHandle<P> {
@@ -306,7 +366,11 @@ export class MarkerController {
       get removed() { return point.removed; },
       ...featureEvents((fn, options) => point.onFeature(fn, options)),
       getPosition: () => point.getPosition(),
-      setPosition: (position) => point.setPosition(position),
+      setPosition: (position) => {
+        const commit = point.setPosition(position);
+        if (this.clustering) this.recomputeClusters();
+        return commit;
+      },
       setIcon: (icon) => this.setIcon(record, icon),
       setDraggable: (draggable) => this.setDraggable(record, draggable),
       setTooltip: (tooltip) => this.setTooltip(record, tooltip),
@@ -327,8 +391,8 @@ export class MarkerController {
       get popupOpen() { return isPopupOpen(); },
       tooltipElement: () => record.tooltipElement,
       popupElement: () => (this.popup?.record === record ? this.popup.element : null),
-      show: () => point.show(),
-      hide: () => point.hide(),
+      show: () => this.setHidden(record, false),
+      hide: () => this.setHidden(record, true),
       remove: () => this.removeRecord(record),
     };
   }
@@ -345,13 +409,32 @@ export class MarkerController {
     this.applyAppearance(record);
   }
 
+  private setHidden(record: MarkerRecord, hidden: boolean): void {
+    this.assertLive(record);
+    record.hidden = hidden;
+    this.applyAppearance(record);
+    if (hidden) this.parkMemberOverlays(record);
+    else this.restoreMemberOverlays(record);
+    if (this.clustering) this.recomputeClusters();
+  }
+
   private setTooltip(record: MarkerRecord, value: MarkerTooltipInit | MarkerContent | null): void {
     this.assertLive(record);
     const next = value === null ? null : markerTooltip(value);
     const wasOpen = record.tooltipElement !== null;
     this.closeTooltipElement(record);
     record.tooltip = next;
-    if (next && (next.permanent || wasOpen)) this.openTooltipElement(record, next.permanent === true);
+    if (!next) {
+      record.tooltipParked = false;
+      return;
+    }
+    if (record.hidden || record.clustered) {
+      // The pin sits behind a badge or is hidden: keep the intent and open the
+      // tooltip when the pin comes back (MARKER-11).
+      record.tooltipParked = next.permanent === true || wasOpen;
+      return;
+    }
+    if (next.permanent || wasOpen) this.openTooltipElement(record, next.permanent === true);
   }
 
   private setPopup(record: MarkerRecord, value: MarkerPopupInit | MarkerContent | null): void {
@@ -368,6 +451,8 @@ export class MarkerController {
     if (this.popup?.record === record) this.closePopupElement();
     record.point.remove();
     this.records.delete(featureRefKey(record.point.ref));
+    this.clusteredRecords.delete(record);
+    if (this.clustering) this.recomputeClusters();
   }
 
   private assertLive(record: MarkerRecord): void {
@@ -377,6 +462,9 @@ export class MarkerController {
   /** Overrides are rebuilt from scratch so `setIcon(null)` restores defaults. */
   private applyAppearance(record: MarkerRecord): void {
     const applied: FeatureOverride = {
+      // Visibility is owned by the record, so a hidden pin stays hidden across
+      // appearance edits and a clustered member hides together with its badge.
+      ...(record.hidden || record.clustered ? { visible: false } : {}),
       ...(record.icon === null ? {} : { icon: record.icon }),
       ...(record.iconSize === null ? {} : { iconSize: record.iconSize }),
       ...(record.iconAnchor === null ? {} : { iconAnchor: { ...record.iconAnchor } }),
@@ -396,6 +484,10 @@ export class MarkerController {
       if (record) {
         if (this.popup?.record === record) return;
         this.closePopupElement();
+        if (record.badge) {
+          this.zoomToCluster(record);
+          return;
+        }
         if (record.popup) this.openPopupElement(record);
         return;
       }
@@ -405,6 +497,12 @@ export class MarkerController {
     if (event.layerId !== this.layer.id) return;
     const record = this.records.get(featureRefKey(event.feature));
     if (!record) return;
+    if (event.type === 'dragstart' || event.type === 'dragend') {
+      // A dragged pin stays individual for the gesture; its badge drops it.
+      record.dragging = event.type === 'dragstart';
+      if (this.clustering) this.recomputeClusters();
+      return;
+    }
     if (event.type === 'mouseover') {
       if (record.tooltip && !record.tooltip.permanent && !record.tooltipElement) {
         this.openTooltipElement(record, false);
@@ -414,6 +512,202 @@ export class MarkerController {
     if (event.type === 'mouseout' && record.tooltipElement && !record.tooltipSticky) {
       this.closeTooltipElement(record);
     }
+  }
+
+  /** Enables, reconfigures or disables clustering (`null` shows every pin). */
+  setClustering(options: MarkerClusteringOptions | null): void {
+    if (this.destroyed || this.layer.removed) fail('destroyed', 'the marker layer has been removed');
+    this.clustering = options === null ? null : resolveMarkerClustering(options);
+    this.recomputeClusters();
+  }
+
+  /** The active configuration with defaults applied, or `null` when off. */
+  getClustering(): ResolvedMarkerClustering | null {
+    return this.clustering === null ? null : { ...this.clustering };
+  }
+
+  private onViewChange(): void {
+    this.reposition();
+    if (!this.clustering) return;
+    const zoom = this.engine.view.get().zoom;
+    if (this.lastClusterZoom === null || Math.abs(zoom - this.lastClusterZoom) > 1e-9) this.recomputeClusters();
+  }
+
+  /**
+   * Rebuilds the badge set from the current screen positions (MARKER-11). Runs
+   * on zoom and marker changes, never on pan: screen distances do not change
+   * while the view only moves, so the grouping — and its animation-free
+   * stability — survives a drag of the map.
+   */
+  private recomputeClusters(): void {
+    if (this.destroyed || this.applyingClusters) return;
+    const clustering = this.clustering;
+    const zoom = this.engine.view.get().zoom;
+    this.lastClusterZoom = zoom;
+    const active = clustering !== null && (clustering.disableAtZoom === null || zoom < clustering.disableAtZoom);
+    const candidates: ClusterCandidate[] = [];
+    const records = new Map<string, MarkerRecord>();
+    if (active && clustering) {
+      for (const [key, record] of this.records) {
+        if (record.badge || record.point.removed || record.dragging || record.hidden || !record.clusterable) continue;
+        const screen = this.engine.view.positionToScreen(record.point.getPosition());
+        candidates.push({ key, x: screen.x, y: screen.y });
+        records.set(key, record);
+      }
+    }
+    const partition =
+      active && clustering
+        ? clusterByProximity(candidates, clustering.radiusPx, clustering.minCount)
+        : { clusters: [] as ClusterPartition['clusters'], singles: [] as ClusterPartition['singles'] };
+    this.applyingClusters = true;
+    try {
+      const grouped = new Set<string>();
+      partition.clusters.forEach((group, index) => {
+        const members = group.members.map((key) => records.get(key)!);
+        for (const member of members) grouped.add(featureRefKey(member.point.ref));
+        this.updateBadge(this.badgeAt(index), members, group.x, group.y);
+      });
+      for (let index = partition.clusters.length; index < this.badges.length; index++) {
+        this.parkBadge(this.badges[index]!);
+      }
+      // Members of the last pass are touched too: when grouping turns off (or
+      // every pin moves out of reach) their pins must come back.
+      const touched = new Set<MarkerRecord>(records.values());
+      for (const record of this.clusteredRecords) touched.add(record);
+      for (const record of touched) {
+        const clustered = grouped.has(featureRefKey(record.point.ref));
+        if (record.clustered === clustered) continue;
+        record.clustered = clustered;
+        if (clustered) this.clusteredRecords.add(record);
+        else this.clusteredRecords.delete(record);
+        this.applyAppearance(record);
+        if (clustered) this.parkMemberOverlays(record);
+        else this.restoreMemberOverlays(record);
+      }
+    } finally {
+      this.applyingClusters = false;
+    }
+  }
+
+  /** Lazily allocates the pool slot for a cluster; ids stay reserved. */
+  private badgeAt(index: number): MarkerRecord {
+    const existing = this.badges[index];
+    if (existing) return existing;
+    const point = this.layer.add({
+      id: `${CLUSTER_FEATURE_PREFIX}${++this.badgeSerial}`,
+      position: this.engine.view.screenToPosition({ x: 0, y: 0 }),
+      properties: {},
+    }) as unknown as PointHandle<FeatureProperties>;
+    const record: MarkerRecord = {
+      point,
+      icon: null,
+      iconSize: null,
+      iconAnchor: { x: 0, y: 0 },
+      iconTint: null,
+      draggable: false,
+      tooltip: null,
+      popup: null,
+      tooltipElement: null,
+      tooltipSticky: false,
+      hidden: true,
+      clusterable: false,
+      clustered: false,
+      badge: { members: [], x: 0, y: 0 },
+      dragging: false,
+      tooltipParked: false,
+    };
+    this.records.set(featureRefKey(record.point.ref), record);
+    this.badges.push(record);
+    this.applyAppearance(record);
+    return record;
+  }
+
+  /**
+   * Paints one badge for the given members: centre on the group centroid, count
+   * artwork, `N pins` hover tooltip. Unchanged badges are left untouched so a
+   * view change only commits what actually moved.
+   */
+  private updateBadge(badge: MarkerRecord, members: MarkerRecord[], x: number, y: number): void {
+    const count = members.length;
+    const art = clusterBadge(count);
+    const asset = this.badgeAsset(art);
+    const state = badge.badge!;
+    const unchanged =
+      !badge.hidden &&
+      badge.icon === asset.id &&
+      badge.iconSize === art.size &&
+      state.members.length === members.length &&
+      state.members.every((member, index) => member === members[index]) &&
+      Math.abs(state.x - x) <= 0.5 &&
+      Math.abs(state.y - y) <= 0.5;
+    state.members = members;
+    state.x = x;
+    state.y = y;
+    if (unchanged) return;
+    badge.hidden = false;
+    badge.icon = asset.id;
+    badge.iconSize = art.size;
+    badge.iconAnchor = { x: 0, y: 0 };
+    const content = `${count} pin${count === 1 ? '' : 's'}`;
+    badge.tooltip = { content };
+    badge.point.setPosition(this.engine.view.screenToPosition({ x, y }));
+    this.applyAppearance(badge);
+    const host = badge.tooltipElement?.querySelector<HTMLElement>('[data-maplet-tooltip-content]');
+    if (host) this.renderContent(host, content);
+  }
+
+  private parkBadge(badge: MarkerRecord): void {
+    if (badge.hidden) return;
+    badge.hidden = true;
+    badge.icon = null;
+    badge.badge!.members = [];
+    if (badge.tooltipElement) this.closeTooltipElement(badge);
+    this.applyAppearance(badge);
+  }
+
+  /** Registers (or reuses) badge artwork; the cache evicts unused labels. */
+  private badgeAsset(art: ClusterBadgeArt): { id: string; size: number } {
+    const cached = this.badgeArt.get(art.label);
+    if (cached) return cached;
+    if (this.badgeArt.size >= MAX_BADGE_ART) {
+      for (const [label, entry] of this.badgeArt) {
+        if (this.badges.some((badge) => badge.icon === entry.id)) continue;
+        this.badgeArt.delete(label);
+        if (this.engine.assets.get(entry.id)) this.engine.assets.remove(entry.id);
+        break;
+      }
+    }
+    const id = `${CLUSTER_ASSET_PREFIX}${art.label}`;
+    if (!this.engine.assets.get(id)) this.engine.assets.addImage({ id, src: art.url });
+    const entry = { id, size: art.size };
+    this.badgeArt.set(art.label, entry);
+    return entry;
+  }
+
+  /** Badge click: fit the member bounds, capped by `disableAtZoom`. */
+  private zoomToCluster(badge: MarkerRecord): void {
+    const positions = (badge.badge?.members ?? [])
+      .filter((member) => !member.point.removed)
+      .map((member) => member.point.getPosition());
+    const bounds = boundsFromPositions(positions);
+    if (!bounds) return;
+    const disableAtZoom = this.clustering?.disableAtZoom ?? null;
+    this.engine.view.fit(bounds, { padding: 40, ...(disableAtZoom === null ? {} : { maxZoom: disableAtZoom }) });
+  }
+
+  /** Overlays leave the map with the pin they belong to (MARKER-11). */
+  private parkMemberOverlays(record: MarkerRecord): void {
+    if (record.tooltipElement) {
+      record.tooltipParked = record.tooltip?.permanent === true || record.tooltipSticky;
+      this.closeTooltipElement(record);
+    }
+    if (this.popup?.record === record) this.closePopupElement();
+  }
+
+  private restoreMemberOverlays(record: MarkerRecord): void {
+    if (record.hidden || record.clustered || !record.tooltipParked) return;
+    record.tooltipParked = false;
+    if (record.tooltip) this.openTooltipElement(record, true);
   }
 
   /** Re-places every open overlay from the marker's current screen position. */
@@ -468,7 +762,7 @@ export class MarkerController {
   }
 
   private openTooltipElement(record: MarkerRecord, sticky: boolean): void {
-    if (!record.tooltip) return;
+    if (!record.tooltip || record.hidden || record.clustered) return;
     if (!this.container) fail('unsupported-capability', 'marker tooltips require a map container');
     const element = document.createElement('div');
     element.dataset.mapletTooltip = 'true';

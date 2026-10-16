@@ -85,9 +85,15 @@ background click or `closePopup()` closes it, and `autoPan` keeps it inside the
 container. Strings render as text (UI-06); pass a `Node` for rich content. Pass
 `draggable: true` to drag a single pin; the map does not pan while it is dragged.
 The handle also exposes `setIcon`, `setDraggable`, `setTooltip`, `setPopup`,
-`openTooltip`, `show`, `hide` and `remove`. See
-[marker contracts](decisions.md#markers) and the
-[markers tutorial](tutorials/markers.md).
+`openTooltip`, `show`, `hide` and `remove`.
+
+`setMarkerClustering(options)` groups pins whose screen distance is within
+`radiusPx` (default 64) into one count badge; `null` shows every pin again.
+A badge is an internal sprite (reserved `maplet-cluster:` id prefix) that hovers
+a `N pins` tooltip and fits the member bounds on click, so the pins separate.
+See [marker contracts](decisions.md#markers), the
+[markers tutorial](tutorials/markers.md) and the
+[clustering tutorial](tutorials/clusters.md).
 
 ## Raster tiles and WMS
 

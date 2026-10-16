@@ -382,9 +382,31 @@ The current public construction, object lifetime and migration contract is in
   `dragstart`/`drag`/`dragend` like any other feature and survives later
   appearance edits, because the controller rewrites the whole per-feature
   override on every `setIcon`/`setDraggable` (INPUT-10). `setDraggable(false)`
-  stops it at runtime and returns the cursor to `pointer`. Keyboard focus on pins
-  and clustering are not part of this alpha; pins pick and emit feature events
-  like any interactive point.
+  stops it at runtime and returns the cursor to `pointer`.
+- Clustering is a view of the same pin set (MARKER-11):
+  `setMarkerClustering({ radiusPx, minCount, disableAtZoom })` makes a pin join
+  the nearest group whose running centre is within `radiusPx` screen pixels, and
+  a group with at least `minCount` members (defaults: radius 64 px, minCount 2)
+  replaces its pins with one count badge. Grouping is resolved in screen space
+  at the current zoom, so panning never re-clusters (screen distances do not
+  change); it re-resolves when the zoom or the pins change, and at or above
+  `disableAtZoom` every pin draws individually. `getMarkerClustering()` reports
+  the options with defaults applied; `null` shows every pin again.
+- A badge is an internal point feature in the same layer with the reserved
+  `maplet-cluster:` id prefix (its generated artwork uses
+  `maplet-cluster-asset:<label>`, cached per count and evicted unused). The badge
+  carries the member count as text (exact to 999, then `1.2k`) in three size
+  tiers, hovers an automatic `N pins` tooltip and fits the member bounds on
+  click, capped by `disableAtZoom`. Grouped pins hide through the same
+  per-feature override as `hide()`, and their permanent tooltips and open popup
+  park until the pin ungroups. `cluster: false` keeps a pin individual, `hide()`
+  removes a pin from its badge's count, and a pin being dragged stays individual
+  for the gesture, joining or leaving a group at `dragend`. Badges pick and emit
+  feature events like any sprite, so raw `onFeature` listeners and
+  `query.rendered` can return their reserved ids. Pins that share one position
+  stay one badge at the maximum zoom (no spiderfy in this alpha). Keyboard focus
+  on pins is not part of this alpha; pins pick and emit feature events like any
+  interactive point.
 
 ## Fonts and text
 
