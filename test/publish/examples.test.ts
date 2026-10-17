@@ -10,11 +10,11 @@ import { publishGists } from '../../scripts/publish-gists.mjs';
 // @ts-expect-error Documentation tooling is not part of the package API.
 import { renderMarkdown } from '../../scripts/docs-site.mjs';
 
-test('complete documentation and nineteen tutorials build under a Pages subdirectory', () => {
+test('complete documentation and twenty tutorials build under a Pages subdirectory', () => {
   const directory = mkdtempSync(join(tmpdir(), 'maplet-examples-test-'));
   try {
     const { site, plan, pageCount } = buildExamples({ output: directory, baseUrl: 'https://example.github.io/project/' });
-    assert.equal(plan.gists.length, 19);
+    assert.equal(plan.gists.length, 20);
     assert.ok(pageCount >= 36);
     const gallery = readFileSync(join(site, 'index.html'), 'utf8');
     assert.match(gallery, /Maplet documentation/);

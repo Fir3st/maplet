@@ -23,6 +23,7 @@ JavaScript source. Start with a first map, then choose a topic.
 - [Markers with tooltips and popups](markers.md) — pins, hover tooltips, one click popup per map and drag to move a pin.
 - [Cluster nearby pins](clusters.md) — count badges for dense pins that split apart as you zoom in.
 - [Raster tiles](raster.md) — tile URLs, source updates and attribution.
+- [Discover a WMS endpoint](wms-endpoint.md) — GetCapabilities discovery, layer switching and typed endpoint errors.
 - [A plugin is a function](plugins.md) — installation, a custom API and cleanup.
 - [Gesture guard](gesture-guard.md) — two-finger touch and modifier-gated mouse gestures.
 - [Fullscreen mode](fullscreen.md) — a fullscreen toggle with a corner button.

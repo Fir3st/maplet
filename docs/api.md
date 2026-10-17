@@ -115,7 +115,19 @@ places.addLabels(stations.source); // shares the same features; defaults to name
 the same pattern. Their objects expose `setPositions()` and `setRings()`.
 Polygon rings are outer ring first, then holes. `addTiles(url, options)`,
 `addWms(url, options)`, `addImage(options)` and `addVideo(options)` create both
-the source and display layer and return a layer with `.source` access.
+the source and display layer and return a layer with `.source` access. A WMS
+endpoint can be inspected before it is added:
+
+```ts
+const capabilities = await map.data.wmsCapabilities('https://example/ows');
+// { version, title, crs, formats, bounds, layers, preferred? }
+map.addWms('https://example/ows', { id: 'service', layers: 'roads', ...capabilities.preferred });
+```
+
+`wmsCapabilities()` returns the parsed GetCapabilities answer; `preferred`
+carries the version, CRS and format the endpoint supports (absent when it
+declares no CRS this library can request). An unsupported CRS fails with
+`invalid-argument`.
 
 Layer, collection and feature ids are optional. Layer/collection ids are map-local
 and generated without collisions with existing entries or sources; `base` is

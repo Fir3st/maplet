@@ -200,6 +200,15 @@ export type {
 } from './scene/media-source.ts';
 export type { RasterTilesOptions, TileCoord, WmsOptions } from './formats/raster.ts';
 export type {
+  WmsCapabilities,
+  WmsCapabilitiesFetch,
+  WmsCapabilitiesFetchResponse,
+  WmsCapabilitiesOptions,
+  WmsCapabilitiesVersion,
+  WmsLayerNode,
+  WmsRequestDefaults,
+} from './formats/wms-capabilities.ts';
+export type {
   TileFetch,
   TileFetchResponse,
   VectorTilesFeaturesHandle,

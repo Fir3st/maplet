@@ -3,7 +3,7 @@
  *
  * These are pure functions: the loader and the renderer share them, and the tests
  * compare URLs and BBOX order against an independent expectation list
- * (RASTER-01..RASTER-06, WMS-01..WMS-05).
+ * (RASTER-01..RASTER-06, WMS-01..WMS-06).
  */
 
 import { assertArgument, fail } from '../api/errors.ts';
@@ -172,12 +172,68 @@ export interface WmsOptions {
   readonly params?: Readonly<Record<string, string>>;
   readonly opacity?: number;
   readonly attribution?: string;
+  /** Pixel size of one GetMap tile; the geographic grid is the 256px XYZ grid. */
+  readonly tileSize?: number;
+  readonly minZoom?: number;
+  readonly maxZoom?: number;
 }
 
 export interface WmsRequest {
   readonly url: string;
   readonly width: number;
   readonly height: number;
+}
+
+/**
+ * CRS values whose BBOX this library can request correctly (WMS-06): degrees
+ * lng/lat for CRS:84 and the version-dependent EPSG:4326 axis order, projected
+ * metres for EPSG:3857. A projected national grid has no implementation here,
+ * so it is refused instead of being sent with degree coordinates.
+ */
+export const WMS_REQUEST_CRS = ['CRS:84', 'EPSG:4326', 'EPSG:3857'] as const;
+
+export type WmsRequestCrs = (typeof WMS_REQUEST_CRS)[number];
+
+/** Validates a CRS value (case-insensitive) and returns its canonical spelling. */
+export function assertSupportedWmsCrs(crs: string): WmsRequestCrs {
+  const canonical = crs.trim().toUpperCase();
+  if ((WMS_REQUEST_CRS as readonly string[]).includes(canonical)) return canonical as WmsRequestCrs;
+  fail('invalid-argument', `WMS CRS ${crs} is not supported`, {
+    crs,
+    supported: [...WMS_REQUEST_CRS],
+  });
+}
+
+/**
+ * Tile grid of a WMS source: the standard 256px XYZ grid, because every GetMap
+ * request is exactly one tile of it. Tile size, zoom limits and (absence of)
+ * TMS/wrap/retina follow the shared grid vocabulary (RASTER-01..06).
+ */
+export function wmsTileGridOptions(options: WmsOptions): TileGridOptions {
+  const minZoom = options.minZoom ?? 0;
+  const maxZoom = options.maxZoom ?? 24;
+  assertArgument(
+    Number.isInteger(minZoom) && Number.isInteger(maxZoom) && minZoom <= maxZoom,
+    'invalid WMS zoom limits',
+    { minZoom, maxZoom },
+  );
+  return {
+    tileSize: options.tileSize ?? 256,
+    minZoom,
+    maxZoom,
+    retina: false,
+    tms: false,
+    wrap: false,
+  };
+}
+
+/**
+ * One tile of a WMS source: the GetMap request for the tile's geographic extent,
+ * so the plan, the cache, ancestor stand-ins and the pick surface all speak the
+ * same tile language as XYZ layers.
+ */
+export function formatWmsTileUrl(options: WmsOptions, coord: TileCoord, tileSize: number): string {
+  return wmsGetMapUrl(options, tileGeoBounds(coord), tileSize, tileSize).url;
 }
 
 function encodeParams(params: Record<string, string>): string {
@@ -194,7 +250,9 @@ function encodeParams(params: Record<string, string>): string {
  * - EPSG:3857 (both versions) -> projected metres x,y; latitude uses the true
  *   spherical Mercator (a linear degrees->metres factor is ~612 km off at 45°);
  * - 1.1.1 + geographic CRS -> SRS, BBOX=lng,lat.
- * WMS-01..WMS-05.
+ * Only the CRS values in `WMS_REQUEST_CRS` are accepted; anything else fails
+ * with `invalid-argument` rather than being sent with degree coordinates.
+ * WMS-01..WMS-06.
  */
 export function wmsGetMapUrl(
   options: WmsOptions,
@@ -204,17 +262,16 @@ export function wmsGetMapUrl(
 ): WmsRequest {
   assertArgument(width > 0 && height > 0, 'WMS width/height must be positive', { width, height });
   const version = options.version ?? '1.3.0';
-  const crs = options.crs ?? 'EPSG:4326';
+  const canonical = assertSupportedWmsCrs(options.crs ?? 'EPSG:4326');
   const { southwest, northeast } = bounds;
   const minLng = Math.min(southwest.lng, northeast.lng);
   const maxLng = Math.max(southwest.lng, northeast.lng);
   const swLat = Math.min(southwest.lat, northeast.lat);
   const neLat = Math.max(southwest.lat, northeast.lat);
   let bbox: [number, number, number, number];
-  const crsUpper = crs.toUpperCase().replace('CRS:', 'EPSG:').replace('EPSG:84', 'CRS:84');
-  if (version === '1.3.0' && (crsUpper === 'EPSG:4326' || crsUpper === 'EPSG:32663')) {
+  if (version === '1.3.0' && canonical === 'EPSG:4326') {
     bbox = [swLat, minLng, neLat, maxLng];
-  } else if (crsUpper === 'EPSG:3857') {
+  } else if (canonical === 'EPSG:3857') {
     // Same verified spherical Mercator as the CRS itself (`latToUnitY` clamps
     // to the Mercator limit); metres per world unit = 2 * pi * R.
     const metersPerWorldUnit = 2 * Math.PI * 6378137;
@@ -240,9 +297,9 @@ export function wmsGetMapUrl(
     ...(options.params ?? {}),
   };
   if (version === '1.3.0') {
-    params['crs'] = crs;
+    params['crs'] = canonical;
   } else {
-    params['srs'] = crs;
+    params['srs'] = canonical;
   }
   const base = options.url;
   const separator = base.includes('?') ? '&' : '?';

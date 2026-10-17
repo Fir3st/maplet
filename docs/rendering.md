@@ -112,9 +112,28 @@ Tiles support XYZ/TMS, retina and parent/child fallback. PNG, JPEG and SVG image
 are decoded by the browser and drawn as textures. Display the provider's required
 attribution and follow its usage policy.
 
-`addWms(url, options)` supplies layers and service parameters in one step. WMS
-version and CRS determine BBOX axis order; EPSG:3857 uses projected meters.
-Parameter changes keep the previous bitmap until its replacement loads.
+`addWms(url, options)` supplies layers and service parameters in one step.
+Every GetMap request is one 256 px tile of the standard grid, so ancestor
+stand-ins, caching and picking work like any tile layer; WMS version and CRS
+determine BBOX axis order and EPSG:3857 uses projected meters. Parameter
+changes keep the previous tiles until their replacements load. Only
+`CRS:84`, `EPSG:4326` and `EPSG:3857` can be requested; any other CRS fails
+instead of sending degree coordinates to a projected service.
+
+```ts
+const capabilities = await map.data.wmsCapabilities('https://example/ows');
+map.addWms('https://example/ows', {
+  id: 'service',
+  layers: 'roads,buildings',
+  ...capabilities.preferred, // { version, crs, format } the endpoint supports
+  attribution: '© the provider',
+});
+```
+
+`wmsCapabilities(url)` reads the service's GetCapabilities answer (1.3.0 or
+1.1.1): the layer tree with titles and queryable flags, every declared CRS,
+GetMap formats and the service extent. `preferred` is absent when the endpoint
+declares no requestable CRS. See [Discover a WMS endpoint](tutorials/wms-endpoint.md).
 
 ## Vector tiles
 

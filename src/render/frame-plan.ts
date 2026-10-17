@@ -18,14 +18,13 @@
 
 import type { FeatureRef, ScreenPoint } from '../api/types.ts';
 import { transformOrigin, worldScaleAt, type ViewTransform } from '../math/transform.ts';
-import type { GeoBounds } from '../math/bounds.ts';
 import type { Scene } from '../scene/scene.ts';
 import type { LayerImpl } from '../scene/layers.ts';
 import { compileFilter, evaluateStyleValue, type ExpressionContext } from '../scene/expression.ts';
 import type { SourceImpl } from '../scene/source.ts';
 import type { SlotRecord } from '../scene/store.ts';
 import { GEOMETRY_KIND } from '../geometry/geometry.ts';
-import { formatTileUrl, tileZoomForView, tilesForWorldRect, wmsGetMapUrl } from '../formats/raster.ts';
+import { formatTileUrl, formatWmsTileUrl, tileZoomForView, tilesForWorldRect } from '../formats/raster.ts';
 import { parseColor, type Rgba } from './color.ts';
 import { polygonMesh, visiblePolygon } from './polygon-mesh.ts';
 import { lineMesh, visitLineSegments } from './line-mesh.ts';
@@ -301,28 +300,33 @@ let symbolCaches = new WeakMap<LayerImpl, SymbolCache>();
 
 const MAX_FALLBACK_LEVELS = 5;
 
+/** WMS stand-ins stay within two levels: a service rerenders per scale, so a
+ * quarter-size ancestor blown up 8x or more is noise, not a preview. */
+const MAX_WMS_FALLBACK_LEVELS = 2;
+
 /**
  * Coarser tiles covering the given tile, nearest level first. The UV rectangle
  * picks the quadrant (sub-quadrant, ...) of the ancestor, so a decoded ancestor
  * can stand in for the requested tile at the correct offset while it loads.
+ * `urlOf` is the grid URL builder of the source (XYZ template or WMS GetMap);
+ * `maxLevels` bounds how far a stand-in may be magnified (XYZ keeps the wide
+ * chain for sparse providers, WMS stays within two levels so a rerendered
+ * service view is never blown up beyond recognition).
  */
 function tileFallbacks(
-  options: RasterTilesOptions,
+  urlOf: (coord: TileCoord) => string,
   grid: TileGridOptions,
   coord: TileCoord,
+  maxLevels = MAX_FALLBACK_LEVELS,
 ): TileFallback[] {
-  const levels = Math.min(MAX_FALLBACK_LEVELS, coord.z - grid.minZoom);
+  const levels = Math.min(maxLevels, coord.z - grid.minZoom);
   const list: TileFallback[] = [];
   for (let level = 1; level <= levels; level++) {
     const span = 2 ** level;
     const dx = coord.x % span;
     const dy = coord.y % span;
     list.push({
-      url: formatTileUrl(
-        options,
-        { z: coord.z - level, x: coord.x >> level, y: coord.y >> level },
-        { tms: grid.tms },
-      ),
+      url: urlOf({ z: coord.z - level, x: coord.x >> level, y: coord.y >> level }),
       u0: dx / span,
       v0: dy / span,
       u1: (dx + 1) / span,
@@ -334,7 +338,7 @@ function tileFallbacks(
 
 /** Four finer tiles (TL, TR, BL, BR) that together cover the given tile. */
 function tileChildren(
-  options: RasterTilesOptions,
+  urlOf: (coord: TileCoord) => string,
   grid: TileGridOptions,
   coord: TileCoord,
 ): readonly [string, string, string, string] | null {
@@ -343,10 +347,11 @@ function tileChildren(
   const z = coord.z + 1;
   const x = coord.x * 2;
   const y = coord.y * 2;
-  const at = (cx: number, cy: number): string =>
-    formatTileUrl(options, { z, x: cx, y: cy }, { tms: grid.tms });
+  const at = (cx: number, cy: number): string => urlOf({ z, x: cx, y: cy });
   return [at(x, y), at(x + 1, y), at(x, y + 1), at(x + 1, y + 1)];
 }
+
+/**
 
 /** Builds (and caches) the frame plan for the current scene revision and viewport. */
 export function buildFramePlan(scene: Scene, options: FramePlanOptions): FramePlan {
@@ -1302,75 +1307,55 @@ function collectTiles(
     });
   }
 
-  if (source.kind === 'rasterTiles') {
-    const options = source.options as RasterTilesOptions;
-    const grid = source.tilesGrid();
-    const tileZoom = tileZoomForView(transform.zoom, grid);
-    const tileWorld = 256 / 2 ** tileZoom;
-    const coords = tilesForWorldRect(rect.minX, rect.minY, rect.maxX, rect.maxY, tileZoom, grid.tileSize, {
-      wrap: grid.wrap,
-      minZoom: grid.minZoom,
-      maxZoom: grid.maxZoom,
-    });
-    for (const coord of coords) {
-      const baseX = coord.x * tileWorld;
-      const candidateX = baseX + Math.round((rect.minX - baseX) / 256) * 256;
-      const x = grid.wrap ? candidateX : baseX;
-      const y = coord.y * tileWorld;
-      const [sx, sy] = screenOf(x, y);
-      const [sx1, sy1] = screenOf(x + tileWorld, y + tileWorld);
-      out.push({
-        sourceId: source.id,
-        layerId: layer.id,
-        tileKey: `${coord.z}/${coord.x}/${coord.y}`,
-        url: formatTileUrl(options, coord, { tms: grid.tms }),
-        sx,
-        sy,
-        sw: sx1 - sx,
-        sh: sy1 - sy,
-        opacity,
-        sourceRevision: source.revision,
-        ...(pickIndex === undefined ? {} : { pickIndex }),
-        fallbacks: tileFallbacks(options, grid, coord),
-        children: tileChildren(options, grid, coord),
-      });
-    }
-    return out;
-  }
-  const options = source.options as WmsOptions;
-  if (scene.crs.positionKind !== 'geographic') return out;
-  const bounds = scene.attachedView.getBounds();
-  if (!bounds) return out;
-  const width = Math.max(256, Math.ceil(transform.width / 256) * 256);
-  const height = Math.max(256, Math.ceil(transform.height / 256) * 256);
-  const request = wmsGetMapUrl(options, bounds as GeoBounds, width, height);
-  const southwest = scene.crs.toWorld(bounds.southwest);
-  const northeast = scene.crs.toWorld(bounds.northeast);
-  // World y grows southward: the placement rect starts at the north-west
-  // corner so width/height stay positive like every other tile placement.
-  const [sx, sy] = screenOf(
-    Math.min(southwest.x, northeast.x),
-    Math.min(southwest.y, northeast.y),
-  );
-  const [sx1, sy1] = screenOf(
-    Math.max(southwest.x, northeast.x),
-    Math.max(southwest.y, northeast.y),
-  );
-  out.push({
-    sourceId: source.id,
-    layerId: layer.id,
-    tileKey: `wms:${sx.toFixed(1)},${sy.toFixed(1)},${(sx1 - sx).toFixed(1)},${(sy1 - sy).toFixed(1)}`,
-    url: request.url,
-    sx,
-    sy,
-    sw: sx1 - sx,
-    sh: sy1 - sy,
-    opacity,
-    sourceRevision: source.revision,
-    ...(pickIndex === undefined ? {} : { pickIndex }),
-    fallbacks: [],
-    children: null,
+  // Both raster kinds share the tile pipeline: XYZ templates and WMS GetMap
+  // tiles differ only in how a tile URL is built, so fallback chains, the
+  // cache, TMS and picking all behave the same (RASTER-01..11, WMS-01..06).
+  const tiles = source.kind === 'rasterTiles'
+    ? (() => {
+        const options = source.options as RasterTilesOptions;
+        const grid = source.tilesGrid();
+        const urlOf = (coord: TileCoord): string => formatTileUrl(options, coord, { tms: grid.tms });
+        return { grid, urlOf, wrap: grid.wrap, fallbackLevels: MAX_FALLBACK_LEVELS };
+      })()
+    : (() => {
+        const options = source.options as WmsOptions;
+        if (scene.crs.positionKind !== 'geographic') return null;
+        const grid = source.tilesGrid();
+        const urlOf = (coord: TileCoord): string => formatWmsTileUrl(options, coord, grid.tileSize);
+        return { grid, urlOf, wrap: false, fallbackLevels: MAX_WMS_FALLBACK_LEVELS };
+      })();
+  if (!tiles) return out;
+  const { grid, urlOf, wrap, fallbackLevels } = tiles;
+  const tileZoom = tileZoomForView(transform.zoom, grid);
+  const tileWorld = 256 / 2 ** tileZoom;
+  const coords = tilesForWorldRect(rect.minX, rect.minY, rect.maxX, rect.maxY, tileZoom, grid.tileSize, {
+    wrap,
+    minZoom: grid.minZoom,
+    maxZoom: grid.maxZoom,
   });
+  for (const coord of coords) {
+    const baseX = coord.x * tileWorld;
+    const candidateX = baseX + Math.round((rect.minX - baseX) / 256) * 256;
+    const x = wrap ? candidateX : baseX;
+    const y = coord.y * tileWorld;
+    const [sx, sy] = screenOf(x, y);
+    const [sx1, sy1] = screenOf(x + tileWorld, y + tileWorld);
+    out.push({
+      sourceId: source.id,
+      layerId: layer.id,
+      tileKey: `${coord.z}/${coord.x}/${coord.y}`,
+      url: urlOf(coord),
+      sx,
+      sy,
+      sw: sx1 - sx,
+      sh: sy1 - sy,
+      opacity,
+      sourceRevision: source.revision,
+      ...(pickIndex === undefined ? {} : { pickIndex }),
+      fallbacks: tileFallbacks(urlOf, grid, coord, fallbackLevels),
+      children: tileChildren(urlOf, grid, coord),
+    });
+  }
   return out;
 }
 

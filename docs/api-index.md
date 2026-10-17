@@ -82,7 +82,7 @@ moves to root. See [layer and lifetime contracts](api.md).
 
 | Property | Purpose |
 | --- | --- |
-| `data` | Explicit vector, raster, WMS, MVT, image and video sources |
+| `data` | Explicit vector, raster, WMS (incl. GetCapabilities discovery), MVT, image and video sources |
 | `assets` | Reusable image and font registration |
 | `relations` | Connections, neighbors and bounded traversal |
 | `bindings` | Derived geometry/properties and ownership |

@@ -183,7 +183,7 @@ export function buildExamples({ output = resolve(root, '.example-build'), baseUr
   // copy of the shared files (LICENSE, NOTICE, stylesheet, README), roughly 40 kB,
   // so it grows with the catalogue deliberately rather than by dropping files.
   const planBytes = Buffer.byteLength(JSON.stringify(plan));
-  if (planBytes > 1280 * 1024) throw new Error(`Example Gist payloads exceed the 1.25 MiB build budget (${planBytes} bytes)`);
+  if (planBytes > 1331 * 1024) throw new Error(`Example Gist payloads exceed the 1.30 MiB build budget (${planBytes} bytes)`);
   writeFileSync(join(output, 'gist-plan.json'), `${JSON.stringify(plan, null, 2)}\n`);
   return { site, plan, pageCount: pageCount + catalog.length };
 }

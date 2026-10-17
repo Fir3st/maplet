@@ -9,12 +9,17 @@ modules.
 
 `/wms` answers GetMap requests with an image that encodes the *interpreted*
 geography, using an independent Python implementation of the WMS semantics
-(version/CRS axis order, BBOX units, spherical Mercator):
+(version/CRS axis order, BBOX units, spherical Mercator), and GetCapabilities
+requests with a small 1.3.0 document (nested layers, a URN CRS form and an
+EPSG:5514-only layer):
 
-- red follows longitude across the interpreted BBOX, green follows latitude;
+- red follows longitude and green latitude inside one fixed geographic window
+  (the FIXTURE_MIN/MAX constants below), so neighbouring GetMap tiles stitch
+  into one continuous image and a scaled ancestor shows the right colours;
 - blue carries the request identity: +32 for version 1.3.0, +64 for a projected
   CRS (EPSG:3857), +16 for CRS:84, 255 for `layers` containing `alt`;
-- `MARK=lng,lat` paints a magenta square at that position.
+- `MARK=lng,lat` paints a magenta square at that position on the tile that
+  contains it.
 
 `demo/wms.html` samples GPU pixels against the same expectations, so a wrong
 BBOX (swapped axes, linear-degree "metres") shows up as shifted colour or a
@@ -38,11 +43,18 @@ WMS_PATH = "/wms"
 # (e.g. started before this file gained the `/wms` route or the `?csp=` hook)
 # and say so instead of failing batteries confusingly. Bump when the server
 # contract changes.
-SERVER_MARKER = "wms-fixture-2"
+SERVER_MARKER = "wms-fixture-4"
 
 EARTH_RADIUS = 6378137.0
 MAX_MERCATOR_LATITUDE = 85.0511287798
 MARKER_RADIUS = 8
+# The geographic window the fixture colours are anchored to. `demo/wms.js`
+# computes its expectations from the same constants, so tiles and single large
+# requests agree pixel for pixel at a given coordinate.
+FIXTURE_MIN_LNG, FIXTURE_MAX_LNG = 13.0, 16.0
+FIXTURE_MIN_LAT, FIXTURE_MAX_LAT = 48.5, 51.5
+FIXTURE_SPAN_LNG = FIXTURE_MAX_LNG - FIXTURE_MIN_LNG
+FIXTURE_SPAN_LAT = FIXTURE_MAX_LAT - FIXTURE_MIN_LAT
 
 
 def _png(width: int, height: int, rows: bytes) -> bytes:
@@ -67,14 +79,68 @@ def _inverse_mercator_lat(y: float) -> float:
     return math.degrees(math.atan(math.sinh(y / EARTH_RADIUS)))
 
 
-def _wms_image(query: str) -> bytes | None:
-    """Renders a GetMap image; None means the request is not a GetMap call."""
+def _wms_params(query: str) -> dict[str, str]:
     params: dict[str, str] = {}
     for part in query.split("&"):
         if "=" not in part:
             continue
         key, value = part.split("=", 1)
         params[urllib.parse.unquote_plus(key).lower()] = urllib.parse.unquote_plus(value)
+    return params
+
+
+# The GetCapabilities answer for `/wms`: 1.3.0, nested layers, a URN CRS form and
+# one layer that only offers the national Krovak grid (EPSG:5514) so the browser
+# battery can exercise both the discovery defaults and the refusal path.
+WMS_CAPABILITIES = """<?xml version="1.0" encoding="UTF-8"?>
+<WMS_Capabilities version="1.3.0" xmlns="http://www.opengis.net/wms">
+  <Service>
+    <Name>WMS</Name>
+    <Title>Maplet WMS fixture</Title>
+    <Abstract><![CDATA[Deterministic fixture: red = longitude, green = latitude, blue = request identity
+& semantics. Used by wms.html; no CDATA or entity trick here is accidental.]]></Abstract>
+  </Service>
+  <Capability>
+    <Request>
+      <GetMap>
+        <Format>image/jpeg</Format>
+        <Format>image/png</Format>
+      </GetMap>
+    </Request>
+    <Layer>
+      <Title>Fixture root</Title>
+      <CRS>urn:ogc:def:crs:EPSG::3857</CRS>
+      <EX_GeographicBoundingBox>
+        <westBoundLongitude>12.2</westBoundLongitude>
+        <eastBoundLongitude>16.7</eastBoundLongitude>
+        <southBoundLatitude>48.3</southBoundLatitude>
+        <northBoundLatitude>51.5</northBoundLatitude>
+      </EX_GeographicBoundingBox>
+      <Layer queryable="1">
+        <Name>roads</Name>
+        <Title>Roads &amp; rails</Title>
+        <CRS>EPSG:4326</CRS>
+        <CRS>CRS:84</CRS>
+      </Layer>
+      <Layer queryable="0">
+        <Name>alt</Name>
+        <Title>Alternative layer</Title>
+        <CRS>EPSG:4326</CRS>
+      </Layer>
+      <Layer>
+        <Name>slow</Name>
+        <Title>Slow layer</Title>
+        <CRS>EPSG:5514</CRS>
+      </Layer>
+    </Layer>
+  </Capability>
+</WMS_Capabilities>
+"""
+
+
+def _wms_image(query: str) -> bytes | None:
+    """Renders a GetMap image; None means the request is not a GetMap call."""
+    params = _wms_params(query)
     if params.get("request", "").lower() != "getmap":
         return None
     try:
@@ -110,7 +176,15 @@ def _wms_image(query: str) -> bytes | None:
     blue += 16 if crs == "CRS:84" else 0
     blue = min(255, blue)
 
-    reds = bytes(min(255, round(255 * (col + 0.5) / width)) for col in range(width))
+    # Colours are anchored to a fixed geographic window, not to the request's
+    # bbox: neighbouring GetMap tiles must stitch into one continuous image.
+    def channel(value: float) -> int:
+        return min(255, max(0, round(value)))
+
+    reds = bytes(
+        channel(255 * ((min_lng + (col + 0.5) / width * span_lng) - FIXTURE_MIN_LNG) / FIXTURE_SPAN_LNG)
+        for col in range(width)
+    )
     rows = bytearray()
     for row in range(height):
         if projected:
@@ -118,7 +192,7 @@ def _wms_image(query: str) -> bytes | None:
             lat = _inverse_mercator_lat(y)
         else:
             lat = max_lat - (row + 0.5) / height * span_lat
-        green = min(255, max(0, round(255 * (lat - min_lat) / span_lat)))
+        green = channel(255 * (lat - FIXTURE_MIN_LAT) / FIXTURE_SPAN_LAT)
         row_bytes = bytearray(width * 3)
         row_bytes[0::3] = reds
         row_bytes[1::3] = bytes([green]) * width
@@ -128,16 +202,19 @@ def _wms_image(query: str) -> bytes | None:
     if "mark" in params:
         try:
             mark_lng, mark_lat = (float(value) for value in params["mark"].split(","))
-            col = min(width - 1, max(0, int((mark_lng - min_lng) / span_lng * width)))
-            if projected:
-                row = min(height - 1, max(0, int((north_y - _mercator_y(mark_lat)) / (north_y - south_y) * height)))
-            else:
-                row = min(height - 1, max(0, int((max_lat - mark_lat) / span_lat * height)))
-            col0, col1 = max(0, col - MARKER_RADIUS), min(width, col + MARKER_RADIUS + 1)
-            magenta = bytes((255, 0, 255)) * (col1 - col0)
-            for marker_row in range(max(0, row - MARKER_RADIUS), min(height, row + MARKER_RADIUS + 1)):
-                start = marker_row * (width * 3 + 1) + 1 + col0 * 3
-                rows[start : start + len(magenta)] = magenta
+            # Only the tiles that actually contain the mark paint it; clamping
+            # would smear it onto every neighbouring tile's edge.
+            if min_lng <= mark_lng <= max_lng and min_lat <= mark_lat <= max_lat:
+                col = min(width - 1, max(0, int((mark_lng - min_lng) / span_lng * width)))
+                if projected:
+                    row = min(height - 1, max(0, int((north_y - _mercator_y(mark_lat)) / (north_y - south_y) * height)))
+                else:
+                    row = min(height - 1, max(0, int((max_lat - mark_lat) / span_lat * height)))
+                col0, col1 = max(0, col - MARKER_RADIUS), min(width, col + MARKER_RADIUS + 1)
+                magenta = bytes((255, 0, 255)) * (col1 - col0)
+                for marker_row in range(max(0, row - MARKER_RADIUS), min(height, row + MARKER_RADIUS + 1)):
+                    start = marker_row * (width * 3 + 1) + 1 + col0 * 3
+                    rows[start : start + len(magenta)] = magenta
         except ValueError:
             pass
     return _png(width, height, bytes(rows))
@@ -178,9 +255,18 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         super().do_GET()
 
     def _serve_wms(self, query: str) -> None:
+        params = _wms_params(query)
+        if params.get("request", "").lower() == "getcapabilities":
+            body = WMS_CAPABILITIES.encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "text/xml; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
         image = _wms_image(query)
         if image is None:
-            body = b"not a WMS GetMap request: expected SERVICE=WMS&REQUEST=GetMap&BBOX=&WIDTH=&HEIGHT="
+            body = b"not a WMS GetMap or GetCapabilities request: expected SERVICE=WMS&REQUEST=GetMap&BBOX=&WIDTH=&HEIGHT="
             self.send_response(400)
             self.send_header("Content-Type", "text/plain; charset=utf-8")
             self.send_header("Content-Length", str(len(body)))

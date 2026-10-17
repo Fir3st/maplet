@@ -80,6 +80,14 @@
     "origin": "demo/tiles.js"
   },
   {
+    "id": "wms-endpoint", "title": "Discover a WMS endpoint", "group": "Presentation", "kind": "wms",
+    "summary": "Read a live WMS service's GetCapabilities and request only the layers you switch on.",
+    "learn": "map.data.wmsCapabilities() fetches and parses the service document: title, version, CRS list, formats, extent and the nested layer tree. Its preferred block names the version, CRS and format the endpoint itself supports, so one spread plus a layer list is a valid GetMap request. A checkbox change rewrites the layers parameter while the previous bitmap stays until the replacement loads; an unsupported CRS fails with a typed error instead of sending wrong coordinates.",
+    "hint": "Switch layers on and off · pan and zoom the real Prague base map",
+    "note": "A live public service from IPR Praha (via the Czech INSPIRE geoportal); a network connection is required. Maplet can request CRS:84, EPSG:4326 and EPSG:3857 BBOX; the service also publishes the Czech national grid, which is reported but not requested.",
+    "origin": "demo/wms.js"
+  },
+  {
     "id": "plugins", "title": "A plugin is a function", "group": "Extending Maplet", "kind": "plugins",
     "summary": "Install a small pin plugin, use its API and remove all its resources.",
     "learn": "map.use() passes a context into a plain function. Return your own API and register cleanup in ownership order. Removing the plugin removes its layer, source and HTML badge.",

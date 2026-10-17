@@ -14,7 +14,7 @@ to use this repository.
 | Layers and styles | Heterogeneous nested layers, shared base, ordering, filters, overrides, expressions, points, lines and polygon holes; scene/render tests |
 | Relations and bindings | Endpoint policies, traversal, dependency DAGs, field ownership, `lineBetween`, `anchorOnLine`, `copyProperty`; relation and data tests |
 | Rendering | WebGPU and WebGL 1, retained mixed-vector buffers with local uploads, indexed polygon meshes and spatial geometry blocks, expansion without instancing/wide indices, shared frame plan and loss recovery; `test/render/`, parity/loss batteries, `retained-point-buffers` and `retained-mixed-scene` E2E |
-| Raster | XYZ/TMS/retina, decoded parent/child fallback, previous-bitmap retention, WMS axis/CRS semantics; raster tests, `demo/tiles.html`, `demo/wms.html` |
+| Raster | XYZ/TMS/retina, decoded parent/child fallback, previous-bitmap retention across parameter and view changes, WMS axis/CRS semantics and GetCapabilities endpoint discovery; raster tests, `demo/tiles.html`, `demo/wms.html` |
 | MVT | Decoder, source-layer namespaces, exact large IDs, fragments, unload/reload, overzoom and attribution; vector-tile tests, `demo/mvt.html` |
 | Interaction | Pan, zoom, hover/click/drag, pinch, keyboard, selection, bubbling; dragging comes from a layer opt-in or a per-feature override, so a draggable marker and a plain one share one layer; `demo/interaction.html` and real-input E2E scenarios |
 | Picking | Shape-aware GPU queries, revision/generation checks, measured blocking/async readback; `demo/pick.html` |
@@ -333,6 +333,55 @@ switch, `onChange` reports both entries and stops after unsubscribe, and
 the id. The new `views` tutorial covers the switcher end to end; the 19-tutorial
 Gist plan measures 1229 KiB inside the 1280 KiB budget.
 
+The WMS-endpoint addition passes **360 unit tests**, the same build/type/
+distribution and consumer-type checks, and the complete default browser suite:
+**41/41 scenarios/batteries on each of WebGL 1, WebGPU and forced basic WebGL 1**.
+The `battery:wms` battery grew from six to eleven checks. The discovery check
+reads the deterministic `/wms` GetCapabilities fixture: version 1.3.0, the
+service title and CDATA abstract, GetMap-only formats, a normalized CRS list (a
+URN form and an EPSG:5514-only layer included), the declared extent, the nested
+layers with inherited queryable flags, and the `preferred` request (CRS:84,
+`image/png`). The rendering check creates a second source from that `preferred`
+block and waits for the fixture's interpreted blue to change from the previous
+1.1.1 `alt` request to the new 1.3.0 CRS:84 identity, then verifies the red/green
+geography, the marker and the requested URL. The failure check refuses an
+EPSG:5514 descriptor (`invalid-argument`), maps a 404 and an HTML page to
+`import-invalid`, and parses the committed Krovak-only `demo/wms-legacy.xml` into
+a 1.1.1 document with no `preferred` but a complete layer. The last two checks
+cover the tile behaviour: a partial zoom change (12.0 -> 12.4) requests nothing
+and keeps every decoded tile with its URL (nine tiles, all reused), and while the
+next integer level loads behind the fixture's per-request delay the view stays
+covered by the previous level - the marker is sampled at its projected position
+and a gradient sample equals the absolute fixture colour of that coordinate, so
+the stand-in is geographically right rather than merely painted. WMS is served
+as 256 px tiles on the standard grid; the earlier single-image approaches (a
+request per view, then per-view requests with a held fallback, then sticky
+requests with a reuse margin) each measured bland or stale in the browser - the
+original probe recorded 40/40 painted samples before a view change and 0/40
+immediately after it - and the tile grid is the representation the renderer
+already shares with XYZ layers, so stand-ins, caching and picking come from the
+same verified machinery. The unit suite adds both document versions, namespace
+prefixes, a DOCTYPE whose entity stays literal, CRS inheritance/normalization,
+degenerate bounds, the fetch failure mapping, the CRS refusal itself, the
+per-tile requests with axis order and units, the WMS stand-in chain (a zoom-in
+names the previous level's tile as its quadrant stand-in, a zoom-out its four
+children, both already requested by the previous view) and the fractional-zoom
+reuse (the same level, the same URLs, scaled). The new live
+[wms-endpoint](tutorials/wms-endpoint.md) tutorial discovers IPR Praha's
+"Základní mapa" service behind the Czech INSPIRE record it cites: discovery
+reported 11 top-level layers (16 named), CRS:84/EPSG:4326/EPSG:5514/EPSG:102067
+and a CRS:84/`image/png` default. Rendered pixels matched the service's own
+GetMap image - sampled boundary pixels were equal to a 2D-canvas rendering of
+the identical URL, or within a few values where an antialiased edge is
+resampled - the map is placed at the requested geography. Unchecking a layer
+changed `layers=6,8,13,17,19,20` to `8,13,17,19,20` with the previous tiles held
+until their replacements decode,
+the extent action moved zoom 16 -> 8.12 over the declared bounds, and with every
+request to the service blocked the page still boots with a readable message and
+no page errors. All twenty example pages boot without page errors when tiles and
+services are blocked. The 20-tutorial Gist plan measures 1295 KiB inside the
+1.30 MiB budget (raised deliberately for the twentieth tutorial).
+
 The recorded browser environment was headless Chromium on an Apple M5 Pro,
 using ANGLE Metal for WebGL and `apple metal-3` for WebGPU. Pixel comparisons
 against decoded source bitmaps and between backends found zero differences at
@@ -419,6 +468,16 @@ Canvas setup is still faster at 282 ms. One-second warm-pan outliers persist.
   view changes, selection or sources between entries. Every activated view holds
   its own GPU context and retained buffers until `destroy()`, and the host needs
   an explicit height like a single map container.
+- **WMS:** requests cover `CRS:84`, `EPSG:4326` and `EPSG:3857` only; an endpoint
+  that publishes just a national grid (e.g. EPSG:5514) is fully reported by
+  `wmsCapabilities()` but cannot be requested, and any other CRS fails with
+  `invalid-argument` instead of producing a wrong BBOX. Discovery reads the
+  document's service metadata, layer names/titles/flags, CRS, GetMap formats and
+  geographic extent; per-layer styles, legends, feature info and SLD are not
+  modeled. WMS is requested as 256 px tiles on the standard grid (one GetMap per
+  tile), so a view costs several requests instead of one large image; an
+  undecoded tile is substituted by at most two coarser ancestors or by decoded
+  children, never by a deeply magnified older view.
 - **Icons:** size is square via `iconSize` or natural size/DPR. `iconTint` multiplies
   the icon atlas RGB (default white); the shape fallback of a loading/failed icon
   keeps `color` and is not tinted. Shape fallbacks and ordinary point shapes do not
@@ -511,7 +570,7 @@ Open the paths below under `http://localhost:8400/demo/`. Most test pages accept
 | `tiles.html?mode=svg` | Offline tile orientation, pixel sampling and seams |
 | `tiles.html?mode=osm` | Live OpenStreetMap tile comparison |
 | `tiles.html?mode=esri-imagery&live=1` | Live JPEG provider comparison |
-| `wms.html` / `wms.html?mode=live` | Deterministic local WMS checks / optional public WMS |
+| `wms.html` / `wms.html?mode=live` | Deterministic local WMS checks (GetMap semantics, GetCapabilities discovery) / optional public WMS |
 | `interaction.html`, `pick.html` | Events, gestures, selection and readback stalls |
 | `labels.html`, `fonts.html`, `icons.html` | Text, shaping fixtures, image assets and anchor rotation |
 | `mvt.html` | Vector-tile identity, fragments, failure handling and overzoom |

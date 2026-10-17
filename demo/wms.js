@@ -3,12 +3,15 @@
  * fixture in `demo/serve.py` (an independent Python implementation of the WMS
  * semantics), plus `?mode=live` against a public WMS.
  *
- * The fixture encodes the *interpreted* geography: red follows longitude, green
- * latitude, blue carries the request identity (+32 version 1.3.0, +64 projected
- * CRS, +16 CRS:84, 255 for `layers` containing `alt`) and `MARK=lng,lat` paints
- * a magenta square. Sampling GPU pixels therefore proves the whole path: BBOX
- * axis order and units, URL parameters, fetch, decode, placement, the hold/swap
- * behaviour on parameter changes and the bitmap's interactive area.
+ * The fixture encodes the *interpreted* geography against one fixed window:
+ * red follows longitude, green latitude, blue carries the request identity
+ * (+32 version 1.3.0, +64 projected CRS, +16 CRS:84, 255 for `layers`
+ * containing `alt`) and `MARK=lng,lat` paints a magenta square. Because the
+ * colours are absolute, neighbouring GetMap tiles stitch together and a scaled
+ * ancestor tile shows the right colours, so sampling GPU pixels proves the
+ * whole path: BBOX axis order and units, URL parameters, fetch, decode,
+ * placement, tile fallbacks, the hold/swap behaviour on parameter changes and
+ * the bitmap's interactive area.
  *
  * Results: `window.__wmsCheckResult`.
  */
@@ -19,6 +22,8 @@ const CENTER = { lat: 50.05, lng: 14.4 };
 const ZOOM = 12;
 const TOL = 6;
 const MARKER = [255, 0, 255];
+// Must match the FIXTURE_* constants in demo/serve.py.
+const WINDOW = { minLng: 13.0, maxLng: 16.0, minLat: 48.5, maxLat: 51.5 };
 const GRADIENT_POINTS = [
   { x: 80, y: 80 },
   { x: 432, y: 80 },
@@ -40,7 +45,7 @@ window.addEventListener('unhandledrejection', (event) => {
   finalize();
 });
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-const expectedChecks = live ? 1 : 6;
+const expectedChecks = live ? 1 : 11;
 
 let finalized = false;
 function finalize() {
@@ -66,7 +71,6 @@ const map = await createMap('map', {
     center: CENTER, zoom: ZOOM
 });
 
-const bounds = map.getBounds();
 const mark = `${CENTER.lng},${CENTER.lat}`;
 const source = map.data.wms({
   id: 'wms',
@@ -121,13 +125,12 @@ function expectedBlue(state) {
 
 function expectedColor(point, state) {
   const position = map.screenToPosition(point);
-  const red = Math.round(
-    (255 * (position.lng - bounds.southwest.lng)) / (bounds.northeast.lng - bounds.southwest.lng),
-  );
-  const green = Math.round(
-    (255 * (position.lat - bounds.southwest.lat)) / (bounds.northeast.lat - bounds.southwest.lat),
-  );
-  return [red, green, expectedBlue(state)];
+  const clamp = (value) => Math.max(0, Math.min(255, Math.round(value)));
+  return [
+    clamp((255 * (position.lng - WINDOW.minLng)) / (WINDOW.maxLng - WINDOW.minLng)),
+    clamp((255 * (position.lat - WINDOW.minLat)) / (WINDOW.maxLat - WINDOW.minLat)),
+    expectedBlue(state),
+  ];
 }
 
 /** Geography check: four gradient corners plus the marker and its absence. */
@@ -261,27 +264,29 @@ if (live) {
     };
   });
 
-  await check('WMS-05 setParams: held bitmap, fast swap, late response discarded', async () => {
+  await check('WMS-05 setParams: held bitmaps, superseding swap, late response discarded', async () => {
     const baseline = expectedColor(OFF_MARK, { version: '1.1.1', crs: 'EPSG:4326', projected: false, alt: false });
     const t0 = performance.now();
-    // A slow request starts; the previous bitmap must stay visible meanwhile.
+    // A slow request starts; the previous bitmaps must stay visible meanwhile.
     source.update({ params: { delay: '700', MARK: mark } });
     source.setParams({ layers: 'slow' });
     await sleep(150);
     const held = await sample(OFF_MARK);
-    // A fast replacement arrives while the slow request is still in flight.
+    // A faster replacement arrives while the slow tiles are still in flight.
     source.update({ params: { MARK: mark } });
     source.setParams({ layers: 'alt' });
     const swapped = await until(async () => (await sample(OFF_MARK))[2] === 255);
     const swapMs = Math.round(performance.now() - t0);
-    await sleep(1000); // the slow response lands late
+    await sleep(1200); // the superseded slow responses land late
     const late = await sample(OFF_MARK);
+    // The held bitmap covers the delay and the late tiles never replace the
+    // accepted (alt) ones. The swap itself waits for the whole tile row, so no
+    // wall-clock bound is asserted here.
     return {
       pass:
         held[3] === 255 &&
         channelDelta(held, baseline) <= TOL &&
         swapped !== null &&
-        swapMs < 700 &&
         late[2] === 255,
       detail: { held, baseline, swapMs, late },
     };
@@ -344,6 +349,161 @@ if (live) {
         hotspotHits: hotspotHits.map(id),
         clicks,
       },
+    };
+  });
+
+  await check('WMS-07 GetCapabilities discovery reports layers, CRS, formats and defaults', async () => {
+    const capabilities = await map.data.wmsCapabilities('/wms');
+    const layers = capabilities.layers.map((layer) => ({ name: layer.name, title: layer.title, queryable: layer.queryable, crs: layer.crs }));
+    return {
+      pass:
+        capabilities.version === '1.3.0' &&
+        capabilities.title === 'Maplet WMS fixture' &&
+        (capabilities.abstract ?? '').includes('red = longitude') &&
+        JSON.stringify(capabilities.formats) === JSON.stringify(['image/jpeg', 'image/png']) &&
+        JSON.stringify(capabilities.crs) === JSON.stringify(['EPSG:3857', 'EPSG:4326', 'CRS:84', 'EPSG:5514']) &&
+        capabilities.bounds?.southwest.lng === 12.2 &&
+        capabilities.bounds?.northeast.lat === 51.5 &&
+        JSON.stringify(layers.map((layer) => layer.name)) === JSON.stringify(['roads', 'alt', 'slow']) &&
+        JSON.stringify(capabilities.preferred) === JSON.stringify({ version: '1.3.0', crs: 'CRS:84', format: 'image/png' }) &&
+        layers[0].queryable === true &&
+        layers[1].queryable === false &&
+        layers[2].crs.includes('EPSG:5514'),
+      detail: {
+        version: capabilities.version,
+        title: capabilities.title,
+        formats: capabilities.formats,
+        crs: capabilities.crs,
+        bounds: capabilities.bounds,
+        layers,
+        preferred: capabilities.preferred,
+      },
+    };
+  });
+
+  await check('WMS-08 a layer built from the discovered defaults renders the service', async () => {
+    const capabilities = await map.data.wmsCapabilities('/wms');
+    const discovered = map.data.wms({
+      id: 'wms-discovered',
+      url: '/wms',
+      layers: 'roads',
+      ...capabilities.preferred,
+      params: { MARK: mark },
+    });
+    map.addLayer({ id: 'wms-discovered-layer', type: 'raster', source: discovered });
+    try {
+      // The battery's previous request left blue at 255 (`alt`, 1.1.1); the
+      // discovered options (1.3.0, CRS:84, no `alt`) paint 48, so waiting for
+      // that value proves the discovered request itself reached the screen.
+      // Tiles load independently, so the geography is retried until every
+      // sampled corner carries the new identity.
+      const state = { version: '1.3.0', crs: 'CRS:84', projected: false, alt: false };
+      const loaded = await until(async () => (await sample(OFF_MARK))[2] === expectedBlue(state));
+      const geography = await until(async () => {
+        const result = await verifyGeography(state);
+        return result.pass ? result : null;
+      }, 10000);
+      const url = new URL(map.debug.layerTiles('wms-discovered-layer')[0]?.url ?? 'about:blank', location.href);
+      const requested = {
+        crs: url.searchParams.get('crs'),
+        version: url.searchParams.get('version'),
+        format: url.searchParams.get('format'),
+      };
+      return {
+        pass:
+          loaded !== null &&
+          geography !== null &&
+          requested.crs === 'CRS:84' &&
+          requested.version === '1.3.0' &&
+          requested.format === 'image/png',
+        detail: { loaded: loaded !== null, geography: geography !== null, requested },
+      };
+    } finally {
+      map.layers.remove('wms-discovered-layer');
+      map.data.remove('wms-discovered');
+    }
+  });
+
+  await check('WMS-09 unsupported CRS and non-document responses fail with clear errors', async () => {
+    const failures = [];
+    const expectFailure = async (run, code) => {
+      try {
+        await run();
+        failures.push(`no error, expected ${code}`);
+      } catch (error) {
+        if (error?.code !== code) failures.push(`${String(error?.code)}: ${String(error?.message).slice(0, 90)}`);
+      }
+    };
+    await expectFailure(
+      () => map.data.wms({ id: 'bad-crs', url: '/wms', layers: 'slow', crs: 'EPSG:5514' }),
+      'invalid-argument',
+    );
+    await expectFailure(() => map.data.wmsCapabilities('./nope-404.xml'), 'import-invalid');
+    await expectFailure(() => map.data.wmsCapabilities('./wms.html'), 'import-invalid');
+    const legacy = await map.data.wmsCapabilities('./wms-legacy.xml');
+    return {
+      pass:
+        failures.length === 0 &&
+        legacy.version === '1.1.1' &&
+        legacy.preferred === undefined &&
+        legacy.crs.join() === 'EPSG:5514' &&
+        legacy.layers[0]?.name === 'grid' &&
+        legacy.layers[0]?.queryable === true,
+      detail: {
+        failures,
+        legacy: { version: legacy.version, preferred: legacy.preferred, crs: legacy.crs, layer: legacy.layers[0]?.name },
+      },
+    };
+  });
+
+  await check('WMS-10 a partial zoom reuses the requested tiles', async () => {
+    const before = map.debug.layerTiles('wms-layer').map((tile) => ({ key: tile.tileKey, url: tile.url }));
+    map.setView({ center: CENTER, zoom: map.getZoom() + 0.4 });
+    const after = map.debug.layerTiles('wms-layer').map((tile) => ({ key: tile.tileKey, url: tile.url }));
+    // The tile grid only deepens per integer zoom level, so part of a level of
+    // scrolling requests nothing and the same decoded tiles scale with the view.
+    const reused = after.every((tile) => {
+      const match = before.find((entry) => entry.key === tile.key);
+      return match !== undefined && match.url === tile.url;
+    });
+    const missing = after.find((tile) => !before.some((entry) => entry.key === tile.key))?.key ?? null;
+    return {
+      pass: after.length > 0 && reused,
+      detail: { tiles: after.length, reused, missing, zoom: Math.round(map.getZoom() * 1000) / 1000 },
+    };
+  });
+
+  await check('WMS-11 a zoom change stays covered by the previous level while the new one loads', async () => {
+    // Slow every tile of the next level down and let the current level settle
+    // (the fixture sleeps per request), so the previous level is decoded when
+    // the view changes.
+    source.update({ params: { delay: '400', MARK: mark } });
+    await until(async () => (await sample(MARK_POINT))[3] === 255, 4000);
+    await sleep(1800);
+    const zoomBefore = map.getZoom();
+    map.setView({ center: CENTER, zoom: zoomBefore + 1 });
+    const markerAfter = map.positionToScreen(CENTER);
+    await sleep(120);
+    // The new level is still loading, so the ancestors stand in: the marker is
+    // painted at its projected position and a gradient sample matches the
+    // absolute fixture window, i.e. the stand-in is geographically correct.
+    const covered = await sample(markerAfter);
+    const gradientPoint = { x: 128, y: 96 };
+    const gradient = await sample(gradientPoint);
+    const expected = expectedColor(gradientPoint, { version: '1.1.1', crs: 'EPSG:4326', projected: false, alt: false });
+    const standInKeys = map.debug.layerTiles('wms-layer')[0]?.fallbacks[0]?.url;
+    await sleep(1200);
+    const settled = await sample(markerAfter);
+    const level = map.debug.layerTiles('wms-layer')[0]?.tileKey?.split('/')[0];
+    const magenta = (pixel) => channelDelta(pixel, MARKER) <= TOL;
+    return {
+      pass:
+        magenta(covered) &&
+        channelDelta(gradient, expected) <= TOL &&
+        magenta(settled) &&
+        typeof standInKeys === 'string' &&
+        level === String(Math.floor(zoomBefore + 1)),
+      detail: { covered, gradient, expected, settled, zoomBefore, level, standIn: standInKeys?.slice(-46) },
     };
   });
 

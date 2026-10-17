@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- A WMS 1.1.1 endpoint that offers only the Czech national grid (EPSG:5514,
+     Krovak). Maplet reports its layer inventory, but the request planner has no
+     Krovak implementation, so `wmsCapabilities()` yields no preferred request
+     options and a GetMap with that CRS is refused. Read by the WMS battery and
+     the capabilities unit tests. -->
+<WMT_MS_Capabilities version="1.1.1">
+  <Service>
+    <Name>WMS</Name>
+    <Title>Legacy grid service</Title>
+    <Abstract>A Krovak-only endpoint from the before-Web-Mercator era.</Abstract>
+  </Service>
+  <Capability>
+    <Request>
+      <GetMap>
+        <Format>image/png</Format>
+      </GetMap>
+    </Request>
+    <Layer>
+      <Title>Legacy root</Title>
+      <SRS>EPSG:5514</SRS>
+      <LatLonBoundingBox minx="12.09" miny="48.55" maxx="18.86" maxy="51.06" />
+      <Layer queryable="1">
+        <Name>grid</Name>
+        <Title>Grid squares</Title>
+      </Layer>
+    </Layer>
+  </Capability>
+</WMT_MS_Capabilities>

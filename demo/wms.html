@@ -21,11 +21,17 @@
   <div>
     <h1>Maplet WMS checks</h1>
     <p class="hint">
-      Real GetMap images from the deterministic <code>/wms</code> fixture (red = longitude,
-      green = latitude, blue = version/CRS/layers, magenta = <code>MARK</code>):
-      1.1.1 vs 1.3.0 axis order, EPSG:4326 vs CRS:84 vs EPSG:3857 metres, special
-      characters, held bitmap + late-response discard on parameter changes, and the
-      bitmap's own interactive area. <code>?mode=live</code> checks a public WMS.
+      Real GetMap tiles from the deterministic <code>/wms</code> fixture (red = longitude,
+      green = latitude inside a fixed window, blue = version/CRS/layers,
+      magenta = <code>MARK</code>): 1.1.1 vs 1.3.0 axis order, EPSG:4326 vs CRS:84
+      vs EPSG:3857 metres, special characters, held bitmaps + late-response discard
+      on parameter changes, the tile fallback chain and the bitmap's own
+      interactive area. GetCapabilities discovery reads the fixture's layer tree
+      and defaults, a layer built from them renders, the Krovak-only document in
+      <code>wms-legacy.xml</code> yields no requestable default and a refused CRS
+      or non-document response reports a typed error. A partial zoom requests
+      nothing and a delayed zoom level stays covered by the previous one.
+      <code>?mode=live</code> checks a public WMS.
       Results: <code>window.__wmsCheckResult</code>.
     </p>
     <p id="summary">running…</p>

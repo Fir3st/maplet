@@ -3,14 +3,17 @@
  *
  * The source owns descriptor state only; pixel fetching happens in the tile loader
  * used by the renderer. `update`/`setParams` bump the source revision so late
- * responses of an older revision are discarded (RASTER-07, WMS-05).
+ * responses of an older revision are discarded (RASTER-07, WMS-05), and a WMS
+ * descriptor refuses a CRS the request builder cannot express (WMS-06).
  */
 
 import { fail } from '../api/errors.ts';
 import { Emitter } from '../api/events.ts';
 import type { SubscribeOptions, Unsubscribe } from '../api/types.ts';
+import { assertSupportedWmsCrs } from '../formats/raster.ts';
 import {
   tileGridOptions,
+  wmsTileGridOptions,
   type RasterTilesOptions,
   type TileGridOptions,
   type WmsOptions,
@@ -36,16 +39,19 @@ export class RasterSourceImpl {
     this.id = id;
     this.kind = kind;
     this.options = options;
+    const crs = (options as WmsOptions).crs;
+    if (kind === 'wms' && crs !== undefined) assertSupportedWmsCrs(crs);
   }
 
   tilesGrid(): TileGridOptions {
-    if (this.kind !== 'rasterTiles') {
-      fail('invalid-state', `source ${this.id} is not a tile source`);
-    }
-    return tileGridOptions(this.options as RasterTilesOptions);
+    if (this.kind === 'rasterTiles') return tileGridOptions(this.options as RasterTilesOptions);
+    return wmsTileGridOptions(this.options as WmsOptions);
   }
 
   update(patch: Partial<RasterTilesOptions & WmsOptions>): void {
+    // An unsupported CRS is refused at the descriptor boundary, before any
+    // frame plan could send degree coordinates to a projected service (WMS-06).
+    if (this.kind === 'wms' && patch.crs !== undefined) assertSupportedWmsCrs(patch.crs);
     this.options = { ...this.options, ...patch } as RasterTilesOptions | WmsOptions;
     this.revision++;
     this.emitter.emit('change', this.snapshot());

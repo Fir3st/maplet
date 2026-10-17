@@ -209,9 +209,51 @@ The current public construction, object lifetime and migration contract is in
   1.1.1 uses lng/lat, 1.3.0 EPSG:4326 uses lat/lng, CRS:84 uses lng/lat.
   BBOX units depend on the CRS, not the version. EPSG:3857 uses true spherical
   Mercator meters in both versions. Requests never send both `SRS` and `CRS`.
-- One GetMap request covers the viewport, with width/height rounded to multiples
-  of 256. URL keys the cache. A parameter change retains the previous bitmap
-  until the replacement loads; late superseded responses never replace it.
+- Requestable WMS CRS are exactly `CRS:84`, `EPSG:4326` and `EPSG:3857`
+  (WMS-06). There is no national-grid or arbitrary CRS implementation, so a
+  descriptor or an `update({ crs })` with any other value fails with
+  `invalid-argument` listing the supported set, instead of sending degree
+  coordinates to a projected service. Capabilities discovery still reports every
+  declared CRS, so an endpoint that only offers e.g. EPSG:5514 is visible even
+  though it cannot be requested.
+- `map.data.wmsCapabilities(url)` (WMS-07/08) requests
+  `service=WMS&request=GetCapabilities&version=1.3.0` with an existing query
+  string kept, and accepts both 1.3.0 (`WMS_Capabilities`) and 1.1.1
+  (`WMT_MS_Capabilities`) answers, including version negotiation. The reader
+  handles elements, attributes, CDATA, comments, namespace prefixes and the five
+  predefined entities; a DOCTYPE (with any internal subset) is skipped without
+  processing, so entities are never expanded or fetched and an unknown named
+  entity stays literal. Elements are matched on their local names; malformed or
+  foreign documents fail with `import-invalid`, and a document whose version is
+  neither 1.1.1 nor 1.3.0 fails with `unsupported-capability`. Transport
+  failures and non-document responses are `import-invalid` (with the HTTP status
+  in `detail`), a caller abort is `aborted`, and a missing `fetch` is
+  `environment`.
+- The capabilities model mirrors the WMS inheritance rules: a layer's effective
+  `crs` and `bounds` are its own values plus the nearest declared ancestor's, and
+  `queryable` defaults to false until declared. CRS values are normalized
+  (`urn:ogc:def:crs:EPSG::4326`, the OGC URL form and `epsg:4326` all become
+  `EPSG:4326`; `CRS84` becomes `CRS:84`) and deduplicated. A degenerate
+  bounding box (zero width or height) is treated as absent. `layers` are the
+  top-level nodes: the named service root layer, or its children when the root
+  is a group. `preferred` picks the first of `CRS:84`, `EPSG:4326`, `EPSG:3857`
+  the document declares and prefers an exact `image/png`, then any `image/png*`,
+  then any `image/*`, falling back to `image/png` when no image format is
+  declared; without a requestable CRS `preferred` is absent.
+- WMS is served through the same tile grid as XYZ: one GetMap request per tile
+  (`tileSize` square, default 256), the tile's own geographic extent at the
+  declared CRS with the axis order and units above. Ancestor stand-ins, the
+  tile cache, re-requests only when the integer tile zoom changes and picking
+  therefore behave exactly like a tile basemap; a pan asks only for the tiles
+  that entered the view. Tile size and zoom limits use the tile vocabulary
+  (`tileSize`, `minZoom`, `maxZoom`).
+- An undecoded tile is substituted by up to **two** coarser ancestors (nearest
+  first, correct UV sub-rect) or by decoded children after a zoom-out. The
+  two-level limit is deliberate: a WMS rerenders its layers per scale, so an
+  older view blown up eight times or more is noise rather than a preview (XYZ
+  keeps its five-level chain for sparse providers). A parameter change retains
+  the previous per-tile bitmap until its replacement loads; late superseded
+  responses never replace it.
 - Interactive raster sources expose one pick record with the source ID for the
   displayed rectangle, not IDs invented from pixels. Tile basemaps require
   explicit `interactive: true`; media follows layer defaults.

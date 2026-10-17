@@ -40,6 +40,11 @@ import type { EndpointPolicy, NeighborOptions, RelationInput, RelationSnapshot, 
 import { createFontAssetHandle, createImageAssetHandle, type FontAssetHandle, type ImageAssetHandle } from './scene/assets.ts';
 import type { BindingInput, BindingSnapshot } from './scene/bindings.ts';
 import type { RasterTilesOptions, WmsOptions } from './formats/raster.ts';
+import {
+  fetchWmsCapabilities,
+  type WmsCapabilities,
+  type WmsCapabilitiesOptions,
+} from './formats/wms-capabilities.ts';
 import type {
   ImageSourceOptions,
   MediaSourceHandle,
@@ -209,6 +214,12 @@ export interface SourcesHandle {
   vector<G = import('./api/types.ts').Geometry, P = import('./api/types.ts').FeatureProperties>(options: { readonly id: string }): VectorSourceHandle<G, P>;
   rasterTiles(options: RasterTilesOptions): RasterSourceHandle;
   wms(options: WmsOptions): RasterSourceHandle;
+  /**
+   * GetCapabilities discovery (WMS-07): fetch and parse what a WMS endpoint
+   * offers - service title, version, CRS, formats and the layer tree - without
+   * creating a source. Spread `preferred` next to a layer list into `wms()`.
+   */
+  wmsCapabilities(url: string, options?: WmsCapabilitiesOptions): Promise<WmsCapabilities>;
   /**
    * Image placed into explicit bounds (MEDIA-01..04): `url` or raw RGBA
    * `pixels`, with `updateRegion` for partial pixel updates.
@@ -896,6 +907,10 @@ function buildHandle(
       assertArgument(typeof options.url === 'string' && options.url.length > 0, 'wms requires a url');
       assertArgument(typeof options.layers === 'string' && options.layers.length > 0, 'wms requires layers');
       return scene.createRasterSource(options.id, 'wms', options);
+    },
+    wmsCapabilities(url, options) {
+      scene.assertAlive('sources.wmsCapabilities');
+      return fetchWmsCapabilities(url, options);
     },
     image(options) {
       scene.assertAlive('sources.image');
