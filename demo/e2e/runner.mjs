@@ -474,6 +474,12 @@ async function main() {
     '--disable-background-networking',
     '--disable-component-update',
     '--disable-sync',
+    // Never touch the macOS Keychain. A freshly installed Playwright browser
+    // asks for access to its "Chrome Safe Storage" item on every launch until
+    // the ACL is granted, and these tests have no use for encrypted cookie or
+    // password storage: a mock keychain removes the prompt entirely.
+    '--use-mock-keychain',
+    '--password-store=basic',
     // Keep the page "foreground": headless Chromium otherwise throttles
     // requestAnimationFrame to ~1 Hz in some runs (measured 1016 ms frames),
     // which makes every frame-cadence check flaky.
