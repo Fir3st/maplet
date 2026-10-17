@@ -30,17 +30,20 @@ const LIGATURE_SET = [
 
 const mercator = crs.webMercator();
 const worldCenter = mercator.toWorld({ lat: 50.05, lng: 14.45 });
-const geoAt = (dx, dy) => mercator.fromWorld({
-  x: worldCenter.x + dx / 2 ** 12,
-  y: worldCenter.y + dy / 2 ** 12,
-});
+const geoAt = (dx, dy) =>
+  mercator.fromWorld({
+    x: worldCenter.x + dx / 2 ** 12,
+    y: worldCenter.y + dy / 2 ** 12,
+  });
 
 const map = await createMap('map', {
-    renderer: new URLSearchParams(location.search).get('backend') === 'webgpu'
-        ? { primary: 'webgpu', fallback: false }
-        : { primary: 'webgl1', fallback: false },
-    size: { width: 560, height: 560 },
-    center: { lat: 50.05, lng: 14.45 }, zoom: 12
+  renderer:
+    new URLSearchParams(location.search).get('backend') === 'webgpu'
+      ? { primary: 'webgpu', fallback: false }
+      : { primary: 'webgl1', fallback: false },
+  size: { width: 560, height: 560 },
+  center: { lat: 50.05, lng: 14.45 },
+  zoom: 12,
 });
 
 // Registered before the labels exist, with a delayed response: the first frames
@@ -78,7 +81,12 @@ await pois.features.replace(
     properties: { name },
   })),
 );
-map.addLayer({ id: 'dots', type: 'points', source: pois, style: { radiusPx: 2, color: '#cbd5e1' } });
+map.addLayer({
+  id: 'dots',
+  type: 'points',
+  source: pois,
+  style: { radiusPx: 2, color: '#cbd5e1' },
+});
 map.addLayer({
   id: 'late',
   type: 'labels',
@@ -107,7 +115,10 @@ map.addLayer({
   filter: { id: 'dr' },
   style: { text: expr.field('name'), sizePx: 18, fontFamily: FIXTURE_FAMILY, direction: 'rtl' },
 });
-for (const [layerId, featureId] of [['share-a', 's1'], ['share-b', 's2']]) {
+for (const [layerId, featureId] of [
+  ['share-a', 's1'],
+  ['share-b', 's2'],
+]) {
   map.addLayer({
     id: layerId,
     type: 'labels',
@@ -130,7 +141,11 @@ map.addLayer({
   filter: { id: 'cp' },
   style: { text: expr.field('name'), sizePx: 18, fontFamily: FIXTURE_FAMILY },
 });
-for (const [layerId, featureId] of [['shaping-lig', 'lig'], ['shaping-ctl', 'ctl'], ['shaping-kern', 'kern']]) {
+for (const [layerId, featureId] of [
+  ['shaping-lig', 'lig'],
+  ['shaping-ctl', 'ctl'],
+  ['shaping-kern', 'kern'],
+]) {
   map.addLayer({
     id: layerId,
     type: 'labels',
@@ -340,54 +355,64 @@ await check('FONT-05 combining marks stay composed (TEXT-03)', async () => {
       Math.abs(precomposed.width - precomposedOracle.width) <= 3,
     detail: {
       acute: { width: acute.width, oracle: acuteOracle.width, ink: acute.ink },
-      precomposed: { width: precomposed.width, oracle: precomposedOracle.width, ink: precomposed.ink },
+      precomposed: {
+        width: precomposed.width,
+        oracle: precomposedOracle.width,
+        ink: precomposed.ink,
+      },
     },
   };
 });
 
-await check('FONT-07 the fixture ligature set shapes against the ZWNJ control (TEXT-03)', async () => {
-  // Fixture contract first: a ligature is one glyph for several code points,
-  // so its shaped ink is narrower than the ZWNJ-blocked control, which keeps
-  // one glyph per code point. Measured against the fixed subset, not assumed.
-  const rows = LIGATURE_SET.map(([ligature, control]) => {
-    const ligatureOracle = oracleInk(ligature, 48, `"${FIXTURE_FAMILY}"`, 'ltr');
-    const controlOracle = oracleInk(control, 48, `"${FIXTURE_FAMILY}"`, 'ltr');
+await check(
+  'FONT-07 the fixture ligature set shapes against the ZWNJ control (TEXT-03)',
+  async () => {
+    // Fixture contract first: a ligature is one glyph for several code points,
+    // so its shaped ink is narrower than the ZWNJ-blocked control, which keeps
+    // one glyph per code point. Measured against the fixed subset, not assumed.
+    const rows = LIGATURE_SET.map(([ligature, control]) => {
+      const ligatureOracle = oracleInk(ligature, 48, `"${FIXTURE_FAMILY}"`, 'ltr');
+      const controlOracle = oracleInk(control, 48, `"${FIXTURE_FAMILY}"`, 'ltr');
+      return {
+        ligature,
+        control,
+        ligatureWidth: ligatureOracle.width,
+        controlWidth: controlOracle.width,
+      };
+    });
     return {
-      ligature,
-      control,
-      ligatureWidth: ligatureOracle.width,
-      controlWidth: controlOracle.width,
+      pass: rows.every((row) => row.ligatureWidth + 1 <= row.controlWidth),
+      detail: rows,
     };
-  });
-  return {
-    pass: rows.every((row) => row.ligatureWidth + 1 <= row.controlWidth),
-    detail: rows,
-  };
-});
+  },
+);
 
-await check('FONT-08 atlas rendering keeps the shaped ligature and the ZWNJ control (TEXT-03)', async () => {
-  // Our pipeline rasterizes the whole run and lays out by the measured
-  // advance, so the shaped ligature must survive it: the rendered `ffi` is
-  // narrower and has less ink (the i dot merges into the f hook) than the
-  // ZWNJ control, and both match their oracle ink boxes.
-  const ligature = await inkBox(anchorOf('lig'), 32, 24, 1, 2);
-  const control = await inkBox(anchorOf('ctl'), 32, 24, 1, 2);
-  const ligatureOracle = oracleInk(LIGATURE, 48, `"${FIXTURE_FAMILY}"`, 'ltr');
-  const controlOracle = oracleInk(LIGATURE_CONTROL, 48, `"${FIXTURE_FAMILY}"`, 'ltr');
-  return {
-    pass:
-      ligature.ink > 0 &&
-      control.ink > 0 &&
-      Math.abs(ligature.width - ligatureOracle.width) <= 4 &&
-      Math.abs(control.width - controlOracle.width) <= 4 &&
-      control.width - ligature.width >= 3 &&
-      control.ink > ligature.ink,
-    detail: {
-      ligature: { width: ligature.width, ink: ligature.ink, oracle: ligatureOracle.width },
-      control: { width: control.width, ink: control.ink, oracle: controlOracle.width },
-    },
-  };
-});
+await check(
+  'FONT-08 atlas rendering keeps the shaped ligature and the ZWNJ control (TEXT-03)',
+  async () => {
+    // Our pipeline rasterizes the whole run and lays out by the measured
+    // advance, so the shaped ligature must survive it: the rendered `ffi` is
+    // narrower and has less ink (the i dot merges into the f hook) than the
+    // ZWNJ control, and both match their oracle ink boxes.
+    const ligature = await inkBox(anchorOf('lig'), 32, 24, 1, 2);
+    const control = await inkBox(anchorOf('ctl'), 32, 24, 1, 2);
+    const ligatureOracle = oracleInk(LIGATURE, 48, `"${FIXTURE_FAMILY}"`, 'ltr');
+    const controlOracle = oracleInk(LIGATURE_CONTROL, 48, `"${FIXTURE_FAMILY}"`, 'ltr');
+    return {
+      pass:
+        ligature.ink > 0 &&
+        control.ink > 0 &&
+        Math.abs(ligature.width - ligatureOracle.width) <= 4 &&
+        Math.abs(control.width - controlOracle.width) <= 4 &&
+        control.width - ligature.width >= 3 &&
+        control.ink > ligature.ink,
+      detail: {
+        ligature: { width: ligature.width, ink: ligature.ink, oracle: ligatureOracle.width },
+        control: { width: control.width, ink: control.ink, oracle: controlOracle.width },
+      },
+    };
+  },
+);
 
 await check('FONT-09 kerning comes from the shaped advance (TEXT-03)', async () => {
   // `AV` is a kerning pair of the fixture. The rendered label must match the
@@ -448,12 +473,21 @@ await check('FONT-06 removing the font falls back and cleans document.fonts', as
     [...document.fonts].filter((face) => familyOf(face) === MISSING_FAMILY).length;
   return {
     pass: faces === 0 && fallback.ink > 0 && delta <= 5 && afterDestroy === 0,
-    detail: { faces, fallbackWidth: fallback.width, preReadyWidth: preReady.width, delta, afterDestroy },
+    detail: {
+      faces,
+      fallbackWidth: fallback.width,
+      preReadyWidth: preReady.width,
+      delta,
+      afterDestroy,
+    },
   };
 });
 
 result.ms = Math.round(performance.now() - started);
-result.pass = result.errors.length === 0 && result.checks.every((entry) => entry.pass) && result.checks.length === 11;
+result.pass =
+  result.errors.length === 0 &&
+  result.checks.every((entry) => entry.pass) &&
+  result.checks.length === 11;
 window.__fontCheckResult = result;
 document.title = 'font-check-done';
 const summary = document.getElementById('summary');

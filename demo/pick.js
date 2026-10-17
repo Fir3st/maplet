@@ -24,7 +24,8 @@ const SIZE = 512;
 const PROBE = { x: 256, y: 256 };
 const EMPTY = { x: 256, y: 270 };
 const BURST = 40;
-const backend = new URLSearchParams(location.search).get('backend') === 'webgpu' ? 'webgpu' : 'webgl1';
+const backend =
+  new URLSearchParams(location.search).get('backend') === 'webgpu' ? 'webgpu' : 'webgl1';
 
 const result = { checks: [], pass: false, errors: [], ms: 0, env: {} };
 window.addEventListener('error', (event) => result.errors.push(String(event.message)));
@@ -41,7 +42,9 @@ function finalize() {
   finalized = true;
   result.ms = Math.round(performance.now() - started);
   result.pass =
-    result.errors.length === 0 && result.checks.length === 3 && result.checks.every((entry) => entry.pass);
+    result.errors.length === 0 &&
+    result.checks.length === 3 &&
+    result.checks.every((entry) => entry.pass);
   window.__pickCheckResult = result;
   document.title = 'pick-check-done';
   const summary = document.getElementById('summary');
@@ -52,9 +55,10 @@ function finalize() {
 let started = performance.now();
 
 const map = await createMap('map', {
-    renderer: { primary: backend, fallback: false },
-    size: { width: SIZE, height: SIZE },
-    center: { lat: 50.05, lng: 14.4 }, zoom: 12
+  renderer: { primary: backend, fallback: false },
+  size: { width: SIZE, height: SIZE },
+  center: { lat: 50.05, lng: 14.4 },
+  zoom: 12,
 });
 
 const toScreen = (x, y) => map.screenToPosition({ x, y });
@@ -73,7 +77,10 @@ const gridFeatures = [];
 for (let y = 12; y <= SIZE - 12; y += 16) {
   for (let x = 12; x <= SIZE - 12; x += 16) {
     if (Math.hypot(x - PROBE.x, y - PROBE.y) < 30) continue;
-    gridFeatures.push({ id: `g${gridFeatures.length}`, geometry: { type: 'point', position: toScreen(x, y) } });
+    gridFeatures.push({
+      id: `g${gridFeatures.length}`,
+      geometry: { type: 'point', position: toScreen(x, y) },
+    });
   }
 }
 await grid.features.replace(gridFeatures);
@@ -82,14 +89,14 @@ map.addLayer({
   id: 'grid-layer',
   type: 'points',
   source: 'grid',
-  interactive: true ,
+  interactive: true,
   style: { radiusPx: 1, color: '#2563eb' },
 });
 const layer = map.addLayer({
   id: 'probes-layer',
   type: 'points',
   source: 'probes',
-  interactive: true ,
+  interactive: true,
   style: { radiusPx: 2, color: '#dc2626' },
 });
 

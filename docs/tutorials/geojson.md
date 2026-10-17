@@ -8,10 +8,17 @@ in your browser; this tutorial accepts up to 64 KiB and 100 point features.
 GeoJSON uses **[longitude, latitude]**, the reverse of Maplet's geographic tuples.
 
 ```js
-const data = { type: 'FeatureCollection', features: [
-  { type: 'Feature', id: 'prague', properties: { name: 'Prague' },
-    geometry: { type: 'Point', coordinates: [14.44, 50.08] } },
-] };
+const data = {
+  type: 'FeatureCollection',
+  features: [
+    {
+      type: 'Feature',
+      id: 'prague',
+      properties: { name: 'Prague' },
+      geometry: { type: 'Point', coordinates: [14.44, 50.08] },
+    },
+  ],
+};
 await points.source.importGeoJson(data);
 ```
 

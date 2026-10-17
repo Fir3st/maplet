@@ -52,7 +52,8 @@ export function clusterByProximity(
   const groups: { x: number; y: number; members: string[] }[] = [];
   const grid = new Map<string, number[]>();
   const groupCell = new Map<number, string>();
-  const cellKey = (x: number, y: number): string => `${Math.floor(x / radius)}:${Math.floor(y / radius)}`;
+  const cellKey = (x: number, y: number): string =>
+    `${Math.floor(x / radius)}:${Math.floor(y / radius)}`;
   const addToGrid = (index: number, key: string): void => {
     const bucket = grid.get(key);
     if (bucket) bucket.push(index);
@@ -138,13 +139,26 @@ export interface ResolvedMarkerClustering {
 export const DEFAULT_CLUSTER_RADIUS_PX = 64;
 export const DEFAULT_CLUSTER_MIN_COUNT = 2;
 
-export function resolveMarkerClustering(options: MarkerClusteringOptions): ResolvedMarkerClustering {
-  assertArgument(typeof options === 'object' && options !== null, 'marker clustering options must be an object');
+export function resolveMarkerClustering(
+  options: MarkerClusteringOptions,
+): ResolvedMarkerClustering {
+  assertArgument(
+    typeof options === 'object' && options !== null,
+    'marker clustering options must be an object',
+  );
   const radiusPx = options.radiusPx ?? DEFAULT_CLUSTER_RADIUS_PX;
   const minCount = options.minCount ?? DEFAULT_CLUSTER_MIN_COUNT;
   const disableAtZoom = options.disableAtZoom ?? null;
-  assertArgument(Number.isFinite(radiusPx) && radiusPx > 0, 'clustering radiusPx must be a positive number', { radiusPx });
-  assertArgument(Number.isInteger(minCount) && minCount >= 2, 'clustering minCount must be an integer of at least 2', { minCount });
+  assertArgument(
+    Number.isFinite(radiusPx) && radiusPx > 0,
+    'clustering radiusPx must be a positive number',
+    { radiusPx },
+  );
+  assertArgument(
+    Number.isInteger(minCount) && minCount >= 2,
+    'clustering minCount must be an integer of at least 2',
+    { minCount },
+  );
   assertArgument(
     disableAtZoom === null || Number.isFinite(disableAtZoom),
     'clustering disableAtZoom must be a finite number or null',
@@ -167,7 +181,11 @@ export interface ClusterBadgeArt {
 
 export function clusterBadge(count: number): ClusterBadgeArt {
   const label =
-    count <= 999 ? String(count) : count <= 9999 ? `${(count / 1000).toFixed(1).replace(/\.0$/, '')}k` : `${Math.round(count / 1000)}k`;
+    count <= 999
+      ? String(count)
+      : count <= 9999
+        ? `${(count / 1000).toFixed(1).replace(/\.0$/, '')}k`
+        : `${Math.round(count / 1000)}k`;
   const size = count < 10 ? 34 : count < 100 ? 40 : 46;
   const color = count < 10 ? '#2563eb' : count < 100 ? '#1d4ed8' : '#1e3a8a';
   const fontSize = size < 36 ? 13 : size < 44 ? 15 : 17;

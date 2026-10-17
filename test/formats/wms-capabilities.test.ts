@@ -86,7 +86,11 @@ test('WMS-07: a 1.3.0 document yields layers, CRS, formats and defaults', () => 
   const capabilities = parseWmsCapabilities(V130);
   assert.equal(capabilities.version, '1.3.0');
   assert.equal(capabilities.title, 'Základní mapa & okolí', 'entities decode');
-  assert.equal(capabilities.abstract, 'Base layers: <boundaries>, parcels & buildings.', 'CDATA is text');
+  assert.equal(
+    capabilities.abstract,
+    'Base layers: <boundaries>, parcels & buildings.',
+    'CDATA is text',
+  );
   assert.deepEqual(capabilities.formats, ['image/jpeg', 'image/png'], 'only GetMap formats');
   assert.deepEqual(capabilities.bounds, {
     southwest: { lat: 49.9, lng: 14.15 },
@@ -94,23 +98,42 @@ test('WMS-07: a 1.3.0 document yields layers, CRS, formats and defaults', () => 
   });
 
   // The unnamed root layer contributes crs and bounds, not a layer entry.
-  assert.deepEqual(capabilities.layers.map((layer) => layer.name), ['0', '8', undefined]);
+  assert.deepEqual(
+    capabilities.layers.map((layer) => layer.name),
+    ['0', '8', undefined],
+  );
   const boundaries = capabilities.layers[0]!;
   assert.equal(boundaries.title, 'Boundaries');
   assert.equal(boundaries.queryable, true, 'the queryable attribute inherits');
-  assert.deepEqual(boundaries.crs, ['EPSG:3857', 'EPSG:4326', 'CRS:84'], 'declared plus inherited, normalized');
+  assert.deepEqual(
+    boundaries.crs,
+    ['EPSG:3857', 'EPSG:4326', 'CRS:84'],
+    'declared plus inherited, normalized',
+  );
   const districts = boundaries.children[0]!;
   assert.equal(districts.name, '17');
-  assert.deepEqual(districts.crs, ['EPSG:3857', 'EPSG:4326', 'CRS:84', 'EPSG:5514'], 'child CRS adds to inherited');
+  assert.deepEqual(
+    districts.crs,
+    ['EPSG:3857', 'EPSG:4326', 'CRS:84', 'EPSG:5514'],
+    'child CRS adds to inherited',
+  );
   assert.deepEqual(districts.bounds, capabilities.bounds, 'bounds inherit');
   const group = capabilities.layers[2]!;
   assert.equal(group.name, undefined, 'an empty <Name> is still a group');
   assert.equal(group.queryable, false, 'no declared flag defaults to not queryable');
-  assert.deepEqual(group.children.map((layer) => layer.name), ['alt'], 'a group keeps its children');
+  assert.deepEqual(
+    group.children.map((layer) => layer.name),
+    ['alt'],
+    'a group keeps its children',
+  );
 
   // Service-level union in document order, with URN and OGC URL forms normalized.
   assert.deepEqual(capabilities.crs, ['EPSG:3857', 'EPSG:4326', 'CRS:84', 'EPSG:5514']);
-  assert.deepEqual(capabilities.preferred, { version: '1.3.0', crs: 'CRS:84', format: 'image/png' });
+  assert.deepEqual(capabilities.preferred, {
+    version: '1.3.0',
+    crs: 'CRS:84',
+    format: 'image/png',
+  });
 });
 
 test('WMS-07: a 1.1.1 document uses SRS lists and LatLonBoundingBox', () => {
@@ -125,11 +148,19 @@ test('WMS-07: a 1.1.1 document uses SRS lists and LatLonBoundingBox', () => {
   const grid = capabilities.layers[0]!;
   assert.equal(grid.name, 'grid');
   assert.equal(grid.title, 'Grid & labels');
-  assert.deepEqual(grid.crs, ['EPSG:4326', 'EPSG:3857', 'EPSG:5514'], 'a space-separated SRS list splits');
+  assert.deepEqual(
+    grid.crs,
+    ['EPSG:4326', 'EPSG:3857', 'EPSG:5514'],
+    'a space-separated SRS list splits',
+  );
   assert.equal(grid.queryable, true);
   // CRS:84 is not declared, so the next requestable value wins; the png variant
   // is used because no exact image/png is on the list.
-  assert.deepEqual(capabilities.preferred, { version: '1.1.1', crs: 'EPSG:4326', format: 'image/png8' });
+  assert.deepEqual(capabilities.preferred, {
+    version: '1.1.1',
+    crs: 'EPSG:4326',
+    format: 'image/png8',
+  });
 });
 
 test('WMS-08: OGC CRS:84 spellings normalize to the same code', () => {
@@ -139,7 +170,11 @@ test('WMS-08: OGC CRS:84 spellings normalize to the same code', () => {
     <CRS>EPSG:4326</CRS>
     <Layer><Name>l</Name></Layer>
   </Layer></Capability></WMS_Capabilities>`);
-  assert.deepEqual(capabilities.crs, ['CRS:84', 'EPSG:4326'], 'URN and URL spellings collapse into one code');
+  assert.deepEqual(
+    capabilities.crs,
+    ['CRS:84', 'EPSG:4326'],
+    'URN and URL spellings collapse into one code',
+  );
   assert.equal(capabilities.preferred?.crs, 'CRS:84');
 });
 
@@ -149,9 +184,19 @@ test('WMS-08: a named root layer stays the single top-level layer', () => {
     <CRS>EPSG:3857</CRS>
     <Layer><Name>roads</Name></Layer>
   </Layer></Capability></WMS_Capabilities>`);
-  assert.deepEqual(capabilities.layers.map((layer) => layer.name), ['service']);
-  assert.deepEqual(capabilities.layers[0]!.children.map((layer) => layer.name), ['roads']);
-  assert.deepEqual(capabilities.preferred, { version: '1.3.0', crs: 'EPSG:3857', format: 'image/png' });
+  assert.deepEqual(
+    capabilities.layers.map((layer) => layer.name),
+    ['service'],
+  );
+  assert.deepEqual(
+    capabilities.layers[0]!.children.map((layer) => layer.name),
+    ['roads'],
+  );
+  assert.deepEqual(capabilities.preferred, {
+    version: '1.3.0',
+    crs: 'EPSG:3857',
+    format: 'image/png',
+  });
 });
 
 test('WMS-08: the default CRS follows CRS:84, EPSG:4326, EPSG:3857 and the format is a declared image', () => {
@@ -161,7 +206,11 @@ test('WMS-08: the default CRS follows CRS:84, EPSG:4326, EPSG:3857 and the forma
         `<Layer><CRS>${crs}</CRS><Layer><Name>l</Name></Layer></Layer></Capability></WMS_Capabilities>`,
     );
   assert.equal(pick('EPSG:3857').preferred?.crs, 'EPSG:3857');
-  assert.equal(pick('EPSG:3857 EPSG:4326').preferred?.crs, 'EPSG:4326', 'without CRS:84, EPSG:4326 wins');
+  assert.equal(
+    pick('EPSG:3857 EPSG:4326').preferred?.crs,
+    'EPSG:4326',
+    'without CRS:84, EPSG:4326 wins',
+  );
   assert.equal(pick('EPSG:4326').preferred?.crs, 'EPSG:4326');
   assert.equal(
     parseWmsCapabilities(`<WMS_Capabilities version="1.3.0"><Capability><Layer>
@@ -194,12 +243,16 @@ test('WMS-09: malformed or foreign documents fail with import-invalid', () => {
   for (const [document, message] of failures) {
     assert.throws(
       () => parseWmsCapabilities(document),
-      (error: unknown) => isMapletError(error) && error.code === 'import-invalid' && message.test(error.message),
+      (error: unknown) =>
+        isMapletError(error) && error.code === 'import-invalid' && message.test(error.message),
       document.slice(0, 40),
     );
   }
   assert.throws(
-    () => parseWmsCapabilities('<WMS_Capabilities version="1.0.0"><Capability><Layer/></Capability></WMS_Capabilities>'),
+    () =>
+      parseWmsCapabilities(
+        '<WMS_Capabilities version="1.0.0"><Capability><Layer/></Capability></WMS_Capabilities>',
+      ),
     (error: unknown) => isMapletError(error) && error.code === 'unsupported-capability',
   );
 });
@@ -215,7 +268,8 @@ test('WMS-09: entities in a DOCTYPE are never expanded and namespaced documents 
   assert.equal(capabilities.title, '&xxe;', 'an unresolved entity stays literal text');
   assert.equal(capabilities.layers[0]!.title, '&unknown;');
 
-  const namespaced = parseWmsCapabilities(`<wms:WMS_Capabilities version="1.3.0" xmlns:wms="http://www.opengis.net/wms">
+  const namespaced =
+    parseWmsCapabilities(`<wms:WMS_Capabilities version="1.3.0" xmlns:wms="http://www.opengis.net/wms">
     <wms:Capability><wms:Layer><wms:CRS>EPSG:4326</wms:CRS><wms:Layer><wms:Name>roads</wms:Name></wms:Layer></wms:Layer></wms:Capability>
   </wms:WMS_Capabilities>`);
   assert.equal(namespaced.layers[0]!.name, 'roads');
@@ -242,35 +296,36 @@ test('WMS-09: the fetcher builds the request URL and maps transport failures', a
 
   const calls: string[] = [];
   const capabilities = await fetchWmsCapabilities('https://wms.example/ows', {
-    fetchFn: async (url) => {
+    fetchFn: (url) => {
       calls.push(url);
-      return { ok: true, status: 200, text: async () => V130 };
+      return Promise.resolve({ ok: true, status: 200, text: () => Promise.resolve(V130) });
     },
   });
-  assert.deepEqual(calls, ['https://wms.example/ows?service=WMS&request=GetCapabilities&version=1.3.0']);
+  assert.deepEqual(calls, [
+    'https://wms.example/ows?service=WMS&request=GetCapabilities&version=1.3.0',
+  ]);
   assert.equal(capabilities.title, 'Základní mapa & okolí');
 
   await assert.rejects(
     fetchWmsCapabilities('https://wms.example/ows', {
-      fetchFn: async () => ({ ok: false, status: 404, text: async () => 'nope' }),
+      fetchFn: () =>
+        Promise.resolve({ ok: false, status: 404, text: () => Promise.resolve('nope') }),
     }),
     (error: unknown) =>
       isMapletError(error) && error.code === 'import-invalid' && error.detail['status'] === 404,
   );
   await assert.rejects(
     fetchWmsCapabilities('https://wms.example/ows', {
-      fetchFn: async () => {
-        throw new TypeError('Failed to fetch');
-      },
+      fetchFn: () => Promise.reject(new TypeError('Failed to fetch')),
     }),
     (error: unknown) =>
-      isMapletError(error) && error.code === 'import-invalid' && /Failed to fetch/.test(error.message),
+      isMapletError(error) &&
+      error.code === 'import-invalid' &&
+      /Failed to fetch/.test(error.message),
   );
   await assert.rejects(
     fetchWmsCapabilities('https://wms.example/ows', {
-      fetchFn: async () => {
-        throw new Error('aborted');
-      },
+      fetchFn: () => Promise.reject(new Error('aborted')),
       signal: AbortSignal.abort(),
     }),
     (error: unknown) => isMapletError(error) && error.code === 'aborted',
@@ -292,7 +347,10 @@ test('WMS-09: without a fetch implementation the fetcher reports the environment
 });
 
 test('WMS-09: the committed legacy fixture parses as a Krovak-only endpoint', () => {
-  const document = readFileSync(fileURLToPath(new URL('../../demo/wms-legacy.xml', import.meta.url)), 'utf8');
+  const document = readFileSync(
+    fileURLToPath(new URL('../../demo/wms-legacy.xml', import.meta.url)),
+    'utf8',
+  );
   const capabilities = parseWmsCapabilities(document);
   assert.equal(capabilities.version, '1.1.1');
   assert.equal(capabilities.preferred, undefined);

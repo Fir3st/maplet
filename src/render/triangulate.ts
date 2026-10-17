@@ -27,8 +27,14 @@ function ringArea(vertices: Float64Array, start: number, count: number): number 
 }
 
 function pointInTriangle(
-  px: number, py: number,
-  ax: number, ay: number, bx: number, by: number, cx: number, cy: number,
+  px: number,
+  py: number,
+  ax: number,
+  ay: number,
+  bx: number,
+  by: number,
+  cx: number,
+  cy: number,
 ): boolean {
   const d1 = (px - bx) * (ay - by) - (ax - bx) * (py - by);
   const d2 = (px - cx) * (by - cy) - (bx - cx) * (py - cy);
@@ -38,12 +44,7 @@ function pointInTriangle(
   return !(hasNeg && hasPos);
 }
 
-function earClip(
-  vertices: Float64Array,
-  start: number,
-  count: number,
-  out: number[],
-): void {
+function earClip(vertices: Float64Array, start: number, count: number, out: number[]): void {
   const xs: number[] = [];
   const ys: number[] = [];
   const ccw = ringArea(vertices, start, count) > 0;
@@ -97,7 +98,6 @@ function earClip(
   }
 }
 
-
 function clipHalfPlane(polygon: number[], side: (x: number, y: number) => number): number[] {
   if (polygon.length < 6) return [];
   const out: number[] = [];
@@ -110,7 +110,7 @@ function clipHalfPlane(polygon: number[], side: (x: number, y: number) => number
     const c = side(cx, cy);
     const nSide = side(nx, ny);
     if (c >= 0) out.push(cx, cy);
-    if ((c >= 0) !== (nSide >= 0)) {
+    if (c >= 0 !== nSide >= 0) {
       const d = c - nSide;
       if (d !== 0) {
         const t = c / d;
@@ -145,7 +145,10 @@ function subtractTriangle(triangle: number[], hole: number[], out: number[]): vo
     const side = (x: number, y: number): number => (bx - ax) * (y - ay) - (by - ay) * (x - ax);
     // Match the proven leaflet-gpu subtraction: the piece on the negative side
     // of each hole edge is filled, the rest continues to the next edge.
-    fanFromPolygon(clipHalfPlane(remaining, (x, y) => -side(x, y)), out);
+    fanFromPolygon(
+      clipHalfPlane(remaining, (x, y) => -side(x, y)),
+      out,
+    );
     remaining = clipHalfPlane(remaining, side);
   }
 }

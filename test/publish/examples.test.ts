@@ -1,19 +1,32 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync, existsSync, statSync } from 'node:fs';
+import {
+  mkdtempSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  writeFileSync,
+  existsSync,
+  statSync,
+} from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-// @ts-expect-error Build tooling is a JavaScript module, not part of the library API.
-import { assertModuleGraph, buildExamples, highlightJavaScript } from '../../scripts/build-examples.mjs';
-// @ts-expect-error Publication tooling is tested with fake GitHub responses only.
-import { publishGists } from '../../scripts/publish-gists.mjs';
-// @ts-expect-error Documentation tooling is not part of the package API.
+import {
+  assertModuleGraph,
+  buildExamples,
+  highlightJavaScript,
+} from '../../scripts/build-examples.mjs';
+import { publishGists, type GitHubApi } from '../../scripts/publish-gists.mjs';
 import { renderMarkdown } from '../../scripts/docs-site.mjs';
 
 test('complete documentation and twenty tutorials build under a Pages subdirectory', () => {
   const directory = mkdtempSync(join(tmpdir(), 'maplet-examples-test-'));
   try {
-    const { site, plan, pageCount } = buildExamples({ output: directory, baseUrl: 'https://example.github.io/project/' });
+    const { site, plan, pageCount } = buildExamples({
+      output: directory,
+      baseUrl: 'https://example.github.io/project/',
+    });
     assert.equal(plan.gists.length, 20);
     assert.ok(pageCount >= 36);
     const gallery = readFileSync(join(site, 'index.html'), 'utf8');
@@ -28,12 +41,47 @@ test('complete documentation and twenty tutorials build under a Pages subdirecto
     assert.ok(stylesheet, 'Gallery stylesheet must have a content fingerprint');
     assert.deepEqual(JSON.parse(readFileSync(join(site, 'gists.json'), 'utf8')), {});
     assert.ok(readFileSync(join(site, 'dist', 'workers', 'import.worker.js'), 'utf8').length > 0);
-    const symbols = JSON.parse(readFileSync(join(site, 'api-symbols.json'), 'utf8'));
-    for (const required of ['MapHandle', 'LayerHandle', 'SourceLayerSpec', 'MapOptions', 'style', 'crs', 'FeaturesHandle', 'LocateResult', 'boundsFromPositions', 'parseGeoJson']) assert.ok(symbols.includes(required));
+    const symbols = JSON.parse(readFileSync(join(site, 'api-symbols.json'), 'utf8')) as string[];
+    for (const required of [
+      'MapHandle',
+      'LayerHandle',
+      'SourceLayerSpec',
+      'MapOptions',
+      'style',
+      'crs',
+      'FeaturesHandle',
+      'LocateResult',
+      'boundsFromPositions',
+      'parseGeoJson',
+    ])
+      assert.ok(symbols.includes(required));
     const mapReference = readFileSync(join(site, 'reference', 'map', 'index.html'), 'utf8');
-    for (const member of ['MapHandle-addPoints', 'MapHandle-use', 'MapHandle-whenRendered', 'MapOptions-controls', 'MapOptions-projection']) assert.ok(mapReference.includes(`id="${member}"`), `Missing inherited API member ${member}`);
+    for (const member of [
+      'MapHandle-addPoints',
+      'MapHandle-use',
+      'MapHandle-whenRendered',
+      'MapOptions-controls',
+      'MapOptions-projection',
+    ])
+      assert.ok(mapReference.includes(`id="${member}"`), `Missing inherited API member ${member}`);
     assert.ok(!mapReference.includes('MapHandle-groups'));
-    for (const route of ['download', 'tutorials', 'plugins', 'guides/maps', 'guides/layers', 'guides/data', 'guides/rendering', 'guides/interaction', 'guides/status', 'guides/contracts', 'guides/development']) assert.ok(existsSync(join(site, route, 'index.html')), `Missing documentation section ${route}`);
+    for (const route of [
+      'download',
+      'tutorials',
+      'plugins',
+      'guides/maps',
+      'guides/layers',
+      'guides/data',
+      'guides/rendering',
+      'guides/interaction',
+      'guides/status',
+      'guides/contracts',
+      'guides/development',
+    ])
+      assert.ok(
+        existsSync(join(site, route, 'index.html')),
+        `Missing documentation section ${route}`,
+      );
     for (const gist of plan.gists) {
       assert.ok(gallery.includes(`href="./examples/${gist.id}/"`));
       const html = readFileSync(join(site, 'examples', gist.id, 'index.html'), 'utf8');
@@ -42,34 +90,75 @@ test('complete documentation and twenty tutorials build under a Pages subdirecto
       assert.match(html, /id="live-example"/);
       assert.match(html, /Complete example source/);
       assert.match(html, /class="syntax-string"/);
-      assert.ok(html.includes(`href="${stylesheet}"`), 'Each detail must use the fingerprinted stylesheet');
-      assert.ok(gist.files['index.html'].includes(`href="${stylesheet}"`), 'Gist HTML must use the fingerprinted stylesheet');
+      assert.ok(
+        html.includes(`href="${stylesheet}"`),
+        'Each detail must use the fingerprinted stylesheet',
+      );
+      assert.ok(
+        gist.files['index.html']!.includes(`href="${stylesheet}"`),
+        'Gist HTML must use the fingerprinted stylesheet',
+      );
       assert.match(html, /Gist not published yet/);
       assert.match(html, /src="\.\/runtime-[0-9a-f]{12}\.js"/);
-      assert.match(html, /Failed to start:/, 'Example pages must explain a blocked module instead of staying silent');
-      assert.match(gist.files['shared.js'], /from 'https:\/\/example.github.io\/project\/dist\/index.js'/);
-      assert.match(gist.files['index.html'], /data-gallery="https:\/\/example.github.io\/project\/"/);
-      assert.match(gist.files['README.md'], /Gist itself does not execute HTML/);
-      assert.deepEqual(Object.keys(gist.files).sort(), ['LICENSE', 'NOTICE', 'README.md', 'example.js', 'index.html', 'shared.js', 'style.css'].sort());
+      assert.match(
+        html,
+        /Failed to start:/,
+        'Example pages must explain a blocked module instead of staying silent',
+      );
+      assert.match(
+        gist.files['shared.js']!,
+        /from 'https:\/\/example.github.io\/project\/dist\/index.js'/,
+      );
+      assert.match(
+        gist.files['index.html']!,
+        /data-gallery="https:\/\/example.github.io\/project\/"/,
+      );
+      assert.match(gist.files['README.md']!, /Gist itself does not execute HTML/);
+      assert.deepEqual(
+        Object.keys(gist.files).sort(),
+        [
+          'LICENSE',
+          'NOTICE',
+          'README.md',
+          'example.js',
+          'index.html',
+          'shared.js',
+          'style.css',
+        ].sort(),
+      );
       assert.ok(new TextEncoder().encode(JSON.stringify(gist.files)).length < 128 * 1024);
     }
     // Every example loads a content-fingerprinted module graph, so a cached copy
     // (or a cached error) of one module can never mix with a fresh deploy. The
     // plain example.js/shared.js stay for display and download, and the stable
     // dist/ copy keeps published Gists and external links working.
-    const runtime = /src="\.\/(runtime-[0-9a-f]{12}\.js)"/.exec(readFileSync(join(site, 'examples', 'heatmap', 'index.html'), 'utf8'))?.[1];
+    const runtime = /src="\.\/(runtime-[0-9a-f]{12}\.js)"/.exec(
+      readFileSync(join(site, 'examples', 'heatmap', 'index.html'), 'utf8'),
+    )?.[1];
     assert.ok(runtime, 'The example page must load a fingerprinted runtime');
     const runtimeSource = readFileSync(join(site, 'examples', 'heatmap', runtime), 'utf8');
     const sharedRuntime = /from '\.\/(shared-[0-9a-f]{12}\.js)'/.exec(runtimeSource)?.[1];
     assert.ok(sharedRuntime, 'The runtime must import a fingerprinted shared setup');
     const sharedSource = readFileSync(join(site, 'examples', 'heatmap', sharedRuntime), 'utf8');
-    const distDirectory = /from '\.\.\/\.\.\/(dist-[0-9a-f]{12})\/index\.js'/.exec(sharedSource)?.[1];
+    const distDirectory = /from '\.\.\/\.\.\/(dist-[0-9a-f]{12})\/index\.js'/.exec(
+      sharedSource,
+    )?.[1];
     assert.ok(distDirectory, 'The shared setup must import a fingerprinted library build');
     assert.ok(existsSync(join(site, distDirectory, 'index.js')));
     assert.ok(existsSync(join(site, distDirectory, 'plugins', 'heatmap.js')));
-    assert.ok(existsSync(join(site, 'dist', 'index.js')), 'The stable dist copy must stay for external consumers');
-    assert.ok(readFileSync(join(site, 'examples', 'heatmap', 'example.js'), 'utf8').includes("from './shared.js'"), 'Downloaded sources stay unversioned');
-    const galleryScript = /src="\.\/(gallery-[0-9a-f]{12}\.js)"/.exec(readFileSync(join(site, 'tutorials', 'index.html'), 'utf8'))?.[1];
+    assert.ok(
+      existsSync(join(site, 'dist', 'index.js')),
+      'The stable dist copy must stay for external consumers',
+    );
+    assert.ok(
+      readFileSync(join(site, 'examples', 'heatmap', 'example.js'), 'utf8').includes(
+        "from './shared.js'",
+      ),
+      'Downloaded sources stay unversioned',
+    );
+    const galleryScript = /src="\.\/(gallery-[0-9a-f]{12}\.js)"/.exec(
+      readFileSync(join(site, 'tutorials', 'index.html'), 'utf8'),
+    )?.[1];
     assert.ok(galleryScript, 'The tutorial directory must load a fingerprinted gallery script');
     assert.ok(existsSync(join(site, 'tutorials', galleryScript)));
     // Check every static local link and fragment independently of the builder.
@@ -86,39 +175,65 @@ test('complete documentation and twenty tutorials build under a Pages subdirecto
     assert.equal(documents.length, pageCount);
     for (const file of documents) {
       const html = readFileSync(file, 'utf8');
-      const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]);
+      const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]);
       assert.equal(new Set(ids).size, ids.length, `Duplicate anchors in ${file}`);
       for (const match of html.matchAll(/(?:href|src)="([^"]+)"/g)) {
         if (/^(https?:|data:)/.test(match[1]!)) continue;
         const url = new URL(match[1]!, `file://${file}`);
         const target = url.pathname.endsWith('/') ? `${url.pathname}index.html` : url.pathname;
         assert.ok(existsSync(target), `Broken local link: ${file} → ${match[1]}`);
-        if (url.hash) assert.ok(readFileSync(target, 'utf8').includes(`id="${decodeURIComponent(url.hash.slice(1))}"`), `Broken fragment: ${file} → ${match[1]}`);
+        if (url.hash)
+          assert.ok(
+            readFileSync(target, 'utf8').includes(`id="${decodeURIComponent(url.hash.slice(1))}"`),
+            `Broken fragment: ${file} → ${match[1]}`,
+          );
       }
     }
-    assert.throws(() => buildExamples({ output: directory, baseUrl: 'file:///local/' }), /Pages base URL/);
-    assert.throws(() => buildExamples({ output: directory, baseUrl: 'https://user:example@example.com/' }), /Pages base URL/);
-  } finally { rmSync(directory, { recursive: true, force: true }); }
+    assert.throws(
+      () => buildExamples({ output: directory, baseUrl: 'file:///local/' }),
+      /Pages base URL/,
+    );
+    assert.throws(
+      () => buildExamples({ output: directory, baseUrl: 'https://user:example@example.com/' }),
+      /Pages base URL/,
+    );
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
 });
 
 test('the module graph check rejects missing modules and relative worker URLs', () => {
   const directory = mkdtempSync(join(tmpdir(), 'maplet-graph-test-'));
   try {
     mkdirSync(join(directory, 'dist'), { recursive: true });
-    writeFileSync(join(directory, 'dist', 'index.js'), "import './plugins/missing.js';\nexport { default as worker } from './worker-entry.js';\n");
+    writeFileSync(
+      join(directory, 'dist', 'index.js'),
+      "import './plugins/missing.js';\nexport { default as worker } from './worker-entry.js';\n",
+    );
     assert.throws(() => assertModuleGraph(directory), /loads missing modules/);
-    writeFileSync(join(directory, 'dist', 'worker-entry.js'), "export const load = () => new Worker(new URL('./workers/import.worker.js', import.meta.url), { type: 'module' });\n");
-    assert.throws(() => assertModuleGraph(directory), /worker-entry\.js → \.\/workers\/import\.worker\.js/);
+    writeFileSync(
+      join(directory, 'dist', 'worker-entry.js'),
+      "export const load = () => new Worker(new URL('./workers/import.worker.js', import.meta.url), { type: 'module' });\n",
+    );
+    assert.throws(
+      () => assertModuleGraph(directory),
+      /worker-entry\.js → \.\/workers\/import\.worker\.js/,
+    );
     mkdirSync(join(directory, 'dist', 'plugins'), { recursive: true });
     writeFileSync(join(directory, 'dist', 'plugins', 'missing.js'), 'export {};\n');
     mkdirSync(join(directory, 'dist', 'workers'), { recursive: true });
     writeFileSync(join(directory, 'dist', 'workers', 'import.worker.js'), 'export {};\n');
     assert.doesNotThrow(() => assertModuleGraph(directory));
-  } finally { rmSync(directory, { recursive: true, force: true }); }
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
 });
 
 test('guide Markdown renders safe code, tables and project-relative links', () => {
-  const rendered = renderMarkdown('# Guide\n\n## Types\n\n| Type | Meaning |\n| --- | --- |\n| `string | number` | **ID** |\n\n[Objects](api.md#collections-and-objects)\n\n```html\n<script>alert(1)</script>\n```', { source: 'docs/maps.md', home: '../../' });
+  const rendered = renderMarkdown(
+    '# Guide\n\n## Types\n\n| Type | Meaning |\n| --- | --- |\n| `string | number` | **ID** |\n\n[Objects](api.md#collections-and-objects)\n\n```html\n<script>alert(1)</script>\n```',
+    { source: 'docs/maps.md', home: '../../' },
+  );
   assert.match(rendered.html, /<code>string \| number<\/code>/);
   assert.match(rendered.html, /<strong>ID<\/strong>/);
   assert.match(rendered.html, /href="\.\.\/\.\.\/guides\/layers\/#collections-and-objects"/);
@@ -135,18 +250,43 @@ test('syntax highlighting preserves JavaScript text and escapes HTML', () => {
   assert.match(html, /class="syntax-number"/);
   assert.match(html, /class="syntax-function"/);
   assert.ok(!html.includes('<script>'));
-  const text = html.replace(/<span class="syntax-[a-z]+">|<\/span>/g, '')
-    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+  const text = html
+    .replace(/<span class="syntax-[a-z]+">|<\/span>/g, '')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, '&');
   assert.equal(text, source);
 });
 
-function fakeGitHub(seed: any[] = []) {
-  const gists = [...seed];
-  const calls: { path: string; method: string; body?: any }[] = [];
+interface FakeGist {
+  id: string;
+  html_url: string;
+  public: boolean;
+  owner: { login: string };
+  description?: string;
+}
+
+interface FakeBody {
+  description?: string;
+  public?: boolean;
+  files?: Record<string, { content: string }>;
+}
+
+function fakeGitHub(seed: readonly { id: string; description?: string }[] = []) {
+  const gists: FakeGist[] = seed.map((entry) => ({
+    ...entry,
+    html_url: `https://gist.github.com/Fir3st/${entry.id}`,
+    public: true,
+    owner: { login: 'Fir3st' },
+  }));
+  const calls: { path: string; method: string; body?: FakeBody }[] = [];
   let serial = 1;
-  const api = async (path: string, options: { method?: string; body?: any } = {}) => {
+  const api: GitHubApi = (path, options = {}) => {
     const method = options.method ?? 'GET';
-    calls.push({ path, method, body: options.body });
+    const body = options.body as FakeBody | undefined;
+    calls.push({ path, method, ...(body === undefined ? {} : { body }) });
     if (path === 'user') return { login: 'Fir3st' };
     if (path.startsWith('users/Fir3st/gists?')) {
       const page = Number(new URLSearchParams(path.split('?')[1]).get('page'));
@@ -154,14 +294,20 @@ function fakeGitHub(seed: any[] = []) {
     }
     if (method === 'POST' && path === 'gists') {
       const id = (serial++).toString(16).padStart(32, '0');
-      const gist = { id, html_url: `https://gist.github.com/Fir3st/${id}`, public: true, owner: { login: 'Fir3st' }, description: options.body.description };
+      const gist: FakeGist = {
+        id,
+        html_url: `https://gist.github.com/Fir3st/${id}`,
+        public: true,
+        owner: { login: 'Fir3st' },
+        ...(body?.description === undefined ? {} : { description: body.description }),
+      };
       gists.push(gist);
       return gist;
     }
     if (method === 'PATCH') {
-      const gist = gists.find(entry => path === `gists/${entry.id}`);
+      const gist = gists.find((entry) => path === `gists/${entry.id}`);
       assert.ok(gist);
-      gist.description = options.body.description;
+      if (body?.description !== undefined) gist.description = body.description;
       return gist;
     }
     throw new Error(`Unexpected GitHub call: ${method} ${path}`);
@@ -169,70 +315,107 @@ function fakeGitHub(seed: any[] = []) {
   return { api, calls, gists };
 }
 
-const fixture = () => ({ repository: 'Fir3st/maplet', baseUrl: 'https://fir3st.github.io/maplet/', version: '0.1.0-alpha.3',
-  gists: [{ id: 'basics', title: 'Your first map', files: { 'index.html': '<h1>Map</h1>', 'README.md': 'An example' } }] });
+const fixture = () => ({
+  repository: 'Fir3st/maplet',
+  baseUrl: 'https://fir3st.github.io/maplet/',
+  version: '0.1.0-alpha.3',
+  gists: [
+    {
+      id: 'basics',
+      title: 'Your first map',
+      files: { 'index.html': '<h1>Map</h1>', 'README.md': 'An example' },
+    },
+  ],
+});
 
 test('Gists create once, skip unchanged files, and update existing URLs', async () => {
   const fake = fakeGitHub();
   const plan = fixture();
   const first = await publishGists(plan, fake.api);
-  assert.equal(fake.calls.filter(call => call.method === 'POST').length, 2);
-  assert.ok(fake.calls.filter(call => call.method === 'POST').every(call => call.body.public === true));
-  assert.ok(fake.calls.find(call => call.body?.files['README.md']?.content.includes('[source Gist]')));
+  assert.equal(fake.calls.filter((call) => call.method === 'POST').length, 2);
+  assert.ok(
+    fake.calls.filter((call) => call.method === 'POST').every((call) => call.body?.public === true),
+  );
+  assert.ok(
+    fake.calls.find((call) => call.body?.files?.['README.md']?.content.includes('[source Gist]')),
+  );
   fake.calls.length = 0;
   assert.deepEqual(await publishGists(plan, fake.api), first);
-  assert.equal(fake.calls.filter(call => call.method !== 'GET').length, 0);
+  assert.equal(fake.calls.filter((call) => call.method !== 'GET').length, 0);
   plan.gists[0]!.files['index.html'] = '<h1>Updated map</h1>';
   fake.calls.length = 0;
   assert.deepEqual(await publishGists(plan, fake.api), first);
-  assert.equal(fake.calls.filter(call => call.method === 'PATCH').length, 1);
-  assert.equal(fake.calls.filter(call => call.method === 'POST').length, 0);
+  assert.equal(fake.calls.filter((call) => call.method === 'PATCH').length, 1);
+  assert.equal(fake.calls.filter((call) => call.method === 'POST').length, 0);
 });
 
 test('complete metadata discovery paginates without reading unrelated contents', async () => {
-  const unrelated = Array.from({ length: 100 }, (_, i) => ({ id: i.toString(16), description: 'Unrelated public Gist' }));
+  const unrelated = Array.from({ length: 100 }, (_, i) => ({
+    id: i.toString(16),
+    description: 'Unrelated public Gist',
+  }));
   const fake = fakeGitHub(unrelated);
   await publishGists(fixture(), fake.api);
-  assert.ok(fake.calls.some(call => call.path.endsWith('page=2')));
-  assert.ok(fake.calls.filter(call => call.method === 'GET').every(call => call.path === 'user' || call.path.startsWith('users/Fir3st/gists?')));
-  assert.equal(fake.calls.filter(call => call.method === 'POST').length, 2);
+  assert.ok(fake.calls.some((call) => call.path.endsWith('page=2')));
+  assert.ok(
+    fake.calls
+      .filter((call) => call.method === 'GET')
+      .every((call) => call.path === 'user' || call.path.startsWith('users/Fir3st/gists?')),
+  );
+  assert.equal(fake.calls.filter((call) => call.method === 'POST').length, 2);
 });
 
 test('partial publication can resume without duplicating the created example', async () => {
   const fake = fakeGitHub();
   let failed = false;
-  const interrupted = async (path: string, options: any) => {
-    if (options?.body?.description.includes(' index ') && !failed) { failed = true; throw new Error('Synthetic API failure'); }
+  const interrupted: GitHubApi = (path, options) => {
+    const body = options?.body as FakeBody | undefined;
+    if (body?.description?.includes(' index ') && !failed) {
+      failed = true;
+      throw new Error('Synthetic API failure');
+    }
     return fake.api(path, options);
   };
   await assert.rejects(publishGists(fixture(), interrupted), /Synthetic API failure/);
   assert.equal(fake.gists.length, 1);
-  const firstId = fake.gists[0].id;
+  const firstId = fake.gists[0]!.id;
   await publishGists(fixture(), fake.api);
   assert.equal(fake.gists.length, 2);
-  assert.equal(fake.gists[0].id, firstId);
+  assert.equal(fake.gists[0]!.id, firstId);
 });
 
 test('wrong ownership, duplicate IDs, API failures and unbounded scans fail before writes', async () => {
   const fake = fakeGitHub();
-  await assert.rejects(publishGists(fixture(), async () => ({ login: 'someone-else' })), /repository owner/);
-  const duplicate = fixture(); duplicate.gists.push(duplicate.gists[0]!);
+  await assert.rejects(
+    publishGists(fixture(), () => ({ login: 'someone-else' })),
+    /repository owner/,
+  );
+  const duplicate = fixture();
+  duplicate.gists.push(duplicate.gists[0]!);
   await assert.rejects(publishGists(duplicate, fake.api), /duplicate Gist ID/);
-  await assert.rejects(publishGists(fixture(), async () => { throw new Error('API denied'); }), /API denied/);
+  await assert.rejects(
+    publishGists(fixture(), () => {
+      throw new Error('API denied');
+    }),
+    /API denied/,
+  );
   const fullPage = Array.from({ length: 100 }, () => ({ description: 'Unrelated Gist' }));
   let writes = 0;
-  await assert.rejects(publishGists(fixture(), async (path: string, options: any) => {
-    if (options?.method !== undefined) writes++;
-    return path === 'user' ? { login: 'Fir3st' } : fullPage;
-  }), /2,000 entries/);
+  await assert.rejects(
+    publishGists(fixture(), (path, options) => {
+      if (options?.method !== undefined) writes++;
+      return path === 'user' ? { login: 'Fir3st' } : fullPage;
+    }),
+    /2,000 entries/,
+  );
   assert.equal(writes, 0);
 });
 
 test('duplicate managed Gists are rejected rather than overwritten', async () => {
   const fake = fakeGitHub();
   await publishGists(fixture(), fake.api);
-  fake.gists.push({ ...fake.gists[0], id: 'f'.repeat(32) });
+  fake.gists.push({ ...fake.gists[0]!, id: 'f'.repeat(32) });
   fake.calls.length = 0;
   await assert.rejects(publishGists(fixture(), fake.api), /Multiple managed Gists/);
-  assert.equal(fake.calls.filter(call => call.method !== 'GET').length, 0);
+  assert.equal(fake.calls.filter((call) => call.method !== 'GET').length, 0);
 });

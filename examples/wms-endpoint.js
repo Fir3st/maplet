@@ -9,7 +9,8 @@ import { openExample, action, report, ready } from './shared.js';
 // The service behind the Czech INSPIRE record for Prague's "Základní mapa"
 // (base map) published by IPR Praha.
 const ENDPOINT = 'https://gs-pub.praha.eu/arcgis/services/map/zakladni_mapa/MapServer/WMSServer';
-const RECORD = 'https://geoportal.gov.cz/php/micka/record/basic/%7B98D8056D-D9D4-4D1B-AEF5-187E7BF0A1DB%7D?dlang=cze';
+const RECORD =
+  'https://geoportal.gov.cz/php/micka/record/basic/%7B98D8056D-D9D4-4D1B-AEF5-187E7BF0A1DB%7D?dlang=cze';
 // Layer names published by the service: parcels, buildings, street segments,
 // cadastral areas, city districts and the Prague boundary. This base map only
 // draws its detail layers at close zooms, so the example starts there. Every
@@ -41,12 +42,15 @@ if (capabilities) {
   action('Show the declared extent', () => {
     if (capabilities.bounds) {
       map.fitBounds(capabilities.bounds, { padding: 12 });
-      report('Fitted to the extent the service declares — this base map only draws its detail layers at close zooms, so zoom back in.');
+      report(
+        'Fitted to the extent the service declares — this base map only draws its detail layers at close zooms, so zoom back in.',
+      );
     }
   });
   const preferred = capabilities.preferred;
   if (!preferred) {
-    summary.textContent = 'This service declares no CRS this library can request (only CRS:84, EPSG:4326 and EPSG:3857 have BBOX support).';
+    summary.textContent =
+      'This service declares no CRS this library can request (only CRS:84, EPSG:4326 and EPSG:3857 have BBOX support).';
   } else {
     // `preferred` names the version, CRS and format the endpoint itself
     // supports, so one spread plus a layer list is a valid GetMap request.
@@ -85,7 +89,9 @@ if (capabilities) {
       }
       wms.show();
       wms.source.setParams({ layers: selected.join(',') });
-      report(`Requesting ${selected.length} of ${rows.length} layers: ${preferred.version} · ${preferred.crs} · ${preferred.format}.`);
+      report(
+        `Requesting ${selected.length} of ${rows.length} layers: ${preferred.version} · ${preferred.crs} · ${preferred.format}.`,
+      );
     };
     for (const row of rows) row.box.addEventListener('change', applySelection);
 
@@ -99,7 +105,9 @@ if (capabilities) {
     record.append(link);
     panel.append(record);
     data.applySelection = applySelection;
-    report(`Endpoint discovered: ${rows.length} layers, requesting ${preferred.crs} as ${preferred.format}.`);
+    report(
+      `Endpoint discovered: ${rows.length} layers, requesting ${preferred.crs} as ${preferred.format}.`,
+    );
   }
 }
 

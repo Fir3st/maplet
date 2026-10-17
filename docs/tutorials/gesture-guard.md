@@ -10,23 +10,23 @@ and a one-finger drag scrolls the page instead of moving the map.
 import { gestureGuard } from '@fir3st/maplet';
 
 const guard = map.use(gestureGuard({ modifier: 'alt', touchPointers: 2 }));
-guard.api.unlock();            // allow everything until lock(), e.g. from a button
+guard.api.unlock(); // allow everything until lock(), e.g. from a button
 guard.api.setModifier('control');
-guard.remove();                // restores touch-action and clears the gate
-map.use(gestureGuard());       // installing again starts a fresh, guarded instance
+guard.remove(); // restores touch-action and clears the gate
+map.use(gestureGuard()); // installing again starts a fresh, guarded instance
 ```
 
-| Option | Default | Meaning |
-| --- | --- | --- |
-| `modifier` | `'alt'` | `alt`, `control`, `shift`, `meta` or `none` for mouse/pen gestures |
-| `touchPointers` | `2` | Fingers required before a touch gesture applies |
-| `touchAction` | `'pan-y'` | Container `touch-action` while the plugin is installed |
-| `unlocked` | `false` | Start with every gesture allowed; `lock()` still applies |
-| `overlay` | on | Explain blocked attempts with a hint overlay, or `false` to stay silent |
-| `onChange` | — | Notified whenever `unlock()`/`lock()` change the state |
+| Option          | Default   | Meaning                                                                 |
+| --------------- | --------- | ----------------------------------------------------------------------- |
+| `modifier`      | `'alt'`   | `alt`, `control`, `shift`, `meta` or `none` for mouse/pen gestures      |
+| `touchPointers` | `2`       | Fingers required before a touch gesture applies                         |
+| `touchAction`   | `'pan-y'` | Container `touch-action` while the plugin is installed                  |
+| `unlocked`      | `false`   | Start with every gesture allowed; `lock()` still applies                |
+| `overlay`       | on        | Explain blocked attempts with a hint overlay, or `false` to stay silent |
+| `onChange`      | —         | Notified whenever `unlock()`/`lock()` change the state                  |
 
-A blocked attempt shows a short hint over the map — *Use 2 fingers to move the
-map*, *Hold Alt and scroll to zoom the map* — following the same pattern as
+A blocked attempt shows a short hint over the map — _Use 2 fingers to move the
+map_, _Hold Alt and scroll to zoom the map_ — following the same pattern as
 Leaflet's gesture-handling plugins. It disappears on its own (default after
 2.2 s), on the next allowed gesture, or on `unlock()`; `overlay: { durationMs,
 message }` changes the timing or the wording.

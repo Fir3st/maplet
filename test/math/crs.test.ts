@@ -104,7 +104,10 @@ test('MATH-06: EPSG:4326 and EPSG:3395 use their own conversions', () => {
   for (const lat of [-60, -10, 0, 33.3, 70]) {
     const world = g3395.toWorld({ lat, lng: 14 });
     const back = g3395.fromWorld(world);
-    assert.ok('lat' in back && Math.abs(back.lat - lat) < 1e-6, `lat ${lat} -> ${'lat' in back ? back.lat : 'x'}`);
+    assert.ok(
+      'lat' in back && Math.abs(back.lat - lat) < 1e-6,
+      `lat ${lat} -> ${'lat' in back ? back.lat : 'x'}`,
+    );
   }
   // Equator matches the spherical Mercator.
   const e0 = g3395.toWorld({ lat: 0, lng: 10 });
@@ -208,7 +211,16 @@ test('crs registry: lookup, custom registration and rejection of duplicates', ()
   });
   assert.equal(crs.get('test:plain')?.code, 'TEST:PLAIN');
   assert.deepEqual(custom.fromWorld(custom.toWorld({ x: 1, y: 2 })), { x: 1, y: 2 });
-  assert.throws(() => crs.define({ code: 'TEST:PLAIN', positionKind: 'planar', toWorld: () => ({ x: 0, y: 0 }), fromWorld: () => ({ x: 0, y: 0 }) }), /already registered/);
+  assert.throws(
+    () =>
+      crs.define({
+        code: 'TEST:PLAIN',
+        positionKind: 'planar',
+        toWorld: () => ({ x: 0, y: 0 }),
+        fromWorld: () => ({ x: 0, y: 0 }),
+      }),
+    /already registered/,
+  );
   assert.equal(crs.unregister('TEST:PLAIN'), true);
   assert.equal(crs.get('TEST:PLAIN'), undefined);
 });

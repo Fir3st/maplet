@@ -30,18 +30,15 @@ export class PluginHost {
   private readonly container: HTMLElement | null;
   private readonly render: RenderHandle;
 
-  constructor(
-    getMap: () => MapHandle,
-    container: HTMLElement | null,
-    render: RenderHandle,
-  ) {
+  constructor(getMap: () => MapHandle, container: HTMLElement | null, render: RenderHandle) {
     this.getMap = getMap;
     this.container = container;
     this.render = render;
   }
 
   use<T>(plugin: Plugin<T>): PluginHandle<T> {
-    if (this.closed || this.getMap().destroyed) fail('destroyed', 'use: the map has been destroyed');
+    if (this.closed || this.getMap().destroyed)
+      fail('destroyed', 'use: the map has been destroyed');
     assertArgument(typeof plugin === 'function', 'use expects a plugin function');
     const controller = new AbortController();
     const cleanups: (() => void)[] = [];
@@ -53,7 +50,11 @@ export class PluginHost {
       const errors: unknown[] = [];
       controller.abort();
       for (const cleanup of cleanups.reverse()) {
-        try { cleanup(); } catch (error) { errors.push(error); }
+        try {
+          cleanup();
+        } catch (error) {
+          errors.push(error);
+        }
       }
       cleanups.length = 0;
       if (errors.length) throw new AggregateError(errors, 'plugin cleanup failed');
@@ -66,17 +67,46 @@ export class PluginHost {
     };
     // Render registrations made through the context belong to this installation.
     const scopedRender: RenderHandle = {
-      invalidate: this.render.invalidate,
-      transform: (fn) => { const off = this.render.transform(fn); onCleanup(off); return off; },
-      onFrame: (fn) => { const off = this.render.onFrame(fn); onCleanup(off); return off; },
-      use: (renderer) => { const off = this.render.use(renderer); onCleanup(off); return off; },
+      invalidate: () => this.render.invalidate(),
+      transform: (fn) => {
+        const off = this.render.transform(fn);
+        onCleanup(off);
+        return off;
+      },
+      onFrame: (fn) => {
+        const off = this.render.onFrame(fn);
+        onCleanup(off);
+        return off;
+      },
+      use: (renderer) => {
+        const off = this.render.use(renderer);
+        onCleanup(off);
+        return off;
+      },
     };
     try {
-      const api = plugin({ map: this.getMap(), container: this.container, render: scopedRender, signal: controller.signal, onCleanup });
-      assertArgument(!(api && typeof (api as { then?: unknown }).then === 'function'), 'plugin setup must be synchronous; start async work using signal');
-      return { api, get removed() { return removed; }, remove };
+      const api = plugin({
+        map: this.getMap(),
+        container: this.container,
+        render: scopedRender,
+        signal: controller.signal,
+        onCleanup,
+      });
+      assertArgument(
+        !(api && typeof (api as { then?: unknown }).then === 'function'),
+        'plugin setup must be synchronous; start async work using signal',
+      );
+      return {
+        api,
+        get removed() {
+          return removed;
+        },
+        remove,
+      };
     } catch (error) {
-      try { remove(); } catch (cleanupError) {
+      try {
+        remove();
+      } catch (cleanupError) {
         throw new AggregateError([error, cleanupError], 'plugin installation and cleanup failed');
       }
       throw error;
@@ -87,7 +117,11 @@ export class PluginHost {
     this.closed = true;
     const errors: unknown[] = [];
     for (const remove of [...this.removers].reverse()) {
-      try { remove(); } catch (error) { errors.push(error); }
+      try {
+        remove();
+      } catch (error) {
+        errors.push(error);
+      }
     }
     if (errors.length) throw new AggregateError(errors, 'plugin cleanup failed');
   }

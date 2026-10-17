@@ -1,42 +1,88 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8" />
-<title>Maplet media checks</title>
-<style>
-  html, body { margin: 0; font: 13px/1.5 system-ui, sans-serif; background: #111827; color: #e5e7eb; }
-  main { display: flex; gap: 16px; padding: 16px; align-items: flex-start; }
-  .map { position: relative; background: #ffffff; flex: none; }
-  #map { width: 600px; height: 600px; }
-  .label { font: 600 12px ui-monospace, monospace; color: #9ca3af; margin: 4px 0 0; }
-  h1 { font-size: 15px; margin: 0 0 6px; }
-  #summary { font-weight: 600; }
-  #summary.pass { color: #4ade80; }
-  #summary.fail { color: #f87171; }
-  #details { white-space: pre-wrap; font: 11px/1.45 ui-monospace, monospace; max-width: 620px; max-height: 84vh; overflow: auto; color: #9ca3af; }
-  .hint { color: #9ca3af; margin: 0 0 10px; }
-</style>
-</head>
-<body>
-<main>
-  <div>
-    <div id="map" class="map" aria-label="Media checks map"></div>
-    <p class="label">images (corners, alt, pixel store), fills, video</p>
-  </div>
-  <div>
-    <h1>Maplet images &amp; video</h1>
-    <p class="hint">
-      MEDIA-01..07, MEDIA-09 and LIFE-05: images in explicit bounds with
-      order/opacity, URL/bounds changes, partial <code>updateRegion</code>
-      uploads with validation, video frames with a pump that idles on pause,
-      runtime video URL changes that resume playback and keep the last frame on
-      failure, media identity in picking, and clean removal during playback.
-      Results: <code>window.__mediaCheckResult</code>.
-    </p>
-    <p id="summary">running…</p>
-    <pre id="details"></pre>
-  </div>
-</main>
-<script type="module" src="./media.js"></script>
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <title>Maplet media checks</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        font:
+          13px/1.5 system-ui,
+          sans-serif;
+        background: #111827;
+        color: #e5e7eb;
+      }
+      main {
+        display: flex;
+        gap: 16px;
+        padding: 16px;
+        align-items: flex-start;
+      }
+      .map {
+        position: relative;
+        background: #ffffff;
+        flex: none;
+      }
+      #map {
+        width: 600px;
+        height: 600px;
+      }
+      .label {
+        font:
+          600 12px ui-monospace,
+          monospace;
+        color: #9ca3af;
+        margin: 4px 0 0;
+      }
+      h1 {
+        font-size: 15px;
+        margin: 0 0 6px;
+      }
+      #summary {
+        font-weight: 600;
+      }
+      #summary.pass {
+        color: #4ade80;
+      }
+      #summary.fail {
+        color: #f87171;
+      }
+      #details {
+        white-space: pre-wrap;
+        font:
+          11px/1.45 ui-monospace,
+          monospace;
+        max-width: 620px;
+        max-height: 84vh;
+        overflow: auto;
+        color: #9ca3af;
+      }
+      .hint {
+        color: #9ca3af;
+        margin: 0 0 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div>
+        <div id="map" class="map" aria-label="Media checks map"></div>
+        <p class="label">images (corners, alt, pixel store), fills, video</p>
+      </div>
+      <div>
+        <h1>Maplet images &amp; video</h1>
+        <p class="hint">
+          MEDIA-01..07, MEDIA-09 and LIFE-05: images in explicit bounds with order/opacity,
+          URL/bounds changes, partial <code>updateRegion</code> uploads with validation, video
+          frames with a pump that idles on pause, runtime video URL changes that resume playback and
+          keep the last frame on failure, media identity in picking, and clean removal during
+          playback. Results: <code>window.__mediaCheckResult</code>.
+        </p>
+        <p id="summary">running…</p>
+        <pre id="details"></pre>
+      </div>
+    </main>
+    <script type="module" src="./media.js"></script>
+  </body>
 </html>

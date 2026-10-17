@@ -54,7 +54,11 @@ test('MARKER-11: a group centre is re-indexed as it drifts, so a later neighbour
   // running centre it meets, but the centre crosses into the next grid cell —
   // were the group left behind in its first cell the third candidate would miss
   // it (its lookup scans only the nine cells around itself).
-  const { clusters, singles } = clusterByProximity([at('a', 60, 0), at('b', 124, 0), at('c', 150, 0)], 64, 2);
+  const { clusters, singles } = clusterByProximity(
+    [at('a', 60, 0), at('b', 124, 0), at('c', 150, 0)],
+    64,
+    2,
+  );
   assert.deepEqual(singles, []);
   assert.equal(clusters.length, 1);
   assert.deepEqual(clusters[0]!.members, ['a', 'b', 'c']);
@@ -62,7 +66,13 @@ test('MARKER-11: a group centre is re-indexed as it drifts, so a later neighbour
 });
 
 test('MARKER-11: candidates join the nearest group and the pass is deterministic', () => {
-  const points = [at('a', 0, 0), at('a2', 20, 0), at('b1', 100, 0), at('b2', 120, 0), at('q', 50, 0)];
+  const points = [
+    at('a', 0, 0),
+    at('a2', 20, 0),
+    at('b1', 100, 0),
+    at('b2', 120, 0),
+    at('q', 50, 0),
+  ];
   const first = clusterByProximity(points, 64, 2);
   assert.equal(first.clusters.length, 2);
   // q is within the radius of both centres (40 px vs 60 px) and joins the closer one.

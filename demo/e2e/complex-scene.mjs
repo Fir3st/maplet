@@ -84,6 +84,7 @@ export async function complexScene({ session, expect, options }) {
       heapDeltaMiB: heap0 === null || heap1 === null ? null : (heap1 - heap0) / 1048576, gpuBytes: stats.gpuBytes,
       drawCalls: stats.drawCalls, panMs: distribution(panMs), editMs: distribution(editMs) } };
   })()`);
-  for (const check of result.checks) expect.ok(check.pass, `${check.name}: ${JSON.stringify(check.detail ?? null)}`);
+  for (const check of result.checks)
+    expect.ok(check.pass, `${check.name}: ${JSON.stringify(check.detail ?? null)}`);
   console.log(`\n    complex-scene measurements: ${JSON.stringify(result.measurements)}`);
 }

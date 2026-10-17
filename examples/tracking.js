@@ -1,8 +1,8 @@
 import { openExample, action, ready, report, style, haversineMeters } from './shared.js';
 
 const OSM = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-const map = await openExample({ geographic: true, center: [50.0880, 14.4200], zoom: 14 });
-const basemap = map.addTiles(OSM, { id: 'basemap', attribution: '© OpenStreetMap contributors' });
+const map = await openExample({ geographic: true, center: [50.088, 14.42], zoom: 14 });
+map.addTiles(OSM, { id: 'basemap', attribution: '© OpenStreetMap contributors' });
 map.addControl('attribution');
 map.addControl('scale');
 
@@ -10,15 +10,31 @@ map.addControl('scale');
 // Florenc through the Old Town to Malá Strana). Live tracking systems receive
 // these updates from the vehicle and push them into the same calls below.
 const route = [
-  { lat: 50.0898, lng: 14.4388 }, { lat: 50.0894, lng: 14.4331 }, { lat: 50.0888, lng: 14.4281 },
-  { lat: 50.0883, lng: 14.4244 }, { lat: 50.0877, lng: 14.4207 }, { lat: 50.0871, lng: 14.4173 },
-  { lat: 50.0866, lng: 14.4140 }, { lat: 50.0864, lng: 14.4109 }, { lat: 50.0869, lng: 14.4075 },
-  { lat: 50.0878, lng: 14.4040 },
+  { lat: 50.0898, lng: 14.4388 },
+  { lat: 50.0894, lng: 14.4331 },
+  { lat: 50.0888, lng: 14.4281 },
+  { lat: 50.0883, lng: 14.4244 },
+  { lat: 50.0877, lng: 14.4207 },
+  { lat: 50.0871, lng: 14.4173 },
+  { lat: 50.0866, lng: 14.414 },
+  { lat: 50.0864, lng: 14.4109 },
+  { lat: 50.0869, lng: 14.4075 },
+  { lat: 50.0878, lng: 14.404 },
 ];
 const stops = [
   { id: 'pickup', name: 'Florenc depot', detail: 'Pickup · 24 parcels', at: route[0] },
-  { id: 'checkpoint', name: 'Old Town checkpoint', detail: 'Checkpoint · scan the load', at: route[4] },
-  { id: 'dropoff', name: 'Malá Strana drop-off', detail: 'Drop-off · 24 parcels', at: route[route.length - 1] },
+  {
+    id: 'checkpoint',
+    name: 'Old Town checkpoint',
+    detail: 'Checkpoint · scan the load',
+    at: route[4],
+  },
+  {
+    id: 'dropoff',
+    name: 'Malá Strana drop-off',
+    detail: 'Drop-off · 24 parcels',
+    at: route[route.length - 1],
+  },
 ];
 
 const cumulative = [0];
@@ -28,15 +44,16 @@ for (let index = 1; index < route.length; index++) {
 const totalMeters = cumulative[cumulative.length - 1];
 
 function headingDegrees(from, to) {
-  const east = (to.lng - from.lng) * Math.cos(((from.lat + to.lat) / 2) * Math.PI / 180);
+  const east = (to.lng - from.lng) * Math.cos((((from.lat + to.lat) / 2) * Math.PI) / 180);
   const north = to.lat - from.lat;
-  return (Math.atan2(east, north) * 180 / Math.PI + 360) % 360;
+  return ((Math.atan2(east, north) * 180) / Math.PI + 360) % 360;
 }
 
 function positionAt(meters) {
   let index = 1;
   while (index < route.length - 1 && cumulative[index] < meters) index++;
-  const from = route[index - 1], to = route[index];
+  const from = route[index - 1],
+    to = route[index];
   const leg = cumulative[index] - cumulative[index - 1];
   const t = leg > 0 ? Math.min(1, Math.max(0, (meters - cumulative[index - 1]) / leg)) : 0;
   return {
@@ -47,39 +64,57 @@ function positionAt(meters) {
 }
 
 const planned = map.addLines([{ id: 'planned', positions: route }], {
-  id: 'planned', interactive: false,
+  id: 'planned',
+  interactive: false,
   style: { color: '#94a3b8', widthPx: 5, dash: [7, 6], cap: 'round' },
 });
 // A line needs two distinct positions; the first metre is the stand-in until
 // the feed reports the first move (it is invisible at map scale).
-const travelled = map.addLines([{ id: 'travelled', positions: [route[0], positionAt(1).position] }], {
-  id: 'travelled', interactive: false,
-  style: { color: '#16724c', widthPx: 5, cap: 'round' },
-});
+const travelled = map.addLines(
+  [{ id: 'travelled', positions: [route[0], positionAt(1).position] }],
+  {
+    id: 'travelled',
+    interactive: false,
+    style: { color: '#16724c', widthPx: 5, cap: 'round' },
+  },
+);
 // The collection lists features; geometry edits go through the object handle.
 const travelledLine = travelled.get('travelled');
-const stopMarkers = map.addMarkers(stops.map(stop => ({
-  id: stop.id,
-  position: stop.at,
-  tooltip: stop.name,
-  popup: `${stop.name} — ${stop.detail}`,
-})));
+const stopMarkers = map.addMarkers(
+  stops.map((stop) => ({
+    id: stop.id,
+    position: stop.at,
+    tooltip: stop.name,
+    popup: `${stop.name} — ${stop.detail}`,
+  })),
+);
 
 // The vehicle is one point with an icon; `heading` rotates the sprite along the
 // segment it is driving, so no DOM element is created per update.
-const ARROW = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(
-  '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28">' +
-  '<path d="M14 2 24 25 14 19 4 25Z" fill="#1d4ed8" stroke="#ffffff" stroke-width="2" stroke-linejoin="round"/></svg>');
+const ARROW =
+  'data:image/svg+xml;charset=utf-8,' +
+  encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28">' +
+      '<path d="M14 2 24 25 14 19 4 25Z" fill="#1d4ed8" stroke="#ffffff" stroke-width="2" stroke-linejoin="round"/></svg>',
+  );
 map.assets.addImage({ id: 'vehicle-arrow', src: ARROW });
 const vehicle = map.addPoints([{ id: 'vehicle', position: route[0], properties: { heading: 0 } }], {
-  id: 'vehicle', interactive: false,
+  id: 'vehicle',
+  interactive: false,
   style: { icon: 'vehicle-arrow', iconSize: 28, iconRotate: style.field('heading') },
 });
 
-const formatMeters = (meters) => meters < 950 ? `${Math.round(meters)} m` : `${(meters / 1000).toFixed(2)} km`;
+const formatMeters = (meters) =>
+  meters < 950 ? `${Math.round(meters)} m` : `${(meters / 1000).toFixed(2)} km`;
 const SPEED_KMH = 26;
 const UPDATE_MS = 80;
-let travelledMeters = 0, playing = false, factor = 2, follow = true, frame = 0, lastTime = 0, lastDraw = 0;
+let travelledMeters = 0,
+  playing = false,
+  factor = 2,
+  follow = true,
+  frame = 0,
+  lastTime = 0,
+  lastDraw = 0;
 
 const extra = document.querySelector('#example-extra');
 const panel = document.createElement('div');
@@ -131,13 +166,20 @@ function draw() {
 }
 
 function syncPlayButton() {
-  playButton.textContent = playing ? 'Pause the feed' : travelledMeters >= totalMeters ? 'Drive the route again' : 'Play the feed';
+  playButton.textContent = playing
+    ? 'Pause the feed'
+    : travelledMeters >= totalMeters
+      ? 'Drive the route again'
+      : 'Play the feed';
 }
 
 function tick(now) {
   if (!playing) return;
   if (!lastTime) lastTime = now;
-  travelledMeters = Math.min(totalMeters, travelledMeters + (SPEED_KMH / 3.6) * ((now - lastTime) / 1000) * factor);
+  travelledMeters = Math.min(
+    totalMeters,
+    travelledMeters + (SPEED_KMH / 3.6) * ((now - lastTime) / 1000) * factor,
+  );
   lastTime = now;
   if (now - lastDraw >= UPDATE_MS || travelledMeters >= totalMeters) {
     lastDraw = now;
@@ -170,17 +212,28 @@ function pause() {
   report('Feed paused; the last position stays on the map.');
 }
 
-playButton.addEventListener('click', () => { if (playing) pause(); else play(); });
-speed.addEventListener('change', () => { factor = Number(speed.value); report(`Simulation speed ×${factor}.`); });
-followBox.addEventListener('change', () => { follow = followBox.checked; report(follow ? 'The map follows the vehicle.' : 'Follow mode off; pan freely.'); });
+playButton.addEventListener('click', () => {
+  if (playing) pause();
+  else play();
+});
+speed.addEventListener('change', () => {
+  factor = Number(speed.value);
+  report(`Simulation speed ×${factor}.`);
+});
+followBox.addEventListener('change', () => {
+  follow = followBox.checked;
+  report(follow ? 'The map follows the vehicle.' : 'Follow mode off; pan freely.');
+});
 
 action('Skip ahead 30 seconds', () => {
   travelledMeters = Math.min(totalMeters, travelledMeters + (SPEED_KMH / 3.6) * 30 * factor);
   draw();
   syncPlayButton();
-  report(travelledMeters >= totalMeters
-    ? `Arrived at the drop-off: ${formatMeters(totalMeters)} travelled.`
-    : `${formatMeters(travelledMeters)} travelled · ${formatMeters(totalMeters - travelledMeters)} remaining.`);
+  report(
+    travelledMeters >= totalMeters
+      ? `Arrived at the drop-off: ${formatMeters(totalMeters)} travelled.`
+      : `${formatMeters(travelledMeters)} travelled · ${formatMeters(totalMeters - travelledMeters)} remaining.`,
+  );
 });
 action('Reset the route', () => {
   pause();
@@ -207,7 +260,10 @@ document.addEventListener('visibilitychange', () => {
     play();
   }
 });
-window.addEventListener('pagehide', () => { playing = false; cancelAnimationFrame(frame); });
+window.addEventListener('pagehide', () => {
+  playing = false;
+  cancelAnimationFrame(frame);
+});
 
 draw();
 syncPlayButton();

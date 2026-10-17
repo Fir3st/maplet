@@ -23,7 +23,9 @@ function finalize() {
   finalized = true;
   result.ms = Math.round(performance.now() - started);
   result.pass =
-    result.errors.length === 0 && result.checks.length === 4 && result.checks.every((entry) => entry.pass);
+    result.errors.length === 0 &&
+    result.checks.length === 4 &&
+    result.checks.every((entry) => entry.pass);
   window.__cspCheckResult = result;
   document.title = 'csp-check-done';
   const summary = document.getElementById('summary');
@@ -36,7 +38,9 @@ const started = performance.now();
 /** True when the page actually runs under the blocking CSP. */
 async function workerBlocked() {
   try {
-    const probe = new Worker(new URL('../dist/workers/import.worker.js', location.href), { type: 'module' });
+    const probe = new Worker(new URL('../dist/workers/import.worker.js', location.href), {
+      type: 'module',
+    });
     const blocked = await new Promise((resolve) => {
       const timer = setTimeout(() => {
         probe.terminate();
@@ -57,11 +61,13 @@ async function workerBlocked() {
 const blocked = await workerBlocked();
 
 const map = await createMap('map', {
-    renderer: new URLSearchParams(location.search).get('backend') === 'webgpu'
-        ? { primary: 'webgpu', fallback: false }
-        : { primary: 'webgl1', fallback: false },
-    size: { width: 420, height: 320 },
-    center: { lat: 50, lng: 14.05 }, zoom: 10
+  renderer:
+    new URLSearchParams(location.search).get('backend') === 'webgpu'
+      ? { primary: 'webgpu', fallback: false }
+      : { primary: 'webgl1', fallback: false },
+  size: { width: 420, height: 320 },
+  center: { lat: 50, lng: 14.05 },
+  zoom: 10,
 });
 const source = map.data.vector({ id: 'marks' });
 map.addLayer({
@@ -69,7 +75,7 @@ map.addLayer({
   type: 'points',
   source,
   style: { radiusPx: 6, color: '#2563eb' },
-  interactive: true ,
+  interactive: true,
 });
 
 async function check(name, fn) {
@@ -105,7 +111,10 @@ function pointGrid(count, columns, lat0, lng0, dLat, dLng) {
 
 await check('CSP-00 the page runs under worker-src none', async () => ({
   pass: blocked,
-  detail: { blocked, hint: 'open this battery as ?csp=worker-none (the dev server sends the header)' },
+  detail: {
+    blocked,
+    hint: 'open this battery as ?csp=worker-none (the dev server sends the header)',
+  },
 }));
 
 await check('CSP-01 the blocked worker fails the first preparation explicitly', async () => {
@@ -143,7 +152,11 @@ await check('CSP-03 inline stays permanent for later imports', async () => {
   await map.whenRendered(commit.revision);
   const imports = map.debug.imports();
   return {
-    pass: imports.backend === 'inline' && imports.used.worker === 0 && imports.used.inline >= 2 && source.features.count() === 120,
+    pass:
+      imports.backend === 'inline' &&
+      imports.used.worker === 0 &&
+      imports.used.inline >= 2 &&
+      source.features.count() === 120,
     detail: { imports, count: source.features.count() },
   };
 });

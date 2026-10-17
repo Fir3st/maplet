@@ -9,9 +9,10 @@ function fakeDocument() {
   const doc = {
     fullscreenElement: null as unknown,
     exitCalls: 0,
-    exitFullscreen: async () => {
+    exitFullscreen: () => {
       doc.fullscreenElement = null;
       doc.exitCalls += 1;
+      return Promise.resolve();
     },
     addEventListener: (type: string, fn: (event: Event) => void) => {
       let set = listeners.get(type);
@@ -22,7 +23,8 @@ function fakeDocument() {
       listeners.get(type)?.delete(fn);
     },
     dispatchChange: () => {
-      for (const fn of [...(listeners.get('fullscreenchange') ?? [])]) fn(new Event('fullscreenchange'));
+      for (const fn of [...(listeners.get('fullscreenchange') ?? [])])
+        fn(new Event('fullscreenchange'));
     },
     dispatchKey: (key: string) => {
       for (const fn of [...(listeners.get('keydown') ?? [])]) fn({ key } as unknown as Event);
@@ -32,21 +34,26 @@ function fakeDocument() {
   return doc;
 }
 
-function fakeTarget(doc: ReturnType<typeof fakeDocument>, request: 'ok' | 'reject' | 'missing' = 'ok') {
+function fakeTarget(
+  doc: ReturnType<typeof fakeDocument>,
+  request: 'ok' | 'reject' | 'missing' = 'ok',
+) {
   const target = {
-    style: { position: '', inset: '', zIndex: '', overflow: '', background: '' } as Record<string, string>,
+    style: { position: '', inset: '', zIndex: '', overflow: '', background: '' } as Record<
+      string,
+      string
+    >,
     dataset: {} as Record<string, string>,
     ownerDocument: doc,
     requestFullscreen:
       request === 'ok'
-        ? async () => {
+        ? () => {
             doc.fullscreenElement = target;
             doc.dispatchChange();
+            return Promise.resolve();
           }
         : request === 'reject'
-          ? async () => {
-              throw new Error('denied');
-            }
+          ? () => Promise.reject(new Error('denied'))
           : undefined,
   };
   return target;

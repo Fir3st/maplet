@@ -35,7 +35,9 @@ function finalize() {
   finalized = true;
   result.ms = Math.round(performance.now() - started);
   result.pass =
-    result.errors.length === 0 && result.checks.length === 7 && result.checks.every((entry) => entry.pass);
+    result.errors.length === 0 &&
+    result.checks.length === 7 &&
+    result.checks.every((entry) => entry.pass);
   window.__soakCheckResult = result;
   document.title = 'soak-check-done';
   const summary = document.getElementById('summary');
@@ -78,7 +80,11 @@ const makeBatch = (prefix, mod) => {
 
 gcNow();
 const baseHeap = memory();
-result.memory = { api: baseHeap !== null, gc: hasGc, heapLimitMB: performance.memory ? MB(performance.memory.jsHeapSizeLimit) : null };
+result.memory = {
+  api: baseHeap !== null,
+  gc: hasGc,
+  heapLimitMB: performance.memory ? MB(performance.memory.jsHeapSizeLimit) : null,
+};
 
 /* ------------------------- 1) create/destroy cycles ------------------------ */
 const offscreen = document.createElement('div');
@@ -96,8 +102,9 @@ for (let i = 0; i < 12; i++) {
   const map = await createMap(host, {
     renderer,
     size: { width: 320, height: 240 },
-    center: { lat: 50, lng: 14.05 }, zoom: 10
-});
+    center: { lat: 50, lng: 14.05 },
+    zoom: 10,
+  });
   const source = map.data.vector({ id: `v${i}` });
   source.features.replace([
     { id: 'a', geometry: { type: 'point', position: { lat: 50, lng: 14.05 } }, properties: {} },
@@ -105,7 +112,11 @@ for (let i = 0; i < 12; i++) {
   ]);
   map.addLayer({ id: `p${i}`, type: 'points', source, style: { radiusPx: 8, color: '#2563eb' } });
   if (i === 3) {
-    const font = map.assets.addFont({ id: 'soak', family: 'SoakFixture', src: './fonts/maplet-subset.woff2' });
+    const font = map.assets.addFont({
+      id: 'soak',
+      family: 'SoakFixture',
+      src: './fonts/maplet-subset.woff2',
+    });
     await font.ready();
     fontState = font.snapshot().state;
   }
@@ -127,7 +138,11 @@ await check('SOAK-01 twelve create/destroy cycles render and clean up', async ()
     cycleCanvasGone.every(Boolean) &&
     cycleBlue.length === 12 &&
     cycleCanvasGone.length === 12,
-  detail: { cycles: 12, blue: cycleBlue.filter(Boolean).length, canvasGone: cycleCanvasGone.filter(Boolean).length },
+  detail: {
+    cycles: 12,
+    blue: cycleBlue.filter(Boolean).length,
+    canvasGone: cycleCanvasGone.filter(Boolean).length,
+  },
 }));
 
 await check('SOAK-02 the font asset is released with its map', async () => ({
@@ -136,7 +151,8 @@ await check('SOAK-02 the font asset is released with its map', async () => ({
 }));
 
 await check('SOAK-03 cycle heap growth stays bounded', async () => {
-  const growthMB = baseHeap !== null && afterCyclesHeap !== null ? MB(afterCyclesHeap - baseHeap) : null;
+  const growthMB =
+    baseHeap !== null && afterCyclesHeap !== null ? MB(afterCyclesHeap - baseHeap) : null;
   const boundMB = hasGc ? 8 : 80;
   return {
     pass: growthMB === null ? true : growthMB < boundMB,
@@ -145,7 +161,9 @@ await check('SOAK-03 cycle heap growth stays bounded', async () => {
       boundMB,
       gc: hasGc,
       measured: growthMB !== null,
-      note: hasGc ? 'GC-stabilized' : 'gc() not exposed; run npm run e2e for the GC-stabilized bound',
+      note: hasGc
+        ? 'GC-stabilized'
+        : 'gc() not exposed; run npm run e2e for the GC-stabilized bound',
     },
   };
 });
@@ -160,8 +178,9 @@ const heavy = await (async () => {
   const map = await createMap(host, {
     renderer,
     size: { width: 420, height: 320 },
-    center: { lat: 50, lng: 14.05 }, zoom: 10
-});
+    center: { lat: 50, lng: 14.05 },
+    zoom: 10,
+  });
   const source = map.data.vector({ id: 'big' });
   map.addLayer({ id: 'big', type: 'points', source, style: { radiusPx: 2, color: '#2563eb' } });
 
@@ -190,7 +209,8 @@ const heavy = await (async () => {
     const screen = map.positionToScreen(position);
     return map.debug.samplePixel({ x: Math.round(screen.x), y: Math.round(screen.y) });
   };
-  const pixelsBlue = blue(await sampleAt({ lat: 50, lng: 14.05 })) && blue(await sampleAt({ lat: 49.6, lng: 14.5 }));
+  const pixelsBlue =
+    blue(await sampleAt({ lat: 50, lng: 14.05 })) && blue(await sampleAt({ lat: 49.6, lng: 14.5 }));
   const stats = map.stats();
   const imports = map.debug.imports();
 
@@ -208,8 +228,14 @@ const heavy = await (async () => {
   const countAfterAbort = source.features.count();
   const pendingAfterAbort = map.debug.imports().pending;
   const smallCount = await source
-    .importColumnar({ kind: 'point', positions: new Float64Array([14.05, 50]), ids: ['z'], properties: [{}] }, { copy: true })
-    .then(() => source.features.count(), (error) => `error:${error.code}`);
+    .importColumnar(
+      { kind: 'point', positions: new Float64Array([14.05, 50]), ids: ['z'], properties: [{}] },
+      { copy: true },
+    )
+    .then(
+      () => source.features.count(),
+      (error) => `error:${error.code}`,
+    );
 
   map.destroy();
   host.remove();
@@ -222,21 +248,28 @@ const heavy = await (async () => {
   gcNow();
   const residualSettled = memory();
   return {
-    count: COUNT,    genMs: Math.round(genMs),
+    count: COUNT,
+    genMs: Math.round(genMs),
     importMs: Math.round(importMs),
     peakImportMB: peak !== null && baseHeap !== null ? MB(peak - baseHeap) : null,
     detached,
-    heapAfterImportMB: heapAfterImport !== null && baseHeap !== null ? MB(heapAfterImport - baseHeap) : null,
+    heapAfterImportMB:
+      heapAfterImport !== null && baseHeap !== null ? MB(heapAfterImport - baseHeap) : null,
     renderMs: Math.round(renderMs),
     pixelsBlue,
-    stats: { drawCalls: stats.drawCalls, instances: stats.instances, gpuBytesMB: MB(stats.gpuBytes) },
+    stats: {
+      drawCalls: stats.drawCalls,
+      instances: stats.instances,
+      gpuBytesMB: MB(stats.gpuBytes),
+    },
     imports,
     aborted,
     countAfterAbort,
     pendingAfterAbort,
     smallCount,
     residualMB: residual !== null && baseHeap !== null ? MB(residual - baseHeap) : null,
-    residualSettledMB: residualSettled !== null && baseHeap !== null ? MB(residualSettled - baseHeap) : null,
+    residualSettledMB:
+      residualSettled !== null && baseHeap !== null ? MB(residualSettled - baseHeap) : null,
   };
 })();
 offscreen.remove();
@@ -285,7 +318,9 @@ await check('SOAK-06 destroying the heavy map releases the store', async () => {
   const boundMB = hasGc ? 96 : 320;
   return {
     pass:
-      residualMB === null ? true : residualMB < boundMB && residualMB < heavy.heapAfterImportMB * 0.6,
+      residualMB === null
+        ? true
+        : residualMB < boundMB && residualMB < heavy.heapAfterImportMB * 0.6,
     detail: {
       residualMB,
       residualImmediateMB: heavy.residualMB,
@@ -314,14 +349,18 @@ await check('SOAK-07 a sustained pan/update run keeps rendering', async () => {
   const map = await createMap(host, {
     renderer,
     size: { width: 420, height: 320 },
-    center: { lat: 50, lng: 14.05 }, zoom: 10
-});
+    center: { lat: 50, lng: 14.05 },
+    zoom: 10,
+  });
   const source = map.data.vector({ id: 'run' });
   const features = [];
   for (let i = 0; i < 400; i++) {
     features.push({
       id: `f:${i}`,
-      geometry: { type: 'point', position: { lat: 49.9 + (i % 20) * 0.01, lng: 13.9 + Math.floor(i / 20) * 0.01 } },
+      geometry: {
+        type: 'point',
+        position: { lat: 49.9 + (i % 20) * 0.01, lng: 13.9 + Math.floor(i / 20) * 0.01 },
+      },
       properties: { v: 0 },
     });
   }
@@ -345,7 +384,12 @@ await check('SOAK-07 a sustained pan/update run keeps rendering', async () => {
   let lastUpdate = 0;
   while (performance.now() < end) {
     const t0 = performance.now();
-    map.setView({ center: { lat: 50 + 0.0006 * Math.sin(rafFrames / 9), lng: 14.05 + 0.0008 * Math.cos(rafFrames / 7) } });
+    map.setView({
+      center: {
+        lat: 50 + 0.0006 * Math.sin(rafFrames / 9),
+        lng: 14.05 + 0.0008 * Math.cos(rafFrames / 7),
+      },
+    });
     const t1 = performance.now();
     await new Promise((resolve) => requestAnimationFrame(resolve));
     const t2 = performance.now();
@@ -362,7 +406,8 @@ await check('SOAK-07 a sustained pan/update run keeps rendering', async () => {
   }
   const engineFrames = map.stats().frames - frames0;
   times.sort((a, b) => a - b);
-  const pct = (q) => Math.round(times[Math.min(times.length - 1, Math.floor(times.length * q))] * 10) / 10;
+  const pct = (q) =>
+    Math.round(times[Math.min(times.length - 1, Math.floor(times.length * q))] * 10) / 10;
 
   map.setView({ center: { lat: 49.9, lng: 13.9 }, zoom: 10 });
   await map.whenRendered();

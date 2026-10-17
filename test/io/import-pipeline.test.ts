@@ -4,7 +4,11 @@ import assert from 'node:assert/strict';
 import { isMapletError, MapletError } from '../../src/index.ts';
 import type { FeatureInput, ImportWorkerLike } from '../../src/index.ts';
 import { ImportPipeline } from '../../src/io/import-pipeline.ts';
-import type { ImportJobRequest, PointImportJobRequest, WorkerImportRequest } from '../../src/io/prepare.ts';
+import type {
+  ImportJobRequest,
+  PointImportJobRequest,
+  WorkerImportRequest,
+} from '../../src/io/prepare.ts';
 import { prepareParts } from '../../src/io/parts.ts';
 import { crs } from '../../src/math/crs.ts';
 
@@ -103,13 +107,28 @@ test('IO-09: the worker prepares a job and the pipeline reports its use', async 
 test('compact point worker replies stay columnar and malformed columns fail closed', async () => {
   const { pipeline, worker } = pipelineWithWorker();
   const batch = { kind: 'point' as const, positions: Float64Array.of(14, 50), ids: ['a'] };
-  const prepared = pipeline.submit({ kind: 'columnar-points', sourceId: 's', positionKind: 'geographic', batch }, { copy: false });
+  const prepared = pipeline.submit(
+    { kind: 'columnar-points', sourceId: 's', positionKind: 'geographic', batch },
+    { copy: false },
+  );
   assert.deepEqual(worker.posted[0]!.transfer, [batch.positions.buffer]);
   worker.reply({ requestId: worker.posted[0]!.requestId, ok: true, features: batch });
   assert.equal((await prepared).positions.length, 2);
-  const malformed = pipeline.submit({ kind: 'columnar-points', sourceId: 's', positionKind: 'geographic', batch });
-  worker.reply({ requestId: worker.posted[1]!.requestId, ok: true, features: { kind: 'point', positions: Float64Array.of(Number.NaN, 0) } });
-  await assert.rejects(malformed, (error: unknown) => isMapletError(error) && error.code === 'worker-failed');
+  const malformed = pipeline.submit({
+    kind: 'columnar-points',
+    sourceId: 's',
+    positionKind: 'geographic',
+    batch,
+  });
+  worker.reply({
+    requestId: worker.posted[1]!.requestId,
+    ok: true,
+    features: { kind: 'point', positions: Float64Array.of(Number.NaN, 0) },
+  });
+  await assert.rejects(
+    malformed,
+    (error: unknown) => isMapletError(error) && error.code === 'worker-failed',
+  );
   assert.equal(worker.terminated, true);
   pipeline.destroy();
 });
@@ -117,8 +136,18 @@ test('compact point worker replies stay columnar and malformed columns fail clos
 test('compact point metadata is owned once and never sent through the geometry worker', async () => {
   const { pipeline, worker } = pipelineWithWorker();
   const nested = { value: 1 };
-  const batch = { kind: 'point' as const, positions: Float64Array.of(14, 50), ids: ['a'], properties: [{ nested }] };
-  const pending = pipeline.submit({ kind: 'columnar-points', sourceId: 's', positionKind: 'geographic', batch });
+  const batch = {
+    kind: 'point' as const,
+    positions: Float64Array.of(14, 50),
+    ids: ['a'],
+    properties: [{ nested }],
+  };
+  const pending = pipeline.submit({
+    kind: 'columnar-points',
+    sourceId: 's',
+    positionKind: 'geographic',
+    batch,
+  });
   const posted = worker.posted[0]!;
   assert.notEqual(posted.request.kind, 'geojson');
   const columns = (posted.request as PointImportJobRequest).batch;
@@ -137,10 +166,21 @@ test('compact point metadata is owned once and never sent through the geometry w
 
 test('compact worker replies cannot silently change the owned metadata row count', async () => {
   const { pipeline, worker } = pipelineWithWorker();
-  const pending = pipeline.submit({ kind: 'columnar-points', sourceId: 's', positionKind: 'geographic',
-    batch: { kind: 'point', positions: Float64Array.of(14, 50), ids: ['a'] } });
-  worker.reply({ requestId: worker.posted[0]!.requestId, ok: true, features: { kind: 'point', positions: new Float64Array(0) } });
-  await assert.rejects(pending, (error: unknown) => isMapletError(error) && error.code === 'worker-failed');
+  const pending = pipeline.submit({
+    kind: 'columnar-points',
+    sourceId: 's',
+    positionKind: 'geographic',
+    batch: { kind: 'point', positions: Float64Array.of(14, 50), ids: ['a'] },
+  });
+  worker.reply({
+    requestId: worker.posted[0]!.requestId,
+    ok: true,
+    features: { kind: 'point', positions: new Float64Array(0) },
+  });
+  await assert.rejects(
+    pending,
+    (error: unknown) => isMapletError(error) && error.code === 'worker-failed',
+  );
   assert.equal(worker.terminated, true);
   pipeline.destroy();
 });
@@ -152,11 +192,19 @@ test('local metadata copies preserve property graph aliases, cycles and native v
   shared.self = shared;
   shared.map = new Map([['shared', shared]]);
   const properties = [shared, { shared }, undefined];
-  const pending = pipeline.submit({ kind: 'columnar-points', sourceId: 's', positionKind: 'geographic',
-    batch: { kind: 'point', positions: new Float64Array(6), ids, properties } });
-  ids[0] = 'changed'; (shared.bytes as Uint8Array)[0] = 9;
-  worker.reply({ requestId: worker.posted[0]!.requestId, ok: true,
-    features: { kind: 'point', positions: new Float64Array(6) } });
+  const pending = pipeline.submit({
+    kind: 'columnar-points',
+    sourceId: 's',
+    positionKind: 'geographic',
+    batch: { kind: 'point', positions: new Float64Array(6), ids, properties },
+  });
+  ids[0] = 'changed';
+  (shared.bytes as Uint8Array)[0] = 9;
+  worker.reply({
+    requestId: worker.posted[0]!.requestId,
+    ok: true,
+    features: { kind: 'point', positions: new Float64Array(6) },
+  });
   const owned = await pending;
   assert.deepEqual(owned.ids, [42, '42', undefined]);
   const first = owned.properties![0]!;
@@ -172,14 +220,27 @@ test('local metadata copies preserve property graph aliases, cycles and native v
 
 test('binary parts keep owned metadata local and adopt the actual worker coordinate pools', async () => {
   const { pipeline, worker } = pipelineWithWorker();
-  const batch = { kind: 'lineString' as const, positions: Float64Array.of(0, 0, 1, 1), partOffsets: Uint32Array.of(0, 2), ids: ['a'], properties: [{ nested: { value: 1 } }] };
-  const pending = pipeline.submit({ kind: 'columnar-parts', sourceId: 's', batch, positionKind: 'planar', projectionCode: 'SIMPLE' });
+  const batch = {
+    kind: 'lineString' as const,
+    positions: Float64Array.of(0, 0, 1, 1),
+    partOffsets: Uint32Array.of(0, 2),
+    ids: ['a'],
+    properties: [{ nested: { value: 1 } }],
+  };
+  const pending = pipeline.submit({
+    kind: 'columnar-parts',
+    sourceId: 's',
+    batch,
+    positionKind: 'planar',
+    projectionCode: 'SIMPLE',
+  });
   const request = worker.posted[0]!.request;
   assert.equal(request.kind, 'columnar-parts');
   if (request.kind !== 'columnar-parts') throw new Error('unexpected test request');
   assert.equal(request.batch.ids, undefined);
   assert.equal(request.batch.properties, undefined);
-  batch.ids[0] = 'changed'; batch.properties[0]!.nested.value = 9;
+  batch.ids[0] = 'changed';
+  batch.properties[0]!.nested.value = 9;
   const reply = prepareParts(request.batch, crs.simple());
   worker.reply({ requestId: worker.posted[0]!.requestId, ok: true, features: reply });
   const prepared = await pending;
@@ -194,15 +255,37 @@ test('binary parts keep owned metadata local and adopt the actual worker coordin
 test('binary workers fail closed on changed counts, kinds or malformed pools', async () => {
   for (const fault of ['count', 'kind', 'offset'] as const) {
     const { pipeline, worker } = pipelineWithWorker();
-    const batch = { kind: 'polygon' as const, positions: Float64Array.of(0, 0, 1, 0, 1, 1, 0, 1), partOffsets: Uint32Array.of(0, 4) };
-    const pending = pipeline.submit({ kind: 'columnar-parts', sourceId: 's', batch, positionKind: 'planar', projectionCode: 'SIMPLE' });
-    const reply = prepareParts(fault === 'kind' ? { ...batch, kind: 'lineString' } : batch, crs.simple());
-    if (fault === 'count') worker.reply({ requestId: worker.posted[0]!.requestId, ok: true, features: { ...reply, geometries: [] } });
+    const batch = {
+      kind: 'polygon' as const,
+      positions: Float64Array.of(0, 0, 1, 0, 1, 1, 0, 1),
+      partOffsets: Uint32Array.of(0, 4),
+    };
+    const pending = pipeline.submit({
+      kind: 'columnar-parts',
+      sourceId: 's',
+      batch,
+      positionKind: 'planar',
+      projectionCode: 'SIMPLE',
+    });
+    const reply = prepareParts(
+      fault === 'kind' ? { ...batch, kind: 'lineString' } : batch,
+      crs.simple(),
+    );
+    if (fault === 'count')
+      worker.reply({
+        requestId: worker.posted[0]!.requestId,
+        ok: true,
+        features: { ...reply, geometries: [] },
+      });
     else {
-      if (fault === 'offset') (reply.geometries[0]!.payload as { rings: Uint32Array }).rings[1] = 0xffffffff;
+      if (fault === 'offset')
+        (reply.geometries[0]!.payload as { rings: Uint32Array }).rings[1] = 0xffffffff;
       worker.reply({ requestId: worker.posted[0]!.requestId, ok: true, features: reply });
     }
-    await assert.rejects(pending, (error: unknown) => isMapletError(error) && error.code === 'worker-failed');
+    await assert.rejects(
+      pending,
+      (error: unknown) => isMapletError(error) && error.code === 'worker-failed',
+    );
     assert.equal(worker.terminated, true);
     pipeline.destroy();
   }
@@ -217,7 +300,12 @@ test('IO-06/IO-07: copy transfers nothing; move transfers the batch buffers', as
     featurePartOffsets: Int32Array.of(0, 1),
     altitudes: Float64Array.of(1, 1, 1),
   };
-  const copy = pipeline.submit({ kind: 'columnar', sourceId: 's', positionKind: 'geographic', batch });
+  const copy = pipeline.submit({
+    kind: 'columnar',
+    sourceId: 's',
+    positionKind: 'geographic',
+    batch,
+  });
   assert.deepEqual(worker.posted[0]!.transfer, [], 'the default copy transfers nothing');
   worker.reply({ requestId: worker.posted[0]!.requestId, ok: true, features: features() });
   await copy;
@@ -270,7 +358,10 @@ test('IO-09: aborting a waiting job rejects it and never posts it', async () => 
   const active = pipeline.submit(pointJob());
   const queued = pipeline.submit(pointJob(), { signal: controller.signal });
   controller.abort();
-  await assert.rejects(queued, (error: unknown) => isMapletError(error) && error.code === 'aborted');
+  await assert.rejects(
+    queued,
+    (error: unknown) => isMapletError(error) && error.code === 'aborted',
+  );
   assert.equal(pipeline.debug().pending, 1, 'the aborted job left the queue');
   assert.equal(worker.posted.length, 1);
   worker.reply({ requestId: worker.posted[0]!.requestId, ok: true, features: features() });
@@ -287,7 +378,8 @@ test('IO-09/IO-10: a mid-flight abort rejects immediately and the late reply is 
   controller.abort();
   await assert.rejects(
     aborted,
-    (error: unknown) => isMapletError(error) && error.code === 'aborted' && error.detail.revision === 2,
+    (error: unknown) =>
+      isMapletError(error) && error.code === 'aborted' && error.detail.revision === 2,
   );
   assert.equal(pipeline.debug().pending, 0);
   // The worker finishes anyway; the late reply must not publish anything.
@@ -308,7 +400,11 @@ test('IO-10: stale and foreign replies are ignored without touching the active j
   const job = pipeline.submit(pointJob());
   const requestId = worker.posted[0]!.requestId;
   worker.reply({ requestId: requestId + 100, ok: true, features: features() });
-  worker.reply({ requestId: requestId - 1, ok: false, error: { code: 'aborted', message: 'late' } });
+  worker.reply({
+    requestId: requestId - 1,
+    ok: false,
+    error: { code: 'aborted', message: 'late' },
+  });
   assert.equal(pipeline.debug().pending, 1, 'the active job is still waiting');
   assert.equal(pipeline.debug().backend, 'worker');
   worker.reply({ requestId, ok: true, features: features() });
@@ -317,22 +413,38 @@ test('IO-10: stale and foreign replies are ignored without touching the active j
 });
 
 test('IO-10: late replies from cancelled imports cannot poison a different result format', async () => {
-  const compact: PointImportJobRequest = { kind: 'columnar-points', sourceId: 's', positionKind: 'geographic',
-    batch: { kind: 'point', positions: Float64Array.of(14, 50) } };
+  const compact: PointImportJobRequest = {
+    kind: 'columnar-points',
+    sourceId: 's',
+    positionKind: 'geographic',
+    batch: { kind: 'point', positions: Float64Array.of(14, 50) },
+  };
   for (const oldCompact of [false, true]) {
     const { pipeline, worker } = pipelineWithWorker();
     const controller = new AbortController();
-    const aborted = oldCompact ? pipeline.submit(compact, { signal: controller.signal }) :
-      pipeline.submit(pointJob(), { signal: controller.signal });
+    const aborted = oldCompact
+      ? pipeline.submit(compact, { signal: controller.signal })
+      : pipeline.submit(pointJob(), { signal: controller.signal });
     const oldId = worker.posted[0]!.requestId;
     controller.abort();
-    await assert.rejects(aborted, (error: unknown) => isMapletError(error) && error.code === 'aborted');
+    await assert.rejects(
+      aborted,
+      (error: unknown) => isMapletError(error) && error.code === 'aborted',
+    );
     const next = oldCompact ? pipeline.submit(pointJob()) : pipeline.submit(compact);
     void next.catch(() => {});
     worker.reply({ requestId: oldId, ok: true, features: oldCompact ? compact.batch : features() });
-    assert.equal(pipeline.debug().backend, 'worker', 'the late result must be ignored before validating its format');
+    assert.equal(
+      pipeline.debug().backend,
+      'worker',
+      'the late result must be ignored before validating its format',
+    );
     assert.equal(pipeline.debug().pending, 1);
-    worker.reply({ requestId: worker.posted[1]!.requestId, ok: true, features: oldCompact ? features() : compact.batch });
+    worker.reply({
+      requestId: worker.posted[1]!.requestId,
+      ok: true,
+      features: oldCompact ? features() : compact.batch,
+    });
     await next;
     assert.equal(pipeline.debug().used.worker, 1);
     pipeline.destroy();
@@ -440,8 +552,14 @@ test('destroy cancels active and queued jobs and rejects further work', async ()
   const active = pipeline.submit(pointJob());
   const queued = pipeline.submit(pointJob());
   pipeline.destroy();
-  await assert.rejects(active, (error: unknown) => isMapletError(error) && error.code === 'destroyed');
-  await assert.rejects(queued, (error: unknown) => isMapletError(error) && error.code === 'destroyed');
+  await assert.rejects(
+    active,
+    (error: unknown) => isMapletError(error) && error.code === 'destroyed',
+  );
+  await assert.rejects(
+    queued,
+    (error: unknown) => isMapletError(error) && error.code === 'destroyed',
+  );
   assert.equal(worker.terminated, true);
   await assert.rejects(
     pipeline.submit(pointJob()),
@@ -452,7 +570,7 @@ test('destroy cancels active and queued jobs and rejects further work', async ()
 test('a clone failure is a typed error and does not poison the pipeline', async () => {
   const worker = new FakeWorker();
   const pipeline = new ImportPipeline({ workerFactory: () => worker });
-  const originalPost = worker.postMessage;
+  const originalPost = worker.postMessage.bind(worker);
   let failNext = true;
   worker.postMessage = function (message: unknown, transfer: readonly Transferable[] = []): void {
     if (failNext) {
@@ -464,7 +582,9 @@ test('a clone failure is a typed error and does not poison the pipeline', async 
   await assert.rejects(
     pipeline.submit(pointJob(), { revision: 1 }),
     (error: unknown) =>
-      isMapletError(error) && error.code === 'import-invalid' && error.detail.reason === 'copy-failed',
+      isMapletError(error) &&
+      error.code === 'import-invalid' &&
+      error.detail.reason === 'copy-failed',
   );
   const next = pipeline.submit(pointJob());
   assert.equal(worker.posted.length, 1);

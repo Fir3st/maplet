@@ -57,7 +57,7 @@ export function parseColor(value: ColorValue | undefined, fallback: Rgba): Rgba 
         clamp01(parts[0]! / 255),
         clamp01(parts[1]! / 255),
         clamp01(parts[2]! / 255),
-        parts[3] === undefined ? 1 : clamp01(parts[3]!),
+        parts[3] === undefined ? 1 : clamp01(parts[3]),
       ];
     }
   }

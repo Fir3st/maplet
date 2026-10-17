@@ -69,7 +69,9 @@ export async function consumerContracts(container: HTMLElement): Promise<void> {
   });
   const overlayRotation: number = overlay.snapshot().rotate;
   overlay.update({ rotate: 30 });
-  overlay.update({ bounds: { southwest: { lat: 50, lng: 14 }, northeast: { lat: 50.2, lng: 14.2 } } });
+  overlay.update({
+    bounds: { southwest: { lat: 50, lng: 14 }, northeast: { lat: 50.2, lng: 14.2 } },
+  });
   void overlayRotation;
   // @ts-expect-error rotation is a number of degrees, not a string (MEDIA-07)
   overlay.update({ rotate: '30' });
@@ -88,7 +90,10 @@ export async function consumerContracts(container: HTMLElement): Promise<void> {
   marker.setPopup('Details as plain text');
   marker.openPopup();
   const popupElement: HTMLElement | null = marker.popupElement();
-  marker.on('click', (event) => { const ref: FeatureRef = event.feature; void ref; });
+  marker.on('click', (event) => {
+    const ref: FeatureRef = event.feature;
+    void ref;
+  });
   void markerId;
   void markerPosition;
   void popupElement;
@@ -111,7 +116,9 @@ export async function consumerContracts(container: HTMLElement): Promise<void> {
 
   // TYPE-05: event payloads and typed results narrow through the published names.
   const stopFeature = map.onFeature((event) => {
-    const kind: 'click' | 'mouseover' | 'mouseout' | 'mousemove' | 'dragstart' | 'drag' | 'dragend' = event.type;
+    const kind:
+      'click' | 'mouseover' | 'mouseout' | 'mousemove' | 'dragstart' | 'drag' | 'dragend' =
+      event.type;
     const hit: string | number = event.feature.id;
     event.stopPropagation();
     void kind;
@@ -173,11 +180,11 @@ export async function consumerContracts(container: HTMLElement): Promise<void> {
   const explicitAltitude: GeoPosition = { lat: 0, lng: 0, altitude: undefined };
   void explicitAltitude;
 
-  // TYPE-07: detached methods need no receiver and keep their parameter contract.
-  const setView = map.setView;
+  // TYPE-07: detached methods keep their parameter contract (TYPE-07).
+  const setView = map.setView.bind(map);
   const commit = setView({ zoom: 4 });
   void commit.revision;
-  const update = stations.features.update;
+  const update = stations.features.update.bind(stations.features);
   update(ref, { properties: { status: 'online' } });
   // @ts-expect-error the detached typed method still rejects an unknown literal (TYPE-07)
   update(ref, { properties: { status: 'paused' } });
@@ -195,7 +202,10 @@ export async function consumerContracts(container: HTMLElement): Promise<void> {
   void worldX;
   void roundTrip;
   void bounds;
-  const parsed = parseGeoJson({ type: 'FeatureCollection', features: [] }, { sourceId: 'stations' });
+  const parsed = parseGeoJson(
+    { type: 'FeatureCollection', features: [] },
+    { sourceId: 'stations' },
+  );
   const first = parsed[0];
   void first;
   const collection: GeoJsonFeatureCollection = { type: 'FeatureCollection', features: [] };
@@ -216,5 +226,10 @@ export async function consumerContracts(container: HTMLElement): Promise<void> {
   // @ts-expect-error radiusPx is a number expression; a string field is rejected (TYPE-02/08)
   map.addLayer({ id: 'bad', type: 'points', source: stations, style: { radiusPx: style } });
   // @ts-expect-error iconTint is a color expression; a numeric zoom field is rejected (TYPE-02/08)
-  map.addLayer({ id: 'bad-tint', type: 'points', source: stations, style: { iconTint: expr.zoom() } });
+  map.addLayer({
+    id: 'bad-tint',
+    type: 'points',
+    source: stations,
+    style: { iconTint: expr.zoom() },
+  });
 }

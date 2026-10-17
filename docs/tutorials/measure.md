@@ -7,13 +7,13 @@ you go, close the ring to get an area, and step back with **Undo the last point*
 
 ```ts
 map.on('click', (event) => {
-  if (event.feature) return;                       // background clicks only
+  if (event.feature) return; // background clicks only
   const handle = vertices.add({ position: event.position, properties: { label: '' } });
   if (handles.length > 1) {
     const leg = haversineMeters(handles[handles.length - 2].getPosition(), handle.getPosition());
     handle.setProperties({ label: formatDistance(leg) });
   }
-  path?.setPositions(handles.map(vertex => vertex.getPosition()));
+  path?.setPositions(handles.map((vertex) => vertex.getPosition()));
 });
 ```
 

@@ -126,9 +126,7 @@ export function tightestLongitudeInterval(lngs: readonly number[]): [number, num
     const lng = wrapLongitude(lngs[0]!);
     return [lng, lng, false];
   }
-  const sorted = lngs
-    .map((lng) => wrapLongitude(lng))
-    .sort((a, b) => a - b);
+  const sorted = lngs.map((lng) => wrapLongitude(lng)).sort((a, b) => a - b);
   // The largest circular gap is excluded; the interval runs from the end of that
   // gap eastwards to its start.
   let gapEnd = sorted[0]!;
@@ -151,7 +149,7 @@ export function tightestLongitudeInterval(lngs: readonly number[]): [number, num
 export function boundsLongitudeSpan(bounds: GeoBounds): number {
   const { southwest, northeast } = bounds;
   if (bounds.crossesAntimeridian) {
-    return ((northeast.lng - southwest.lng) % 360 + 360) % 360;
+    return (((northeast.lng - southwest.lng) % 360) + 360) % 360;
   }
   return northeast.lng - southwest.lng;
 }
@@ -254,10 +252,7 @@ export function mergeBounds(
       const { southwest, northeast } = bounds;
       positions.push(southwest, northeast);
       if (bounds.crossesAntimeridian) {
-        positions.push(
-          { lat: southwest.lat, lng: 180 },
-          { lat: northeast.lat, lng: -180 },
-        );
+        positions.push({ lat: southwest.lat, lng: 180 }, { lat: northeast.lat, lng: -180 });
       }
     } else {
       positions.push(bounds.southwest, bounds.northeast);

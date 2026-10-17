@@ -11,7 +11,15 @@
 
 import { parseGeoJson, parsedToFeatureInput } from '../formats/geojson.ts';
 import type { FeatureInput } from '../scene/source.ts';
-import { columnarToFeatures, validatePointBatch, validatePartsBatch, type ColumnarBatch, type ColumnarPointBatch, type ColumnarPartsBatch, type ColumnarPositionKind } from './columnar.ts';
+import {
+  columnarToFeatures,
+  validatePointBatch,
+  validatePartsBatch,
+  type ColumnarBatch,
+  type ColumnarPointBatch,
+  type ColumnarPartsBatch,
+  type ColumnarPositionKind,
+} from './columnar.ts';
 import { crs } from '../math/crs.ts';
 import { prepareParts, type PreparedPartsImport } from './parts.ts';
 
@@ -42,7 +50,10 @@ export interface PartsImportJobRequest {
   /** Only an unmodified built-in projection is serializable. */
   readonly projectionCode?: string;
 }
-export interface RawPartsImport { readonly kind: 'raw-parts'; readonly batch: ColumnarPartsBatch }
+export interface RawPartsImport {
+  readonly kind: 'raw-parts';
+  readonly batch: ColumnarPartsBatch;
+}
 export type PartsImport = PreparedPartsImport | RawPartsImport;
 export type WorkerImportRequest = ImportJobRequest | PointImportJobRequest | PartsImportJobRequest;
 export type PreparedImport = FeatureInput[] | ColumnarPointBatch | PartsImport;
@@ -54,14 +65,21 @@ export function prepareImport(request: PartsImportJobRequest): PartsImport;
 export function prepareImport(request: WorkerImportRequest): PreparedImport;
 export function prepareImport(request: WorkerImportRequest): PreparedImport {
   if (request.kind === 'columnar-parts') {
-    validatePartsBatch(request.batch, { positionKind: request.positionKind, context: `columnar(${request.sourceId})` });
+    validatePartsBatch(request.batch, {
+      positionKind: request.positionKind,
+      context: `columnar(${request.sourceId})`,
+    });
     if (request.projectionCode === undefined) return { kind: 'raw-parts', batch: request.batch };
     const projection = crs.get(request.projectionCode);
-    if (!projection || projection.positionKind !== request.positionKind) throw new Error('invalid import projection');
+    if (!projection || projection.positionKind !== request.positionKind)
+      throw new Error('invalid import projection');
     return prepareParts(request.batch, projection, `columnar(${request.sourceId})`);
   }
   if (request.kind === 'columnar-points') {
-    return validatePointBatch(request.batch, { positionKind: request.positionKind, context: `columnar(${request.sourceId})` });
+    return validatePointBatch(request.batch, {
+      positionKind: request.positionKind,
+      context: `columnar(${request.sourceId})`,
+    });
   }
   if (request.kind === 'geojson') {
     return parseGeoJson(request.input as never, { sourceId: request.sourceId }).map(

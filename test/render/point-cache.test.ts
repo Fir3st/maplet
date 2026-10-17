@@ -3,19 +3,45 @@ import assert from 'node:assert/strict';
 import { crs, style as expr } from '../../src/index.ts';
 import { Scene } from '../../src/scene/scene.ts';
 import { ViewImpl } from '../../src/view/view.ts';
-import { buildFramePlan, invalidateFramePlanCache, FLAG_HIDDEN, type FramePlan, type PlanBatch } from '../../src/render/frame-plan.ts';
+import {
+  buildFramePlan,
+  invalidateFramePlanCache,
+  FLAG_HIDDEN,
+  type FramePlan,
+  type PlanBatch,
+} from '../../src/render/frame-plan.ts';
 import { manualClock } from '../helpers/fixture.ts';
 
 function fixture(count = 10) {
   const clock = manualClock();
   const scene = new Scene(crs.webMercator(), clock);
-  const view = new ViewImpl(scene.crs, scene, { width: 720, height: 520, minZoom: 0, maxZoom: 24, maxBounds: null }, { lat: 50, lng: 14 }, 10, clock);
+  const view = new ViewImpl(
+    scene.crs,
+    scene,
+    { width: 720, height: 520, minZoom: 0, maxZoom: 24, maxBounds: null },
+    { lat: 50, lng: 14 },
+    10,
+    clock,
+  );
   scene.attachView(view);
   const source = scene.createVectorSource('s');
-  source.features.add(Array.from({ length: count }, (_, id) => ({
-    id, geometry: { type: 'point' as const, position: { lat: 50 + id % 100 * 0.0001, lng: 14 + Math.floor(id / 100) * 0.0001 } }, properties: { visible: true, z: 0 },
-  })));
-  const layer = scene.layers.add({ id: 'points', type: 'points', source, style: { radiusPx: 5, color: '#2563eb' }, filter: { field: 'visible', eq: true } });
+  source.features.add(
+    Array.from({ length: count }, (_, id) => ({
+      id,
+      geometry: {
+        type: 'point' as const,
+        position: { lat: 50 + (id % 100) * 0.0001, lng: 14 + Math.floor(id / 100) * 0.0001 },
+      },
+      properties: { visible: true, z: 0 },
+    })),
+  );
+  const layer = scene.layers.add({
+    id: 'points',
+    type: 'points',
+    source,
+    style: { radiusPx: 5, color: '#2563eb' },
+    filter: { field: 'visible', eq: true },
+  });
   const plan = () => buildFramePlan(scene, { deviceWidth: 720, deviceHeight: 520, dpr: 1 });
   return { scene, view, source, layer, plan };
 }
@@ -47,17 +73,38 @@ function visibleRows(plan: FramePlan) {
 test('retained empty point plans rebuild after bulk initialization, then retain local edits', async () => {
   const clock = manualClock();
   const scene = new Scene(crs.webMercator(), clock);
-  const view = new ViewImpl(scene.crs, scene, { width: 720, height: 520, minZoom: 0, maxZoom: 24, maxBounds: null }, { lat: 50, lng: 14 }, 10, clock);
+  const view = new ViewImpl(
+    scene.crs,
+    scene,
+    { width: 720, height: 520, minZoom: 0, maxZoom: 24, maxBounds: null },
+    { lat: 50, lng: 14 },
+    10,
+    clock,
+  );
   scene.attachView(view);
   const source = scene.createVectorSource('s');
-  scene.layers.add({ id: 'points', type: 'points', source, style: { radiusPx: 5, color: '#2563eb' } });
+  scene.layers.add({
+    id: 'points',
+    type: 'points',
+    source,
+    style: { radiusPx: 5, color: '#2563eb' },
+  });
   const plan = () => buildFramePlan(scene, { deviceWidth: 720, deviceHeight: 520, dpr: 1 });
   try {
     assert.deepEqual(visibleRows(plan()), []);
-    await source.importColumnar({ kind: 'point', positions: Float64Array.of(14, 50, 14.001, 50.001), ids: ['a', 'b'] });
-    assert.deepEqual(visibleRows(plan()).map(row => row.id), ['a', 'b']);
+    await source.importColumnar({
+      kind: 'point',
+      positions: Float64Array.of(14, 50, 14.001, 50.001),
+      ids: ['a', 'b'],
+    });
+    assert.deepEqual(
+      visibleRows(plan()).map((row) => row.id),
+      ['a', 'b'],
+    );
     const initial = batch(plan());
-    source.features.update('b', { geometry: { type: 'point', position: { lng: 14.002, lat: 50.002 } } });
+    source.features.update('b', {
+      geometry: { type: 'point', position: { lng: 14.002, lat: 50.002 } },
+    });
     const changed = batch(plan());
     assert.equal(changed.data, initial.data);
     assert.deepEqual(changed.upload!.ranges, [{ start: 16, end: 32 }]);
@@ -72,7 +119,16 @@ test('retained empty point plans rebuild after bulk initialization, then retain 
 test('retained points: pan and one-record edits never revisit the resident collection', () => {
   const f = fixture(50000);
   let evaluations = 0;
-  f.layer.style = { color: { constant: false, evaluate: () => { evaluations++; return '#2563eb'; } }, radiusPx: 5 };
+  f.layer.style = {
+    color: {
+      constant: false,
+      evaluate: () => {
+        evaluations++;
+        return '#2563eb';
+      },
+    },
+    radiusPx: 5,
+  };
   const first = batch(f.plan());
   assert.equal(evaluations, 50000);
   const initialVersion = first.upload!.version;
@@ -93,15 +149,30 @@ test('retained points: pan and one-record edits never revisit the resident colle
 
 test('retained points: local visibility, filter, move, state and selection match a fresh rebuild', () => {
   const f = fixture();
-  f.layer.style = { color: expr.when(expr.state('selected'), '#ff0000', expr.when(expr.state('hovered'), '#00ff00', '#2563eb')) };
+  f.layer.style = {
+    color: expr.when(
+      expr.state('selected'),
+      '#ff0000',
+      expr.when(expr.state('hovered'), '#00ff00', '#2563eb'),
+    ),
+  };
   f.plan();
   const ref = f.source.features.ref(3);
   const mutations = [
-    () => { f.layer.setOverride(ref, { visible: false }); f.scene.publishStateChange(true); },
-    () => { f.layer.clearOverride(ref); f.scene.publishStateChange(true); },
+    () => {
+      f.layer.setOverride(ref, { visible: false });
+      f.scene.publishStateChange(true);
+    },
+    () => {
+      f.layer.clearOverride(ref);
+      f.scene.publishStateChange(true);
+    },
     () => f.source.features.update(2, { properties: { visible: false } }),
     () => f.source.features.update(2, { properties: { visible: true } }),
-    () => f.source.features.update(3, { geometry: { type: 'point', position: { lat: 50.1, lng: 14.1 } } }),
+    () =>
+      f.source.features.update(3, {
+        geometry: { type: 'point', position: { lat: 50.1, lng: 14.1 } },
+      }),
     () => f.scene.state.set(ref, { hovered: true }),
     () => f.scene.selection.add([ref]),
     () => f.scene.selection.remove([ref]),
@@ -119,7 +190,11 @@ test('retained points: large pan, zoom, ordering and generation changes rebuild 
   const f = fixture();
   let previous = batch(f.plan()).data;
   f.view.set({ center: f.view.screenToPosition({ x: 410, y: 260 }) });
-  assert.notEqual(batch(f.plan()).data, previous, 'leaving the resident margin refreshes candidates');
+  assert.notEqual(
+    batch(f.plan()).data,
+    previous,
+    'leaving the resident margin refreshes candidates',
+  );
   previous = batch(f.plan()).data;
   f.view.set({ zoom: 11.25 });
   assert.notEqual(batch(f.plan()).data, previous, 'zoom-dependent styles are reevaluated');
@@ -131,7 +206,11 @@ test('retained points: large pan, zoom, ordering and generation changes rebuild 
   const old = f.source.features.ref(1);
   f.source.features.remove(1);
   f.plan();
-  f.source.features.add({ id: 1, geometry: { type: 'point', position: { lat: 50, lng: 14 } }, properties: { visible: true } });
+  f.source.features.add({
+    id: 1,
+    geometry: { type: 'point', position: { lat: 50, lng: 14 } },
+    properties: { visible: true },
+  });
   const row = visibleRows(f.plan()).find((row) => row.id === 1)!;
   assert.notEqual(row.generation, old.generation);
   f.scene.destroy();
@@ -143,7 +222,12 @@ test('retained points: layers/maps share neither cache ownership nor pick bases'
   const first = batch(a.plan()).data;
   b.plan();
   assert.equal(batch(a.plan()).data, first);
-  a.scene.layers.add({ id: 'above', type: 'points', source: a.source, style: { color: '#ff0000' } });
+  a.scene.layers.add({
+    id: 'above',
+    type: 'points',
+    source: a.source,
+    style: { color: '#ff0000' },
+  });
   const plan = a.plan();
   assert.equal(batch(plan, 'above').pickBase, 10);
   assert.equal(plan.pickTable.get(13)!.layerId, 'above');
@@ -151,7 +235,8 @@ test('retained points: layers/maps share neither cache ownership nor pick bases'
   a.layer.touch();
   a.scene.publishStateChange();
   assert.equal(batch(a.plan(), 'above').pickBase, 0);
-  a.scene.destroy(); b.scene.destroy();
+  a.scene.destroy();
+  b.scene.destroy();
 });
 
 test('retained points: coalesced edits and journal overflow do not lose changes', () => {
@@ -173,12 +258,20 @@ test('retained points: coalesced edits and journal overflow do not lose changes'
 test('retained points: failed geometry changes and slot reuse keep the accepted output', () => {
   const f = fixture();
   const accepted = visibleRows(f.plan());
-  assert.throws(() => f.scene.batch(() => {
-    f.source.features.remove(4);
-    f.source.features.update(3, { geometry: { type: 'point', position: { lat: Number.NaN, lng: 0 } } });
-  }));
+  assert.throws(() =>
+    f.scene.batch(() => {
+      f.source.features.remove(4);
+      f.source.features.update(3, {
+        geometry: { type: 'point', position: { lat: Number.NaN, lng: 0 } },
+      });
+    }),
+  );
   assert.deepEqual(visibleRows(f.plan()), accepted);
-  f.source.features.add({ id: 'new', geometry: { type: 'point', position: { lat: 50, lng: 14 } }, properties: { visible: true } });
+  f.source.features.add({
+    id: 'new',
+    geometry: { type: 'point', position: { lat: 50, lng: 14 } },
+    properties: { visible: true },
+  });
   assert.equal(f.source.features.count(), 11);
   assert.ok(f.source.features.has(4), 'rollback restored slot must not be allocated again');
   assert.equal(visibleRows(f.plan()).length, 11);
@@ -190,12 +283,30 @@ test('retained points: different identities reusing a slot do not alias equal ge
   f.plan();
   const old = f.source.features.ref(4);
   f.source.features.remove(4);
-  f.source.features.add({ id: 'other', geometry: { type: 'point', position: { lat: 50, lng: 14 } }, properties: { visible: true } });
-  assert.equal(f.source.features.ref('other').generation, old.generation, 'generations alone are not identity');
+  f.source.features.add({
+    id: 'other',
+    geometry: { type: 'point', position: { lat: 50, lng: 14 } },
+    properties: { visible: true },
+  });
+  assert.equal(
+    f.source.features.ref('other').generation,
+    old.generation,
+    'generations alone are not identity',
+  );
   assert.ok(visibleRows(f.plan()).some((row) => row.id === 'other'));
   assert.ok(!visibleRows(f.plan()).some((row) => row.id === 4));
-  await f.source.importColumnar({ kind: 'point', positions: Float64Array.of(14, 50, 14.01, 50.01), ids: [7, 'seven'], properties: [{ visible: true }, { visible: true }] });
-  assert.deepEqual(visibleRows(f.plan()).map((row) => row.id).sort(), [7, 'seven']);
+  await f.source.importColumnar({
+    kind: 'point',
+    positions: Float64Array.of(14, 50, 14.01, 50.01),
+    ids: [7, 'seven'],
+    properties: [{ visible: true }, { visible: true }],
+  });
+  assert.deepEqual(
+    visibleRows(f.plan())
+      .map((row) => row.id)
+      .sort(),
+    [7, 'seven'],
+  );
   f.scene.destroy();
 });
 
@@ -204,10 +315,22 @@ test('retained point pick identities stay generation-bound after reuse and destr
   const oldPlan = f.plan();
   const original = f.source.features.ref(4);
   f.source.features.remove(4);
-  f.source.features.add({ id: 'recycled', geometry: { type: 'point', position: { lat: 50, lng: 14 } }, properties: { visible: true } });
-  assert.deepEqual(oldPlan.pickTable.get(4)!.feature, original, 'lazy reads use captured columns, not the current physical row');
+  f.source.features.add({
+    id: 'recycled',
+    geometry: { type: 'point', position: { lat: 50, lng: 14 } },
+    properties: { visible: true },
+  });
+  assert.deepEqual(
+    oldPlan.pickTable.get(4)!.feature,
+    original,
+    'lazy reads use captured columns, not the current physical row',
+  );
   const current = f.plan();
   assert.equal(current.pickTable.get(4)!.feature.id, 'recycled');
   f.scene.destroy();
-  assert.deepEqual(oldPlan.pickTable.get(4)!.feature, original, 'a pending old GPU pick cannot acquire a new identity');
+  assert.deepEqual(
+    oldPlan.pickTable.get(4)!.feature,
+    original,
+    'a pending old GPU pick cannot acquire a new identity',
+  );
 });

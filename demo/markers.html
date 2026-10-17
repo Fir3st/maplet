@@ -1,34 +1,74 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8" />
-<title>Maplet marker checks</title>
-<style>
-  html, body { margin: 0; font: 13px/1.5 system-ui, sans-serif; background: #111827; color: #e5e7eb; }
-  main { display: flex; gap: 20px; padding: 16px; align-items: flex-start; }
-  #map { width: 640px; height: 480px; position: relative; background: #f8fafc; flex: none; }
-  h1 { font-size: 15px; margin: 0 0 6px; }
-  #summary { font-weight: 600; }
-  #summary.pass { color: #4ade80; }
-  #summary.fail { color: #f87171; }
-  #details { white-space: pre-wrap; font: 11px/1.45 ui-monospace, monospace; max-width: 620px; max-height: 82vh; overflow: auto; color: #9ca3af; }
-  .hint { color: #9ca3af; margin: 0 0 10px; }
-</style>
-</head>
-<body>
-<main>
-  <div id="map" aria-label="Marker check map"></div>
-  <div>
-    <h1>Maplet marker checks</h1>
-    <p class="hint">
-      Leaflet-style markers: GPU pins, hover/permanent tooltips, click popups
-      with auto-pan, custom icons, events and removal. Results:
-      <code>window.__markerCheckResult</code>.
-    </p>
-    <p id="summary">running…</p>
-    <pre id="details"></pre>
-  </div>
-</main>
-<script type="module" src="./markers.js"></script>
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <title>Maplet marker checks</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        font:
+          13px/1.5 system-ui,
+          sans-serif;
+        background: #111827;
+        color: #e5e7eb;
+      }
+      main {
+        display: flex;
+        gap: 20px;
+        padding: 16px;
+        align-items: flex-start;
+      }
+      #map {
+        width: 640px;
+        height: 480px;
+        position: relative;
+        background: #f8fafc;
+        flex: none;
+      }
+      h1 {
+        font-size: 15px;
+        margin: 0 0 6px;
+      }
+      #summary {
+        font-weight: 600;
+      }
+      #summary.pass {
+        color: #4ade80;
+      }
+      #summary.fail {
+        color: #f87171;
+      }
+      #details {
+        white-space: pre-wrap;
+        font:
+          11px/1.45 ui-monospace,
+          monospace;
+        max-width: 620px;
+        max-height: 82vh;
+        overflow: auto;
+        color: #9ca3af;
+      }
+      .hint {
+        color: #9ca3af;
+        margin: 0 0 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div id="map" aria-label="Marker check map"></div>
+      <div>
+        <h1>Maplet marker checks</h1>
+        <p class="hint">
+          Leaflet-style markers: GPU pins, hover/permanent tooltips, click popups with auto-pan,
+          custom icons, events and removal. Results:
+          <code>window.__markerCheckResult</code>.
+        </p>
+        <p id="summary">running…</p>
+        <pre id="details"></pre>
+      </div>
+    </main>
+    <script type="module" src="./markers.js"></script>
+  </body>
 </html>

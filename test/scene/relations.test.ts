@@ -9,14 +9,50 @@ async function graphFixture() {
   const points = map.data.vector<Geometry<GeoPosition>>({ id: 'points' });
   const connections = map.data.vector<Geometry<GeoPosition>>({ id: 'connections' });
   points.features.add([
-    { id: 'a', geometry: { type: 'point', position: { lat: 0, lng: 0 } }, properties: { name: 'A' } },
-    { id: 'b', geometry: { type: 'point', position: { lat: 0, lng: 1 } }, properties: { name: 'B' } },
-    { id: 'c', geometry: { type: 'point', position: { lat: 0, lng: 2 } }, properties: { name: 'C' } },
-    { id: 'd', geometry: { type: 'point', position: { lat: 0, lng: 3 } }, properties: { name: 'D' } },
+    {
+      id: 'a',
+      geometry: { type: 'point', position: { lat: 0, lng: 0 } },
+      properties: { name: 'A' },
+    },
+    {
+      id: 'b',
+      geometry: { type: 'point', position: { lat: 0, lng: 1 } },
+      properties: { name: 'B' },
+    },
+    {
+      id: 'c',
+      geometry: { type: 'point', position: { lat: 0, lng: 2 } },
+      properties: { name: 'C' },
+    },
+    {
+      id: 'd',
+      geometry: { type: 'point', position: { lat: 0, lng: 3 } },
+      properties: { name: 'D' },
+    },
   ]);
   connections.features.add([
-    { id: 'ab', geometry: { type: 'lineString', positions: [{ lat: 0, lng: 0 }, { lat: 0, lng: 1 }] }, properties: {} },
-    { id: 'bc', geometry: { type: 'lineString', positions: [{ lat: 0, lng: 1 }, { lat: 0, lng: 2 }] }, properties: {} },
+    {
+      id: 'ab',
+      geometry: {
+        type: 'lineString',
+        positions: [
+          { lat: 0, lng: 0 },
+          { lat: 0, lng: 1 },
+        ],
+      },
+      properties: {},
+    },
+    {
+      id: 'bc',
+      geometry: {
+        type: 'lineString',
+        positions: [
+          { lat: 0, lng: 1 },
+          { lat: 0, lng: 2 },
+        ],
+      },
+      properties: {},
+    },
   ]);
   return { map, points, connections };
 }
@@ -50,11 +86,19 @@ test('REL-02/03/04: M:N, multiple types, cycles and exact neighbors', async () =
   map.relations.add({ id: 'ca-road', type: 'road', from: c, to: a });
   assert.equal(map.relations.list({ type: 'road' }).length, 3);
   assert.equal(map.relations.list({ type: 'rail' }).length, 1);
-  const outgoing = map.relations.neighbors(a, { direction: 'out' }).map((ref) => ref.id).sort();
+  const outgoing = map.relations
+    .neighbors(a, { direction: 'out' })
+    .map((ref) => ref.id)
+    .sort();
   assert.deepEqual(outgoing, ['b'], 'two relation types between the same ends stay one neighbour');
-  const outgoingRoad = map.relations.neighbors(a, { direction: 'out', type: 'road' }).map((ref) => ref.id);
+  const outgoingRoad = map.relations
+    .neighbors(a, { direction: 'out', type: 'road' })
+    .map((ref) => ref.id);
   assert.deepEqual(outgoingRoad, ['b']);
-  assert.deepEqual(map.relations.neighbors(a, { direction: 'in' }).map((ref) => ref.id), ['c']);
+  assert.deepEqual(
+    map.relations.neighbors(a, { direction: 'in' }).map((ref) => ref.id),
+    ['c'],
+  );
   const cycle = map.relations.traverse(a, { maxDepth: 3, limit: 10 }).map((ref) => ref.id);
   assert.deepEqual(cycle, ['b', 'c'], 'the A->B->C->A cycle terminates and deduplicates');
   map.destroy();
@@ -66,9 +110,18 @@ test('REL-05: traversal respects depth, limit and abort', async () => {
   map.relations.add({ id: 'ab', type: 'x', from: ref('a'), to: ref('b') });
   map.relations.add({ id: 'bc', type: 'x', from: ref('b'), to: ref('c') });
   map.relations.add({ id: 'cd', type: 'x', from: ref('c'), to: ref('d') });
-  assert.deepEqual(map.relations.traverse(ref('a'), { maxDepth: 1 }).map((r) => r.id), ['b']);
-  assert.deepEqual(map.relations.traverse(ref('a'), { maxDepth: 10 }).map((r) => r.id), ['b', 'c', 'd']);
-  assert.deepEqual(map.relations.traverse(ref('a'), { maxDepth: 10, limit: 2 }).map((r) => r.id), ['b', 'c']);
+  assert.deepEqual(
+    map.relations.traverse(ref('a'), { maxDepth: 1 }).map((r) => r.id),
+    ['b'],
+  );
+  assert.deepEqual(
+    map.relations.traverse(ref('a'), { maxDepth: 10 }).map((r) => r.id),
+    ['b', 'c', 'd'],
+  );
+  assert.deepEqual(
+    map.relations.traverse(ref('a'), { maxDepth: 10, limit: 2 }).map((r) => r.id),
+    ['b', 'c'],
+  );
   const controller = new AbortController();
   controller.abort();
   try {
@@ -94,7 +147,10 @@ test('REL-06: invalid endpoints and duplicate ids fail atomically without adjace
   assert.equal(map.relations.list().length, 0);
   assert.deepEqual(map.relations.neighbors(a), []);
   map.relations.add({ id: 'ok', type: 'x', from: a, to: points.features.ref('b') });
-  assert.throws(() => map.relations.add({ id: 'ok', type: 'x', from: a, to: points.features.ref('c') }), /exists/);
+  assert.throws(
+    () => map.relations.add({ id: 'ok', type: 'x', from: a, to: points.features.ref('c') }),
+    /exists/,
+  );
   assert.equal(map.relations.neighbors(a, { direction: 'out' })[0]?.id, 'b');
   void connections;
   map.destroy();
@@ -272,7 +328,15 @@ test('BIND-04/05/09/10: ownership, release and descriptor updates', async () => 
     geometry: { kind: 'lineBetween', from: a, to: b },
   });
   try {
-    connections.features.update('ab', { geometry: { type: 'lineString', positions: [{ lat: 9, lng: 9 }, { lat: 9.1, lng: 9.1 }] } });
+    connections.features.update('ab', {
+      geometry: {
+        type: 'lineString',
+        positions: [
+          { lat: 9, lng: 9 },
+          { lat: 9.1, lng: 9.1 },
+        ],
+      },
+    });
     assert.fail('expected ownership-conflict');
   } catch (error) {
     assert.ok(isMapletError(error));
@@ -299,18 +363,32 @@ test('BIND-04/05/09/10: ownership, release and descriptor updates', async () => 
     assert.equal(error.code, 'ownership-conflict');
   }
   // Rebinding the descriptor disconnects the old dependency.
-  map.bindings.update('link', { target: connections.features.ref('ab'), geometry: { kind: 'lineBetween', from: a, to: c } });
+  map.bindings.update('link', {
+    target: connections.features.ref('ab'),
+    geometry: { kind: 'lineBetween', from: a, to: c },
+  });
   points.features.update('b', { geometry: { type: 'point', position: { lat: 7, lng: 7 } } });
   const line = connections.features.get('ab')?.geometry;
   assert.ok(line && line.type === 'lineString');
   assert.ok(Math.abs(line.positions[1]!.lng - 2) < 1e-9, 'B no longer feeds the link');
   // After removing the binding, manual geometry edits are allowed.
   map.bindings.remove('link');
-  connections.features.update('ab', { geometry: { type: 'lineString', positions: [{ lat: 8, lng: 8 }, { lat: 8.1, lng: 8.1 }] } });
+  connections.features.update('ab', {
+    geometry: {
+      type: 'lineString',
+      positions: [
+        { lat: 8, lng: 8 },
+        { lat: 8.1, lng: 8.1 },
+      ],
+    },
+  });
   points.features.update('a', { geometry: { type: 'point', position: { lat: -5, lng: -5 } } });
   const manual = connections.features.get('ab')?.geometry;
   assert.ok(manual && manual.type === 'lineString');
-  assert.ok(Math.abs(manual.positions[0]!.lat - 8) < 1e-9, 'no late evaluator overwrote the manual change');
+  assert.ok(
+    Math.abs(manual.positions[0]!.lat - 8) < 1e-9,
+    'no late evaluator overwrote the manual change',
+  );
   map.destroy();
 });
 
@@ -341,7 +419,11 @@ test('BIND-06/07: missing-input policies hide, retain or reject', async () => {
   });
   const before = connections.features.get('bc')?.geometry;
   points.features.remove('a');
-  assert.deepEqual(connections.features.get('bc')?.geometry, before, 'retain keeps the last result');
+  assert.deepEqual(
+    connections.features.get('bc')?.geometry,
+    before,
+    'retain keeps the last result',
+  );
   // reject policy: the removal that would lose an input is refused.
   points.features.add({ id: 'a', geometry: { type: 'point', position: { lat: 0.2, lng: 0.2 } } });
   map.bindings.remove('retain-link');
@@ -373,13 +455,19 @@ test('BIND-11/TX-09: an invalid evaluation rolls the whole change back', async (
   });
   const before = connections.features.get('bc')?.geometry;
   try {
-    connections.features.update('bc', { geometry: { type: 'point', position: { lat: 9, lng: 9 } } });
+    connections.features.update('bc', {
+      geometry: { type: 'point', position: { lat: 9, lng: 9 } },
+    });
     assert.fail('expected invalid-argument');
   } catch (error) {
     assert.ok(isMapletError(error));
     assert.equal(error.code, 'invalid-argument');
   }
-  assert.deepEqual(connections.features.get('bc')?.geometry, before, 'the failed commit changed nothing');
+  assert.deepEqual(
+    connections.features.get('bc')?.geometry,
+    before,
+    'the failed commit changed nothing',
+  );
   // A binding whose descriptor is invalid at add time leaves no partial state.
   const count = map.bindings.list().length;
   try {
@@ -393,7 +481,11 @@ test('BIND-11/TX-09: an invalid evaluation rolls the whole change back', async (
     assert.ok(isMapletError(error));
     assert.equal(error.code, 'invalid-argument');
   }
-  assert.equal(map.bindings.list().length, count, 'the failed binding add kept the registry unchanged');
+  assert.equal(
+    map.bindings.list().length,
+    count,
+    'the failed binding add kept the registry unchanged',
+  );
   assert.equal(map.bindings.get('invalid'), undefined);
   // The source is still editable after the rollback.
   connections.features.update('ab', { properties: { fine: true } });

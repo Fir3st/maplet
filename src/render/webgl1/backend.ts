@@ -406,9 +406,6 @@ interface MediaEntry {
   lastUsed: number;
 }
 
-
-
-
 const MAX_TILES = 256;
 const MAX_MEDIA = 16;
 /** Raster quad vertex stride: aPos(4) + aUV(4) + aPick(4). */
@@ -431,8 +428,14 @@ export class WebGl1Backend implements MapBackend {
     vertexAttribDivisorANGLE(index: number, divisor: number): void;
   } | null;
   private readonly programs = new Map<string, ProgramBundle>();
-  private readonly batchBuffers = new Map<Float32Array, { buffer: WebGLBuffer; version: number; bytes: number }>();
-  private readonly indexBuffers = new Map<Uint32Array, { buffer: WebGLBuffer; wide: boolean; bytes: number }>();
+  private readonly batchBuffers = new Map<
+    Float32Array,
+    { buffer: WebGLBuffer; version: number; bytes: number }
+  >();
+  private readonly indexBuffers = new Map<
+    Uint32Array,
+    { buffer: WebGLBuffer; wide: boolean; bytes: number }
+  >();
   private readonly expandedFills = new WeakMap<Float32Array, ExpandedFill>();
   private wideIndices: boolean | undefined;
   private readonly buffers = {
@@ -443,8 +446,14 @@ export class WebGl1Backend implements MapBackend {
   };
   private readonly tileCache = new Map<string, TileEntry>();
   private readonly symbols: Symbols;
-  private readonly atlasTextures = new Map<AtlasPage, { texture: WebGLTexture; revision: number }>();
-  private readonly symbolBuffers = new Map<Float32Array, { buffer: WebGLBuffer; version: number }>();
+  private readonly atlasTextures = new Map<
+    AtlasPage,
+    { texture: WebGLTexture; revision: number }
+  >();
+  private readonly symbolBuffers = new Map<
+    Float32Array,
+    { buffer: WebGLBuffer; version: number }
+  >();
   private readonly usedSymbols = new Set<Float32Array>();
   private readonly mediaTextures = new Map<string, MediaEntry>();
   /** Per layer: tileKey -> URL of the previously drawn template. */
@@ -452,7 +461,12 @@ export class WebGl1Backend implements MapBackend {
   private scene: Scene | null = null;
   private plan: FramePlan | null = null;
   private rafHandle: number | null = null;
-  private pickTarget: { framebuffer: WebGLFramebuffer; texture: WebGLTexture; width: number; height: number } | null = null;
+  private pickTarget: {
+    framebuffer: WebGLFramebuffer;
+    texture: WebGLTexture;
+    width: number;
+    height: number;
+  } | null = null;
   private readonly pickStall = new PickStallRecorder('blocking');
   private destroyed = false;
   private lost = false;
@@ -493,7 +507,9 @@ export class WebGl1Backend implements MapBackend {
     const precision = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT);
     this.highpFragment = (precision?.precision ?? 0) > 0;
     if (!this.highpFragment) {
-      this.notes.push('fragment highp is unavailable; pick ids, dashes and shared uniforms fall back to mediump');
+      this.notes.push(
+        'fragment highp is unavailable; pick ids, dashes and shared uniforms fall back to mediump',
+      );
     }
     if (!this.instanced) {
       this.notes.push('ANGLE_instanced_arrays is unavailable; instances are expanded on the CPU');
@@ -514,7 +530,10 @@ export class WebGl1Backend implements MapBackend {
     if (this.destroyed || this.lost) return;
     const event =
       typeof WebGLContextEvent === 'function'
-        ? new WebGLContextEvent('webglcontextlost', { cancelable: true, statusMessage: 'simulated loss' })
+        ? new WebGLContextEvent('webglcontextlost', {
+            cancelable: true,
+            statusMessage: 'simulated loss',
+          })
         : new Event('webglcontextlost', { cancelable: true });
     this.canvas.dispatchEvent(event);
   }
@@ -545,12 +564,16 @@ export class WebGl1Backend implements MapBackend {
     const run = (): void => {
       this.rafHandle = null;
       if (this.destroyed || this.lost) return;
-      try { this.renderNow(scene); } catch (error) { scene.failFrame(error); }
+      try {
+        this.renderNow(scene);
+      } catch (error) {
+        scene.failFrame(error);
+      }
     };
     if (raf) {
       this.rafHandle = raf(run);
     } else {
-      this.rafHandle = setTimeout(run, 16) as unknown as number;
+      this.rafHandle = setTimeout(run, 16);
     }
   }
 
@@ -597,7 +620,8 @@ export class WebGl1Backend implements MapBackend {
     for (const entry of this.mediaTextures.values()) {
       if (entry.texture) bytes += entry.width * entry.height * 4;
     }
-    for (const page of this.atlasTextures.keys()) bytes += page.canvas.width * page.canvas.height * 4;
+    for (const page of this.atlasTextures.keys())
+      bytes += page.canvas.width * page.canvas.height * 4;
     for (const data of this.symbolBuffers.keys()) bytes += data.byteLength;
     for (const entry of this.batchBuffers.values()) bytes += entry.bytes;
     for (const entry of this.indexBuffers.values()) bytes += entry.bytes;
@@ -629,11 +653,31 @@ export class WebGl1Backend implements MapBackend {
         continue;
       }
       if (draw.type === 'labels') {
-        this.drawSymbols(this.symbols.labels(draw.labels, (family) => this.scene?.fontSignature(family) ?? 'system', this.frameCounter, draw.appearance), pickMode, 0.02, draw);
+        this.drawSymbols(
+          this.symbols.labels(
+            draw.labels,
+            (family) => this.scene?.fontSignature(family) ?? 'system',
+            this.frameCounter,
+            draw.appearance,
+          ),
+          pickMode,
+          0.02,
+          draw,
+        );
         continue;
       }
       if (draw.type === 'sprites') {
-        this.drawSymbols(this.symbols.sprites(draw.sprites, (id) => this.scene?.assets.get(id), this.frameCounter, draw.appearance), pickMode, 0.5, draw);
+        this.drawSymbols(
+          this.symbols.sprites(
+            draw.sprites,
+            (id) => this.scene?.assets.get(id),
+            this.frameCounter,
+            draw.appearance,
+          ),
+          pickMode,
+          0.5,
+          draw,
+        );
         continue;
       }
       const batch = draw.batch;
@@ -642,18 +686,27 @@ export class WebGl1Backend implements MapBackend {
       else this.drawFills(batch, pickMode);
     }
     let disabled = false;
-    for (const [data, entry] of this.symbolBuffers) if (!this.usedSymbols.has(data)) {
-      if (!disabled) {
-        for (let i = 0; i < (gl.getParameter(gl.MAX_VERTEX_ATTRIBS) as number); i++) gl.disableVertexAttribArray(i);
-        disabled = true;
+    for (const [data, entry] of this.symbolBuffers)
+      if (!this.usedSymbols.has(data)) {
+        if (!disabled) {
+          for (let i = 0; i < (gl.getParameter(gl.MAX_VERTEX_ATTRIBS) as number); i++)
+            gl.disableVertexAttribArray(i);
+          disabled = true;
+        }
+        gl.deleteBuffer(entry.buffer);
+        this.symbolBuffers.delete(data);
       }
-      gl.deleteBuffer(entry.buffer); this.symbolBuffers.delete(data);
-    }
   }
 
   /* ------------------------------ programs -------------------------------- */
 
-  private compile(name: string, vertex: string, fragment: string, attribs: string[], uniforms: string[]): ProgramBundle {
+  private compile(
+    name: string,
+    vertex: string,
+    fragment: string,
+    attribs: string[],
+    uniforms: string[],
+  ): ProgramBundle {
     const gl = this.gl;
     const compile = (type: number, source: string): WebGLShader => {
       const shader = gl.createShader(type);
@@ -729,17 +782,33 @@ export class WebGl1Backend implements MapBackend {
           LINE_VERTEX,
           LINE_FRAGMENT,
           ['aCorner', 'aSeg', 'aLine', 'aFill', 'aArc'],
-          ['uViewport', 'uDpr', 'uPickMode', 'uDashCount', 'uDashPattern[0]', 'uDashOffset', 'uOffset', 'uPickBase'],
+          [
+            'uViewport',
+            'uDpr',
+            'uPickMode',
+            'uDashCount',
+            'uDashPattern[0]',
+            'uDashOffset',
+            'uOffset',
+            'uPickBase',
+          ],
         );
       case 'fills':
-        return this.compile('fills', FILL_VERTEX, FILL_FRAGMENT, ['aPos', 'aFill', 'aMeta'], ['uViewport', 'uDpr', 'uPickMode', 'uOffset', 'uPickBase']);
+        return this.compile(
+          'fills',
+          FILL_VERTEX,
+          FILL_FRAGMENT,
+          ['aPos', 'aFill', 'aMeta'],
+          ['uViewport', 'uDpr', 'uPickMode', 'uOffset', 'uPickBase'],
+        );
       case 'raster':
-        return this.compile('raster', RASTER_VERTEX, RASTER_FRAGMENT, ['aPos', 'aUV', 'aPick'], [
-          'uViewport',
-          'uDpr',
-          'uTexture',
-          'uPickMode',
-        ]);
+        return this.compile(
+          'raster',
+          RASTER_VERTEX,
+          RASTER_FRAGMENT,
+          ['aPos', 'aUV', 'aPick'],
+          ['uViewport', 'uDpr', 'uTexture', 'uPickMode'],
+        );
       case 'labels':
         return this.compile(
           'labels',
@@ -761,22 +830,31 @@ export class WebGl1Backend implements MapBackend {
     this.buffers[name] = buffer;
     if (name === 'quad' || name === 'tri') {
       this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
-      this.gl.bufferData(this.gl.ARRAY_BUFFER, name === 'quad' ? CORNERS_QUAD : CORNERS_TRI, this.gl.STATIC_DRAW);
+      this.gl.bufferData(
+        this.gl.ARRAY_BUFFER,
+        name === 'quad' ? CORNERS_QUAD : CORNERS_TRI,
+        this.gl.STATIC_DRAW,
+      );
     }
     return buffer;
   }
 
   private pruneBatchBuffers(plan: FramePlan): void {
-    const live = new Set(plan.draws.flatMap((draw) => draw.type === 'batch' ? [draw.batch.data] : []));
+    const live = new Set(
+      plan.draws.flatMap((draw) => (draw.type === 'batch' ? [draw.batch.data] : [])),
+    );
     const liveIndices = new Set<Uint32Array>();
-    for (const draw of plan.draws) if (draw.type === 'batch' && draw.batch.indices) {
-      liveIndices.add(draw.batch.indices);
-      const expanded = this.expandedFills.get(draw.batch.data);
-      if (expanded) live.add(expanded.batch(draw.batch).data);
-    }
-    for (const [indices, entry] of this.indexBuffers) if (!liveIndices.has(indices)) {
-      this.gl.deleteBuffer(entry.buffer); this.indexBuffers.delete(indices);
-    }
+    for (const draw of plan.draws)
+      if (draw.type === 'batch' && draw.batch.indices) {
+        liveIndices.add(draw.batch.indices);
+        const expanded = this.expandedFills.get(draw.batch.data);
+        if (expanded) live.add(expanded.batch(draw.batch).data);
+      }
+    for (const [indices, entry] of this.indexBuffers)
+      if (!liveIndices.has(indices)) {
+        this.gl.deleteBuffer(entry.buffer);
+        this.indexBuffers.delete(indices);
+      }
     let attributesDisabled = false;
     for (const [data, entry] of this.batchBuffers) {
       if (live.has(data)) continue;
@@ -809,12 +887,16 @@ export class WebGl1Backend implements MapBackend {
     if (batch.upload && entry.version >= 0 && entry.version === batch.upload.previousVersion) {
       for (const { start, end } of batch.upload.ranges) {
         const slice = batch.data.subarray(start, end);
-        const data = corners ? expandInstances(slice, stride, slice.length / stride, corners, 2) : slice;
-        const offset = corners ? start / stride * 6 * (stride + 2) * 4 : start * 4;
+        const data = corners
+          ? expandInstances(slice, stride, slice.length / stride, corners, 2)
+          : slice;
+        const offset = corners ? (start / stride) * 6 * (stride + 2) * 4 : start * 4;
         gl.bufferSubData(gl.ARRAY_BUFFER, offset, data);
       }
     } else {
-      const data = corners ? expandInstances(batch.data, stride, batch.count, corners, 2) : batch.data;
+      const data = corners
+        ? expandInstances(batch.data, stride, batch.count, corners, 2)
+        : batch.data;
       gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
       entry.bytes = data.byteLength;
     }
@@ -836,7 +918,7 @@ export class WebGl1Backend implements MapBackend {
     const gl = this.gl;
     gl.uniform2f(bundle.uniforms['uViewport']!, this.canvas.width, this.canvas.height);
     gl.uniform1f(bundle.uniforms['uDpr']!, this.dpr);
-    if (bundle.uniforms['uPickMode']) gl.uniform1f(bundle.uniforms['uPickMode']!, pickMode ? 1 : 0);
+    if (bundle.uniforms['uPickMode']) gl.uniform1f(bundle.uniforms['uPickMode'], pickMode ? 1 : 0);
   }
 
   /* ------------------------------- points --------------------------------- */
@@ -915,11 +997,7 @@ export class WebGl1Backend implements MapBackend {
 
   /* -------------------------------- lines --------------------------------- */
 
-  private drawLines(
-    batch: PlanBatch,
-    pickMode: boolean,
-    dash: readonly number[] | null,
-  ): void {
+  private drawLines(batch: PlanBatch, pickMode: boolean, dash: readonly number[] | null): void {
     const { count } = batch;
     if (count === 0) return;
     const gl = this.gl;
@@ -996,7 +1074,10 @@ export class WebGl1Backend implements MapBackend {
       const wide = batch.data.length / FILL_STRIDE > 65535;
       if (wide && !this.wideIndices) {
         let expanded = this.expandedFills.get(batch.data);
-        if (!expanded) { expanded = new ExpandedFill(batch); this.expandedFills.set(batch.data, expanded); }
+        if (!expanded) {
+          expanded = new ExpandedFill(batch);
+          this.expandedFills.set(batch.data, expanded);
+        }
         batch = expanded.batch(batch);
       } else {
         indexed = this.indexBuffers.get(batch.indices);
@@ -1006,7 +1087,8 @@ export class WebGl1Backend implements MapBackend {
           const indices = wide ? batch.indices : Uint16Array.from(batch.indices);
           this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, buffer);
           this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, indices, this.gl.STATIC_DRAW);
-          indexed = { buffer, wide, bytes: indices.byteLength }; this.indexBuffers.set(batch.indices, indexed);
+          indexed = { buffer, wide, bytes: indices.byteLength };
+          this.indexBuffers.set(batch.indices, indexed);
         }
       }
     }
@@ -1034,7 +1116,12 @@ export class WebGl1Backend implements MapBackend {
     if (indexed) {
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexed.buffer);
       this.frameDrawCalls++;
-      gl.drawElements(gl.TRIANGLES, vertexCount, indexed.wide ? gl.UNSIGNED_INT : gl.UNSIGNED_SHORT, 0);
+      gl.drawElements(
+        gl.TRIANGLES,
+        vertexCount,
+        indexed.wide ? gl.UNSIGNED_INT : gl.UNSIGNED_SHORT,
+        0,
+      );
     } else this.submitDrawArrays(gl.TRIANGLES, 0, vertexCount);
   }
 
@@ -1060,15 +1147,15 @@ export class WebGl1Backend implements MapBackend {
       if (image.naturalWidth === 0 || image.naturalHeight === 0) {
         // Decoded without an intrinsic size (e.g. an SVG missing both width and
         // viewBox); texImage2D would throw, so report it as a decode error.
-        entry!.state = 'error';
+        entry.state = 'error';
         return;
       }
-      entry!.state = 'ready';
-      entry!.image = image;
+      entry.state = 'ready';
+      entry.image = image;
       this.scene?.requestFrame();
     };
     image.onerror = () => {
-      entry!.state = 'error';
+      entry.state = 'error';
     };
     image.src = url;
     entry.image = image;
@@ -1134,12 +1221,78 @@ export class WebGl1Backend implements MapBackend {
       flag: number,
     ): void => {
       data.push(
-        x, y, 0, 0, u0, v0, opacity, 0, pick, flag, 0, 0,
-        x + width, y, 0, 0, u1, v0, opacity, 0, pick, flag, 0, 0,
-        x, y + height, 0, 0, u0, v1, opacity, 0, pick, flag, 0, 0,
-        x + width, y, 0, 0, u1, v0, opacity, 0, pick, flag, 0, 0,
-        x + width, y + height, 0, 0, u1, v1, opacity, 0, pick, flag, 0, 0,
-        x, y + height, 0, 0, u0, v1, opacity, 0, pick, flag, 0, 0,
+        x,
+        y,
+        0,
+        0,
+        u0,
+        v0,
+        opacity,
+        0,
+        pick,
+        flag,
+        0,
+        0,
+        x + width,
+        y,
+        0,
+        0,
+        u1,
+        v0,
+        opacity,
+        0,
+        pick,
+        flag,
+        0,
+        0,
+        x,
+        y + height,
+        0,
+        0,
+        u0,
+        v1,
+        opacity,
+        0,
+        pick,
+        flag,
+        0,
+        0,
+        x + width,
+        y,
+        0,
+        0,
+        u1,
+        v0,
+        opacity,
+        0,
+        pick,
+        flag,
+        0,
+        0,
+        x + width,
+        y + height,
+        0,
+        0,
+        u1,
+        v1,
+        opacity,
+        0,
+        pick,
+        flag,
+        0,
+        0,
+        x,
+        y + height,
+        0,
+        0,
+        u0,
+        v1,
+        opacity,
+        0,
+        pick,
+        flag,
+        0,
+        0,
       );
       batch.push({ entry });
     };
@@ -1161,7 +1314,22 @@ export class WebGl1Backend implements MapBackend {
       const flag = tile.pickIndex === undefined ? 0 : 1;
       const entry = resolve(tile.url);
       if (entry.state === 'ready') {
-        pushQuad(vertexData, draws, entry, tile.sx, tile.sy, tile.sw, tile.sh, 0, 0, 1, 1, tile.opacity, pick, flag);
+        pushQuad(
+          vertexData,
+          draws,
+          entry,
+          tile.sx,
+          tile.sy,
+          tile.sw,
+          tile.sh,
+          0,
+          0,
+          1,
+          1,
+          tile.opacity,
+          pick,
+          flag,
+        );
         continue;
       }
       allReady = false;
@@ -1222,7 +1390,22 @@ export class WebGl1Backend implements MapBackend {
         const heldEntry = this.tileCache.get(heldUrl);
         if (heldEntry && heldEntry.state === 'ready') {
           heldEntry.lastUsed = this.frameCounter;
-          pushQuad(vertexData, draws, heldEntry, tile.sx, tile.sy, tile.sw, tile.sh, 0, 0, 1, 1, tile.opacity, pick, flag);
+          pushQuad(
+            vertexData,
+            draws,
+            heldEntry,
+            tile.sx,
+            tile.sy,
+            tile.sw,
+            tile.sh,
+            0,
+            0,
+            1,
+            1,
+            tile.opacity,
+            pick,
+            flag,
+          );
         }
       }
     }
@@ -1259,7 +1442,9 @@ export class WebGl1Backend implements MapBackend {
 
   private evictTiles(): void {
     if (this.tileCache.size <= MAX_TILES) return;
-    const entries = Array.from(this.tileCache.entries()).sort((a, b) => a[1].lastUsed - b[1].lastUsed);
+    const entries = Array.from(this.tileCache.entries()).sort(
+      (a, b) => a[1].lastUsed - b[1].lastUsed,
+    );
     const removeCount = this.tileCache.size - MAX_TILES;
     for (let i = 0; i < removeCount; i++) {
       const [url, entry] = entries[i]!;
@@ -1274,7 +1459,14 @@ export class WebGl1Backend implements MapBackend {
   private mediaEntry(sourceId: string): MediaEntry {
     let entry = this.mediaTextures.get(sourceId);
     if (!entry) {
-      entry = { texture: null, element: null, width: 0, height: 0, pixelVersion: -1, lastUsed: this.frameCounter };
+      entry = {
+        texture: null,
+        element: null,
+        width: 0,
+        height: 0,
+        pixelVersion: -1,
+        lastUsed: this.frameCounter,
+      };
       this.mediaTextures.set(sourceId, entry);
     }
     return entry;
@@ -1301,7 +1493,10 @@ export class WebGl1Backend implements MapBackend {
     if (!entry.texture) entry.texture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, entry.texture);
     const full =
-      created || entry.element !== element || entry.width !== source.width || entry.height !== source.height;
+      created ||
+      entry.element !== element ||
+      entry.width !== source.width ||
+      entry.height !== source.height;
     if (full) {
       gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, element);
@@ -1380,17 +1575,96 @@ export class WebGl1Backend implements MapBackend {
         const points = quadVertices(x + width / 2, y + height / 2, width, height, rotate);
         for (let index = 0; index < 6; index++) {
           const uv = QUAD_UVS[index]!;
-          data.push(points[index * 2]!, points[index * 2 + 1]!, 0, 0, uv[0], uv[1], opacity, 0, pick, flag, 0, 0);
+          data.push(
+            points[index * 2]!,
+            points[index * 2 + 1]!,
+            0,
+            0,
+            uv[0],
+            uv[1],
+            opacity,
+            0,
+            pick,
+            flag,
+            0,
+            0,
+          );
         }
         return;
       }
       data.push(
-        x, y, 0, 0, 0, 0, opacity, 0, pick, flag, 0, 0,
-        x + width, y, 0, 0, 1, 0, opacity, 0, pick, flag, 0, 0,
-        x, y + height, 0, 0, 0, 1, opacity, 0, pick, flag, 0, 0,
-        x + width, y, 0, 0, 1, 0, opacity, 0, pick, flag, 0, 0,
-        x + width, y + height, 0, 0, 1, 1, opacity, 0, pick, flag, 0, 0,
-        x, y + height, 0, 0, 0, 1, opacity, 0, pick, flag, 0, 0,
+        x,
+        y,
+        0,
+        0,
+        0,
+        0,
+        opacity,
+        0,
+        pick,
+        flag,
+        0,
+        0,
+        x + width,
+        y,
+        0,
+        0,
+        1,
+        0,
+        opacity,
+        0,
+        pick,
+        flag,
+        0,
+        0,
+        x,
+        y + height,
+        0,
+        0,
+        0,
+        1,
+        opacity,
+        0,
+        pick,
+        flag,
+        0,
+        0,
+        x + width,
+        y,
+        0,
+        0,
+        1,
+        0,
+        opacity,
+        0,
+        pick,
+        flag,
+        0,
+        0,
+        x + width,
+        y + height,
+        0,
+        0,
+        1,
+        1,
+        opacity,
+        0,
+        pick,
+        flag,
+        0,
+        0,
+        x,
+        y + height,
+        0,
+        0,
+        0,
+        1,
+        opacity,
+        0,
+        pick,
+        flag,
+        0,
+        0,
       );
     };
 
@@ -1453,7 +1727,9 @@ export class WebGl1Backend implements MapBackend {
       this.mediaTextures.delete(id);
     }
     if (this.mediaTextures.size <= MAX_MEDIA) return;
-    const entries = Array.from(this.mediaTextures.entries()).sort((a, b) => a[1].lastUsed - b[1].lastUsed);
+    const entries = Array.from(this.mediaTextures.entries()).sort(
+      (a, b) => a[1].lastUsed - b[1].lastUsed,
+    );
     const removeCount = this.mediaTextures.size - MAX_MEDIA;
     for (let i = 0; i < removeCount; i++) {
       const [id, entry] = entries[i]!;
@@ -1470,7 +1746,8 @@ export class WebGl1Backend implements MapBackend {
     if (!entry) {
       const texture = gl.createTexture();
       if (!texture) fail('render-failed', 'symbol texture allocation failed');
-      entry = { texture, revision: -1 }; this.atlasTextures.set(page, entry);
+      entry = { texture, revision: -1 };
+      this.atlasTextures.set(page, entry);
       gl.bindTexture(gl.TEXTURE_2D, texture);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
@@ -1484,37 +1761,58 @@ export class WebGl1Backend implements MapBackend {
     }
   }
 
-  private drawSymbols(mesh: SymbolMesh, pickMode: boolean, threshold: number,
-    transform: Pick<PlanBatch, 'offsetX' | 'offsetY' | 'pickBase'>): void {
+  private drawSymbols(
+    mesh: SymbolMesh,
+    pickMode: boolean,
+    threshold: number,
+    transform: Pick<PlanBatch, 'offsetX' | 'offsetY' | 'pickBase'>,
+  ): void {
     if (!mesh.data.length) return;
-    const gl = this.gl, bundle = this.program('labels');
-    gl.useProgram(bundle.program); this.setViewportUniforms(bundle, pickMode);
-    gl.uniform1i(bundle.uniforms['uTexture']!, 0); gl.uniform1f(bundle.uniforms['uPickThreshold']!, threshold);
+    const gl = this.gl,
+      bundle = this.program('labels');
+    gl.useProgram(bundle.program);
+    this.setViewportUniforms(bundle, pickMode);
+    gl.uniform1i(bundle.uniforms['uTexture']!, 0);
+    gl.uniform1f(bundle.uniforms['uPickThreshold']!, threshold);
     gl.uniform2f(bundle.uniforms['uOffset']!, transform.offsetX ?? 0, transform.offsetY ?? 0);
-    gl.uniform1f(bundle.uniforms['uPickBase']!, transform.pickBase ?? 0); gl.activeTexture(gl.TEXTURE0);
+    gl.uniform1f(bundle.uniforms['uPickBase']!, transform.pickBase ?? 0);
+    gl.activeTexture(gl.TEXTURE0);
     let entry = this.symbolBuffers.get(mesh.data);
     if (!entry) {
       const buffer = gl.createBuffer();
       if (!buffer) fail('render-failed', 'symbol buffer allocation failed');
-      gl.bindBuffer(gl.ARRAY_BUFFER, buffer); gl.bufferData(gl.ARRAY_BUFFER, mesh.data, gl.STATIC_DRAW);
-      entry = { buffer, version: mesh.upload.version }; this.symbolBuffers.set(mesh.data, entry);
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, mesh.data, gl.STATIC_DRAW);
+      entry = { buffer, version: mesh.upload.version };
+      this.symbolBuffers.set(mesh.data, entry);
     } else {
       gl.bindBuffer(gl.ARRAY_BUFFER, entry.buffer);
       if (entry.version !== mesh.upload.version) {
         if (entry.version === mesh.upload.previousVersion) {
-          for (const { start, end } of mesh.upload.ranges) gl.bufferSubData(gl.ARRAY_BUFFER, start * 4, mesh.data.subarray(start, end));
+          for (const { start, end } of mesh.upload.ranges)
+            gl.bufferSubData(gl.ARRAY_BUFFER, start * 4, mesh.data.subarray(start, end));
         } else gl.bufferData(gl.ARRAY_BUFFER, mesh.data, gl.STATIC_DRAW);
         entry.version = mesh.upload.version;
       }
     }
     this.usedSymbols.add(mesh.data);
-    for (const [name, offset] of [['aPos', 0], ['aUV', 16], ['aFill', 32], ['aMeta', 48]] as const) {
+    for (const [name, offset] of [
+      ['aPos', 0],
+      ['aUV', 16],
+      ['aFill', 32],
+      ['aMeta', 48],
+    ] as const) {
       const location = bundle.attribs[name]!;
       if (location < 0) continue;
-      gl.enableVertexAttribArray(location); gl.vertexAttribPointer(location, 4, gl.FLOAT, false, 64, offset);
+      gl.enableVertexAttribArray(location);
+      gl.vertexAttribPointer(location, 4, gl.FLOAT, false, 64, offset);
     }
     let offset = 0;
-    for (const run of mesh.runs) { this.bindAtlasTexture(run.page); this.submitDrawArrays(gl.TRIANGLES, offset, run.count); offset += run.count; }
+    for (const run of mesh.runs) {
+      this.bindAtlasTexture(run.page);
+      this.submitDrawArrays(gl.TRIANGLES, offset, run.count);
+      offset += run.count;
+    }
   }
 
   private evictSymbols(): void {
@@ -1540,7 +1838,8 @@ export class WebGl1Backend implements MapBackend {
     }
     const texture = gl.createTexture();
     const framebuffer = gl.createFramebuffer();
-    if (!texture || !framebuffer) throw new MapletError('render-failed', 'pick target allocation failed');
+    if (!texture || !framebuffer)
+      throw new MapletError('render-failed', 'pick target allocation failed');
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
@@ -1558,7 +1857,14 @@ export class WebGl1Backend implements MapBackend {
     return this.pickTarget;
   }
 
-  async pick(scene: Scene, point: ScreenPoint, options: { limit: number }): Promise<readonly PickResult[]> {
+  // The whole body runs synchronously (no awaits); the promise-shaped signature
+  // is the backend contract and failures reject instead of throwing (PICK-12).
+  // eslint-disable-next-line @typescript-eslint/require-await
+  async pick(
+    scene: Scene,
+    point: ScreenPoint,
+    options: { limit: number },
+  ): Promise<readonly PickResult[]> {
     if (this.destroyed) return [];
     if (this.lost) {
       fail('gpu-unavailable', 'the WebGL context was lost; the map replaces it automatically', {});
@@ -1636,7 +1942,12 @@ export class WebGl1Backend implements MapBackend {
    * Both axes use the same convention: pixel `(round(x), round(y))` with a
    * top-left origin (the GL row is flipped once, not twice).
    */
-  async samplePixel(scene: Scene, point: ScreenPoint): Promise<{ r: number; g: number; b: number; a: number }> {
+  // See pick above: synchronous readback behind the promise-shaped contract.
+  // eslint-disable-next-line @typescript-eslint/require-await
+  async samplePixel(
+    scene: Scene,
+    point: ScreenPoint,
+  ): Promise<{ r: number; g: number; b: number; a: number }> {
     if (this.destroyed) return { r: 0, g: 0, b: 0, a: 0 };
     if (this.lost) {
       fail('gpu-unavailable', 'the WebGL context was lost; the map replaces it automatically', {});
@@ -1652,7 +1963,10 @@ export class WebGl1Backend implements MapBackend {
     this.drawPlan(plan, false);
     const pixel = new Uint8Array(4);
     const x = Math.max(0, Math.min(this.canvas.width - 1, Math.round(point.x * this.dpr)));
-    const y = Math.max(0, Math.min(this.canvas.height - 1, this.canvas.height - 1 - Math.round(point.y * this.dpr)));
+    const y = Math.max(
+      0,
+      Math.min(this.canvas.height - 1, this.canvas.height - 1 - Math.round(point.y * this.dpr)),
+    );
     gl.readPixels(x, y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
     // Re-render through the normal frame path so the compositor keeps a frame.
     this.drawPlan(plan, false);
@@ -1687,7 +2001,8 @@ export class WebGl1Backend implements MapBackend {
     this.tileCache.clear();
     this.heldTiles.clear();
     for (const entry of this.atlasTextures.values()) gl.deleteTexture(entry.texture);
-    this.atlasTextures.clear(); this.symbols.clear();
+    this.atlasTextures.clear();
+    this.symbols.clear();
     for (const entry of this.symbolBuffers.values()) gl.deleteBuffer(entry.buffer);
     this.symbolBuffers.clear();
     for (const entry of this.mediaTextures.values()) {

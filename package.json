@@ -41,8 +41,11 @@
     "build": "tsc -p tsconfig.build.json && node scripts/rewrite-declarations.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "typecheck:tests": "tsc -p tsconfig.test.json --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "test": "node --test test/*/*.test.ts",
-    "check": "npm run build && npm run typecheck && npm run typecheck:tests && npm run typecheck:types && npm run test",
+    "check": "npm run lint && npm run format:check && npm run build && npm run typecheck && npm run typecheck:tests && npm run typecheck:types && npm run test",
     "demo": "python3 demo/serve.py",
     "e2e": "node demo/e2e/runner.mjs",
     "examples:build": "npm run build && node scripts/build-examples.mjs",
@@ -64,6 +67,12 @@
     "node": ">=22"
   },
   "devDependencies": {
-    "typescript": "5.9.3"
+    "@eslint/js": "10.0.1",
+    "eslint": "10.12.0",
+    "eslint-config-prettier": "10.1.8",
+    "globals": "17.13.0",
+    "prettier": "3.9.10",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.71.1"
   }
 }

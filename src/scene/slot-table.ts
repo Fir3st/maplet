@@ -12,12 +12,16 @@ class SlotPage {
   readonly positions: Float64Array;
   readonly altitudes = new Float64Array(PAGE_SIZE);
   readonly hasAltitude = new Uint8Array(PAGE_SIZE);
-  readonly ids: (FeatureId | undefined)[] = new Array(PAGE_SIZE);
-  readonly keys: (string | undefined)[] = new Array(PAGE_SIZE);
-  readonly namespaces: (string | undefined)[] = new Array(PAGE_SIZE);
-  readonly geometries: (PreparedFeatureGeometry | null | undefined)[] = new Array(PAGE_SIZE);
-  readonly properties: (Readonly<Record<string, unknown>> | undefined)[] = new Array(PAGE_SIZE);
-  readonly views: (SlotView | undefined)[] = new Array(PAGE_SIZE);
+  readonly ids: (FeatureId | undefined)[] = new Array<FeatureId | undefined>(PAGE_SIZE);
+  readonly keys: (string | undefined)[] = new Array<string | undefined>(PAGE_SIZE);
+  readonly namespaces: (string | undefined)[] = new Array<string | undefined>(PAGE_SIZE);
+  readonly geometries: (PreparedFeatureGeometry | null | undefined)[] = new Array<
+    PreparedFeatureGeometry | null | undefined
+  >(PAGE_SIZE);
+  readonly properties: (Readonly<Record<string, unknown>> | undefined)[] = new Array<
+    Readonly<Record<string, unknown>> | undefined
+  >(PAGE_SIZE);
+  readonly views: (SlotView | undefined)[] = new Array<SlotView | undefined>(PAGE_SIZE);
 
   constructor(positions: Float64Array = new Float64Array(PAGE_SIZE * 2)) {
     this.positions = positions;
@@ -33,26 +37,58 @@ class SlotView implements SlotRecord {
     this.page = page;
     this.row = row;
   }
-  get key(): string { return this.page.keys[this.row]!; }
-  get id(): FeatureId { return this.page.ids[this.row]!; }
-  get namespace(): string | undefined { return this.page.namespaces[this.row]; }
-  get generation(): number { return this.page.generations[this.row]!; }
-  set generation(value: number) { this.page.generations[this.row] = value; }
-  get kind(): GeometryKindCode { return this.page.kinds[this.row] as GeometryKindCode; }
-  set kind(value: GeometryKindCode) { this.page.kinds[this.row] = value; }
-  get wx(): number { return this.page.positions[this.row * 2]!; }
-  set wx(value: number) { this.page.positions[this.row * 2] = value; }
-  get wy(): number { return this.page.positions[this.row * 2 + 1]!; }
-  set wy(value: number) { this.page.positions[this.row * 2 + 1] = value; }
-  get alt(): number | undefined { return this.page.hasAltitude[this.row] ? this.page.altitudes[this.row] : undefined; }
+  get key(): string {
+    return this.page.keys[this.row]!;
+  }
+  get id(): FeatureId {
+    return this.page.ids[this.row]!;
+  }
+  get namespace(): string | undefined {
+    return this.page.namespaces[this.row];
+  }
+  get generation(): number {
+    return this.page.generations[this.row]!;
+  }
+  set generation(value: number) {
+    this.page.generations[this.row] = value;
+  }
+  get kind(): GeometryKindCode {
+    return this.page.kinds[this.row] as GeometryKindCode;
+  }
+  set kind(value: GeometryKindCode) {
+    this.page.kinds[this.row] = value;
+  }
+  get wx(): number {
+    return this.page.positions[this.row * 2]!;
+  }
+  set wx(value: number) {
+    this.page.positions[this.row * 2] = value;
+  }
+  get wy(): number {
+    return this.page.positions[this.row * 2 + 1]!;
+  }
+  set wy(value: number) {
+    this.page.positions[this.row * 2 + 1] = value;
+  }
+  get alt(): number | undefined {
+    return this.page.hasAltitude[this.row] ? this.page.altitudes[this.row] : undefined;
+  }
   set alt(value: number | undefined) {
     this.page.hasAltitude[this.row] = value === undefined ? 0 : 1;
     if (value !== undefined) this.page.altitudes[this.row] = value;
   }
-  get geometry(): PreparedFeatureGeometry | null { return this.page.geometries[this.row] ?? null; }
-  set geometry(value: PreparedFeatureGeometry | null) { this.page.geometries[this.row] = value; }
-  get properties(): Readonly<Record<string, unknown>> { return this.page.properties[this.row]!; }
-  set properties(value: Readonly<Record<string, unknown>>) { this.page.properties[this.row] = value; }
+  get geometry(): PreparedFeatureGeometry | null {
+    return this.page.geometries[this.row] ?? null;
+  }
+  set geometry(value: PreparedFeatureGeometry | null) {
+    this.page.geometries[this.row] = value;
+  }
+  get properties(): Readonly<Record<string, unknown>> {
+    return this.page.properties[this.row]!;
+  }
+  set properties(value: Readonly<Record<string, unknown>>) {
+    this.page.properties[this.row] = value;
+  }
 }
 
 export class SlotTable {
@@ -70,7 +106,9 @@ export class SlotTable {
     }
   }
 
-  get length(): number { return this.lengthValue; }
+  get length(): number {
+    return this.lengthValue;
+  }
 
   private pageForWrite(slot: number): SlotPage {
     const index = Math.floor(slot / PAGE_SIZE);
@@ -88,13 +126,20 @@ export class SlotTable {
   }
 
   /** Reject off-rectangle points before allocating their object view. */
-  getInRect(slot: number, minX: number, minY: number, maxX: number, maxY: number): SlotRecord | undefined {
+  getInRect(
+    slot: number,
+    minX: number,
+    minY: number,
+    maxX: number,
+    maxY: number,
+  ): SlotRecord | undefined {
     if (slot < 0 || slot >= this.lengthValue) return undefined;
     const page = this.pages[Math.floor(slot / PAGE_SIZE)]!;
     const row = slot % PAGE_SIZE;
     if (!page.live[row]) return undefined;
     if (!page.geometries[row]) {
-      const x = page.positions[row * 2]!, y = page.positions[row * 2 + 1]!;
+      const x = page.positions[row * 2]!,
+        y = page.positions[row * 2 + 1]!;
       if (x < minX || x > maxX || y < minY || y > maxY) return undefined;
     }
     return page.views[row] ?? (page.views[row] = new SlotView(slot, page, row));
@@ -103,12 +148,21 @@ export class SlotTable {
   /** Removal/replacement undo owns values, not a view of a recyclable row. */
   snapshot(slot: number): SlotRecord | undefined {
     const record = this.get(slot);
-    return record ? {
-      slot, key: record.key, id: record.id, namespace: record.namespace,
-      generation: record.generation, kind: record.kind, wx: record.wx,
-      wy: record.wy, alt: record.alt, geometry: record.geometry,
-      properties: record.properties,
-    } : undefined;
+    return record
+      ? {
+          slot,
+          key: record.key,
+          id: record.id,
+          namespace: record.namespace,
+          generation: record.generation,
+          kind: record.kind,
+          wx: record.wx,
+          wy: record.wy,
+          alt: record.alt,
+          geometry: record.geometry,
+          properties: record.properties,
+        }
+      : undefined;
   }
 
   set(slot: number, record: SlotRecord): void {
@@ -129,8 +183,15 @@ export class SlotTable {
   }
 
   /** Direct column adoption avoids allocating a record per imported point. */
-  setPoint(slot: number, key: string, id: FeatureId, wx: number, wy: number,
-    alt: number | undefined, properties: Readonly<Record<string, unknown>>): void {
+  setPoint(
+    slot: number,
+    key: string,
+    id: FeatureId,
+    wx: number,
+    wy: number,
+    alt: number | undefined,
+    properties: Readonly<Record<string, unknown>>,
+  ): void {
     const page = this.pageForWrite(slot);
     const row = slot % PAGE_SIZE;
     page.live[row] = 1;

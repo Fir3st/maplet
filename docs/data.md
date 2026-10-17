@@ -54,11 +54,14 @@ and the [altitude tutorial](tutorials/elevation.md).
 ## Columnar imports
 
 ```ts
-await source.importColumnar({
-  kind: 'point',
-  positions: new Float64Array([14.44, 50.08, 16.6, 49.2]),
-  ids: ['prague', 'brno'],
-}, { copy: true });
+await source.importColumnar(
+  {
+    kind: 'point',
+    positions: new Float64Array([14.44, 50.08, 16.6, 49.2]),
+    ids: ['prague', 'brno'],
+  },
+  { copy: true },
+);
 ```
 
 Positions are flat longitude/latitude or planar x/y pairs. Lines and polygons add
@@ -93,8 +96,11 @@ or properties and own their target fields:
 
 ```ts
 map.relations.add({ id: 'connection', type: 'connects', from: a.ref, to: b.ref });
-map.bindings.add({ id: 'route-geometry', target: route.ref,
-  geometry: { kind: 'lineBetween', from: a.ref, to: b.ref } });
+map.bindings.add({
+  id: 'route-geometry',
+  target: route.ref,
+  geometry: { kind: 'lineBetween', from: a.ref, to: b.ref },
+});
 ```
 
 Other geometry bindings use `anchorOnLine`; property bindings use `copyProperty`.

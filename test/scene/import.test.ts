@@ -6,7 +6,10 @@ import { Scene } from '../../src/scene/scene.ts';
 import { ChangeJournal } from '../../src/scene/change-journal.ts';
 import { makeMap, manualClock } from '../helpers/fixture.ts';
 
-function pointBatch(count: number, startLng = 14): {
+function pointBatch(
+  count: number,
+  startLng = 14,
+): {
   kind: 'point';
   positions: Float64Array;
   ids: string[];
@@ -163,7 +166,11 @@ test('IO-05: columnar lines and polygons import through the same store validatio
     }),
     (error: unknown) => isMapletError(error) && error.code === 'invalid-argument',
   );
-  assert.equal(source.features.count(), 2, 'the whole import rolled back, including the base feature removal');
+  assert.equal(
+    source.features.count(),
+    2,
+    'the whole import rolled back, including the base feature removal',
+  );
   assert.equal(source.features.has('donut'), true);
   map.destroy();
 });
@@ -171,8 +178,9 @@ test('IO-05: columnar lines and polygons import through the same store validatio
 test('IO-05: a planar CRS imports { x, y } columns without geographic assumptions', async () => {
   const { map } = await makeMap({
     projection: crs.simple(),
-    center: { x: 0, y: 0 }, zoom: 5
-});
+    center: { x: 0, y: 0 },
+    zoom: 5,
+  });
   const source = map.data.vector({ id: 's' });
   await source.importColumnar({
     kind: 'point',
@@ -181,8 +189,7 @@ test('IO-05: a planar CRS imports { x, y } columns without geographic assumption
   });
   assert.equal(source.features.count(), 2);
   const geometry = source.features.get('m1')?.geometry as
-    | { position: { x: number; y: number } }
-    | undefined;
+    { position: { x: number; y: number } } | undefined;
   assert.equal(geometry?.position.x, -40);
   assert.equal(geometry?.position.y, 90);
   // Altitudes are a geographic concept; a planar batch must not carry them.
@@ -203,8 +210,18 @@ test('GeoJSON imports share the pipeline and its diagnostics', async () => {
   await source.importGeoJson({
     type: 'FeatureCollection',
     features: [
-      { type: 'Feature', id: 'a', geometry: { type: 'Point', coordinates: [14, 50] }, properties: {} },
-      { type: 'Feature', id: 'b', geometry: { type: 'Point', coordinates: [15, 51] }, properties: {} },
+      {
+        type: 'Feature',
+        id: 'a',
+        geometry: { type: 'Point', coordinates: [14, 50] },
+        properties: {},
+      },
+      {
+        type: 'Feature',
+        id: 'b',
+        geometry: { type: 'Point', coordinates: [15, 51] },
+        properties: {},
+      },
     ],
   });
   assert.equal(source.features.count(), 2);
@@ -213,24 +230,44 @@ test('GeoJSON imports share the pipeline and its diagnostics', async () => {
     (error: unknown) => isMapletError(error) && error.code === 'import-invalid',
   );
   assert.equal(source.features.count(), 2, 'the failed import published nothing');
-  assert.equal(map.debug.imports().used.inline, 1, 'geojson goes through the same preparation pipeline');
+  assert.equal(
+    map.debug.imports().used.inline,
+    1,
+    'geojson goes through the same preparation pipeline',
+  );
   map.destroy();
 });
 
 test('compact point import preserves generations, metadata ownership and empty replacement', async () => {
   const { map } = await makeMap();
   const source = map.data.vector({ id: 's' });
-  const batch = { kind: 'point' as const, positions: Float64Array.of(14, 50, 15, 51),
-    altitudes: Float64Array.of(123, Number.NaN), ids: [42, '42'], properties: [{ value: 1 }, { value: 2 }] };
+  const batch = {
+    kind: 'point' as const,
+    positions: Float64Array.of(14, 50, 15, 51),
+    altitudes: Float64Array.of(123, Number.NaN),
+    ids: [42, '42'],
+    properties: [{ value: 1 }, { value: 2 }],
+  };
   await source.importColumnar(batch);
   const ref = source.features.ref(42);
   batch.properties[0]!.value = 99;
   batch.positions[0] = 17;
-  assert.equal(source.features.get(42)!.properties.value, 1, 'the caller cannot mutate imported properties');
-  assert.equal((source.features.get(42)!.geometry as { position: { altitude: number } }).position.altitude, 123);
+  assert.equal(
+    source.features.get(42)!.properties.value,
+    1,
+    'the caller cannot mutate imported properties',
+  );
+  assert.equal(
+    (source.features.get(42)!.geometry as { position: { altitude: number } }).position.altitude,
+    123,
+  );
   await source.importColumnar(batch);
   assert.deepEqual(source.features.ref(42), ref, 'retained IDs keep their generation');
-  assert.equal(source.features.get('42')!.properties.value, 2, 'numeric and string IDs stay separate');
+  assert.equal(
+    source.features.get('42')!.properties.value,
+    2,
+    'numeric and string IDs stay separate',
+  );
   await source.importColumnar({ kind: 'point', positions: new Float64Array() });
   assert.equal(source.features.count(), 0);
   map.destroy();
@@ -244,11 +281,21 @@ test('compact point import validates all columns and append duplicates before pu
   const revision = map.stats().revision;
   for (const batch of [
     { kind: 'point' as const, positions: Float64Array.of(14, 50, Number.NaN, 0) },
-    { kind: 'point' as const, positions: Float64Array.of(14, 50), altitudes: Float64Array.of(1, 2) },
+    {
+      kind: 'point' as const,
+      positions: Float64Array.of(14, 50),
+      altitudes: Float64Array.of(1, 2),
+    },
     { kind: 'point' as const, positions: Float64Array.of(14, 50), ids: [] },
     { kind: 'point' as const, positions: Float64Array.of(14, 50), properties: [] },
-  ]) await assert.rejects(source.importColumnar(batch));
-  await assert.rejects(source.importColumnar({ kind: 'point', positions: Float64Array.of(15, 51, 16, 52), ids: ['new', 'keep'] }, { mode: 'append' }));
+  ])
+    await assert.rejects(source.importColumnar(batch));
+  await assert.rejects(
+    source.importColumnar(
+      { kind: 'point', positions: Float64Array.of(15, 51, 16, 52), ids: ['new', 'keep'] },
+      { mode: 'append' },
+    ),
+  );
   assert.equal(source.features.count(), 1);
   assert.deepEqual(source.features.get('keep'), before);
   assert.equal(map.stats().revision, revision);
@@ -260,8 +307,16 @@ test('compact point imports retain the existing altitude semantics', async () =>
   const source = map.data.vector({ id: 'compact' });
   const direct = map.data.vector({ id: 'direct' });
   // Altitude is metadata, not a projected coordinate; the existing store accepts Infinity.
-  direct.features.add({ id: 'p', geometry: { type: 'point', position: { lng: 14, lat: 50, altitude: Infinity } } });
-  await source.importColumnar({ kind: 'point', positions: Float64Array.of(14, 50), altitudes: Float64Array.of(Infinity), ids: ['p'] });
+  direct.features.add({
+    id: 'p',
+    geometry: { type: 'point', position: { lng: 14, lat: 50, altitude: Infinity } },
+  });
+  await source.importColumnar({
+    kind: 'point',
+    positions: Float64Array.of(14, 50),
+    altitudes: Float64Array.of(Infinity),
+    ids: ['p'],
+  });
   assert.deepEqual(source.features.get('p')!.geometry, direct.features.get('p')!.geometry);
   map.destroy();
 });
@@ -270,14 +325,27 @@ test('insertion returns the stored slot identity without a second ID lookup', ()
   const scene = new Scene(crs.webMercator(), manualClock());
   const source = scene.createVectorSource('s');
   const store = scene.getSourceImpl('s')!.store;
-  const originalGet = store.get;
+  const originalGet = store.get.bind(store);
   let lookups = 0;
-  store.get = function (...args) { lookups++; return originalGet.apply(this, args); };
-  const input = { id: 42, namespace: 'points', geometry: { type: 'point' as const, position: { lng: 14, lat: 50 } } };
+  store.get = function (...args) {
+    lookups++;
+    return originalGet.apply(this, args);
+  };
+  const input = {
+    id: 42,
+    namespace: 'points',
+    geometry: { type: 'point' as const, position: { lng: 14, lat: 50 } },
+  };
   try {
     const first = source.features.add([input, { ...input, id: '42' }]);
     assert.equal(lookups, 0, 'the insert result already supplies the live slot');
-    assert.deepEqual(first.refs.map(ref => [ref.id, ref.namespace, ref.generation]), [[42, 'points', 1], ['42', 'points', 1]]);
+    assert.deepEqual(
+      first.refs.map((ref) => [ref.id, ref.namespace, ref.generation]),
+      [
+        [42, 'points', 1],
+        ['42', 'points', 1],
+      ],
+    );
     assert.equal(store.getBySlot(0)!.id, 42);
     assert.equal(store.getBySlot(1)!.id, '42');
     const replacement = source.features.add(input, { upsert: true });
@@ -296,13 +364,22 @@ test('fresh point imports build the store in one batch without per-feature CRUD 
   const source = scene.createVectorSource('s');
   const impl = scene.getSourceImpl('s')!;
   const store = impl.store;
-  const originalAdd = impl.addOne;
-  const originalUndo = scene.recordUndo;
+  const originalAdd = impl.addOne.bind(impl);
+  const originalUndo = scene.recordUndo.bind(scene);
   let undoEntries = 0;
-  let event: ReturnType<typeof source.snapshot> & { change?: { addedCount: number; added: readonly unknown[] } | null };
-  source.on('change', value => { event = value; });
-  impl.addOne = () => { throw new Error('bulk initialization must not run per-feature CRUD'); };
-  scene.recordUndo = function (undo) { undoEntries++; originalUndo.call(this, undo); };
+  let event: ReturnType<typeof source.snapshot> & {
+    change?: { addedCount: number; added: readonly unknown[] } | null;
+  };
+  source.on('change', (value) => {
+    event = value;
+  });
+  impl.addOne = () => {
+    throw new Error('bulk initialization must not run per-feature CRUD');
+  };
+  scene.recordUndo = function (undo) {
+    undoEntries++;
+    originalUndo.call(this, undo);
+  };
   try {
     await source.importColumnar(pointBatch(5000));
     assert.equal(impl.store, store, 'the renderer/query store identity stays stable');
@@ -313,11 +390,13 @@ test('fresh point imports build the store in one batch without per-feature CRUD 
     assert.equal(store.indexStatistics().entries, 5000);
     assert.equal(source.features.ref('p4999').generation, 1);
     const found: string[] = [];
-    store.queryRect(0, 0, 256, 256, record => found.push(record.id as string));
+    store.queryRect(0, 0, 256, 256, (record) => found.push(record.id as string));
     assert.equal(new Set(found).size, 5000);
-    store.forEachLive(record => {
+    store.forEachLive((record) => {
       const i = record.slot;
-      const expected = crs.webMercator().toWorld({ lng: 14 + (i % 100) * 0.001, lat: 50 + Math.floor(i / 100) * 0.001 });
+      const expected = crs
+        .webMercator()
+        .toWorld({ lng: 14 + (i % 100) * 0.001, lat: 50 + Math.floor(i / 100) * 0.001 });
       assert.equal(record.id, `p${i}`);
       assert.deepEqual(record.properties, { index: i });
       assert.ok(Math.abs(record.wx - expected.x) < 1e-9 && Math.abs(record.wy - expected.y) < 1e-9);
@@ -333,11 +412,13 @@ test('bulk initialization rolls back as a unit and cannot revive a captured gene
   const scene = new Scene(crs.webMercator(), manualClock());
   const source = scene.createVectorSource('s');
   const store = scene.getSourceImpl('s')!.store;
-  const originalCommit = scene.finishImplicitCommit;
+  const originalCommit = scene.finishImplicitCommit.bind(scene);
   const beforeEpoch = store.changes.epoch;
   let captured: ReturnType<typeof source.features.ref> | undefined;
   let events = 0;
-  source.on('change', () => { events++; });
+  source.on('change', () => {
+    events++;
+  });
   scene.finishImplicitCommit = () => {
     captured = source.features.ref('p0');
     assert.equal(source.features.count(), 12, 'the transaction can read staged records');
@@ -354,8 +435,10 @@ test('bulk initialization rolls back as a unit and cannot revive a captured gene
     scene.finishImplicitCommit = originalCommit;
     await source.importColumnar(pointBatch(1));
     assert.ok(source.features.ref('p0').generation > captured!.generation);
-    assert.throws(() => source.features.update(captured!, { properties: { leaked: true } }),
-      (error: unknown) => isMapletError(error) && error.code === 'stale-reference');
+    assert.throws(
+      () => source.features.update(captured!, { properties: { leaked: true } }),
+      (error: unknown) => isMapletError(error) && error.code === 'stale-reference',
+    );
   } finally {
     scene.finishImplicitCommit = originalCommit;
     scene.destroy();
@@ -363,15 +446,28 @@ test('bulk initialization rolls back as a unit and cannot revive a captured gene
 });
 
 test('bulk initialization validates the complete CRS domain before adopting data', async () => {
-  const projection = { ...crs.simple(), code: 'bulk-domain', toWorld(position: Position) {
-    const point = position as { x: number; y: number };
-    return point.x === 9 ? { x: Infinity, y: 0 } : crs.simple().toWorld(position);
-  } };
+  const projection = {
+    ...crs.simple(),
+    code: 'bulk-domain',
+    toWorld(position: Position) {
+      const point = position as { x: number; y: number };
+      return point.x === 9 ? { x: Infinity, y: 0 } : crs.simple().toWorld(position);
+    },
+  };
   const { map } = await makeMap({ projection, center: { x: 0, y: 0 }, zoom: 1 });
   const source = map.data.vector({ id: 's' });
   const revision = map.stats().revision;
-  await assert.rejects(source.importColumnar({ kind: 'point', positions: Float64Array.of(1, 2, 9, 4), ids: ['a', 'b'] }),
-    (error: unknown) => isMapletError(error) && error.code === 'invalid-argument' && error.message.includes('CRS domain'));
+  await assert.rejects(
+    source.importColumnar({
+      kind: 'point',
+      positions: Float64Array.of(1, 2, 9, 4),
+      ids: ['a', 'b'],
+    }),
+    (error: unknown) =>
+      isMapletError(error) &&
+      error.code === 'invalid-argument' &&
+      error.message.includes('CRS domain'),
+  );
   assert.equal(source.features.count(), 0);
   assert.equal(map.stats().revision, revision);
   assert.equal(source.getBounds(), null);
@@ -396,20 +492,46 @@ test('bulk journal invalidation rejects older plans and retains subsequent local
 
 test('bulk columns match ordinary CRUD across CRS, wrapping, generated IDs and altitude', async () => {
   for (const projection of [crs.webMercator(), crs.epsg4326(), crs.epsg3395(), crs.simple()]) {
-    const { map } = await makeMap({ projection, center: projection.positionKind === 'geographic' ? { lat: 0, lng: 0 } : { x: 0, y: 0 }, zoom: 1 });
+    const { map } = await makeMap({
+      projection,
+      center: projection.positionKind === 'geographic' ? { lat: 0, lng: 0 } : { x: 0, y: 0 },
+      zoom: 1,
+    });
     const bulk = map.data.vector({ id: 'bulk' });
     const direct = map.data.vector({ id: 'direct' });
-    const coordinates = projection.positionKind === 'geographic' ? [540, 90, -721, -90, 14, 50, 0, 0] : [-500, 20, 0, 0, 256, -256, 800, 800];
+    const coordinates =
+      projection.positionKind === 'geographic'
+        ? [540, 90, -721, -90, 14, 50, 0, 0]
+        : [-500, 20, 0, 0, 256, -256, 800, 800];
     const ids = [42, '42', 'auto:1', 'last'];
     const properties = [{ nested: { value: 1 } }, {}, { nested: { value: 3 } }, {}];
     const altitudes = [Infinity, 0, NaN, -20];
-    await bulk.importColumnar({ kind: 'point', positions: Float64Array.from(coordinates), ids: [42, '42', undefined, 'last'], properties,
-      ...(projection.positionKind === 'geographic' ? { altitudes: Float64Array.from(altitudes) } : {}) });
-    direct.features.add(ids.map((id, i) => ({ id, properties: structuredClone(properties[i]!), geometry: { type: 'point', position:
-      projection.positionKind === 'planar' ? { x: coordinates[i * 2]!, y: coordinates[i * 2 + 1]! } : {
-        lng: coordinates[i * 2]!, lat: coordinates[i * 2 + 1]!,
-        ...(Number.isNaN(altitudes[i]) ? {} : { altitude: altitudes[i]! }),
-      } } })) as never[]);
+    await bulk.importColumnar({
+      kind: 'point',
+      positions: Float64Array.from(coordinates),
+      ids: [42, '42', undefined, 'last'],
+      properties,
+      ...(projection.positionKind === 'geographic'
+        ? { altitudes: Float64Array.from(altitudes) }
+        : {}),
+    });
+    direct.features.add(
+      ids.map((id, i) => ({
+        id,
+        properties: structuredClone(properties[i]!),
+        geometry: {
+          type: 'point',
+          position:
+            projection.positionKind === 'planar'
+              ? { x: coordinates[i * 2]!, y: coordinates[i * 2 + 1]! }
+              : {
+                  lng: coordinates[i * 2]!,
+                  lat: coordinates[i * 2 + 1]!,
+                  ...(Number.isNaN(altitudes[i]) ? {} : { altitude: altitudes[i]! }),
+                },
+        },
+      })) as never[],
+    );
     assert.deepEqual(bulk.features.ids(), ids);
     for (const id of ids) {
       assert.deepEqual(bulk.features.get(id)!.geometry, direct.features.get(id)!.geometry);
@@ -435,25 +557,42 @@ test('line and polygon columns match ordinary CRUD with altitudes', async () => 
       partOffsets: Uint32Array.of(0, 3),
       ids: ['trail'],
     });
-    await bulk.importColumnar({
-      kind: 'polygon',
-      positions: Float64Array.of(14.3, 50, 14.5, 50, 14.5, 50.1, 14.3, 50.1),
-      altitudes: Float64Array.of(10, 20, 30, 40),
-      partOffsets: Uint32Array.of(0, 4),
-      ids: ['ridge'],
-    }, { mode: 'append' });
+    await bulk.importColumnar(
+      {
+        kind: 'polygon',
+        positions: Float64Array.of(14.3, 50, 14.5, 50, 14.5, 50.1, 14.3, 50.1),
+        altitudes: Float64Array.of(10, 20, 30, 40),
+        partOffsets: Uint32Array.of(0, 4),
+        ids: ['ridge'],
+      },
+      { mode: 'append' },
+    );
     direct.features.add([
-      { id: 'trail', geometry: { type: 'lineString', positions: [
-        { lng: 14, lat: 50, altitude: 100 },
-        { lng: 14.1, lat: 50.05 },
-        { lng: 14.2, lat: 50, altitude: 300 },
-      ] } },
-      { id: 'ridge', geometry: { type: 'polygon', rings: [[
-        { lng: 14.3, lat: 50, altitude: 10 },
-        { lng: 14.5, lat: 50, altitude: 20 },
-        { lng: 14.5, lat: 50.1, altitude: 30 },
-        { lng: 14.3, lat: 50.1, altitude: 40 },
-      ]] } },
+      {
+        id: 'trail',
+        geometry: {
+          type: 'lineString',
+          positions: [
+            { lng: 14, lat: 50, altitude: 100 },
+            { lng: 14.1, lat: 50.05 },
+            { lng: 14.2, lat: 50, altitude: 300 },
+          ],
+        },
+      },
+      {
+        id: 'ridge',
+        geometry: {
+          type: 'polygon',
+          rings: [
+            [
+              { lng: 14.3, lat: 50, altitude: 10 },
+              { lng: 14.5, lat: 50, altitude: 20 },
+              { lng: 14.5, lat: 50.1, altitude: 30 },
+              { lng: 14.3, lat: 50.1, altitude: 40 },
+            ],
+          ],
+        },
+      },
     ]);
     for (const id of ['trail', 'ridge']) {
       assert.deepEqual(bulk.features.get(id)!.geometry, direct.features.get(id)!.geometry);
@@ -468,17 +607,22 @@ test('an abort during bulk CRS conversion never publishes even the final row', a
   let conversions = 0;
   let importing = false;
   const base = crs.webMercator();
-  const projection = { ...base, toWorld(position: Position) {
-    if (importing && ++conversions === 2) controller.abort();
-    return base.toWorld(position);
-  } };
+  const projection = {
+    ...base,
+    toWorld(position: Position) {
+      if (importing && ++conversions === 2) controller.abort();
+      return base.toWorld(position);
+    },
+  };
   const { map } = await makeMap({ projection });
   const source = map.data.vector({ id: 's' });
   conversions = 0;
   importing = true;
   const revision = map.stats().revision;
-  await assert.rejects(source.importColumnar(pointBatch(2), { signal: controller.signal }),
-    (error: unknown) => isMapletError(error) && error.code === 'aborted');
+  await assert.rejects(
+    source.importColumnar(pointBatch(2), { signal: controller.signal }),
+    (error: unknown) => isMapletError(error) && error.code === 'aborted',
+  );
   assert.equal(conversions, 2, 'the abort happens during the final CRS conversion');
   assert.equal(source.features.count(), 0);
   assert.equal(source.getBounds(), null);
@@ -493,15 +637,35 @@ test('recycled stores keep generations and existing imports enforce binding owne
   source.features.add({ id: 42, geometry: { type: 'point', position: { lat: 50, lng: 14 } } });
   const stale = source.features.ref(42);
   source.features.remove(42);
-  await source.importColumnar({ kind: 'point', positions: Float64Array.of(15, 51), ids: [42], properties: [{ value: 1 }] });
+  await source.importColumnar({
+    kind: 'point',
+    positions: Float64Array.of(15, 51),
+    ids: [42],
+    properties: [{ value: 1 }],
+  });
   const current = source.features.ref(42);
   assert.equal(current.generation, stale.generation + 1);
-  target.features.add({ id: 't', geometry: { type: 'point', position: { lat: 0, lng: 0 } }, properties: { value: 2 } });
-  map.bindings.add({ id: 'owner', target: current, properties: { kind: 'copyProperty', from: target.features.ref('t'), field: 'value' } });
+  target.features.add({
+    id: 't',
+    geometry: { type: 'point', position: { lat: 0, lng: 0 } },
+    properties: { value: 2 },
+  });
+  map.bindings.add({
+    id: 'owner',
+    target: current,
+    properties: { kind: 'copyProperty', from: target.features.ref('t'), field: 'value' },
+  });
   const before = source.features.get(42);
   const revision = map.stats().revision;
-  await assert.rejects(source.importColumnar({ kind: 'point', positions: Float64Array.of(16, 52), ids: [42], properties: [{ value: 3 }] }),
-    (error: unknown) => isMapletError(error) && error.code === 'ownership-conflict');
+  await assert.rejects(
+    source.importColumnar({
+      kind: 'point',
+      positions: Float64Array.of(16, 52),
+      ids: [42],
+      properties: [{ value: 3 }],
+    }),
+    (error: unknown) => isMapletError(error) && error.code === 'ownership-conflict',
+  );
   assert.deepEqual(source.features.get(42), before);
   assert.equal(map.stats().revision, revision);
   assert.deepEqual(source.features.ref(42), current);
@@ -514,22 +678,49 @@ test('bulk adoption and subsequent staged edits roll back in reverse order', () 
   const impl = scene.getSourceImpl('s')!;
   let captured: ReturnType<typeof source.features.ref> | undefined;
   try {
-    assert.throws(() => scene.batch(() => {
-      impl.mutate(change => { assert.equal(impl.initializePointImport(change, pointBatch(4)), true); });
-      captured = source.features.ref('p0');
-      source.features.update('p0', { geometry: { type: 'lineString', positions: [{ lng: 0, lat: 0 }, { lng: 1, lat: 1 }] } });
-      source.features.remove('p1');
-      source.features.add({ id: 'extra', geometry: { type: 'point', position: { lng: 14, lat: 50 } } });
-      source.features.add({ id: 'overflow', geometry: { type: 'point', position: { lng: 15, lat: 51 } } });
-      throw new Error('cancel staged batch');
-    }), /cancel staged batch/);
+    assert.throws(
+      () =>
+        scene.batch(() => {
+          impl.mutate((change) => {
+            assert.equal(impl.initializePointImport(change, pointBatch(4)), true);
+          });
+          captured = source.features.ref('p0');
+          source.features.update('p0', {
+            geometry: {
+              type: 'lineString',
+              positions: [
+                { lng: 0, lat: 0 },
+                { lng: 1, lat: 1 },
+              ],
+            },
+          });
+          source.features.remove('p1');
+          source.features.add({
+            id: 'extra',
+            geometry: { type: 'point', position: { lng: 14, lat: 50 } },
+          });
+          source.features.add({
+            id: 'overflow',
+            geometry: { type: 'point', position: { lng: 15, lat: 51 } },
+          });
+          throw new Error('cancel staged batch');
+        }),
+      /cancel staged batch/,
+    );
     assert.equal(source.features.count(), 0);
     assert.equal(impl.store.slotCapacity, 0);
     assert.equal(impl.store.pointOnly, true);
     assert.deepEqual(impl.store.indexStatistics(), { buckets: 0, entries: 0, oversized: 0 });
-    const added = source.features.add({ id: 'p0', geometry: { type: 'point', position: { lng: 14, lat: 50 } } });
+    const added = source.features.add({
+      id: 'p0',
+      geometry: { type: 'point', position: { lng: 14, lat: 50 } },
+    });
     assert.ok(added.refs[0]!.generation > captured!.generation);
-    assert.equal(impl.store.slotCapacity, 1, 'a stale free slot cannot leak from the discarded store');
+    assert.equal(
+      impl.store.slotCapacity,
+      1,
+      'a stale free slot cannot leak from the discarded store',
+    );
     assert.equal(impl.store.getBySlot(0)!.id, 'p0');
   } finally {
     scene.destroy();
@@ -540,7 +731,10 @@ test('writes during point preparation are retained by append, not replaced by in
   const { map } = await makeMap();
   const source = map.data.vector({ id: 's' });
   const pending = source.importColumnar(pointBatch(3), { mode: 'append' });
-  source.features.add({ id: 'during', geometry: { type: 'point', position: { lng: 14, lat: 50 } } });
+  source.features.add({
+    id: 'during',
+    geometry: { type: 'point', position: { lng: 14, lat: 50 } },
+  });
   const ref = source.features.ref('during');
   await pending;
   assert.equal(source.features.count(), 4);
@@ -551,14 +745,32 @@ test('writes during point preparation are retained by append, not replaced by in
 test('bulk initialization preserves the binding touched-reference overflow contract', async () => {
   const scene = new Scene(crs.webMercator(), manualClock());
   const control = scene.createVectorSource('control');
-  control.features.add(['a', 't'].map(id => ({ id, geometry: { type: 'point' as const, position: { lng: 14, lat: 50 } }, properties: { value: id === 'a' ? 1 : 0 } })));
-  scene.bindings.add({ id: 'copy', target: control.features.ref('t'), properties: { kind: 'copyProperty', from: control.features.ref('a'), field: 'value' } });
+  control.features.add(
+    ['a', 't'].map((id) => ({
+      id,
+      geometry: { type: 'point' as const, position: { lng: 14, lat: 50 } },
+      properties: { value: id === 'a' ? 1 : 0 },
+    })),
+  );
+  scene.bindings.add({
+    id: 'copy',
+    target: control.features.ref('t'),
+    properties: { kind: 'copyProperty', from: control.features.ref('a'), field: 'value' },
+  });
   try {
     const before = scene.bindings.evaluatedCount;
     await scene.createVectorSource('small').importColumnar(pointBatch(2));
-    assert.equal(scene.bindings.evaluatedCount, before, 'unrelated small imports do not reevaluate the binding');
+    assert.equal(
+      scene.bindings.evaluatedCount,
+      before,
+      'unrelated small imports do not reevaluate the binding',
+    );
     await scene.createVectorSource('large').importColumnar(pointBatch(5000));
-    assert.equal(scene.bindings.evaluatedCount, before + 1, 'overflow safely reevaluates all bindings once');
+    assert.equal(
+      scene.bindings.evaluatedCount,
+      before + 1,
+      'overflow safely reevaluates all bindings once',
+    );
     assert.equal(control.features.get('t')!.properties.value, 1);
   } finally {
     scene.destroy();

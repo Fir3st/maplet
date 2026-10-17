@@ -20,7 +20,9 @@ function zoomBadge({ map, container, signal, onCleanup }: PluginContext) {
   container.append(badge);
   onCleanup(() => badge.remove());
 
-  const update = () => { badge.textContent = `Zoom ${map.getZoom().toFixed(1)}`; };
+  const update = () => {
+    badge.textContent = `Zoom ${map.getZoom().toFixed(1)}`;
+  };
   map.on('viewchange', update, { signal });
   update();
   return { element: badge };
@@ -28,7 +30,7 @@ function zoomBadge({ map, container, signal, onCleanup }: PluginContext) {
 
 const badge = map.use(zoomBadge);
 badge.api?.element.classList.add('my-badge'); // inferred API, no casting
-badge.remove();                            // unsubscribe + remove DOM
+badge.remove(); // unsubscribe + remove DOM
 ```
 
 Install automatically with `createMap(container, { …, plugins: [zoomBadge, otherPlugin] })`.
@@ -39,13 +41,13 @@ same map. `use` and `remove` can be detached from their handles.
 
 ## Context and ownership
 
-| Member | Purpose |
-| --- | --- |
-| `map` | Full public object API: layer creation, view methods, shared data, selection, events, controls, details, bindings… |
-| `container` | Actual HTML container, or `null` for a DOM-free map; also available as `map.container` |
-| `signal` | Aborted when the installation is removed, setup fails, or the map is destroyed |
-| `onCleanup(fn)` | Register resource cleanup, run once in reverse registration order |
-| `render` | Rendering extensions, automatically removed with this installation |
+| Member          | Purpose                                                                                                            |
+| --------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `map`           | Full public object API: layer creation, view methods, shared data, selection, events, controls, details, bindings… |
+| `container`     | Actual HTML container, or `null` for a DOM-free map; also available as `map.container`                             |
+| `signal`        | Aborted when the installation is removed, setup fails, or the map is destroyed                                     |
+| `onCleanup(fn)` | Register resource cleanup, run once in reverse registration order                                                  |
+| `render`        | Rendering extensions, automatically removed with this installation                                                 |
 
 Plugins are trusted application code, not sandboxed modules. Changing HTML is
 intentional: append your own nodes, change existing controls through
@@ -87,7 +89,9 @@ function pins({ map, onCleanup }: PluginContext) {
     add(id: string, lat: number, lng: number) {
       points.add({ id, position: [lat, lng] });
     },
-    hide() { layer.setVisible(false); },
+    hide() {
+      layer.setVisible(false);
+    },
   };
 }
 
@@ -114,7 +118,13 @@ const guard = map.use(gestureGuard({ modifier: 'alt' }));
 const fullscreen = map.use(fullscreenMode({ control: true }));
 const heat = map.use(heatmap({ points: samples, radius: 30 }));
 await fullscreen.api.toggle();
-heat.api.setOptions({ gradient: [[0, '#312e81'], [1, '#f97316']], max: 2 });
+heat.api.setOptions({
+  gradient: [
+    [0, '#312e81'],
+    [1, '#f97316'],
+  ],
+  max: 2,
+});
 ```
 
 `gestureGuard` gates view-affecting gestures without stopping the pointer state
@@ -159,9 +169,9 @@ and plugin invalidation epoch. Color-only example:
 import { POINT_STRIDE } from '@fir3st/maplet';
 
 const bluePoints = map.use(({ render }) => {
-  render.transform(plan => ({
+  render.transform((plan) => ({
     ...plan,
-    draws: plan.draws.map(draw => {
+    draws: plan.draws.map((draw) => {
       if (draw.type !== 'batch' || draw.batch.kind !== 'points') return draw;
       const data = new Float32Array(draw.batch.data);
       for (let i = 0; i < data.length; i += POINT_STRIDE) {
@@ -236,7 +246,9 @@ const replacement = map.use(({ render, signal, onCleanup }) => {
       // Return actual PickResult[] from your renderer, or omit pick entirely.
       return [];
     },
-    destroy() { /* release renderer-owned GPU/other resources */ },
+    destroy() {
+      /* release renderer-owned GPU/other resources */
+    },
   });
 });
 replacement.remove(); // restores the previous built-in renderer

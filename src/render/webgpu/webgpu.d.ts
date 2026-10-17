@@ -192,7 +192,8 @@ declare global {
     | 'uint32x4'
     | (string & {});
   type GPUVertexStepMode = 'vertex' | 'instance';
-  type GPUPrimitiveTopology = 'point-list' | 'line-list' | 'line-strip' | 'triangle-list' | 'triangle-strip';
+  type GPUPrimitiveTopology =
+    'point-list' | 'line-list' | 'line-strip' | 'triangle-list' | 'triangle-strip';
   type GPUIndexFormat = 'uint16' | 'uint32';
   type GPUStoreOp = 'store' | 'discard';
 
@@ -244,8 +245,15 @@ declare global {
   interface GPUCommandEncoder {
     beginRenderPass(descriptor: GPURenderPassDescriptor): GPURenderPassEncoder;
     copyTextureToBuffer(
-      source: { readonly texture: GPUTexture; readonly origin?: { readonly x?: number; readonly y?: number } },
-      destination: { readonly buffer: GPUBuffer; readonly bytesPerRow: number; readonly rowsPerImage: number },
+      source: {
+        readonly texture: GPUTexture;
+        readonly origin?: { readonly x?: number; readonly y?: number };
+      },
+      destination: {
+        readonly buffer: GPUBuffer;
+        readonly bytesPerRow: number;
+        readonly rowsPerImage: number;
+      },
       copySize: { readonly width: number; readonly height: number },
     ): void;
     finish(): GPUCommandBuffer;
@@ -253,7 +261,12 @@ declare global {
 
   interface GPURenderPassColorAttachment {
     readonly view: GPUTextureView;
-    readonly clearValue: { readonly r: number; readonly g: number; readonly b: number; readonly a: number };
+    readonly clearValue: {
+      readonly r: number;
+      readonly g: number;
+      readonly b: number;
+      readonly a: number;
+    };
     readonly loadOp: 'clear' | 'load';
     readonly storeOp: GPUStoreOp;
   }
@@ -265,15 +278,26 @@ declare global {
   interface GPURenderPassEncoder {
     setPipeline(pipeline: GPURenderPipeline): void;
     setBindGroup(index: number, bindGroup: GPUBindGroup, dynamicOffsets?: readonly number[]): void;
-    setVertexBuffer(
-      slot: number,
+    setVertexBuffer(slot: number, buffer: GPUBuffer, offset?: number, size?: number): void;
+    draw(
+      vertexCount: number,
+      instanceCount?: number,
+      firstVertex?: number,
+      firstInstance?: number,
+    ): void;
+    setIndexBuffer(
       buffer: GPUBuffer,
+      indexFormat: 'uint16' | 'uint32',
       offset?: number,
       size?: number,
     ): void;
-    draw(vertexCount: number, instanceCount?: number, firstVertex?: number, firstInstance?: number): void;
-    setIndexBuffer(buffer: GPUBuffer, indexFormat: 'uint16' | 'uint32', offset?: number, size?: number): void;
-    drawIndexed(indexCount: number, instanceCount?: number, firstIndex?: number, baseVertex?: number, firstInstance?: number): void;
+    drawIndexed(
+      indexCount: number,
+      instanceCount?: number,
+      firstIndex?: number,
+      baseVertex?: number,
+      firstInstance?: number,
+    ): void;
     end(): void;
   }
 

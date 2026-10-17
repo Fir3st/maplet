@@ -90,10 +90,13 @@ export class RenderExtensions {
     };
   }
 
-  get active(): boolean { return this.custom !== null; }
+  get active(): boolean {
+    return this.custom !== null;
+  }
 
   pick(point: ScreenPoint, options: { readonly limit: number }): Promise<readonly PickResult[]> {
-    if (!this.custom?.pick) fail('unsupported-capability', 'the custom renderer does not implement picking');
+    if (!this.custom?.pick)
+      fail('unsupported-capability', 'the custom renderer does not implement picking');
     return this.custom.pick(point, options);
   }
 
@@ -108,7 +111,9 @@ export class RenderExtensions {
       this.invalidate();
       return remove;
     } catch (error) {
-      try { remove(); } catch (cleanupError) {
+      try {
+        remove();
+      } catch (cleanupError) {
         throw new AggregateError([error, cleanupError], 'render registration and cleanup failed');
       }
       throw error;
@@ -138,16 +143,19 @@ export class RenderExtensions {
   private frame(plan?: FramePlan): RenderFrame {
     const map = this.getMap();
     const size = map.size();
-    const currentPlan = plan ?? buildFramePlan(this.scene, {
-      deviceWidth: Math.max(1, Math.round(size.width * this.dpr)),
-      deviceHeight: Math.max(1, Math.round(size.height * this.dpr)),
-      dpr: this.dpr,
-    });
+    const currentPlan =
+      plan ??
+      buildFramePlan(this.scene, {
+        deviceWidth: Math.max(1, Math.round(size.width * this.dpr)),
+        deviceHeight: Math.max(1, Math.round(size.height * this.dpr)),
+        dpr: this.dpr,
+      });
     return {
       map,
       plan: currentPlan,
       time: this.scene.clock.now(),
-      positionToScreen: (position) => positionToScreen(currentPlan.view, this.scene.crs.normalize(position)),
+      positionToScreen: (position) =>
+        positionToScreen(currentPlan.view, this.scene.crs.normalize(position)),
     };
   }
 
@@ -158,12 +166,16 @@ export class RenderExtensions {
 
   private use(renderer: CustomRenderer): () => void {
     this.assertAlive();
-    assertArgument(renderer && typeof renderer.render === 'function', 'render.use expects a renderer with render(frame)');
+    assertArgument(
+      renderer && typeof renderer.render === 'function',
+      'render.use expects a renderer with render(frame)',
+    );
     if (this.custom) fail('dependency-conflict', 'a custom renderer is already installed');
     this.custom = renderer;
     this.setDefaultVisible(false);
     this.scene.overrideFrameDriver = { requestFrame: () => this.requestCustomFrame() };
-    this.scene.overridePick = (point, options) => renderer.pick?.(point, options) ?? Promise.resolve([]);
+    this.scene.overridePick = (point, options) =>
+      renderer.pick?.(point, options) ?? Promise.resolve([]);
     this.scene.resetFrameRequest();
     let removed = false;
     const remove = (): void => {
@@ -178,7 +190,11 @@ export class RenderExtensions {
       this.scene.overridePick = null;
       this.setDefaultVisible(true);
       this.scene.resetFrameRequest();
-      try { renderer.destroy?.(); } finally { this.invalidate(); }
+      try {
+        renderer.destroy?.();
+      } finally {
+        this.invalidate();
+      }
     };
     this.removeCustom = remove;
     return this.activate(remove);
@@ -197,7 +213,9 @@ export class RenderExtensions {
           const frame = this.frame();
           await renderer.render(frame);
           if (this.closed || generation !== this.generation) return;
-          this.scene.setFrameStats(renderer.stats?.() ?? { instances: 0, drawCalls: 0, gpuBytes: 0 });
+          this.scene.setFrameStats(
+            renderer.stats?.() ?? { instances: 0, drawCalls: 0, gpuBytes: 0 },
+          );
           this.scene.completeFrame(revision, frame.plan);
           if (this.epoch !== epoch) this.scene.requestFrame();
         } catch (error) {
@@ -210,7 +228,9 @@ export class RenderExtensions {
 
   destroy(): void {
     this.closed = true;
-    try { this.removeCustom?.(); } finally {
+    try {
+      this.removeCustom?.();
+    } finally {
       this.generation++;
       this.cancel?.();
       this.transforms.clear();

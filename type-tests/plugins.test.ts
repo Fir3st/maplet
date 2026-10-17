@@ -1,11 +1,35 @@
-import { createMap, fullscreenMode, gestureGuard, heatmap, type FullscreenApi, type GestureGuardApi, type GestureModifier, type HeatmapApi, type Plugin, type PluginContext, type FramePlan, type CustomRenderer } from '@fir3st/maplet';
+import {
+  createMap,
+  fullscreenMode,
+  gestureGuard,
+  heatmap,
+  type FullscreenApi,
+  type GestureGuardApi,
+  type GestureModifier,
+  type HeatmapApi,
+  type Plugin,
+  type PluginContext,
+  type FramePlan,
+  type CustomRenderer,
+} from '@fir3st/maplet';
 
-const plugin: Plugin<{ setLabel(label: string): void }> = ({ container, signal, onCleanup, render }: PluginContext) => {
+const plugin: Plugin<{ setLabel(label: string): void }> = (context: PluginContext) => {
+  const { container, signal, render } = context;
   const element = container?.ownerDocument.createElement('span');
-  if (element) { container!.append(element); onCleanup(() => element.remove()); }
+  if (element) {
+    container!.append(element);
+    context.onCleanup(() => element.remove());
+  }
   container?.addEventListener('click', () => {}, { signal });
-  render.transform((plan: FramePlan) => ({ ...plan, draws: plan.draws.filter((draw) => draw.type !== 'tiles') }));
-  return { setLabel(label) { if (element) element.textContent = label; } };
+  render.transform((plan: FramePlan) => ({
+    ...plan,
+    draws: plan.draws.filter((draw) => draw.type !== 'tiles'),
+  }));
+  return {
+    setLabel(label) {
+      if (element) element.textContent = label;
+    },
+  };
 };
 
 export async function pluginConsumer(): Promise<void> {
@@ -16,19 +40,31 @@ export async function pluginConsumer(): Promise<void> {
   // @ts-expect-error plugin API arguments survive inference
   installed.api.setLabel(42);
   // @ts-expect-error plugins do not expose unrelated API methods
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call -- the call is the deliberate error above
   installed.api.missing();
   // @ts-expect-error plugin setup requires a function, not a class/descriptor
   map.use({ install() {} });
   const renderer: CustomRenderer = {
-    async render(frame) { const plan: FramePlan = frame.plan; void plan; },
-    async pick() { return []; },
+    render(frame) {
+      const plan: FramePlan = frame.plan;
+      void plan;
+      return Promise.resolve();
+    },
+    pick() {
+      return Promise.resolve([]);
+    },
   };
   // INPUT-09/FULLSCREEN: the built-in plugins keep their APIs through the published declarations.
-  const guard = use(gestureGuard({
-    modifier: 'control',
-    touchPointers: 2,
-    onChange: (state) => { const unlocked: boolean = state.unlocked; void unlocked; },
-  }));
+  const guard = use(
+    gestureGuard({
+      modifier: 'control',
+      touchPointers: 2,
+      onChange: (state) => {
+        const unlocked: boolean = state.unlocked;
+        void unlocked;
+      },
+    }),
+  );
   const guardApi: GestureGuardApi = guard.api;
   const modifier: GestureModifier = guardApi.modifier;
   guardApi.setModifier('meta');
@@ -52,7 +88,14 @@ export async function pluginConsumer(): Promise<void> {
   heatApi.setPoints([{ position: { lat: 50, lng: 14 } }]);
   heatApi.addPoint({ x: 0, y: 0 }, 2);
   heatApi.addPoints([{ position: [50, 14], weight: 1 }]);
-  heatApi.setOptions({ gradient: [[0, '#000'], [1, '#fff']], max: null, minOpacity: 0.1 });
+  heatApi.setOptions({
+    gradient: [
+      [0, '#000'],
+      [1, '#fff'],
+    ],
+    max: null,
+    minOpacity: 0.1,
+  });
   const heatCount: number = heatApi.count;
   void heatCount;
   heatApi.clear();
@@ -64,5 +107,7 @@ export async function pluginConsumer(): Promise<void> {
   guard.remove();
   fullscreen.remove();
   const restore = map.render.use(renderer);
-  restore(); installed.remove(); map.destroy();
+  restore();
+  installed.remove();
+  map.destroy();
 }

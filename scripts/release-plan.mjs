@@ -4,7 +4,9 @@ import { readFileSync } from 'node:fs';
 // Strict SemVer keeps package versions safe to use as tag names and filenames.
 const numeric = '(?:0|[1-9][0-9]*)';
 const identifier = `(?:${numeric}|[0-9]*[A-Za-z-][0-9A-Za-z-]*)`;
-const semver = new RegExp(`^${numeric}\\.${numeric}\\.${numeric}(?:-(${identifier}(?:\\.${identifier})*))?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$`);
+const semver = new RegExp(
+  `^${numeric}\\.${numeric}\\.${numeric}(?:-(${identifier}(?:\\.${identifier})*))?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$`,
+);
 
 export function releasePlan(version, previousVersion) {
   const match = typeof version === 'string' ? semver.exec(version) : null;
@@ -25,9 +27,11 @@ export function planForPush(previousCommit) {
   }
   const { version } = JSON.parse(readFileSync('package.json', 'utf8'));
   // An initial branch push has no previous commit.
-  const previousVersion = /^0+$/.test(previousCommit) ? undefined : JSON.parse(
-    execFileSync('git', ['show', `${previousCommit}:package.json`], { encoding: 'utf8' }),
-  ).version;
+  const previousVersion = /^0+$/.test(previousCommit)
+    ? undefined
+    : JSON.parse(
+        execFileSync('git', ['show', `${previousCommit}:package.json`], { encoding: 'utf8' }),
+      ).version;
   const plan = releasePlan(version, previousVersion);
   // A build fix after a failed version bump must still release that version.
   // Full-history CI checkouts include tags; publication remains idempotent.

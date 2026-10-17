@@ -37,8 +37,8 @@ includes the other two cities and the detail callback.
 ## Respond to a click
 
 ```ts
-points.on('click', event => {
-  map.detail.open(event.feature, { content: feature => String(feature.properties.name) });
+points.on('click', (event) => {
+  map.detail.open(event.feature, { content: (feature) => String(feature.properties.name) });
 });
 map.fitBounds(points.getBounds(), { padding: 40, maxZoom: 8 });
 ```

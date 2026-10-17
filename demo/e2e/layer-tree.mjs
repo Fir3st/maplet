@@ -38,20 +38,40 @@ export async function layerTree({ session, expect, options }) {
       imagePixel: await map.debug.samplePixel(map.positionToScreen({ x: -0.6, y: -0.3 })) };
   })()`);
   const rgb = (pixel) => [pixel.r, pixel.g, pixel.b].join(',');
-  expect.equal(start.roots.join(','), 'base,places', 'ordinary map additions use one base underneath explicit layers');
-  expect.equal(start.controls.join(','), 'base,places', 'layer controls show root layers in painter order, not internal collections');
-  expect.equal(rgb(start.pointPixel), '37,99,235', 'nested points render above the base created later');
+  expect.equal(
+    start.roots.join(','),
+    'base,places',
+    'ordinary map additions use one base underneath explicit layers',
+  );
+  expect.equal(
+    start.controls.join(','),
+    'base,places',
+    'layer controls show root layers in painter order, not internal collections',
+  );
+  expect.equal(
+    rgb(start.pointPixel),
+    '37,99,235',
+    'nested points render above the base created later',
+  );
   expect.equal(rgb(start.linePixel), '22,163,74', 'the same logical layer renders lines');
   expect.equal(rgb(start.polygonPixel), '249,115,22', 'the same logical layer renders polygons');
   expect.equal(rgb(start.imagePixel), '139,92,246', 'the same logical layer renders image media');
   await session.move(start.center.x, start.center.y);
   await session.click(start.center.x, start.center.y);
   await session.waitFor('window.__tree.clicks.length === 5', 5000, 'nested click bubbling');
-  expect.equal((await session.evaluate('window.__tree.clicks')).join(','), 'object,collection,local,places,map', 'events bubble through every actual ancestor');
+  expect.equal(
+    (await session.evaluate('window.__tree.clicks')).join(','),
+    'object,collection,local,places,map',
+    'events bubble through every actual ancestor',
+  );
   await session.evaluate('window.__tree.clicks.length = 0; window.__tree.stop = true');
   await session.click(start.center.x, start.center.y);
   await session.waitFor('window.__tree.clicks.length === 4', 5000, 'stopped nested click');
-  expect.equal((await session.evaluate('window.__tree.clicks')).join(','), 'object,collection,local,places', 'ancestor stopPropagation prevents map delivery');
+  expect.equal(
+    (await session.evaluate('window.__tree.clicks')).join(','),
+    'object,collection,local,places',
+    'ancestor stopPropagation prevents map delivery',
+  );
   await session.click(start.checkbox.x, start.checkbox.y);
   const hidden = await session.evaluate(`(async () => {
     const { map, local, places, points } = window.__tree;
@@ -60,7 +80,10 @@ export async function layerTree({ session, expect, options }) {
     return { visible: places.isVisible(), childVisible: local.isVisible(), count: points.count(),
       pixel: await map.debug.samplePixel(center), hit: (await map.query.rendered(center))[0]?.feature.id };
   })()`);
-  expect.ok(!hidden.visible && !hidden.childVisible, 'real layer-control input hides all descendants');
+  expect.ok(
+    !hidden.visible && !hidden.childVisible,
+    'real layer-control input hides all descendants',
+  );
   expect.equal(rgb(hidden.pixel), '220,38,38', 'hiding the whole subtree reveals the base');
   expect.equal(hidden.hit, 'base-point', 'hidden descendants cannot intercept picking');
   expect.equal(hidden.count, 1, 'hiding the subtree retains its data');
@@ -75,8 +98,16 @@ export async function layerTree({ session, expect, options }) {
     const above = await map.debug.samplePixel(map.positionToScreen({ x: 0, y: 0 }));
     return { below, above };
   })()`);
-  expect.equal(rgb(reordered.below), '220,38,38', 'moving a logical layer reorders its complete subtree');
-  expect.equal(rgb(reordered.above), '37,99,235', 'restoring subtree order restores the visible nested point');
+  expect.equal(
+    rgb(reordered.below),
+    '220,38,38',
+    'moving a logical layer reorders its complete subtree',
+  );
+  expect.equal(
+    rgb(reordered.above),
+    '37,99,235',
+    'restoring subtree order restores the visible nested point',
+  );
   const cleanup = await session.evaluate(`(async () => {
     const { map, places, local, points, lines, polygons, image } = window.__tree;
     const rescue = map.addLayer({ id: 'rescue' });
@@ -93,8 +124,15 @@ export async function layerTree({ session, expect, options }) {
     return { stale, released, retained, movedPixel, sources: map.data.list().length,
       finalPixel: await map.debug.samplePixel(map.positionToScreen({ x: 0, y: 0 })) };
   })()`);
-  expect.ok(cleanup.stale && cleanup.released && cleanup.retained, 'removal releases only current descendants and invalidates the old receiver');
+  expect.ok(
+    cleanup.stale && cleanup.released && cleanup.retained,
+    'removal releases only current descendants and invalidates the old receiver',
+  );
   expect.equal(rgb(cleanup.movedPixel), '37,99,235', 'a moved-out nested layer stays rendered');
   expect.equal(cleanup.sources, 1, 'final subtree cleanup leaves only the independent base source');
-  expect.equal(rgb(cleanup.finalPixel), '220,38,38', 'removing the moved subtree restores the independent base');
+  expect.equal(
+    rgb(cleanup.finalPixel),
+    '220,38,38',
+    'removing the moved subtree restores the independent base',
+  );
 }

@@ -24,7 +24,7 @@ layer.addLabels(points.source, {
   },
 });
 
-map.state.set(points.get('site-07').ref, { disabled: true });   // filtered out
+map.state.set(points.get('site-07').ref, { disabled: true }); // filtered out
 points.on('click', (event) => {
   points.get(event.feature.id)?.select();
   map.detail.open(event.feature, { content: detailNode });

@@ -19,7 +19,8 @@ test('MAP-05: invalid input is rejected before a handle is published', async () 
   await expectError(
     createMap(null, {
       renderer: 'none',
-      center: { lat: 0, lng: 0 }, zoom: Number.NaN,
+      center: { lat: 0, lng: 0 },
+      zoom: Number.NaN,
     }),
     'invalid-argument',
   );
@@ -27,7 +28,8 @@ test('MAP-05: invalid input is rejected before a handle is published', async () 
     createMap(null, {
       renderer: 'none',
       projection: {} as never,
-      center: { lat: 0, lng: 0 }, zoom: 2,
+      center: { lat: 0, lng: 0 },
+      zoom: 2,
     }),
     'invalid-argument',
   );
@@ -78,19 +80,22 @@ test('REF-01/02/03: handles survive transparent proxies and detached methods', a
   const nested = new Proxy(wrapped, {});
   const source = nested.data.vector({ id: 's' });
   const wrappedSource = new Proxy(source, {});
-  wrappedSource.features.add({ id: 'a', geometry: { type: 'point', position: { lat: 50, lng: 14 } } });
+  wrappedSource.features.add({
+    id: 'a',
+    geometry: { type: 'point', position: { lat: 50, lng: 14 } },
+  });
   assert.equal(wrappedSource.features.get('a')?.ref.id, 'a');
 
-  const set = nested.setView;
+  const set = nested.setView.bind(nested);
   const commit = set({ zoom: 9 });
   assert.ok(commit.revision > 0);
   assert.equal(nested.getView().zoom, 9);
 
-  const add = wrappedSource.features.add;
+  const add = wrappedSource.features.add.bind(wrappedSource.features);
   add({ id: 'b', geometry: { type: 'point', position: { lat: 51, lng: 15 } } });
   assert.equal(wrappedSource.features.count(), 2);
 
-  const remove = wrappedSource.features.remove;
+  const remove = wrappedSource.features.remove.bind(wrappedSource.features);
   remove('a');
   assert.equal(wrappedSource.features.has('a'), false);
 
@@ -159,7 +164,10 @@ test('REF-07: 500k features without per-feature handles or listeners', async () 
   for (let i = 0; i < items.length; i++) {
     items[i] = {
       id: i,
-      geometry: { type: 'point', position: { lat: 50 + (i % 100) / 1000, lng: 14 + (i % 1000) / 10000 } },
+      geometry: {
+        type: 'point',
+        position: { lat: 50 + (i % 100) / 1000, lng: 14 + (i % 1000) / 10000 },
+      },
     };
   }
   const start = Date.now();
@@ -189,8 +197,9 @@ test('VIEW-01: fractional zoom round trips and inputs are not mutated', async ()
 
 test('VIEW-02: fit uses the largest allowed zoom with asymmetric padding', async () => {
   const { map } = await makeMap({
-    center: { lat: 50, lng: 14 }, zoom: 5
-});
+    center: { lat: 50, lng: 14 },
+    zoom: 5,
+  });
   const bounds = { southwest: { lat: 49, lng: 13 }, northeast: { lat: 51, lng: 16 } };
   const padding = { top: 40, right: 120, bottom: 20, left: 20 };
   map.fitBounds(bounds, { padding });
@@ -205,7 +214,10 @@ test('VIEW-02: fit uses the largest allowed zoom with asymmetric padding', async
     Math.log2(availableHeight / (sw.y - ne.y)),
   );
   const snapshot = map.getView();
-  assert.ok(Math.abs(snapshot.zoom - expectedZoom) < 1e-9, `zoom ${snapshot.zoom} vs ${expectedZoom}`);
+  assert.ok(
+    Math.abs(snapshot.zoom - expectedZoom) < 1e-9,
+    `zoom ${snapshot.zoom} vs ${expectedZoom}`,
+  );
   for (const corner of [
     bounds.southwest,
     bounds.northeast,
@@ -213,15 +225,24 @@ test('VIEW-02: fit uses the largest allowed zoom with asymmetric padding', async
     { lat: bounds.northeast.lat, lng: bounds.southwest.lng },
   ]) {
     const screen = map.positionToScreen(corner);
-    assert.ok(screen.x >= padding.left - 1e-6 && screen.x <= 800 - padding.right + 1e-6, `x ${screen.x}`);
-    assert.ok(screen.y >= padding.top - 1e-6 && screen.y <= 600 - padding.bottom + 1e-6, `y ${screen.y}`);
+    assert.ok(
+      screen.x >= padding.left - 1e-6 && screen.x <= 800 - padding.right + 1e-6,
+      `x ${screen.x}`,
+    );
+    assert.ok(
+      screen.y >= padding.top - 1e-6 && screen.y <= 600 - padding.bottom + 1e-6,
+      `y ${screen.y}`,
+    );
   }
   map.destroy();
 });
 
 test('VIEW-03: fitting a single point centers it and respects maxZoom', async () => {
   const { map } = await makeMap();
-  map.fitBounds({ southwest: { lat: 50, lng: 14 }, northeast: { lat: 50, lng: 14 } }, { maxZoom: 12 });
+  map.fitBounds(
+    { southwest: { lat: 50, lng: 14 }, northeast: { lat: 50, lng: 14 } },
+    { maxZoom: 12 },
+  );
   const snapshot = map.getView();
   assert.equal(snapshot.zoom, 12);
   assert.ok('lat' in snapshot.center && Math.abs(snapshot.center.lat - 50) < 1e-9);
@@ -233,8 +254,8 @@ test('VIEW-04: zoom limits and maxBounds clamp every published view', async () =
   const { map } = await makeMap({
     minZoom: 4,
     maxZoom: 10,
-    maxBounds: { southwest: { lat: 45, lng: 5 }, northeast: { lat: 55, lng: 25 } }
-});
+    maxBounds: { southwest: { lat: 45, lng: 5 }, northeast: { lat: 55, lng: 25 } },
+  });
   map.setView({ zoom: 2 });
   assert.equal(map.getView().zoom, 4);
   map.setView({ zoom: 100 });
@@ -316,7 +337,10 @@ test('VIEW-10: panning changes the view revision, not the data revision', async 
   for (let i = 0; i < items.length; i++) {
     items[i] = {
       id: i,
-      geometry: { type: 'point', position: { lat: 50 + (i % 200) / 2000, lng: 14 + (i % 500) / 5000 } },
+      geometry: {
+        type: 'point',
+        position: { lat: 50 + (i % 200) / 2000, lng: 14 + (i % 500) / 5000 },
+      },
     };
   }
   await source.features.replace(items);

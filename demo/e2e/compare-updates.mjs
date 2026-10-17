@@ -1,6 +1,9 @@
 /** Verify and time single-feature mutations in the full 500k scene. */
 export async function compareUpdates({ session, expect }) {
-  expect.ok(await session.evaluate('window.__compareCheckResult.pass'), 'rendering prerequisites pass');
+  expect.ok(
+    await session.evaluate('window.__compareCheckResult.pass'),
+    'rendering prerequisites pass',
+  );
   const detail = await session.evaluate(`(async () => {
     const { map, engine, points, source } = window.__comparison;
     const side = Math.ceil(Math.sqrt(500000));
@@ -82,6 +85,9 @@ export async function compareUpdates({ session, expect }) {
       summary: Object.fromEntries(['hide', 'show', 'color', 'position'].map(operation => [operation,
         { api: summarize(operation, 'apiMs'), toFrame: summarize(operation, 'toFrameMs') }])), samples };
   })()`);
-  expect.ok(detail.pass, 'all 20 single-point changes preserve data and produce the expected pixels');
+  expect.ok(
+    detail.pass,
+    'all 20 single-point changes preserve data and produce the expected pixels',
+  );
   console.log('\n    updates-result — ' + JSON.stringify(detail));
 }

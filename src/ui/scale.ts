@@ -24,8 +24,7 @@ export interface ScaleStep {
 /** Earth meters per CSS pixel at the given zoom and latitude (geographic CRS). */
 export function metersPerPixel(zoom: number, latitudeDeg: number): number {
   return (
-    ((EARTH_CIRCUMFERENCE_M / WORLD_UNITS) * Math.cos((latitudeDeg * Math.PI) / 180)) /
-    2 ** zoom
+    ((EARTH_CIRCUMFERENCE_M / WORLD_UNITS) * Math.cos((latitudeDeg * Math.PI) / 180)) / 2 ** zoom
   );
 }
 

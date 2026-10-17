@@ -22,15 +22,30 @@ test('IO-05: a point batch maps vertices to features with ids, altitudes and pro
     geographic,
   );
   assert.equal(features.length, 3);
-  const first = features[0] as unknown as { id?: unknown; geometry: { position: Record<string, number> }; properties?: Record<string, unknown> };
+  const first = features[0] as unknown as {
+    id?: unknown;
+    geometry: { position: Record<string, number> };
+    properties?: Record<string, unknown>;
+  };
   assert.equal(first.id, 'a');
   assert.deepEqual(first.geometry.position, { lng: 14, lat: 50, altitude: 100 });
   assert.deepEqual(first.properties, { name: 'A' });
-  const second = features[1] as unknown as { id?: unknown; geometry: { position: Record<string, number> }; properties?: Record<string, unknown> };
+  const second = features[1] as unknown as {
+    id?: unknown;
+    geometry: { position: Record<string, number> };
+    properties?: Record<string, unknown>;
+  };
   assert.equal(second.id, undefined, 'an undefined id entry keeps the generated-id policy');
-  assert.deepEqual(second.geometry.position, { lng: 14.1, lat: 50.1 }, 'NaN altitude means no altitude');
+  assert.deepEqual(
+    second.geometry.position,
+    { lng: 14.1, lat: 50.1 },
+    'NaN altitude means no altitude',
+  );
   assert.equal(second.properties, undefined);
-  const third = features[2] as unknown as { id?: unknown; geometry: { position: Record<string, number> } };
+  const third = features[2] as unknown as {
+    id?: unknown;
+    geometry: { position: Record<string, number> };
+  };
   assert.equal(third.id, 7);
   assert.equal(third.geometry.position.altitude, 300);
 });
@@ -41,7 +56,8 @@ test('IO-05: a planar point batch uses { x, y } positions and Float32 input', ()
     { positionKind: 'planar' },
   );
   assert.equal(features.length, 1);
-  const geometry = (features[0] as unknown as { geometry: { position: { x: number; y: number } } }).geometry;
+  const geometry = (features[0] as unknown as { geometry: { position: { x: number; y: number } } })
+    .geometry;
   assert.deepEqual(geometry.position, { x: -40, y: 90 });
 });
 
@@ -53,8 +69,14 @@ test('IO-05: line string parts become lineString or multiLineString features', (
     geographic,
   );
   assert.equal(perPart.length, 2, 'without featurePartOffsets every part is one feature');
-  assert.equal((perPart[0] as unknown as { geometry: { type: string } }).geometry.type, 'lineString');
-  assert.equal((perPart[1] as unknown as { geometry: { type: string } }).geometry.type, 'lineString');
+  assert.equal(
+    (perPart[0] as unknown as { geometry: { type: string } }).geometry.type,
+    'lineString',
+  );
+  assert.equal(
+    (perPart[1] as unknown as { geometry: { type: string } }).geometry.type,
+    'lineString',
+  );
 
   const oneFeature = columnarToFeatures(
     {
@@ -67,16 +89,14 @@ test('IO-05: line string parts become lineString or multiLineString features', (
     geographic,
   );
   assert.equal(oneFeature.length, 1);
-  const geometry = (oneFeature[0] as unknown as { geometry: { type: string; lines: unknown[] } }).geometry;
+  const geometry = (oneFeature[0] as unknown as { geometry: { type: string; lines: unknown[] } })
+    .geometry;
   assert.equal(geometry.type, 'multiLineString');
   assert.equal(geometry.lines.length, 2);
 });
 
 test('IO-05: polygon parts are rings; the first ring is the exterior, the rest are holes', () => {
-  const positions = Float64Array.of(
-    0, 0, 10, 0, 10, 10, 0, 10,
-    2, 2, 2, 4, 4, 4, 4, 2,
-  );
+  const positions = Float64Array.of(0, 0, 10, 0, 10, 10, 0, 10, 2, 2, 2, 4, 4, 4, 4, 2);
   const rings = Int32Array.of(0, 4, 8);
   const features = columnarToFeatures(
     {
@@ -89,7 +109,8 @@ test('IO-05: polygon parts are rings; the first ring is the exterior, the rest a
     geographic,
   );
   assert.equal(features.length, 1);
-  const geometry = (features[0] as unknown as { geometry: { type: string; rings: unknown[][] } }).geometry;
+  const geometry = (features[0] as unknown as { geometry: { type: string; rings: unknown[][] } })
+    .geometry;
   assert.equal(geometry.type, 'polygon');
   assert.equal(geometry.rings.length, 2);
   assert.equal(geometry.rings[0]?.length, 4);
@@ -97,53 +118,152 @@ test('IO-05: polygon parts are rings; the first ring is the exterior, the rest a
 
 test('IO-05: malformed batches are rejected as import-invalid before anything is built', () => {
   // Never a typed array.
-  importInvalid(() => columnarToFeatures({ kind: 'point', positions: [1, 2] as never }, geographic));
+  importInvalid(() =>
+    columnarToFeatures({ kind: 'point', positions: [1, 2] as never }, geographic),
+  );
   // Odd number of coordinates.
-  importInvalid(() => columnarToFeatures({ kind: 'point', positions: Float64Array.of(1, 2, 3) }, geographic));
+  importInvalid(() =>
+    columnarToFeatures({ kind: 'point', positions: Float64Array.of(1, 2, 3) }, geographic),
+  );
   // Non-finite coordinates.
-  importInvalid(() => columnarToFeatures({ kind: 'point', positions: Float64Array.of(1, Number.NaN) }, geographic));
-  importInvalid(() => columnarToFeatures({ kind: 'point', positions: Float64Array.of(1, Number.POSITIVE_INFINITY) }, geographic));
+  importInvalid(() =>
+    columnarToFeatures({ kind: 'point', positions: Float64Array.of(1, Number.NaN) }, geographic),
+  );
+  importInvalid(() =>
+    columnarToFeatures(
+      { kind: 'point', positions: Float64Array.of(1, Number.POSITIVE_INFINITY) },
+      geographic,
+    ),
+  );
   // Altitudes: wrong type, wrong length, planar CRS.
-  importInvalid(() => columnarToFeatures({ kind: 'point', positions: Float64Array.of(1, 2), altitudes: [1] as never }, geographic));
-  importInvalid(() => columnarToFeatures({ kind: 'point', positions: Float64Array.of(1, 2, 3, 4), altitudes: Float64Array.of(1) }, geographic));
-  importInvalid(() => columnarToFeatures({ kind: 'point', positions: Float64Array.of(1, 2), altitudes: Float64Array.of(1) }, { positionKind: 'planar' }));
+  importInvalid(() =>
+    columnarToFeatures(
+      { kind: 'point', positions: Float64Array.of(1, 2), altitudes: [1] as never },
+      geographic,
+    ),
+  );
+  importInvalid(() =>
+    columnarToFeatures(
+      { kind: 'point', positions: Float64Array.of(1, 2, 3, 4), altitudes: Float64Array.of(1) },
+      geographic,
+    ),
+  );
+  importInvalid(() =>
+    columnarToFeatures(
+      { kind: 'point', positions: Float64Array.of(1, 2), altitudes: Float64Array.of(1) },
+      { positionKind: 'planar' },
+    ),
+  );
   // A point batch must not carry offsets.
   importInvalid(() =>
     columnarToFeatures(
-      { kind: 'point', positions: Float64Array.of(1, 2), partOffsets: Int32Array.of(0, 1) } as never,
+      {
+        kind: 'point',
+        positions: Float64Array.of(1, 2),
+        partOffsets: Int32Array.of(0, 1),
+      } as never,
       geographic,
     ),
   );
   // Offsets: wrong type, degenerate, not anchored at 0, not ending at the vertex count.
-  importInvalid(() => columnarToFeatures({ kind: 'lineString', positions: Float64Array.of(0, 0, 1, 1), partOffsets: [0, 2] as never }, geographic));
-  importInvalid(() => columnarToFeatures({ kind: 'lineString', positions: Float64Array.of(0, 0, 1, 1), partOffsets: Int32Array.of(0) }, geographic));
-  importInvalid(() => columnarToFeatures({ kind: 'lineString', positions: Float64Array.of(0, 0, 1, 1), partOffsets: Int32Array.of(1, 2) }, geographic));
+  importInvalid(() =>
+    columnarToFeatures(
+      { kind: 'lineString', positions: Float64Array.of(0, 0, 1, 1), partOffsets: [0, 2] as never },
+      geographic,
+    ),
+  );
+  importInvalid(() =>
+    columnarToFeatures(
+      { kind: 'lineString', positions: Float64Array.of(0, 0, 1, 1), partOffsets: Int32Array.of(0) },
+      geographic,
+    ),
+  );
+  importInvalid(() =>
+    columnarToFeatures(
+      {
+        kind: 'lineString',
+        positions: Float64Array.of(0, 0, 1, 1),
+        partOffsets: Int32Array.of(1, 2),
+      },
+      geographic,
+    ),
+  );
   // A last index beyond the buffer is rejected instead of being read (no OOB read).
-  importInvalid(() => columnarToFeatures({ kind: 'lineString', positions: Float64Array.of(0, 0, 1, 1), partOffsets: Int32Array.of(0, 9) }, geographic));
-  importInvalid(() => columnarToFeatures({ kind: 'lineString', positions: Float64Array.of(0, 0, 1, 1), partOffsets: Int32Array.of(0, 2, 1, 2) }, geographic));
+  importInvalid(() =>
+    columnarToFeatures(
+      {
+        kind: 'lineString',
+        positions: Float64Array.of(0, 0, 1, 1),
+        partOffsets: Int32Array.of(0, 9),
+      },
+      geographic,
+    ),
+  );
+  importInvalid(() =>
+    columnarToFeatures(
+      {
+        kind: 'lineString',
+        positions: Float64Array.of(0, 0, 1, 1),
+        partOffsets: Int32Array.of(0, 2, 1, 2),
+      },
+      geographic,
+    ),
+  );
   // featurePartOffsets must anchor to the part count.
   importInvalid(() =>
     columnarToFeatures(
-      { kind: 'polygon', positions: Float64Array.of(0, 0, 1, 0, 1, 1), partOffsets: Int32Array.of(0, 3), featurePartOffsets: Int32Array.of(0, 5) },
+      {
+        kind: 'polygon',
+        positions: Float64Array.of(0, 0, 1, 0, 1, 1),
+        partOffsets: Int32Array.of(0, 3),
+        featurePartOffsets: Int32Array.of(0, 5),
+      },
       geographic,
     ),
   );
   // ids/properties must hold exactly one entry per feature.
-  importInvalid(() => columnarToFeatures({ kind: 'point', positions: Float64Array.of(1, 2, 3, 4), ids: ['only-one'] }, geographic));
-  importInvalid(() => columnarToFeatures({ kind: 'point', positions: Float64Array.of(1, 2), properties: [1] as never }, geographic));
-  importInvalid(() => columnarToFeatures({ kind: 'point', positions: Float64Array.of(1, 2), properties: [{}, {}] }, geographic));
+  importInvalid(() =>
+    columnarToFeatures(
+      { kind: 'point', positions: Float64Array.of(1, 2, 3, 4), ids: ['only-one'] },
+      geographic,
+    ),
+  );
+  importInvalid(() =>
+    columnarToFeatures(
+      { kind: 'point', positions: Float64Array.of(1, 2), properties: [1] as never },
+      geographic,
+    ),
+  );
+  importInvalid(() =>
+    columnarToFeatures(
+      { kind: 'point', positions: Float64Array.of(1, 2), properties: [{}, {}] },
+      geographic,
+    ),
+  );
   // Numeric ids must stay exactly representable (64-bit rule).
-  importInvalid(() => columnarToFeatures({ kind: 'point', positions: Float64Array.of(1, 2), ids: [2 ** 53] }, geographic));
-  importInvalid(() => columnarToFeatures({ kind: 'point', positions: Float64Array.of(1, 2), ids: [1.5] }, geographic));
+  importInvalid(() =>
+    columnarToFeatures(
+      { kind: 'point', positions: Float64Array.of(1, 2), ids: [2 ** 53] },
+      geographic,
+    ),
+  );
+  importInvalid(() =>
+    columnarToFeatures({ kind: 'point', positions: Float64Array.of(1, 2), ids: [1.5] }, geographic),
+  );
   // Unknown kinds.
-  importInvalid(() => columnarToFeatures({ kind: 'circle', positions: Float64Array.of(1, 2) } as never, geographic));
+  importInvalid(() =>
+    columnarToFeatures({ kind: 'circle', positions: Float64Array.of(1, 2) } as never, geographic),
+  );
 });
 
 test('IO-05: an empty point batch is a valid empty input; parts batches need one part', () => {
   const features = columnarToFeatures({ kind: 'point', positions: Float64Array.of() }, geographic);
   assert.equal(features.length, 0);
   importInvalid(() =>
-    columnarToFeatures({ kind: 'polygon', positions: Float64Array.of(), partOffsets: Int32Array.of(0, 0) }, geographic),
+    columnarToFeatures(
+      { kind: 'polygon', positions: Float64Array.of(), partOffsets: Int32Array.of(0, 0) },
+      geographic,
+    ),
   );
 });
 

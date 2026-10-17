@@ -86,7 +86,7 @@ const defaultFetch: WmsCapabilitiesFetch = (url, init) => {
   if (typeof fetch !== 'function') {
     fail('environment', 'WMS capabilities require a fetch() implementation', { url });
   }
-  return fetch(url, { signal: init.signal }) as unknown as Promise<WmsCapabilitiesFetchResponse>;
+  return fetch(url, { signal: init.signal });
 };
 
 export async function fetchWmsCapabilities(
@@ -114,7 +114,9 @@ export async function fetchWmsCapabilities(
   try {
     text = await response.text();
   } catch (error) {
-    fail('import-invalid', `WMS GetCapabilities response could not be read: ${errorText(error)}`, { url });
+    fail('import-invalid', `WMS GetCapabilities response could not be read: ${errorText(error)}`, {
+      url,
+    });
   }
   return parseWmsCapabilities(text);
 }
@@ -135,25 +137,34 @@ interface XmlNode {
 }
 
 const MAX_DEPTH = 64;
-const ENTITIES: Readonly<Record<string, string>> = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'" };
+const ENTITIES: Readonly<Record<string, string>> = {
+  amp: '&',
+  lt: '<',
+  gt: '>',
+  quot: '"',
+  apos: "'",
+};
 
 function decodeEntities(value: string): string {
   if (!value.includes('&')) return value;
-  return value.replace(/&(#[0-9]+|#[xX][0-9a-fA-F]+|[A-Za-z][A-Za-z0-9]*);/g, (match, body: string) => {
-    if (body.startsWith('#')) {
-      const code =
-        body[1] === 'x' || body[1] === 'X'
-          ? Number.parseInt(body.slice(2), 16)
-          : Number.parseInt(body.slice(1), 10);
-      if (!Number.isSafeInteger(code) || code < 0 || code > 0x10ffff) return match;
-      try {
-        return String.fromCodePoint(code);
-      } catch {
-        return match;
+  return value.replace(
+    /&(#[0-9]+|#[xX][0-9a-fA-F]+|[A-Za-z][A-Za-z0-9]*);/g,
+    (match, body: string) => {
+      if (body.startsWith('#')) {
+        const code =
+          body[1] === 'x' || body[1] === 'X'
+            ? Number.parseInt(body.slice(2), 16)
+            : Number.parseInt(body.slice(1), 10);
+        if (!Number.isSafeInteger(code) || code < 0 || code > 0x10ffff) return match;
+        try {
+          return String.fromCodePoint(code);
+        } catch {
+          return match;
+        }
       }
-    }
-    return ENTITIES[body] ?? match;
-  });
+      return ENTITIES[body] ?? match;
+    },
+  );
 }
 
 /**
@@ -208,8 +219,16 @@ function parseXml(source: string): XmlNode {
     const start = index;
     while (index < length) {
       const character = source[index]!;
-      if (character === ' ' || character === '\t' || character === '\n' || character === '\r' ||
-          character === '/' || character === '>' || character === '=') break;
+      if (
+        character === ' ' ||
+        character === '\t' ||
+        character === '\n' ||
+        character === '\r' ||
+        character === '/' ||
+        character === '>' ||
+        character === '='
+      )
+        break;
       index++;
     }
     if (index === start) invalid('expected a name');
@@ -272,7 +291,8 @@ function parseXml(source: string): XmlNode {
         skipSpace();
         if (source[index] !== '>') invalid('expected ">" after a closing tag');
         index++;
-        if (closing !== node.name) invalid(`mismatched closing tag </${closing}> for <${node.name}>`);
+        if (closing !== node.name)
+          invalid(`mismatched closing tag </${closing}> for <${node.name}>`);
         return node;
       }
       if (source.startsWith('<!--', index)) {
@@ -359,7 +379,12 @@ function normalizeCrs(value: string): string | undefined {
   return text;
 }
 
-function usableBounds(west: number, east: number, north: number, south: number): GeoBounds | undefined {
+function usableBounds(
+  west: number,
+  east: number,
+  north: number,
+  south: number,
+): GeoBounds | undefined {
   if (!(east > west && north > south)) return undefined;
   return { southwest: { lat: south, lng: west }, northeast: { lat: north, lng: east } };
 }
@@ -377,7 +402,12 @@ function layerBounds(element: XmlNode): GeoBounds | undefined {
   }
   const latLon = child(element, 'latlonboundingbox');
   if (latLon) {
-    const values = numbers([latLon.attributes['minx'], latLon.attributes['miny'], latLon.attributes['maxx'], latLon.attributes['maxy']]);
+    const values = numbers([
+      latLon.attributes['minx'],
+      latLon.attributes['miny'],
+      latLon.attributes['maxx'],
+      latLon.attributes['maxy'],
+    ]);
     if (values) return usableBounds(values[0]!, values[2]!, values[3]!, values[1]!);
   }
   return undefined;
@@ -406,7 +436,9 @@ function layerNode(element: XmlNode, inherited: LayerContext): WmsLayerNode {
       ? inherited.queryable
       : queryableAttribute === '1' || queryableAttribute.toLowerCase() === 'true';
   const bounds = layerBounds(element) ?? inherited.bounds;
-  const children = childList(element, 'layer').map((nested) => layerNode(nested, { crs, queryable, bounds }));
+  const children = childList(element, 'layer').map((nested) =>
+    layerNode(nested, { crs, queryable, bounds }),
+  );
   return {
     ...(name ? { name } : {}),
     ...(title ? { title } : {}),
@@ -431,7 +463,9 @@ export function parseWmsCapabilities(source: string): WmsCapabilities {
   assertArgument(typeof source === 'string' && source.length > 0, 'capabilities text is required');
   const root = parseXml(source);
   if (root.name !== 'wms_capabilities' && root.name !== 'wmt_ms_capabilities') {
-    fail('import-invalid', `not a WMS capabilities document (root <${root.name}>)`, { root: root.name });
+    fail('import-invalid', `not a WMS capabilities document (root <${root.name}>)`, {
+      root: root.name,
+    });
   }
   const rawVersion = (root.attributes['version'] ?? '').trim();
   if (rawVersion !== '1.1.1' && rawVersion !== '1.3.0') {

@@ -15,7 +15,8 @@ the whole dataset.
 import { createMap } from '@fir3st/maplet';
 
 const map = await createMap('map', {
-  center: [50.08, 14.44], zoom: 8,
+  center: [50.08, 14.44],
+  zoom: 8,
   controls: ['zoom'],
 });
 

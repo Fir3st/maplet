@@ -536,7 +536,8 @@ export class WebGpuBackend implements MapBackend {
     });
     this.notes.push(`webgpu ${this.format}`);
     this.device.onuncapturederror = (event) => {
-      const message = (event as { error?: { message?: string } }).error?.message ?? 'unknown WebGPU error';
+      const message =
+        (event as { error?: { message?: string } }).error?.message ?? 'unknown WebGPU error';
       this.notes.push(message);
       console.error(`maplet webgpu: ${message}`);
     };
@@ -548,7 +549,9 @@ export class WebGpuBackend implements MapBackend {
     } catch {
       // Adapter info is optional.
     }
-    this.device.lost.then((info) => {
+    // The promise resolves when the device is lost; the callback handles it, so
+    // no rejection path is expected and the handle is intentionally discarded.
+    void this.device.lost.then((info) => {
       this.noteLost(`device lost: ${info.message || info.reason}`);
     });
     this.resize(options.width, options.height);
@@ -601,12 +604,16 @@ export class WebGpuBackend implements MapBackend {
     const run = (): void => {
       this.rafHandle = null;
       if (this.destroyed || this.lost) return;
-      try { this.renderNow(scene); } catch (error) { scene.failFrame(error); }
+      try {
+        this.renderNow(scene);
+      } catch (error) {
+        scene.failFrame(error);
+      }
     };
     if (raf) {
       this.rafHandle = raf(run);
     } else {
-      this.rafHandle = setTimeout(run, 16) as unknown as number;
+      this.rafHandle = setTimeout(run, 16);
     }
   }
 
@@ -666,7 +673,8 @@ export class WebGpuBackend implements MapBackend {
     for (const entry of this.mediaTextures.values()) {
       if (entry.texture) bytes += entry.width * entry.height * 4;
     }
-    for (const page of this.atlasTextures.keys()) bytes += page.canvas.width * page.canvas.height * 4;
+    for (const page of this.atlasTextures.keys())
+      bytes += page.canvas.width * page.canvas.height * 4;
     for (const data of this.symbolBuffers.keys()) bytes += data.byteLength;
     if (this.plan) {
       for (const draw of this.plan.draws) {
@@ -683,11 +691,19 @@ export class WebGpuBackend implements MapBackend {
    */
   private beginUniformFrame(plan: FramePlan, passes = 1): void {
     this.resetVertexPages();
-    const live = new Set(plan.draws.flatMap((draw) => draw.type === 'batch' ? [draw.batch.data] : []));
-    const liveIndices = new Set(plan.draws.flatMap((draw) => draw.type === 'batch' && draw.batch.indices ? [draw.batch.indices] : []));
-    for (const [indices, buffer] of this.indexBuffers) if (!liveIndices.has(indices)) {
-      this.retiredBuffers.push(buffer); this.indexBuffers.delete(indices);
-    }
+    const live = new Set(
+      plan.draws.flatMap((draw) => (draw.type === 'batch' ? [draw.batch.data] : [])),
+    );
+    const liveIndices = new Set(
+      plan.draws.flatMap((draw) =>
+        draw.type === 'batch' && draw.batch.indices ? [draw.batch.indices] : [],
+      ),
+    );
+    for (const [indices, buffer] of this.indexBuffers)
+      if (!liveIndices.has(indices)) {
+        this.retiredBuffers.push(buffer);
+        this.indexBuffers.delete(indices);
+      }
     for (const [data, entry] of this.batchBuffers) {
       if (live.has(data)) continue;
       this.retiredBuffers.push(entry.buffer);
@@ -850,7 +866,9 @@ export class WebGpuBackend implements MapBackend {
       for (const message of info.messages) {
         if (message.type === 'error') {
           this.notes.push(`wgsl ${name}: ${message.lineNum}:${message.message}`);
-          console.error(`maplet webgpu ${name} WGSL error at line ${message.lineNum}: ${message.message}`);
+          console.error(
+            `maplet webgpu ${name} WGSL error at line ${message.lineNum}: ${message.message}`,
+          );
         }
       }
     });
@@ -999,7 +1017,10 @@ export class WebGpuBackend implements MapBackend {
     let entry = this.batchBuffers.get(batch.data);
     if (!entry) {
       entry = {
-        buffer: this.device.createBuffer({ size: Math.max(4, batch.data.byteLength), usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST }),
+        buffer: this.device.createBuffer({
+          size: Math.max(4, batch.data.byteLength),
+          usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+        }),
         version: -1,
       };
       this.batchBuffers.set(batch.data, entry);
@@ -1029,11 +1050,33 @@ export class WebGpuBackend implements MapBackend {
         continue;
       }
       if (draw.type === 'labels') {
-        this.drawSymbols(pass, this.symbols.labels(draw.labels, (family) => this.scene?.fontSignature(family) ?? 'system', this.frameCounter, draw.appearance), pickMode, 0.02, draw);
+        this.drawSymbols(
+          pass,
+          this.symbols.labels(
+            draw.labels,
+            (family) => this.scene?.fontSignature(family) ?? 'system',
+            this.frameCounter,
+            draw.appearance,
+          ),
+          pickMode,
+          0.02,
+          draw,
+        );
         continue;
       }
       if (draw.type === 'sprites') {
-        this.drawSymbols(pass, this.symbols.sprites(draw.sprites, (id) => this.scene?.assets.get(id), this.frameCounter, draw.appearance), pickMode, 0.5, draw);
+        this.drawSymbols(
+          pass,
+          this.symbols.sprites(
+            draw.sprites,
+            (id) => this.scene?.assets.get(id),
+            this.frameCounter,
+            draw.appearance,
+          ),
+          pickMode,
+          0.5,
+          draw,
+        );
         continue;
       }
       const batch = draw.batch;
@@ -1044,9 +1087,11 @@ export class WebGpuBackend implements MapBackend {
         this.drawFills(pass, batch, pickMode);
       }
     }
-    for (const [data, entry] of this.symbolBuffers) if (!this.usedSymbols.has(data)) {
-      this.retiredBuffers.push(entry.buffer); this.symbolBuffers.delete(data);
-    }
+    for (const [data, entry] of this.symbolBuffers)
+      if (!this.usedSymbols.has(data)) {
+        this.retiredBuffers.push(entry.buffer);
+        this.symbolBuffers.delete(data);
+      }
   }
 
   private drawPoints(pass: GPURenderPassEncoder, batch: PlanBatch, pickMode: boolean): void {
@@ -1089,10 +1134,15 @@ export class WebGpuBackend implements MapBackend {
     if (batch.indices) {
       let buffer = this.indexBuffers.get(batch.indices);
       if (!buffer) {
-        buffer = this.device.createBuffer({ size: Math.max(4, batch.indices.byteLength), usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST });
-        this.device.queue.writeBuffer(buffer, 0, batch.indices); this.indexBuffers.set(batch.indices, buffer);
+        buffer = this.device.createBuffer({
+          size: Math.max(4, batch.indices.byteLength),
+          usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
+        });
+        this.device.queue.writeBuffer(buffer, 0, batch.indices);
+        this.indexBuffers.set(batch.indices, buffer);
       }
-      pass.setIndexBuffer(buffer, 'uint32'); pass.drawIndexed(vertexCount);
+      pass.setIndexBuffer(buffer, 'uint32');
+      pass.drawIndexed(vertexCount);
     } else pass.draw(vertexCount);
   }
 
@@ -1108,15 +1158,15 @@ export class WebGpuBackend implements MapBackend {
     image.onload = () => {
       if (this.destroyed) return;
       if (image.naturalWidth === 0 || image.naturalHeight === 0) {
-        entry!.state = 'error';
+        entry.state = 'error';
         return;
       }
-      entry!.state = 'ready';
-      entry!.image = image;
+      entry.state = 'ready';
+      entry.image = image;
       this.scene?.requestFrame();
     };
     image.onerror = () => {
-      entry!.state = 'error';
+      entry.state = 'error';
     };
     image.src = url;
     entry.image = image;
@@ -1156,7 +1206,11 @@ export class WebGpuBackend implements MapBackend {
    * same displayed quad with the raster source's single pick record (WMS-06);
    * non-interactive layers are skipped.
    */
-  private drawTiles(pass: GPURenderPassEncoder, tiles: readonly TilePlacement[], pickMode: boolean): void {
+  private drawTiles(
+    pass: GPURenderPassEncoder,
+    tiles: readonly TilePlacement[],
+    pickMode: boolean,
+  ): void {
     if (tiles.length === 0) return;
     const bundle = this.program('raster');
     const pushQuad = (
@@ -1176,12 +1230,78 @@ export class WebGpuBackend implements MapBackend {
       flag: number,
     ): void => {
       data.push(
-        x, y, 0, 0, u0, v0, opacity, 0, pick, flag, 0, 0,
-        x + width, y, 0, 0, u1, v0, opacity, 0, pick, flag, 0, 0,
-        x, y + height, 0, 0, u0, v1, opacity, 0, pick, flag, 0, 0,
-        x + width, y, 0, 0, u1, v0, opacity, 0, pick, flag, 0, 0,
-        x + width, y + height, 0, 0, u1, v1, opacity, 0, pick, flag, 0, 0,
-        x, y + height, 0, 0, u0, v1, opacity, 0, pick, flag, 0, 0,
+        x,
+        y,
+        0,
+        0,
+        u0,
+        v0,
+        opacity,
+        0,
+        pick,
+        flag,
+        0,
+        0,
+        x + width,
+        y,
+        0,
+        0,
+        u1,
+        v0,
+        opacity,
+        0,
+        pick,
+        flag,
+        0,
+        0,
+        x,
+        y + height,
+        0,
+        0,
+        u0,
+        v1,
+        opacity,
+        0,
+        pick,
+        flag,
+        0,
+        0,
+        x + width,
+        y,
+        0,
+        0,
+        u1,
+        v0,
+        opacity,
+        0,
+        pick,
+        flag,
+        0,
+        0,
+        x + width,
+        y + height,
+        0,
+        0,
+        u1,
+        v1,
+        opacity,
+        0,
+        pick,
+        flag,
+        0,
+        0,
+        x,
+        y + height,
+        0,
+        0,
+        u0,
+        v1,
+        opacity,
+        0,
+        pick,
+        flag,
+        0,
+        0,
       );
       const last = batch[batch.length - 1];
       if (last && last.entry === entry) last.run++;
@@ -1204,7 +1324,22 @@ export class WebGpuBackend implements MapBackend {
       const flag = tile.pickIndex === undefined ? 0 : 1;
       const entry = resolve(tile.url);
       if (entry.state === 'ready') {
-        pushQuad(vertexData, draws, entry, tile.sx, tile.sy, tile.sw, tile.sh, 0, 0, 1, 1, tile.opacity, pick, flag);
+        pushQuad(
+          vertexData,
+          draws,
+          entry,
+          tile.sx,
+          tile.sy,
+          tile.sw,
+          tile.sh,
+          0,
+          0,
+          1,
+          1,
+          tile.opacity,
+          pick,
+          flag,
+        );
         continue;
       }
       allReady = false;
@@ -1262,7 +1397,22 @@ export class WebGpuBackend implements MapBackend {
         const heldEntry = this.tileCache.get(heldUrl);
         if (heldEntry && heldEntry.state === 'ready') {
           heldEntry.lastUsed = this.frameCounter;
-          pushQuad(vertexData, draws, heldEntry, tile.sx, tile.sy, tile.sw, tile.sh, 0, 0, 1, 1, tile.opacity, pick, flag);
+          pushQuad(
+            vertexData,
+            draws,
+            heldEntry,
+            tile.sx,
+            tile.sy,
+            tile.sw,
+            tile.sh,
+            0,
+            0,
+            1,
+            1,
+            tile.opacity,
+            pick,
+            flag,
+          );
         }
       }
     }
@@ -1293,7 +1443,9 @@ export class WebGpuBackend implements MapBackend {
 
   private evictTiles(): void {
     if (this.tileCache.size <= MAX_TILES) return;
-    const entries = Array.from(this.tileCache.entries()).sort((a, b) => a[1].lastUsed - b[1].lastUsed);
+    const entries = Array.from(this.tileCache.entries()).sort(
+      (a, b) => a[1].lastUsed - b[1].lastUsed,
+    );
     const removeCount = this.tileCache.size - MAX_TILES;
     for (let i = 0; i < removeCount; i++) {
       const [url, entry] = entries[i]!;
@@ -1308,7 +1460,14 @@ export class WebGpuBackend implements MapBackend {
   private mediaEntry(sourceId: string): MediaEntry {
     let entry = this.mediaTextures.get(sourceId);
     if (!entry) {
-      entry = { texture: null, element: null, width: 0, height: 0, pixelVersion: -1, lastUsed: this.frameCounter };
+      entry = {
+        texture: null,
+        element: null,
+        width: 0,
+        height: 0,
+        pixelVersion: -1,
+        lastUsed: this.frameCounter,
+      };
       this.mediaTextures.set(sourceId, entry);
     }
     return entry;
@@ -1341,7 +1500,10 @@ export class WebGpuBackend implements MapBackend {
       });
     }
     const full =
-      created || entry.element !== element || entry.width !== source.width || entry.height !== source.height;
+      created ||
+      entry.element !== element ||
+      entry.width !== source.width ||
+      entry.height !== source.height;
     const uploadWhole = (): void => {
       this.device.queue.copyExternalImageToTexture(
         { source: element },
@@ -1365,7 +1527,7 @@ export class WebGpuBackend implements MapBackend {
         const pixels = source.regionPixels(region);
         if (!pixels) break;
         this.device.queue.writeTexture(
-          { texture: entry.texture!, origin: { x: region.x, y: region.y } },
+          { texture: entry.texture, origin: { x: region.x, y: region.y } },
           pixels,
           { bytesPerRow: region.width * 4, rowsPerImage: region.height },
           { width: region.width, height: region.height },
@@ -1379,7 +1541,11 @@ export class WebGpuBackend implements MapBackend {
   }
 
   /** Media quads follow the layer order and are one pick record per source. */
-  private drawMedia(pass: GPURenderPassEncoder, media: readonly MediaPlacement[], pickMode: boolean): void {
+  private drawMedia(
+    pass: GPURenderPassEncoder,
+    media: readonly MediaPlacement[],
+    pickMode: boolean,
+  ): void {
     if (media.length === 0) return;
     const bundle = this.program('raster');
     const vertexData: number[] = [];
@@ -1401,16 +1567,95 @@ export class WebGpuBackend implements MapBackend {
         const points = quadVertices(sx + sw / 2, sy + sh / 2, sw, sh, rotate);
         for (let index = 0; index < 6; index++) {
           const uv = QUAD_UVS[index]!;
-          vertexData.push(points[index * 2]!, points[index * 2 + 1]!, 0, 0, uv[0], uv[1], opacity, 0, pick, flag, 0, 0);
+          vertexData.push(
+            points[index * 2]!,
+            points[index * 2 + 1]!,
+            0,
+            0,
+            uv[0],
+            uv[1],
+            opacity,
+            0,
+            pick,
+            flag,
+            0,
+            0,
+          );
         }
       } else {
         vertexData.push(
-          sx, sy, 0, 0, 0, 0, opacity, 0, pick, flag, 0, 0,
-          sx + sw, sy, 0, 0, 1, 0, opacity, 0, pick, flag, 0, 0,
-          sx, sy + sh, 0, 0, 0, 1, opacity, 0, pick, flag, 0, 0,
-          sx + sw, sy, 0, 0, 1, 0, opacity, 0, pick, flag, 0, 0,
-          sx + sw, sy + sh, 0, 0, 1, 1, opacity, 0, pick, flag, 0, 0,
-          sx, sy + sh, 0, 0, 0, 1, opacity, 0, pick, flag, 0, 0,
+          sx,
+          sy,
+          0,
+          0,
+          0,
+          0,
+          opacity,
+          0,
+          pick,
+          flag,
+          0,
+          0,
+          sx + sw,
+          sy,
+          0,
+          0,
+          1,
+          0,
+          opacity,
+          0,
+          pick,
+          flag,
+          0,
+          0,
+          sx,
+          sy + sh,
+          0,
+          0,
+          0,
+          1,
+          opacity,
+          0,
+          pick,
+          flag,
+          0,
+          0,
+          sx + sw,
+          sy,
+          0,
+          0,
+          1,
+          0,
+          opacity,
+          0,
+          pick,
+          flag,
+          0,
+          0,
+          sx + sw,
+          sy + sh,
+          0,
+          0,
+          1,
+          1,
+          opacity,
+          0,
+          pick,
+          flag,
+          0,
+          0,
+          sx,
+          sy + sh,
+          0,
+          0,
+          0,
+          1,
+          opacity,
+          0,
+          pick,
+          flag,
+          0,
+          0,
         );
       }
       const last = draws[draws.length - 1];
@@ -1439,7 +1684,9 @@ export class WebGpuBackend implements MapBackend {
       this.mediaTextures.delete(id);
     }
     if (this.mediaTextures.size <= MAX_MEDIA) return;
-    const entries = Array.from(this.mediaTextures.entries()).sort((a, b) => a[1].lastUsed - b[1].lastUsed);
+    const entries = Array.from(this.mediaTextures.entries()).sort(
+      (a, b) => a[1].lastUsed - b[1].lastUsed,
+    );
     const removeCount = this.mediaTextures.size - MAX_MEDIA;
     for (let i = 0; i < removeCount; i++) {
       const [id, entry] = entries[i]!;
@@ -1453,46 +1700,72 @@ export class WebGpuBackend implements MapBackend {
   private atlasTexture(page: AtlasPage): GPUTexture {
     let entry = this.atlasTextures.get(page);
     if (!entry) {
-      const texture = this.device.createTexture({ size: [page.canvas.width, page.canvas.height], format: 'rgba8unorm',
-        usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT });
-      entry = { texture, revision: -1 }; this.atlasTextures.set(page, entry);
+      const texture = this.device.createTexture({
+        size: [page.canvas.width, page.canvas.height],
+        format: 'rgba8unorm',
+        usage:
+          GPUTextureUsage.TEXTURE_BINDING |
+          GPUTextureUsage.COPY_DST |
+          GPUTextureUsage.RENDER_ATTACHMENT,
+      });
+      entry = { texture, revision: -1 };
+      this.atlasTextures.set(page, entry);
     }
     if (entry.revision !== page.revision) {
-      this.device.queue.copyExternalImageToTexture({ source: page.canvas }, { texture: entry.texture, premultipliedAlpha: false }, [page.canvas.width, page.canvas.height]);
+      this.device.queue.copyExternalImageToTexture(
+        { source: page.canvas },
+        { texture: entry.texture, premultipliedAlpha: false },
+        [page.canvas.width, page.canvas.height],
+      );
       entry.revision = page.revision;
     }
     return entry.texture;
   }
 
-  private drawSymbols(pass: GPURenderPassEncoder, mesh: SymbolMesh, pickMode: boolean, threshold: number,
-    transform: Pick<PlanBatch, 'offsetX' | 'offsetY' | 'pickBase'>): void {
+  private drawSymbols(
+    pass: GPURenderPassEncoder,
+    mesh: SymbolMesh,
+    pickMode: boolean,
+    threshold: number,
+    transform: Pick<PlanBatch, 'offsetX' | 'offsetY' | 'pickBase'>,
+  ): void {
     if (!mesh.data.length) return;
     const bundle = this.program('labels');
     let entry = this.symbolBuffers.get(mesh.data);
     if (!entry) {
-      const buffer = this.device.createBuffer({ size: mesh.data.byteLength, usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST });
+      const buffer = this.device.createBuffer({
+        size: mesh.data.byteLength,
+        usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+      });
       this.device.queue.writeBuffer(buffer, 0, mesh.data);
-      entry = { buffer, version: mesh.upload.version }; this.symbolBuffers.set(mesh.data, entry);
+      entry = { buffer, version: mesh.upload.version };
+      this.symbolBuffers.set(mesh.data, entry);
     } else if (entry.version !== mesh.upload.version) {
       if (entry.version === mesh.upload.previousVersion) {
-        for (const { start, end } of mesh.upload.ranges) this.device.queue.writeBuffer(entry.buffer, start * 4, mesh.data.subarray(start, end));
+        for (const { start, end } of mesh.upload.ranges)
+          this.device.queue.writeBuffer(entry.buffer, start * 4, mesh.data.subarray(start, end));
       } else this.device.queue.writeBuffer(entry.buffer, 0, mesh.data);
       entry.version = mesh.upload.version;
     }
     this.usedSymbols.add(mesh.data);
     pass.setPipeline(pickMode ? bundle.pickPipeline : bundle.pipeline);
     pass.setVertexBuffer(0, entry.buffer);
-    pass.setBindGroup(0, bundle.uniformGroup, [this.allocUniform(pickMode, null, threshold, transform)]);
+    pass.setBindGroup(0, bundle.uniformGroup, [
+      this.allocUniform(pickMode, null, threshold, transform),
+    ]);
     let offset = 0;
     for (const run of mesh.runs) {
       pass.setBindGroup(1, this.textureGroup(bundle, this.atlasTexture(run.page)));
-      this.frameDrawCalls++; pass.draw(run.count, 1, offset, 0); offset += run.count;
+      this.frameDrawCalls++;
+      pass.draw(run.count, 1, offset, 0);
+      offset += run.count;
     }
   }
 
   private evictSymbols(): void {
     for (const page of this.symbols.evict()) {
-      this.atlasTextures.get(page)?.texture.destroy(); this.atlasTextures.delete(page);
+      this.atlasTextures.get(page)?.texture.destroy();
+      this.atlasTextures.delete(page);
     }
   }
 
@@ -1501,7 +1774,12 @@ export class WebGpuBackend implements MapBackend {
   private ensureOffscreen(kind: 'pick' | 'sample'): NonNullable<WebGpuBackend['offscreen']> {
     const width = this.canvas.width;
     const height = this.canvas.height;
-    if (this.offscreen && this.offscreen.kind === kind && this.offscreen.width === width && this.offscreen.height === height) {
+    if (
+      this.offscreen &&
+      this.offscreen.kind === kind &&
+      this.offscreen.width === width &&
+      this.offscreen.height === height
+    ) {
       return this.offscreen;
     }
     this.offscreen?.texture.destroy();
@@ -1558,7 +1836,11 @@ export class WebGpuBackend implements MapBackend {
     return view;
   }
 
-  async pick(scene: Scene, point: ScreenPoint, options: { limit: number }): Promise<readonly PickResult[]> {
+  async pick(
+    scene: Scene,
+    point: ScreenPoint,
+    options: { limit: number },
+  ): Promise<readonly PickResult[]> {
     if (this.destroyed) return [];
     if (this.lost) {
       fail('gpu-unavailable', 'the WebGPU device was lost; the map replaces it automatically', {});
@@ -1658,7 +1940,10 @@ export class WebGpuBackend implements MapBackend {
    * Diagnostics: renders the plan into an offscreen target and reads the pixel
    * at a CSS-pixel position (top-left origin, matching WebGPU texture rows).
    */
-  async samplePixel(scene: Scene, point: ScreenPoint): Promise<{ r: number; g: number; b: number; a: number }> {
+  async samplePixel(
+    scene: Scene,
+    point: ScreenPoint,
+  ): Promise<{ r: number; g: number; b: number; a: number }> {
     if (this.destroyed) return { r: 0, g: 0, b: 0, a: 0 };
     if (this.lost) {
       fail('gpu-unavailable', 'the WebGPU device was lost; the map replaces it automatically', {});
@@ -1743,7 +2028,8 @@ export class WebGpuBackend implements MapBackend {
     this.tileCache.clear();
     this.heldTiles.clear();
     for (const entry of this.atlasTextures.values()) entry.texture.destroy();
-    this.atlasTextures.clear(); this.symbols.clear();
+    this.atlasTextures.clear();
+    this.symbols.clear();
     for (const entry of this.symbolBuffers.values()) entry.buffer.destroy();
     this.symbolBuffers.clear();
     for (const entry of this.mediaTextures.values()) entry.texture?.destroy();

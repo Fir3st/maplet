@@ -11,10 +11,14 @@ Draw the line before the points using `connections.move({ before: stations.id })
 ## Bind the route
 
 ```ts
-const a = stations.get('a'), b = stations.get('b');
+const a = stations.get('a'),
+  b = stations.get('b');
 const route = connections.get('a-b');
-map.bindings.add({ id: 'route-geometry', target: route.ref,
-  geometry: { kind: 'lineBetween', from: a.ref, to: b.ref } });
+map.bindings.add({
+  id: 'route-geometry',
+  target: route.ref,
+  geometry: { kind: 'lineBetween', from: a.ref, to: b.ref },
+});
 map.relations.add({ id: 'station-connection', type: 'connects', from: a.ref, to: b.ref });
 ```
 

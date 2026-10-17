@@ -6,7 +6,8 @@
 import { createMap } from '@fir3st/maplet';
 
 const map = await createMap('map', {
-  center: [50.08, 14.44], zoom: 8,
+  center: [50.08, 14.44],
+  zoom: 8,
   controls: ['zoom', 'scale', 'attribution'],
 });
 ```
@@ -17,13 +18,13 @@ WebGPU → WebGL 1 fallback are the defaults; no controls are added unless reque
 
 ## Coordinates
 
-| Input | Meaning |
-| --- | --- |
-| `[50.08, 14.44]` | Geographic latitude, longitude |
-| `{ lat: 50.08, lng: 14.44, altitude: 250 }` | Geographic position with optional altitude |
-| `{ x: 10, y: 20 }` | Planar position; requires a planar projection |
-| GeoJSON `[14.44, 50.08]` | Longitude, latitude, as required by GeoJSON |
-| Screen `{ x, y }` | CSS pixels from the top-left corner of the container |
+| Input                                       | Meaning                                              |
+| ------------------------------------------- | ---------------------------------------------------- |
+| `[50.08, 14.44]`                            | Geographic latitude, longitude                       |
+| `{ lat: 50.08, lng: 14.44, altitude: 250 }` | Geographic position with optional altitude           |
+| `{ x: 10, y: 20 }`                          | Planar position; requires a planar projection        |
+| GeoJSON `[14.44, 50.08]`                    | Longitude, latitude, as required by GeoJSON          |
+| Screen `{ x, y }`                           | CSS pixels from the top-left corner of the container |
 
 Read methods return canonical object coordinates, not tuples. World coordinates
 use `256 × 2^zoom`; they are not geographic or planar positions. Pixel styles use
@@ -53,7 +54,9 @@ height)` updates them explicitly. DOM maps also observe their container size.
 import { createMap, crs } from '@fir3st/maplet';
 
 const map = await createMap('map', {
-  projection: crs.simple(), center: { x: 0, y: 0 }, zoom: 0,
+  projection: crs.simple(),
+  center: { x: 0, y: 0 },
+  zoom: 0,
 });
 map.addPoints([{ position: { x: 2, y: 3 } }]);
 ```
@@ -76,16 +79,24 @@ const switcher = await createMapSwitcher({
   label: 'Map views',
   initial: 'overview',
   maps: [
-    { id: 'overview', label: 'Overview', options: { center: [49.8, 15.3], zoom: 7, controls: ['zoom', 'layers'] } },
-    { id: 'detail', label: 'Detail', options: { center: [50.08, 14.43], zoom: 12.4, controls: ['zoom', 'layers'] } },
+    {
+      id: 'overview',
+      label: 'Overview',
+      options: { center: [49.8, 15.3], zoom: 7, controls: ['zoom', 'layers'] },
+    },
+    {
+      id: 'detail',
+      label: 'Detail',
+      options: { center: [50.08, 14.43], zoom: 12.4, controls: ['zoom', 'layers'] },
+    },
   ],
 });
 
-switcher.activeId;                            // 'overview'
+switcher.activeId; // 'overview'
 const detail = await switcher.show('detail'); // created on first activation
-switcher.get('overview');                     // the created map, or undefined
-switcher.onChange((id) => {});                // notified after the active entry changes
-switcher.destroy();                           // destroys every created map
+switcher.get('overview'); // the created map, or undefined
+switcher.onChange((id) => {}); // notified after the active entry changes
+switcher.destroy(); // destroys every created map
 ```
 
 The initial entry is created during the call; every other map is created on its

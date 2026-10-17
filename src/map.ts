@@ -2,20 +2,62 @@
 import { assertArgument, fail } from './api/errors.ts';
 import { Emitter } from './api/events.ts';
 import { normalizePosition, type PositionInput } from './api/coordinates.ts';
-import { featureEvents, featureEventTypes, type FeatureEvents, type FeatureEvent } from './api/feature-events.ts';
 import {
-  buildLayer, buildPointsLayer, buildLinesLayer, buildPolygonsLayer, buildVectorLayer, pointFeature, lineFeature, polygonFeature,
-  type RenderLayerHandle, type ObjectOptions, type LineInput, type LinesLayerHandle, type PointInput, type PointsLayerHandle, type PolygonInput, type PolygonsLayerHandle, type VectorLayerHandle,
+  featureEvents,
+  featureEventTypes,
+  type FeatureEvents,
+  type FeatureEvent,
+} from './api/feature-events.ts';
+import {
+  buildLayer,
+  buildPointsLayer,
+  buildLinesLayer,
+  buildPolygonsLayer,
+  buildVectorLayer,
+  pointFeature,
+  lineFeature,
+  polygonFeature,
+  type RenderLayerHandle,
+  type ObjectOptions,
+  type LineInput,
+  type LinesLayerHandle,
+  type PointInput,
+  type PointsLayerHandle,
+  type PolygonInput,
+  type PolygonsLayerHandle,
+  type VectorLayerHandle,
 } from './api/objects.ts';
-import type { BackendKind, Commit, FeatureEventType, FeatureProperties, MapPointerEvent, PointGeometry, Position, ScreenPoint, SubscribeOptions, Unsubscribe } from './api/types.ts';
-import { createMapEngine, type EngineOptions, type MapEngine, type RendererOptions, type SourcesHandle, type GroupHandle as EngineGroup } from './map-engine.ts';
+import type {
+  BackendKind,
+  Commit,
+  FeatureEventType,
+  FeatureProperties,
+  MapPointerEvent,
+  PointGeometry,
+  Position,
+  ScreenPoint,
+  SubscribeOptions,
+  Unsubscribe,
+} from './api/types.ts';
+import {
+  createMapEngine,
+  type EngineOptions,
+  type MapEngine,
+  type RendererOptions,
+  type SourcesHandle,
+  type GroupHandle as EngineGroup,
+} from './map-engine.ts';
 import { crs, type Crs } from './math/crs.ts';
 import type { Bounds } from './math/bounds.ts';
 import type { LayerKind, LayerSpec, MoveTarget } from './scene/layers.ts';
 import type { FeatureInput, VectorSourceHandle } from './scene/source.ts';
 import type { RasterTilesOptions, WmsOptions } from './formats/raster.ts';
 import type { RasterSourceHandle } from './scene/raster-source.ts';
-import type { MediaSourceHandle, ImageSourceOptions, VideoSourceOptions } from './scene/media-source.ts';
+import type {
+  MediaSourceHandle,
+  ImageSourceOptions,
+  VideoSourceOptions,
+} from './scene/media-source.ts';
 import type { SceneEventMap } from './scene/scene.ts';
 import type { FitOptions, FlyOptions, ViewUpdate } from './view/view.ts';
 import type { ControlHandle, ControlKind, ControlSpec } from './ui/controls.ts';
@@ -47,7 +89,11 @@ export interface LayerOptions {
   readonly parent?: string;
 }
 
-export type SourceLayerSpec<K extends LayerKind = LayerKind> = Omit<LayerSpec<K>, 'id' | 'interaction' | 'group'> & ObjectOptions<K>;
+export type SourceLayerSpec<K extends LayerKind = LayerKind> = Omit<
+  LayerSpec<K>,
+  'id' | 'interaction' | 'group'
+> &
+  ObjectOptions<K>;
 export type LayerEntry = LayerHandle | RenderLayerHandle;
 
 export interface LayersHandle {
@@ -65,12 +111,28 @@ export interface LayerContent {
   addLayer(options?: LayerOptions): LayerHandle;
   addTiles(url: string, options?: TilesOptions): RasterLayerHandle<RasterSourceHandle>;
   addWms(url: string, options: WmsLayerOptions): RasterLayerHandle<RasterSourceHandle>;
-  addImage(options: Omit<ImageSourceOptions, 'id'> & ObjectOptions<'raster'>): RasterLayerHandle<MediaSourceHandle>;
-  addVideo(options: Omit<VideoSourceOptions, 'id'> & ObjectOptions<'raster'>): RasterLayerHandle<MediaSourceHandle>;
-  addPoints<P = FeatureProperties>(points: readonly PointInput<P>[] | VectorSourceHandle<PointGeometry<Position>, P>, options?: ObjectOptions<'points'>): PointsLayerHandle<P>;
-  addLines<P = FeatureProperties>(lines: readonly LineInput<P>[], options?: ObjectOptions<'lines'>): LinesLayerHandle<P>;
-  addPolygons<P = FeatureProperties>(polygons: readonly PolygonInput<P>[], options?: ObjectOptions<'fills'>): PolygonsLayerHandle<P>;
-  addLabels<G, P>(source: VectorSourceHandle<G, P>, options?: ObjectOptions<'labels'>): VectorLayerHandle<G, P, 'labels'>;
+  addImage(
+    options: Omit<ImageSourceOptions, 'id'> & ObjectOptions<'raster'>,
+  ): RasterLayerHandle<MediaSourceHandle>;
+  addVideo(
+    options: Omit<VideoSourceOptions, 'id'> & ObjectOptions<'raster'>,
+  ): RasterLayerHandle<MediaSourceHandle>;
+  addPoints<P = FeatureProperties>(
+    points: readonly PointInput<P>[] | VectorSourceHandle<PointGeometry<Position>, P>,
+    options?: ObjectOptions<'points'>,
+  ): PointsLayerHandle<P>;
+  addLines<P = FeatureProperties>(
+    lines: readonly LineInput<P>[],
+    options?: ObjectOptions<'lines'>,
+  ): LinesLayerHandle<P>;
+  addPolygons<P = FeatureProperties>(
+    polygons: readonly PolygonInput<P>[],
+    options?: ObjectOptions<'fills'>,
+  ): PolygonsLayerHandle<P>;
+  addLabels<G, P>(
+    source: VectorSourceHandle<G, P>,
+    options?: ObjectOptions<'labels'>,
+  ): VectorLayerHandle<G, P, 'labels'>;
 }
 
 /** A heterogeneous container: objects, shared sources and other logical layers. */
@@ -88,18 +150,44 @@ export interface LayerHandle extends LayerContent, FeatureEvents {
   remove(): void;
 }
 
-export type MapClickEvent = FeatureEvent<'click'> | (MapPointerEvent & { readonly type: 'click'; readonly feature: null });
+export type MapClickEvent =
+  FeatureEvent<'click'> | (MapPointerEvent & { readonly type: 'click'; readonly feature: null });
 export type MapEventTypes = Omit<SceneEventMap, 'feature' | 'pointer'> & {
   [T in Exclude<FeatureEventType, 'click'>]: FeatureEvent<T>;
 } & { click: MapClickEvent; pointer: MapPointerEvent };
 
-export type RasterLayerHandle<S extends RasterSourceHandle | MediaSourceHandle = RasterSourceHandle | MediaSourceHandle> = RenderLayerHandle<'raster'> & { readonly source: S };
+export type RasterLayerHandle<
+  S extends RasterSourceHandle | MediaSourceHandle = RasterSourceHandle | MediaSourceHandle,
+> = RenderLayerHandle<'raster'> & { readonly source: S };
 export type TilesOptions = Omit<RasterTilesOptions, 'id' | 'url'> & ObjectOptions<'raster'>;
 export type WmsLayerOptions = Omit<WmsOptions, 'id' | 'url'> & ObjectOptions<'raster'>;
 
-export interface MapHandle extends LayerContent, Pick<MapEngine,
-  'id' | 'use' | 'render' | 'container' | 'assets' | 'state' | 'selection' | 'relations' | 'bindings' | 'query' |
-  'interaction' | 'detail' | 'locate' | 'debug' | 'whenRendered' | 'capabilities' | 'stats' | 'destroy' | 'destroyed' | 'size'> {
+export interface MapHandle
+  extends
+    LayerContent,
+    Pick<
+      MapEngine,
+      | 'id'
+      | 'use'
+      | 'render'
+      | 'container'
+      | 'assets'
+      | 'state'
+      | 'selection'
+      | 'relations'
+      | 'bindings'
+      | 'query'
+      | 'interaction'
+      | 'detail'
+      | 'locate'
+      | 'debug'
+      | 'whenRendered'
+      | 'capabilities'
+      | 'stats'
+      | 'destroy'
+      | 'destroyed'
+      | 'size'
+    > {
   /** Explicit shared sources and bulk imports; ordinary layers do not require this. */
   readonly data: SourcesHandle;
   batch<T>(fn: () => T & (T extends PromiseLike<unknown> ? never : unknown)): Commit;
@@ -123,13 +211,21 @@ export interface MapHandle extends LayerContent, Pick<MapEngine,
     remove(id: string): void;
   };
   getView(): ReturnType<MapEngine['view']['get']>;
-  setView(update: Omit<ViewUpdate, 'center'> & { readonly center?: PositionInput }): ReturnType<MapEngine['view']['set']>;
+  setView(
+    update: Omit<ViewUpdate, 'center'> & { readonly center?: PositionInput },
+  ): ReturnType<MapEngine['view']['set']>;
   getCenter(): Position;
   getZoom(): number;
   setCenter(center: PositionInput): ReturnType<MapEngine['view']['set']>;
   setZoom(zoom: number): ReturnType<MapEngine['view']['set']>;
-  fitBounds(bounds: Bounds<Position> | null, options?: FitOptions): ReturnType<MapEngine['view']['fit']>;
-  flyTo(update: Omit<ViewUpdate, 'center'> & { readonly center?: PositionInput }, options?: FlyOptions): Promise<void>;
+  fitBounds(
+    bounds: Bounds<Position> | null,
+    options?: FitOptions,
+  ): ReturnType<MapEngine['view']['fit']>;
+  flyTo(
+    update: Omit<ViewUpdate, 'center'> & { readonly center?: PositionInput },
+    options?: FlyOptions,
+  ): Promise<void>;
   stop(): void;
   zoomAround(screen: ScreenPoint, deltaZoom: number): ReturnType<MapEngine['view']['zoomAround']>;
   resize(width: number, height: number): void;
@@ -137,27 +233,56 @@ export interface MapHandle extends LayerContent, Pick<MapEngine,
   screenToPosition(screen: ScreenPoint): Position;
   getBounds(): Bounds<Position> | null;
   addControl(control: ControlKind | ControlSpec): ControlHandle;
-  on<K extends keyof MapEventTypes>(type: K, fn: (event: MapEventTypes[K]) => void, options?: SubscribeOptions): Unsubscribe;
+  on<K extends keyof MapEventTypes>(
+    type: K,
+    fn: (event: MapEventTypes[K]) => void,
+    options?: SubscribeOptions,
+  ): Unsubscribe;
   onFeature: FeatureEvents['onFeature'];
-  once<K extends keyof MapEventTypes>(type: K, fn: (event: MapEventTypes[K]) => void, options?: SubscribeOptions): Unsubscribe;
+  once<K extends keyof MapEventTypes>(
+    type: K,
+    fn: (event: MapEventTypes[K]) => void,
+    options?: SubscribeOptions,
+  ): Unsubscribe;
   off<K extends keyof MapEventTypes>(type: K, fn: (event: MapEventTypes[K]) => void): void;
 }
 
-export async function createMap(container: HTMLElement | string | null, options: MapOptions = {}): Promise<MapHandle> {
-  assertArgument(container === null || typeof container === 'string' || (typeof container === 'object' && typeof container?.appendChild === 'function'), 'createMap expects an element, its id, or null for a DOM-free map');
+export async function createMap(
+  container: HTMLElement | string | null,
+  options: MapOptions = {},
+): Promise<MapHandle> {
+  assertArgument(
+    container === null ||
+      typeof container === 'string' ||
+      (typeof container === 'object' && typeof container?.appendChild === 'function'),
+    'createMap expects an element, its id, or null for a DOM-free map',
+  );
   assertArgument(options !== null && typeof options === 'object', 'map options must be an object');
-  assertArgument(!('view' in options) && !('container' in options), 'use createMap(container, { center, zoom }); nested view/container options were removed');
+  assertArgument(
+    !('view' in options) && !('container' in options),
+    'use createMap(container, { center, zoom }); nested view/container options were removed',
+  );
   const { center, zoom, controls, renderer, ...rest } = options;
   const projection = options.projection ?? crs.webMercator();
-  assertArgument(projection && typeof projection.normalize === 'function' && typeof projection.toWorld === 'function' && typeof projection.fromWorld === 'function', 'projection must be a CRS object');
-  const rendererOptions = typeof renderer === 'string'
-    ? { primary: renderer, ...(renderer === 'none' ? { fallback: false as const } : {}) }
-    : renderer;
+  assertArgument(
+    projection &&
+      typeof projection.normalize === 'function' &&
+      typeof projection.toWorld === 'function' &&
+      typeof projection.fromWorld === 'function',
+    'projection must be a CRS object',
+  );
+  const rendererOptions =
+    typeof renderer === 'string'
+      ? { primary: renderer, ...(renderer === 'none' ? { fallback: false as const } : {}) }
+      : renderer;
   const engineOptions: EngineOptions = {
     ...rest,
     ...(container === null ? {} : { container }),
     ...(rendererOptions === undefined ? {} : { renderer: rendererOptions }),
-    view: { ...(center === undefined ? {} : { center: normalizePosition(center, projection) }), ...(zoom === undefined ? {} : { zoom }) },
+    view: {
+      ...(center === undefined ? {} : { center: normalizePosition(center, projection) }),
+      ...(zoom === undefined ? {} : { zoom }),
+    },
   };
   return createMapEngine(engineOptions, (engine) => {
     const map = buildMap(engine, projection);
@@ -173,12 +298,17 @@ function buildMap(engine: MapEngine, projection: Crs): MapHandle {
   let nextId = 0;
   const idFor = (kind: string, requested?: string): string => {
     if (requested !== undefined) {
-      assertArgument(typeof requested === 'string' && requested.length > 0, 'id must be a nonempty string');
+      assertArgument(
+        typeof requested === 'string' && requested.length > 0,
+        'id must be a nonempty string',
+      );
       if (requested === 'base') fail('duplicate-id', 'base is reserved for the default layer');
       return requested;
     }
     let id: string;
-    do { id = `${kind}:${++nextId}`; } while (engine.layers.get(id) || engine.groups.get(id) || engine.sources.get(id));
+    do {
+      id = `${kind}:${++nextId}`;
+    } while (engine.layers.get(id) || engine.groups.get(id) || engine.sources.get(id));
     return id;
   };
   const releaseUnusedSources = (candidates: ReadonlySet<string>): void => {
@@ -202,7 +332,10 @@ function buildMap(engine: MapEngine, projection: Crs): MapHandle {
     }
   };
   const removeLayer = (id: string): void => {
-    if (engine.groups.get(id)) { removeContainer(id); return; }
+    if (engine.groups.get(id)) {
+      removeContainer(id);
+      return;
+    }
     const layer = engine.layers.get(id);
     if (!layer) fail('not-found', `layer not found: ${id}`);
     engine.layers.remove(id);
@@ -222,24 +355,38 @@ function buildMap(engine: MapEngine, projection: Crs): MapHandle {
   };
   const moveLayer = (id: string, target: MoveTarget): void => {
     if (id === 'base') {
-      if ('into' in target) assertArgument(target.into === null, 'the base layer must remain at the map root');
+      if ('into' in target)
+        assertArgument(target.into === null, 'the base layer must remain at the map root');
       if ('before' in target || 'after' in target) {
         const anchorId = 'before' in target ? target.before : target.after;
         const anchor = engine.groups.get(anchorId) ?? engine.layers.get(anchorId);
-        if (anchor) assertArgument(anchor.parentId === null, 'the base layer must remain at the map root');
+        if (anchor)
+          assertArgument(anchor.parentId === null, 'the base layer must remain at the map root');
       }
     }
     engine.layers.move(id, target);
   };
   const addRenderLayer = <K extends LayerKind>(spec: SourceLayerSpec<K>): RenderLayerHandle<K> => {
     assertArgument(spec && typeof spec === 'object', 'addLayer expects a layer descriptor');
-    assertArgument(typeof spec.source === 'string' || (spec.source && typeof spec.source === 'object'), 'a layer requires a source');
-    assertArgument(!('interaction' in spec) && !('group' in spec), 'use interactive/draggable and parent directly on object options');
-    assertArgument(['points', 'lines', 'fills', 'labels', 'raster'].includes(spec.type), 'unknown render type');
+    assertArgument(
+      typeof spec.source === 'string' || (spec.source && typeof spec.source === 'object'),
+      'a layer requires a source',
+    );
+    assertArgument(
+      !('interaction' in spec) && !('group' in spec),
+      'use interactive/draggable and parent directly on object options',
+    );
+    assertArgument(
+      ['points', 'lines', 'fills', 'labels', 'raster'].includes(spec.type),
+      'unknown render type',
+    );
     if (typeof spec.source === 'object' && 'type' in spec.source) {
       const registered = engine.sources.get(spec.source.id);
       // A detached closure identifies the source while transparent proxies remain valid.
-      assertArgument(registered && 'snapshot' in spec.source && registered.snapshot === spec.source.snapshot, 'a source must belong to this map');
+      assertArgument(
+        registered && 'snapshot' in spec.source && registered.snapshot === spec.source.snapshot,
+        'a source must belong to this map',
+      );
     }
     const { interactive, draggable, parent, ...rest } = spec;
     const raw = engine.layers.add({
@@ -255,14 +402,24 @@ function buildMap(engine: MapEngine, projection: Crs): MapHandle {
     handles.set(raw.id, handle);
     return handle;
   };
-  const ownVector = <G, P>(kind: LayerKind, inputs: readonly FeatureInput<G, P>[], options: ObjectOptions): { layer: RenderLayerHandle; source: VectorSourceHandle<G, P> } => {
+  const ownVector = <G, P>(
+    kind: LayerKind,
+    inputs: readonly FeatureInput<G, P>[],
+    options: ObjectOptions,
+  ): { layer: RenderLayerHandle; source: VectorSourceHandle<G, P> } => {
     const id = idFor(kind, options.id);
-    if (engine.layers.get(id) || engine.groups.get(id)) fail('duplicate-id', `layer id already exists: ${id}`);
-    if (options.parent && !engine.groups.get(options.parent)) fail('not-found', `layer not found: ${options.parent}`);
+    if (engine.layers.get(id) || engine.groups.get(id))
+      fail('duplicate-id', `layer id already exists: ${id}`);
+    if (options.parent && !engine.groups.get(options.parent))
+      fail('not-found', `layer not found: ${options.parent}`);
     // Source identities are independent of layer ids, including user-chosen ids.
     const source = engine.sources.vector<G, P>({ id: idFor('data') });
     try {
-      if (inputs.length) source.features.add(inputs, options.namespace === undefined ? {} : { namespace: options.namespace });
+      if (inputs.length)
+        source.features.add(
+          inputs,
+          options.namespace === undefined ? {} : { namespace: options.namespace },
+        );
       const layer = addRenderLayer({ ...options, id, type: kind, source });
       ownedSources.add(source.id);
       return { layer, source };
@@ -271,12 +428,30 @@ function buildMap(engine: MapEngine, projection: Crs): MapHandle {
       throw error;
     }
   };
-  const ownRaster = <S extends RasterSourceHandle | MediaSourceHandle>(kind: string, options: ObjectOptions<'raster'>, create: (id: string) => S): RasterLayerHandle<S> => {
+  const ownRaster = <S extends RasterSourceHandle | MediaSourceHandle>(
+    kind: string,
+    options: ObjectOptions<'raster'>,
+    create: (id: string) => S,
+  ): RasterLayerHandle<S> => {
     const source = create(idFor('data'));
     try {
-      const layer = addRenderLayer({ ...options, id: idFor(kind, options.id), type: 'raster', source });
+      const layer = addRenderLayer({
+        ...options,
+        id: idFor(kind, options.id),
+        type: 'raster',
+        source,
+      });
       ownedSources.add(source.id);
-      const handle = { ...layer, get removed() { return layer.removed; }, get parentId() { return layer.parentId; }, source };
+      const handle = {
+        ...layer,
+        get removed() {
+          return layer.removed;
+        },
+        get parentId() {
+          return layer.parentId;
+        },
+        source,
+      };
       handles.set(layer.id, handle);
       return handle;
     } catch (error) {
@@ -287,26 +462,61 @@ function buildMap(engine: MapEngine, projection: Crs): MapHandle {
   const containerHandle = (group: EngineGroup): LayerHandle => {
     const cached = containers.get(group.id);
     if (cached && !cached.removed) return cached;
-    const alive = (): void => { if (group.removed) fail('destroyed', `layer ${group.id} has been removed`); };
+    const alive = (): void => {
+      if (group.removed) fail('destroyed', `layer ${group.id} has been removed`);
+    };
     const handle: LayerHandle = {
       id: group.id,
       kind: 'layer',
-      get parentId() { return group.parentId; },
-      get removed() { return group.removed; },
-      ...featureEvents((fn, options) => { alive(); return group.on('feature', fn, options); }, undefined, group.signal),
+      get parentId() {
+        return group.parentId;
+      },
+      get removed() {
+        return group.removed;
+      },
+      ...featureEvents(
+        (fn, options) => {
+          alive();
+          return group.on('feature', fn, options);
+        },
+        undefined,
+        group.signal,
+      ),
       ...content(group),
       layers: registry(group),
-      setVisible: (visible) => { alive(); group.setVisible(visible); },
-      show: () => { alive(); group.setVisible(true); }, hide: () => { alive(); group.setVisible(false); },
-      isVisible: () => { alive(); return group.getVisible(); },
-      move: (target) => { alive(); moveLayer(group.id, target); },
-      remove: () => { alive(); removeContainer(group.id); },
+      setVisible: (visible) => {
+        alive();
+        group.setVisible(visible);
+      },
+      show: () => {
+        alive();
+        group.setVisible(true);
+      },
+      hide: () => {
+        alive();
+        group.setVisible(false);
+      },
+      isVisible: () => {
+        alive();
+        return group.getVisible();
+      },
+      move: (target) => {
+        alive();
+        moveLayer(group.id, target);
+      },
+      remove: () => {
+        alive();
+        removeContainer(group.id);
+      },
     };
     containers.set(group.id, handle);
     return handle;
   };
   const addContainer = (options: LayerOptions): LayerHandle => {
-    assertArgument(!('style' in options) && !('filter' in options), 'set styles and filters on the typed collections inside a layer');
+    assertArgument(
+      !('style' in options) && !('filter' in options),
+      'set styles and filters on the typed collections inside a layer',
+    );
     return containerHandle(engine.groups.add({ ...options, id: idFor('layer', options.id) }));
   };
   const getBase = (): LayerHandle => {
@@ -335,7 +545,9 @@ function buildMap(engine: MapEngine, projection: Crs): MapHandle {
       const handle = getEntry(id);
       return handle && (parent === undefined || handle.parentId === parent.id) ? handle : undefined;
     };
-    const requireChild = (id: string): void => { if (!get(id)) fail('not-found', `layer entry not found: ${id}`); };
+    const requireChild = (id: string): void => {
+      if (!get(id)) fail('not-found', `layer entry not found: ${id}`);
+    };
     return {
       get,
       list: (options = {}) => {
@@ -352,84 +564,183 @@ function buildMap(engine: MapEngine, projection: Crs): MapHandle {
         visit(parent?.id);
         return entries;
       },
-      remove: (id) => { requireChild(id); removeLayer(id); },
-      move: (id, target) => { requireChild(id); moveLayer(id, target); },
+      remove: (id) => {
+        requireChild(id);
+        removeLayer(id);
+      },
+      move: (id, target) => {
+        requireChild(id);
+        moveLayer(id, target);
+      },
     };
   };
   const content = (owner?: EngineGroup): LayerContent => {
-    const scopedOptions = <T extends { readonly parent?: string }>(options: T, useBase = true): T => {
+    const scopedOptions = <T extends { readonly parent?: string }>(
+      options: T,
+      useBase = true,
+    ): T => {
       engine.view.get();
       if (owner?.removed) fail('destroyed', `layer ${owner.id} has been removed`);
-      assertArgument(options && typeof options === 'object' && !('group' in options), 'use a layer receiver or parent, not group');
+      assertArgument(
+        options && typeof options === 'object' && !('group' in options),
+        'use a layer receiver or parent, not group',
+      );
       if (options.parent !== undefined) {
-        assertArgument(typeof options.parent === 'string' && options.parent.length > 0, 'parent must be a nonempty layer id');
-        if (!engine.groups.get(options.parent)) fail('not-found', `layer not found: ${options.parent}`);
+        assertArgument(
+          typeof options.parent === 'string' && options.parent.length > 0,
+          'parent must be a nonempty layer id',
+        );
+        if (!engine.groups.get(options.parent))
+          fail('not-found', `layer not found: ${options.parent}`);
       }
       if (owner) {
-        assertArgument(options.parent === undefined || options.parent === owner.id, 'objects and child layers must belong to their receiving layer');
+        assertArgument(
+          options.parent === undefined || options.parent === owner.id,
+          'objects and child layers must belong to their receiving layer',
+        );
         return { ...options, parent: owner.id };
       }
-      return useBase && options.parent === undefined ? { ...options, parent: getBase().id } : options;
+      return useBase && options.parent === undefined
+        ? { ...options, parent: getBase().id }
+        : options;
     };
     function addLayer<K extends LayerKind>(spec: SourceLayerSpec<K>): RenderLayerHandle<K>;
     function addLayer(options?: LayerOptions): LayerHandle;
     function addLayer(options: LayerOptions | SourceLayerSpec = {}): LayerEntry {
       assertArgument(options && typeof options === 'object', 'addLayer expects an options object');
-      if ('type' in options || 'source' in options) return addRenderLayer(scopedOptions(options as SourceLayerSpec, false));
+      if ('type' in options || 'source' in options)
+        return addRenderLayer(scopedOptions(options as SourceLayerSpec, false));
       return addContainer(scopedOptions(options, false));
     }
     return {
       addLayer,
-      addTiles: (url, options = {}) => ownRaster('tiles', scopedOptions(options), (id) => engine.sources.rasterTiles({ ...options, id, url })),
-      addWms: (url, options) => ownRaster('wms', scopedOptions(options), (id) => engine.sources.wms({ ...options, id, url })),
-      addImage: (options) => ownRaster('image', scopedOptions(options), (id) => engine.sources.image({ ...options, id })),
-      addVideo: (options) => ownRaster('video', scopedOptions(options), (id) => engine.sources.video({ ...options, id })),
-      addPoints: <P>(points: readonly PointInput<P>[] | VectorSourceHandle<PointGeometry<Position>, P>, options: ObjectOptions<'points'> = {}) => {
+      addTiles: (url, options = {}) =>
+        ownRaster('tiles', scopedOptions(options), (id) =>
+          engine.sources.rasterTiles({ ...options, id, url }),
+        ),
+      addWms: (url, options) =>
+        ownRaster('wms', scopedOptions(options), (id) =>
+          engine.sources.wms({ ...options, id, url }),
+        ),
+      addImage: (options) =>
+        ownRaster('image', scopedOptions(options), (id) =>
+          engine.sources.image({ ...options, id }),
+        ),
+      addVideo: (options) =>
+        ownRaster('video', scopedOptions(options), (id) =>
+          engine.sources.video({ ...options, id }),
+        ),
+      addPoints: <P>(
+        points: readonly PointInput<P>[] | VectorSourceHandle<PointGeometry<Position>, P>,
+        options: ObjectOptions<'points'> = {},
+      ) => {
         const scoped = scopedOptions(options);
         const built = Array.isArray(points)
-          ? ownVector('points', (points as readonly PointInput<P>[]).map((input) => pointFeature(input, projection)), scoped)
-          : { source: points as VectorSourceHandle<PointGeometry<Position>, P>, layer: addRenderLayer({ ...scoped, type: 'points', source: points as VectorSourceHandle<PointGeometry<Position>, P> }) };
-        const handle = buildPointsLayer(engine, built.layer as RenderLayerHandle<'points'>, built.source, projection, scoped.namespace);
+          ? ownVector(
+              'points',
+              (points as readonly PointInput<P>[]).map((input) => pointFeature(input, projection)),
+              scoped,
+            )
+          : {
+              source: points as VectorSourceHandle<PointGeometry<Position>, P>,
+              layer: addRenderLayer({
+                ...scoped,
+                type: 'points',
+                source: points as VectorSourceHandle<PointGeometry<Position>, P>,
+              }),
+            };
+        const handle = buildPointsLayer(
+          engine,
+          built.layer as RenderLayerHandle<'points'>,
+          built.source,
+          projection,
+          scoped.namespace,
+        );
         handles.set(handle.id, handle);
         return handle;
       },
       addLines: (lines, options = {}) => {
         const scoped = scopedOptions(options);
-        const built = ownVector('lines', lines.map((input) => lineFeature(input, projection)), scoped);
-        const handle = buildLinesLayer(engine, built.layer as RenderLayerHandle<'lines'>, built.source, projection, scoped.namespace);
-        handles.set(handle.id, handle); return handle;
+        const built = ownVector(
+          'lines',
+          lines.map((input) => lineFeature(input, projection)),
+          scoped,
+        );
+        const handle = buildLinesLayer(
+          engine,
+          built.layer as RenderLayerHandle<'lines'>,
+          built.source,
+          projection,
+          scoped.namespace,
+        );
+        handles.set(handle.id, handle);
+        return handle;
       },
       addPolygons: (polygons, options = {}) => {
         const scoped = scopedOptions(options);
-        const built = ownVector('fills', polygons.map((input) => polygonFeature(input, projection)), scoped);
-        const handle = buildPolygonsLayer(engine, built.layer as RenderLayerHandle<'fills'>, built.source, projection, scoped.namespace);
-        handles.set(handle.id, handle); return handle;
+        const built = ownVector(
+          'fills',
+          polygons.map((input) => polygonFeature(input, projection)),
+          scoped,
+        );
+        const handle = buildPolygonsLayer(
+          engine,
+          built.layer as RenderLayerHandle<'fills'>,
+          built.source,
+          projection,
+          scoped.namespace,
+        );
+        handles.set(handle.id, handle);
+        return handle;
       },
       addLabels: (source, options = {}) => {
         const scoped = scopedOptions(options);
         const layer = addRenderLayer({ ...scoped, type: 'labels', source });
         const handle = buildVectorLayer(engine, layer, source, scoped.namespace);
-        handles.set(handle.id, handle); return handle;
+        handles.set(handle.id, handle);
+        return handle;
       },
     };
   };
   const events = new Emitter<MapEventTypes>();
-  const nativeEvents = ['commit', 'viewchange', 'viewstart', 'viewend', 'selectchange', 'backend', 'destroy', 'rendererror'] as const;
+  const nativeEvents = [
+    'commit',
+    'viewchange',
+    'viewstart',
+    'viewend',
+    'selectchange',
+    'backend',
+    'destroy',
+    'rendererror',
+  ] as const;
   for (const type of nativeEvents) engine.on(type, (event) => events.emit(type, event));
   engine.on('feature', (event) => events.emit(event.type, event as FeatureEvent));
   engine.on('pointer', (event) => {
     events.emit('pointer', event);
     if (event.type === 'click') events.emit('click', { ...event, type: 'click', feature: null });
   });
-  const listen = <K extends keyof MapEventTypes>(type: K, fn: (event: MapEventTypes[K]) => void, options?: SubscribeOptions, once = false): Unsubscribe => {
-    assertArgument([...nativeEvents, ...featureEventTypes, 'pointer'].includes(type), `unknown map event: ${String(type)}`);
+  const listen = <K extends keyof MapEventTypes>(
+    type: K,
+    fn: (event: MapEventTypes[K]) => void,
+    options?: SubscribeOptions,
+    once = false,
+  ): Unsubscribe => {
+    assertArgument(
+      [...nativeEvents, ...featureEventTypes, 'pointer'].includes(type),
+      `unknown map event: ${String(type)}`,
+    );
     assertArgument(typeof fn === 'function', 'event listener must be a function');
     engine.view.get();
     return once ? events.once(type, fn, options) : events.on(type, fn, options);
   };
-  const viewUpdate = (update: Omit<ViewUpdate, 'center'> & { readonly center?: PositionInput }): ViewUpdate => {
+  const viewUpdate = (
+    update: Omit<ViewUpdate, 'center'> & { readonly center?: PositionInput },
+  ): ViewUpdate => {
     const { center, ...rest } = update;
-    return { ...rest, ...(center === undefined ? {} : { center: normalizePosition(center, projection) }) };
+    return {
+      ...rest,
+      ...(center === undefined ? {} : { center: normalizePosition(center, projection) }),
+    };
   };
   // Lazily created: a map without markers adds no layer, asset, controller or DOM.
   let markerController: MarkerController | null = null;
@@ -448,7 +759,10 @@ function buildMap(engine: MapEngine, projection: Crs): MapHandle {
   };
   const map: MapHandle = {
     ...content(),
-    id: engine.id, container: engine.container, use: engine.use, render: engine.render,
+    id: engine.id,
+    container: engine.container,
+    use: engine.use.bind(engine),
+    render: engine.render,
     assets: engine.assets,
     data: {
       ...engine.sources,
@@ -458,48 +772,138 @@ function buildMap(engine: MapEngine, projection: Crs): MapHandle {
         for (const [layerId, layer] of handles) if (layer.removed) handles.delete(layerId);
       },
     },
-    state: engine.state, selection: engine.selection,
-    relations: engine.relations, bindings: engine.bindings, query: engine.query, interaction: engine.interaction,
-    detail: engine.detail, locate: engine.locate, debug: engine.debug,
-    batch: engine.batch, whenRendered: engine.whenRendered, capabilities: engine.capabilities, stats: engine.stats, size: engine.size,
-    get destroyed() { return engine.destroyed; },
-    destroy: () => { try { engine.destroy(); } finally { events.clear(); handles.clear(); containers.clear(); ownedSources.clear(); } },
+    state: engine.state,
+    selection: engine.selection,
+    relations: engine.relations,
+    bindings: engine.bindings,
+    query: engine.query,
+    interaction: engine.interaction,
+    detail: engine.detail,
+    locate: engine.locate,
+    debug: engine.debug,
+    batch: engine.batch.bind(engine),
+    whenRendered: engine.whenRendered.bind(engine),
+    capabilities: engine.capabilities.bind(engine),
+    stats: engine.stats.bind(engine),
+    size: engine.size.bind(engine),
+    get destroyed() {
+      return engine.destroyed;
+    },
+    destroy: () => {
+      try {
+        engine.destroy();
+      } finally {
+        events.clear();
+        handles.clear();
+        containers.clear();
+        ownedSources.clear();
+      }
+    },
     layers: registry(),
     addMarker: <P = FeatureProperties>(options: MarkerOptions<P>) => markers().add(options),
-    addMarkers: <P = FeatureProperties>(options: readonly MarkerOptions<P>[]) => markers().addMany(options),
+    addMarkers: <P = FeatureProperties>(options: readonly MarkerOptions<P>[]) =>
+      markers().addMany(options),
     setMarkerClustering: (options) => {
       if (options === null && !markerController) return;
       markers().setClustering(options);
     },
     getMarkerClustering: () => markerController?.getClustering() ?? null,
-    get base() { return getBase(); },
-    controls: {
-      get: (id) => engine.controls?.get(id), list: () => engine.controls?.list() ?? [],
-      remove: (id) => { if (!engine.controls) fail('unsupported-capability', 'controls require a map container'); engine.controls.remove(id); },
+    get base() {
+      return getBase();
     },
-    addControl: (control) => { if (!engine.controls) fail('unsupported-capability', 'controls require a map container'); return engine.controls.add(typeof control === 'string' ? { kind: control } : control); },
-    getView: engine.view.get,
+    controls: {
+      get: (id) => engine.controls?.get(id),
+      list: () => engine.controls?.list() ?? [],
+      remove: (id) => {
+        if (!engine.controls) fail('unsupported-capability', 'controls require a map container');
+        engine.controls.remove(id);
+      },
+    },
+    addControl: (control) => {
+      if (!engine.controls) fail('unsupported-capability', 'controls require a map container');
+      return engine.controls.add(typeof control === 'string' ? { kind: control } : control);
+    },
+    getView: engine.view.get.bind(engine.view),
     getCenter: () => engine.view.get().center,
     getZoom: () => engine.view.get().zoom,
     setView: (update) => engine.view.set(viewUpdate(update)),
     setCenter: (center) => engine.view.set({ center: normalizePosition(center, projection) }),
     setZoom: (zoom) => engine.view.set({ zoom }),
-    fitBounds: engine.view.fit,
+    fitBounds: engine.view.fit.bind(engine.view),
     flyTo: (update, options) => engine.view.flyTo(viewUpdate(update), options),
-    stop: engine.view.stop,
-    zoomAround: engine.view.zoomAround,
-    resize: engine.view.resize,
-    positionToScreen: (position) => engine.view.positionToScreen(normalizePosition(position, projection)),
-    screenToPosition: engine.view.screenToPosition,
-    getBounds: engine.view.getBounds,
-    onFeature: (fn, options) => { assertArgument(typeof fn === 'function', 'event listener must be a function'); engine.view.get(); return engine.on('feature', fn, options); },
-    on: (type, fn, options) => listen(type, fn, options), once: (type, fn, options) => listen(type, fn, options, true), off: (type, fn) => events.off(type, fn),
+    stop: engine.view.stop.bind(engine.view),
+    zoomAround: engine.view.zoomAround.bind(engine.view),
+    resize: engine.view.resize.bind(engine.view),
+    positionToScreen: (position) =>
+      engine.view.positionToScreen(normalizePosition(position, projection)),
+    screenToPosition: engine.view.screenToPosition.bind(engine.view),
+    getBounds: engine.view.getBounds.bind(engine.view),
+    onFeature: (fn, options) => {
+      assertArgument(typeof fn === 'function', 'event listener must be a function');
+      engine.view.get();
+      return engine.on('feature', fn, options);
+    },
+    on: (type, fn, options) => listen(type, fn, options),
+    once: (type, fn, options) => listen(type, fn, options, true),
+    off: (type, fn) => events.off(type, fn),
   };
   return map;
 }
 
 export type { PositionInput } from './api/coordinates.ts';
 export type { FeatureEvent, FeatureEvents } from './api/feature-events.ts';
-export type { MarkerContent, MarkerHandle, MarkerOptions, MarkerPopupInit, MarkerPopupOptions, MarkerTooltipInit, MarkerTooltipOptions } from './ui/markers.ts';
-export type { FeatureHandle, PointHandle, LineHandle, PolygonHandle, RenderLayerHandle, ObjectOptions, PointInput, LineInput, PolygonInput, PointsLayerHandle, LinesLayerHandle, PolygonsLayerHandle, VectorLayerHandle } from './api/objects.ts';
-export type { AreaQueryOptions, AreaQueryResult, AssetsHandle, BindingsHandle, ControlHandle, ControlKind, ControlLayerEntry, ControlPosition, ControlSpec, DetailContent, DetailContentFactory, DetailHandle, DetailOptions, DetailServiceHandle, ListControlOptions, LocateErrorCode, LocateHandle, LocateOptions, LocateResult, LocateWatch, LocateWatchOptions, LocatedPosition, QueryCursor, QueryHandle, RelationsHandle, RendererOptions, SelectionHandle, SourcesHandle, StateHandle } from './map-engine.ts';
+export type {
+  MarkerContent,
+  MarkerHandle,
+  MarkerOptions,
+  MarkerPopupInit,
+  MarkerPopupOptions,
+  MarkerTooltipInit,
+  MarkerTooltipOptions,
+} from './ui/markers.ts';
+export type {
+  FeatureHandle,
+  PointHandle,
+  LineHandle,
+  PolygonHandle,
+  RenderLayerHandle,
+  ObjectOptions,
+  PointInput,
+  LineInput,
+  PolygonInput,
+  PointsLayerHandle,
+  LinesLayerHandle,
+  PolygonsLayerHandle,
+  VectorLayerHandle,
+} from './api/objects.ts';
+export type {
+  AreaQueryOptions,
+  AreaQueryResult,
+  AssetsHandle,
+  BindingsHandle,
+  ControlHandle,
+  ControlKind,
+  ControlLayerEntry,
+  ControlPosition,
+  ControlSpec,
+  DetailContent,
+  DetailContentFactory,
+  DetailHandle,
+  DetailOptions,
+  DetailServiceHandle,
+  ListControlOptions,
+  LocateErrorCode,
+  LocateHandle,
+  LocateOptions,
+  LocateResult,
+  LocateWatch,
+  LocateWatchOptions,
+  LocatedPosition,
+  QueryCursor,
+  QueryHandle,
+  RelationsHandle,
+  RendererOptions,
+  SelectionHandle,
+  SourcesHandle,
+  StateHandle,
+} from './map-engine.ts';

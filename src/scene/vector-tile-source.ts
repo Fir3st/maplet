@@ -44,7 +44,12 @@ import {
   type MvtPolygonGeometry,
 } from '../formats/mvt.ts';
 import { formatTileUrl, tilesForWorldRect, type TileCoord } from '../formats/raster.ts';
-import { SourceImpl, type SourceChange, type SourceInternals, type SourceSnapshot } from './source.ts';
+import {
+  SourceImpl,
+  type SourceChange,
+  type SourceInternals,
+  type SourceSnapshot,
+} from './source.ts';
 import type { ViewImpl } from '../view/view.ts';
 
 /* ------------------------------- options --------------------------------- */
@@ -55,7 +60,10 @@ export interface TileFetchResponse {
   arrayBuffer(): Promise<ArrayBuffer>;
 }
 
-export type TileFetch = (url: string, init: { readonly signal: AbortSignal }) => Promise<TileFetchResponse>;
+export type TileFetch = (
+  url: string,
+  init: { readonly signal: AbortSignal },
+) => Promise<TileFetchResponse>;
 
 export interface VectorTilesOptions {
   readonly id: string;
@@ -117,7 +125,10 @@ export interface VectorTilesSourceHandle {
   snapshot(): VectorTilesSourceSnapshot;
   /** URL/grid change; loaded tiles are dropped and re-requested. */
   update(patch: Partial<VectorTilesOptions>): void;
-  subscribe(fn: (snapshot: VectorTilesSourceSnapshot) => void, options?: SubscribeOptions): Unsubscribe;
+  subscribe(
+    fn: (snapshot: VectorTilesSourceSnapshot) => void,
+    options?: SubscribeOptions,
+  ): Unsubscribe;
   on(
     type: 'change',
     fn: (snapshot: VectorTilesSourceSnapshot) => void,
@@ -192,12 +203,7 @@ export class VectorTileSourceImpl extends SourceImpl {
   private failedTiles = 0;
   private rejectedFeatures = 0;
 
-  constructor(
-    scene: VectorTileSceneInternals,
-    id: string,
-    crs: Crs,
-    options: VectorTilesOptions,
-  ) {
+  constructor(scene: VectorTileSceneInternals, id: string, crs: Crs, options: VectorTilesOptions) {
     super(scene, id, crs);
     this.host = scene;
     this.options = normalizeOptions(options);
@@ -229,7 +235,8 @@ export class VectorTileSourceImpl extends SourceImpl {
   }
 
   update(patch: Partial<VectorTilesOptions>): void {
-    if (this.destroyedFlag) fail('destroyed', `source ${this.id} has been destroyed`, { sourceId: this.id });
+    if (this.destroyedFlag)
+      fail('destroyed', `source ${this.id} has been destroyed`, { sourceId: this.id });
     this.options = normalizeOptions({ ...this.options, ...patch });
     if (patch.fetchFn) this.fetchFn = patch.fetchFn;
     // Drop every tile: the URL/grid contract changed.
@@ -293,19 +300,11 @@ export class VectorTileSourceImpl extends SourceImpl {
     const maxTiles = this.options.maxTiles ?? 128;
     const center = transform.centerWorld;
     const tileWorld = (this.options.tileSize ?? 256) / 2 ** zoom;
-    const ordered = coords
-      .slice()
-      .sort((a, b) => {
-        const da = Math.hypot(
-          (a.x + 0.5) * tileWorld - center.x,
-          (a.y + 0.5) * tileWorld - center.y,
-        );
-        const db = Math.hypot(
-          (b.x + 0.5) * tileWorld - center.x,
-          (b.y + 0.5) * tileWorld - center.y,
-        );
-        return da - db || a.y - b.y || a.x - b.x;
-      });
+    const ordered = coords.slice().sort((a, b) => {
+      const da = Math.hypot((a.x + 0.5) * tileWorld - center.x, (a.y + 0.5) * tileWorld - center.y);
+      const db = Math.hypot((b.x + 0.5) * tileWorld - center.x, (b.y + 0.5) * tileWorld - center.y);
+      return da - db || a.y - b.y || a.x - b.x;
+    });
     let deferred = 0;
     for (const coord of ordered) {
       const key = tileKey(coord);
@@ -433,7 +432,11 @@ export class VectorTileSourceImpl extends SourceImpl {
     this.tiles.delete(tile.key);
   }
 
-  private installTile(tile: TileState, layers: readonly MvtLayer[], rejectedFeatures: number): void {
+  private installTile(
+    tile: TileState,
+    layers: readonly MvtLayer[],
+    rejectedFeatures: number,
+  ): void {
     tile.state = 'ready';
     this.rejectedFeatures += rejectedFeatures;
     for (const layer of layers) {
@@ -636,7 +639,9 @@ export class VectorTileSourceImpl extends SourceImpl {
     };
   }
 
-  private emitChange(parts: { added: FeatureId[]; updated: FeatureId[]; removed: FeatureId[] } | null): void {
+  private emitChange(
+    parts: { added: FeatureId[]; updated: FeatureId[]; removed: FeatureId[] } | null,
+  ): void {
     if (this.destroyedFlag) return;
     this.host.publishStateChange();
     const change: SourceChange | null = parts
@@ -776,5 +781,5 @@ const defaultFetch: TileFetch = (url, init) => {
   if (typeof fetch !== 'function') {
     fail('environment', 'vector tiles require a fetch() implementation', { url });
   }
-  return fetch(url, { signal: init.signal }) as unknown as Promise<TileFetchResponse>;
+  return fetch(url, { signal: init.signal });
 };

@@ -11,7 +11,10 @@ import { createMap, crs, style as expr } from '../dist/index.js';
 
 const TILE_WORLD = 128; // z1 tile world size; extent 4096 -> 32 local per world unit
 const mercator = crs.webMercator();
-const worldOf = (tx, ty, lx, ly) => ({ x: tx * TILE_WORLD + lx / 32, y: ty * TILE_WORLD + ly / 32 });
+const worldOf = (tx, ty, lx, ly) => ({
+  x: tx * TILE_WORLD + lx / 32,
+  y: ty * TILE_WORLD + ly / 32,
+});
 const geoOf = (world) => mercator.fromWorld(world);
 const localGeo = (tx, ty, lx, ly) => geoOf(worldOf(tx, ty, lx, ly));
 
@@ -23,9 +26,13 @@ window.addEventListener('error', (event) => result.errors.push(String(event.mess
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const map = await createMap('map', {
-    renderer: { primary: new URLSearchParams(location.search).get('backend') === 'webgpu' ? 'webgpu' : 'webgl1', fallback: false },
-    size: { width: 512, height: 512 },
-    center: geoOf({ x: 128, y: 128 }), zoom: 1.2
+  renderer: {
+    primary: new URLSearchParams(location.search).get('backend') === 'webgpu' ? 'webgpu' : 'webgl1',
+    fallback: false,
+  },
+  size: { width: 512, height: 512 },
+  center: geoOf({ x: 128, y: 128 }),
+  zoom: 1.2,
 });
 
 const vt = map.data.vectorTiles({
@@ -82,7 +89,11 @@ const sampleAt = async (screen) => {
 };
 const near = (pixel, expected, tolerance = 18) =>
   pixel[3] > 200 &&
-  Math.max(Math.abs(pixel[0] - expected[0]), Math.abs(pixel[1] - expected[1]), Math.abs(pixel[2] - expected[2])) <= tolerance;
+  Math.max(
+    Math.abs(pixel[0] - expected[0]),
+    Math.abs(pixel[1] - expected[1]),
+    Math.abs(pixel[2] - expected[2]),
+  ) <= tolerance;
 
 async function inkCount(cx, cy, halfWidth, halfHeight) {
   let count = 0;
@@ -180,14 +191,21 @@ await check('MVT-02: identical ids in source layers stay two identities', async 
       building?.geometry.type === 'polygon' &&
       near(visible, [245, 158, 11]) &&
       hidden[3] === 0,
-    detail: { roadType: road?.geometry.type, buildingType: building?.geometry.type, visible, hidden },
+    detail: {
+      roadType: road?.geometry.type,
+      buildingType: building?.geometry.type,
+      visible,
+      hidden,
+    },
   };
 });
 
 await check('MVT-03: the uint64 id beyond 2^53 stays exact', async () => {
   const id = '9007199254740993';
   return {
-    pass: vt.features.has(id, { namespace: 'roads' }) && vt.features.get(id, { namespace: 'roads' })?.ref.id === id,
+    pass:
+      vt.features.has(id, { namespace: 'roads' }) &&
+      vt.features.get(id, { namespace: 'roads' })?.ref.id === id,
     detail: { ids: vt.features.ids({ namespace: 'roads' }).map(String) },
   };
 });
@@ -211,7 +229,10 @@ await check('Prague zoom: layers, hole, labels and namespace picking', async () 
   const labelScreen = await screenOfLocal(1, 0, 324, 2774);
   const ink = await inkCount(Math.round(labelScreen.x), Math.round(labelScreen.y - 14), 26, 9);
   const labels = map.debug.layerLabels('vt-labels').map((entry) => entry.text);
-  const hits = await map.query.rendered({ x: Math.round(fillScreen.x), y: Math.round(fillScreen.y) });
+  const hits = await map.query.rendered({
+    x: Math.round(fillScreen.x),
+    y: Math.round(fillScreen.y),
+  });
   const fillHit = hits.find((hit) => hit.layerId === 'vt-fills');
   return {
     pass:
@@ -228,37 +249,43 @@ await check('Prague zoom: layers, hole, labels and namespace picking', async () 
   };
 });
 
-await check('MVT-06/04: viewport unload keeps stable-identity state, tile-local ids are new', async () => {
-  const before = vt.features.ids({ namespace: 'pois' }).map(String);
-  const localBefore = before.find((id) => id.startsWith('tl:'));
-  map.state.set(vt.features.ref(1, { namespace: 'roads' }), { selected: true });
-  map.state.set(vt.features.ref(localBefore, { namespace: 'pois' }), { selected: true });
-  map.setView({ center: TILE_0_0_CENTER, zoom: 8 });
-  await until(() => {
-    const loaded = vt.snapshot().stats.loaded;
-    return loaded.length === 1 && loaded[0].x === 0 && loaded[0].y === 0;
-  }, 'tile 1/0/0');
-  const unloaded = {
-    count: vt.features.count(),
-    roadGone: !vt.features.has(1, { namespace: 'roads' }),
-    multiPresent: vt.features.has(7, { namespace: 'buildings' }),
-  };
-  map.setView({ center: PRAGUE_CENTER, zoom: 12 });
-  await waitStats(vt, (snapshot) => snapshot.count === 8, 'Prague reloaded');
-  const restored = map.state.get(vt.features.ref(1, { namespace: 'roads' })).selected;
-  const localAfter = vt.features.ids({ namespace: 'pois' }).map(String).find((id) => id.startsWith('tl:'));
-  return {
-    pass:
-      unloaded.count === 2 &&
-      unloaded.roadGone &&
-      unloaded.multiPresent &&
-      restored === true &&
-      localAfter !== undefined &&
-      localAfter !== localBefore &&
-      map.state.get(vt.features.ref(localAfter, { namespace: 'pois' })).selected === false,
-    detail: { unloaded, restored, localBefore, localAfter },
-  };
-});
+await check(
+  'MVT-06/04: viewport unload keeps stable-identity state, tile-local ids are new',
+  async () => {
+    const before = vt.features.ids({ namespace: 'pois' }).map(String);
+    const localBefore = before.find((id) => id.startsWith('tl:'));
+    map.state.set(vt.features.ref(1, { namespace: 'roads' }), { selected: true });
+    map.state.set(vt.features.ref(localBefore, { namespace: 'pois' }), { selected: true });
+    map.setView({ center: TILE_0_0_CENTER, zoom: 8 });
+    await until(() => {
+      const loaded = vt.snapshot().stats.loaded;
+      return loaded.length === 1 && loaded[0].x === 0 && loaded[0].y === 0;
+    }, 'tile 1/0/0');
+    const unloaded = {
+      count: vt.features.count(),
+      roadGone: !vt.features.has(1, { namespace: 'roads' }),
+      multiPresent: vt.features.has(7, { namespace: 'buildings' }),
+    };
+    map.setView({ center: PRAGUE_CENTER, zoom: 12 });
+    await waitStats(vt, (snapshot) => snapshot.count === 8, 'Prague reloaded');
+    const restored = map.state.get(vt.features.ref(1, { namespace: 'roads' })).selected;
+    const localAfter = vt.features
+      .ids({ namespace: 'pois' })
+      .map(String)
+      .find((id) => id.startsWith('tl:'));
+    return {
+      pass:
+        unloaded.count === 2 &&
+        unloaded.roadGone &&
+        unloaded.multiPresent &&
+        restored === true &&
+        localAfter !== undefined &&
+        localAfter !== localBefore &&
+        map.state.get(vt.features.ref(localAfter, { namespace: 'pois' })).selected === false,
+      detail: { unloaded, restored, localBefore, localAfter },
+    };
+  },
+);
 
 await check('MVT-08: broken tiles error locally, the healthy scene stays intact', async () => {
   await until(() => broken.snapshot().stats.failed >= 1, 'a broken tile counted');
@@ -272,7 +299,11 @@ await check('MVT-08: broken tiles error locally, the healthy scene stays intact'
 await check('MVT features behave like map features (click + hover state)', async () => {
   const element = document.getElementById('map');
   const events = [];
-  map.onFeature((event) => events.push(`${event.type}:${event.layerId}:${String(event.feature.id)}:${event.feature.namespace}`));
+  map.onFeature((event) =>
+    events.push(
+      `${event.type}:${event.layerId}:${String(event.feature.id)}:${event.feature.namespace}`,
+    ),
+  );
   const point = await screenOfLocal(1, 0, 324, 2774);
   const rect = element.getBoundingClientRect();
   const fire = (type, buttons) => {
@@ -293,7 +324,10 @@ await check('MVT features behave like map features (click + hover state)', async
   fire('pointermove', 0);
   // Hover is scheduled per frame and resolved by a GPU pick readback: wait for
   // the state instead of a fixed delay (software rendering can take hundreds of ms).
-  await until(() => map.state.get(vt.features.ref(10, { namespace: 'pois' })).hovered === true, 'hover on the POI');
+  await until(
+    () => map.state.get(vt.features.ref(10, { namespace: 'pois' })).hovered === true,
+    'hover on the POI',
+  );
   const hovered = true;
   fire('pointerdown', 1);
   await sleep(40);
@@ -315,15 +349,15 @@ await check('MVT overzoom: above maxZoom the clamped tile keeps rendering and sc
   const failedBefore = vt.snapshot().stats.failed;
   map.setView({ center: mid, zoom: 12 });
   await sleep(200);
-  const screenDistance = (current) => {
+  const screenDistance = () => {
     const a = map.positionToScreen(poiPoint);
     const b = map.positionToScreen(roadPoint);
     return Math.hypot(b.x - a.x, b.y - a.y);
   };
-  const distance12 = screenDistance(12);
+  const distance12 = screenDistance();
   map.setView({ zoom: 13 });
   await sleep(200);
-  const distance13 = screenDistance(13);
+  const distance13 = screenDistance();
   const poiPixel = await sampleAt(map.positionToScreen(poiPoint));
   const roadPixel = await sampleAt(map.positionToScreen(roadPoint));
   const loaded = vt.snapshot().stats.loaded;
@@ -360,31 +394,37 @@ await check('LIFE-04: a settled map stops drawing and a change asks a new frame'
   };
 });
 
-await check('MVT attribution: the source notice reaches the control and follows its layers', async () => {
-  map.addControl({ kind: 'attribution', id: 'mvt-attribution' });
-  const element = document.querySelector('[data-maplet-control="attribution"]');
-  const text = () => element?.textContent ?? '';
-  await until(() => text().includes('© Maplet MVT fixtures'), 'the notice in the control');
-  const initial = text();
-  const noPlaceholders = !initial.includes('undefined') && !initial.includes('null');
-  // Removing every layer that references the source clears the notice...
-  for (const id of ['vt-fills', 'vt-roads', 'vt-pois', 'vt-labels']) map.layers.remove(id);
-  await until(() => !text().includes('© Maplet MVT fixtures'), 'the notice to clear');
-  const cleared = text();
-  // ...and re-adding one layer brings it back without a reload.
-  map.addLayer({
-    id: 'vt-fills',
-    type: 'fills',
-    source: 'vt',
-    namespace: 'buildings',
-    style: { fillColor: '#f59e0b', fillOpacity: 0.95, strokeColor: '#b45309', strokeWidthPx: 2 },
-  });
-  await until(() => text().includes('© Maplet MVT fixtures'), 'the notice to return');
-  return {
-    pass: noPlaceholders && !cleared.includes('© Maplet MVT fixtures') && text().includes('© Maplet MVT fixtures'),
-    detail: { initial, cleared, restored: text() },
-  };
-});
+await check(
+  'MVT attribution: the source notice reaches the control and follows its layers',
+  async () => {
+    map.addControl({ kind: 'attribution', id: 'mvt-attribution' });
+    const element = document.querySelector('[data-maplet-control="attribution"]');
+    const text = () => element?.textContent ?? '';
+    await until(() => text().includes('© Maplet MVT fixtures'), 'the notice in the control');
+    const initial = text();
+    const noPlaceholders = !initial.includes('undefined') && !initial.includes('null');
+    // Removing every layer that references the source clears the notice...
+    for (const id of ['vt-fills', 'vt-roads', 'vt-pois', 'vt-labels']) map.layers.remove(id);
+    await until(() => !text().includes('© Maplet MVT fixtures'), 'the notice to clear');
+    const cleared = text();
+    // ...and re-adding one layer brings it back without a reload.
+    map.addLayer({
+      id: 'vt-fills',
+      type: 'fills',
+      source: 'vt',
+      namespace: 'buildings',
+      style: { fillColor: '#f59e0b', fillOpacity: 0.95, strokeColor: '#b45309', strokeWidthPx: 2 },
+    });
+    await until(() => text().includes('© Maplet MVT fixtures'), 'the notice to return');
+    return {
+      pass:
+        noPlaceholders &&
+        !cleared.includes('© Maplet MVT fixtures') &&
+        text().includes('© Maplet MVT fixtures'),
+      detail: { initial, cleared, restored: text() },
+    };
+  },
+);
 
 result.ms = Math.round(performance.now() - started);
 result.pass =

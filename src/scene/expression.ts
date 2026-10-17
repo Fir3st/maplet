@@ -27,9 +27,13 @@ export interface Expression<T> {
 }
 
 export type ExpressionInput<T> = T | Expression<T>;
-export type ColorValue = string | readonly [number, number, number] | readonly [number, number, number, number];
+export type ColorValue =
+  string | readonly [number, number, number] | readonly [number, number, number, number];
 
-function makeExpression<T>(evaluate: (context: ExpressionContext) => T, constant = false): Expression<T> {
+function makeExpression<T>(
+  evaluate: (context: ExpressionContext) => T,
+  constant = false,
+): Expression<T> {
   return { evaluate, constant };
 }
 
@@ -49,12 +53,12 @@ function isExpression(value: unknown): value is Expression<unknown> {
     typeof value === 'object' &&
     value !== null &&
     typeof (value as Expression<unknown>).evaluate === 'function' &&
-    'constant' in (value as object)
+    'constant' in value
   );
 }
 
 function toExpression<T>(value: ExpressionInput<T>): Expression<T> {
-  return isExpression(value) ? (value as Expression<T>) : constant(value);
+  return isExpression(value) ? value : constant(value);
 }
 
 /** Resolves a dotted property path. Returns undefined for missing parts. */
@@ -78,7 +82,7 @@ function field<Name extends string, Value>(name: Name): TypedField<Name, Value> 
 }
 
 function match<T, const Cases extends Record<string, T>>(
-  subject: ExpressionInput<unknown> | TypedField<string, unknown>,
+  subject: ExpressionInput<unknown>,
   cases: Cases,
   fallback: T,
 ): Expression<T> {
@@ -86,7 +90,7 @@ function match<T, const Cases extends Record<string, T>>(
   return makeExpression((context) => {
     const value = subjectExpression.evaluate(context);
     if (value === null || value === undefined) return fallback;
-    const key = String(value);
+    const key = typeof value === 'string' || typeof value === 'number' ? String(value) : '';
     return Object.hasOwn(cases, key) ? (cases[key] as T) : fallback;
   });
 }
@@ -166,7 +170,8 @@ function when<T>(
 function interpolate(
   zoom: ExpressionInput<number>,
   stops: readonly (readonly [number, number | string])[],
-): Expression<number | string> {  if (stops.length === 0) fail('invalid-argument', 'interpolate needs at least one stop');
+): Expression<number | string> {
+  if (stops.length === 0) fail('invalid-argument', 'interpolate needs at least one stop');
   const sorted = [...stops].sort((a, b) => a[0] - b[0]);
   const zoomExpression = toExpression(zoom);
   return makeExpression((context) => {
@@ -207,14 +212,21 @@ export type FilterExpression =
   | { readonly and: readonly FilterExpression[] }
   | { readonly or: readonly FilterExpression[] };
 
-export type Filter = FilterExpression | ((properties: Readonly<Record<string, unknown>>, id: FeatureId) => boolean);
+export type Filter =
+  FilterExpression | ((properties: Readonly<Record<string, unknown>>, id: FeatureId) => boolean);
 
 export interface FilterRuntime {
-  readonly state: { readonly hovered: boolean; readonly selected: boolean; readonly disabled: boolean };
+  readonly state: {
+    readonly hovered: boolean;
+    readonly selected: boolean;
+    readonly disabled: boolean;
+  };
   readonly id: FeatureId;
 }
 
-export function compileFilter(filter: Filter | null | undefined): (runtime: FilterRuntime, properties: Readonly<Record<string, unknown>>) => boolean {
+export function compileFilter(
+  filter: Filter | null | undefined,
+): (runtime: FilterRuntime, properties: Readonly<Record<string, unknown>>) => boolean {
   if (filter === null || filter === undefined) return () => true;
   if (typeof filter === 'function') {
     return (_runtime, properties) => filter(properties, _runtime.id);
@@ -222,7 +234,9 @@ export function compileFilter(filter: Filter | null | undefined): (runtime: Filt
   return compileFilterExpression(filter);
 }
 
-function compileFilterExpression(filter: FilterExpression): (runtime: FilterRuntime, properties: Readonly<Record<string, unknown>>) => boolean {
+function compileFilterExpression(
+  filter: FilterExpression,
+): (runtime: FilterRuntime, properties: Readonly<Record<string, unknown>>) => boolean {
   if ('not' in filter) {
     const inner = compileFilterExpression(filter.not);
     return (runtime, properties) => !inner(runtime, properties);
@@ -332,8 +346,8 @@ export function evaluateStyleValue<T>(
   context: ExpressionContext,
 ): T {
   if (value === undefined) return fallback;
-  if (isExpression(value)) return value.evaluate(context) as T;
-  return value as T;
+  if (isExpression(value)) return value.evaluate(context);
+  return value;
 }
 
 export { isExpression };

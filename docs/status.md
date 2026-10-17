@@ -7,25 +7,25 @@ to use this repository.
 
 ## Implemented scope
 
-| Area | Implementation and checks |
-| --- | --- |
-| Coordinates and view | Web Mercator, EPSG:4326, ellipsoidal Mercator, Simple/custom CRS, bounds, fit/flyTo, limits; math/view tests and a vendored Leaflet 1.9.4 oracle |
-| Data | Stable identities/generations, CRUD, transactions/rollback, snapshots, state, selection, queries, GeoJSON and columnar imports; `test/scene/`, `test/io/` |
-| Layers and styles | Heterogeneous nested layers, shared base, ordering, filters, overrides, expressions, points, lines and polygon holes; scene/render tests |
-| Relations and bindings | Endpoint policies, traversal, dependency DAGs, field ownership, `lineBetween`, `anchorOnLine`, `copyProperty`; relation and data tests |
-| Rendering | WebGPU and WebGL 1, retained mixed-vector buffers with local uploads, indexed polygon meshes and spatial geometry blocks, expansion without instancing/wide indices, shared frame plan and loss recovery; `test/render/`, parity/loss batteries, `retained-point-buffers` and `retained-mixed-scene` E2E |
-| Raster | XYZ/TMS/retina, decoded parent/child fallback, previous-bitmap retention across parameter and view changes, WMS axis/CRS semantics and GetCapabilities endpoint discovery; raster tests, `demo/tiles.html`, `demo/wms.html` |
-| MVT | Decoder, source-layer namespaces, exact large IDs, fragments, unload/reload, overzoom and attribution; vector-tile tests, `demo/mvt.html` |
-| Interaction | Pan, zoom, hover/click/drag, pinch, keyboard, selection, bubbling; dragging comes from a layer opt-in or a per-feature override, so a draggable marker and a plain one share one layer; `demo/interaction.html` and real-input E2E scenarios |
-| Picking | Shape-aware GPU queries, revision/generation checks, measured blocking/async readback; `demo/pick.html` |
-| Text and fonts | Labels, multi-line text, collisions, rotation, atlas eviction, font loading/fallback, platform shaping, bidi; `demo/labels.html`, `demo/fonts.html` |
-| Media | Sprites, anchor rotation, tinting, image/video bounds with placement rotation, runtime image/video URL changes, partial uploads and cleanup; `demo/icons.html`, `demo/media.html` |
-| HTML UI | Optional controls (including labelled layer rows), a multi-map switcher, scale, attribution, geolocation, feature detail and bounded accessible lists; `test/ui/`, `test/scene/map-switcher.test.ts`, `demo/ui.html`, `demo/detail.html` |
-| Markers | Leaflet-style `addMarker`/`addMarkers` GPU pins with hover/permanent tooltips, one click popup with auto-pan, custom icons/tint, per-marker overrides and opt-in per-pin dragging; `demo/markers.html` |
-| Plugins | Plain setup functions, typed APIs, HTML access, abort/cleanup, render transforms, after-frame drawing, replaceable renderers and the built-in `gestureGuard`/`fullscreenMode`/`heatmap` plugins; plugin tests, consumer types, the `plugins` scenario and `demo/plugins-builtin.html`; [guide](plugins.md) |
-| Worker imports | Compact columns/canonical line and polygon pools, owned metadata on the publishing thread, validation, copy/move, cancellation, bounded queue, crash/CSP fallback; import tests, `demo/import.html`, `demo/csp.html?csp=worker-none` |
-| Distribution | ESM/declaration/subpath/worker assets, archive audit and consumer types; `test/publish/`, `type-tests/` |
-| Lifecycle and scale | Repeated create/destroy, GC-stabilized memory checks, cancellation and 500,000-point example; `demo/soak.html`, `demo/scale.html` |
+| Area                   | Implementation and checks                                                                                                                                                                                                                                                                                  |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Coordinates and view   | Web Mercator, EPSG:4326, ellipsoidal Mercator, Simple/custom CRS, bounds, fit/flyTo, limits; math/view tests and a vendored Leaflet 1.9.4 oracle                                                                                                                                                           |
+| Data                   | Stable identities/generations, CRUD, transactions/rollback, snapshots, state, selection, queries, GeoJSON and columnar imports; `test/scene/`, `test/io/`                                                                                                                                                  |
+| Layers and styles      | Heterogeneous nested layers, shared base, ordering, filters, overrides, expressions, points, lines and polygon holes; scene/render tests                                                                                                                                                                   |
+| Relations and bindings | Endpoint policies, traversal, dependency DAGs, field ownership, `lineBetween`, `anchorOnLine`, `copyProperty`; relation and data tests                                                                                                                                                                     |
+| Rendering              | WebGPU and WebGL 1, retained mixed-vector buffers with local uploads, indexed polygon meshes and spatial geometry blocks, expansion without instancing/wide indices, shared frame plan and loss recovery; `test/render/`, parity/loss batteries, `retained-point-buffers` and `retained-mixed-scene` E2E   |
+| Raster                 | XYZ/TMS/retina, decoded parent/child fallback, previous-bitmap retention across parameter and view changes, WMS axis/CRS semantics and GetCapabilities endpoint discovery; raster tests, `demo/tiles.html`, `demo/wms.html`                                                                                |
+| MVT                    | Decoder, source-layer namespaces, exact large IDs, fragments, unload/reload, overzoom and attribution; vector-tile tests, `demo/mvt.html`                                                                                                                                                                  |
+| Interaction            | Pan, zoom, hover/click/drag, pinch, keyboard, selection, bubbling; dragging comes from a layer opt-in or a per-feature override, so a draggable marker and a plain one share one layer; `demo/interaction.html` and real-input E2E scenarios                                                               |
+| Picking                | Shape-aware GPU queries, revision/generation checks, measured blocking/async readback; `demo/pick.html`                                                                                                                                                                                                    |
+| Text and fonts         | Labels, multi-line text, collisions, rotation, atlas eviction, font loading/fallback, platform shaping, bidi; `demo/labels.html`, `demo/fonts.html`                                                                                                                                                        |
+| Media                  | Sprites, anchor rotation, tinting, image/video bounds with placement rotation, runtime image/video URL changes, partial uploads and cleanup; `demo/icons.html`, `demo/media.html`                                                                                                                          |
+| HTML UI                | Optional controls (including labelled layer rows), a multi-map switcher, scale, attribution, geolocation, feature detail and bounded accessible lists; `test/ui/`, `test/scene/map-switcher.test.ts`, `demo/ui.html`, `demo/detail.html`                                                                   |
+| Markers                | Leaflet-style `addMarker`/`addMarkers` GPU pins with hover/permanent tooltips, one click popup with auto-pan, custom icons/tint, per-marker overrides and opt-in per-pin dragging; `demo/markers.html`                                                                                                     |
+| Plugins                | Plain setup functions, typed APIs, HTML access, abort/cleanup, render transforms, after-frame drawing, replaceable renderers and the built-in `gestureGuard`/`fullscreenMode`/`heatmap` plugins; plugin tests, consumer types, the `plugins` scenario and `demo/plugins-builtin.html`; [guide](plugins.md) |
+| Worker imports         | Compact columns/canonical line and polygon pools, owned metadata on the publishing thread, validation, copy/move, cancellation, bounded queue, crash/CSP fallback; import tests, `demo/import.html`, `demo/csp.html?csp=worker-none`                                                                       |
+| Distribution           | ESM/declaration/subpath/worker assets, archive audit and consumer types; `test/publish/`, `type-tests/`                                                                                                                                                                                                    |
+| Lifecycle and scale    | Repeated create/destroy, GC-stabilized memory checks, cancellation and 500,000-point example; `demo/soak.html`, `demo/scale.html`                                                                                                                                                                          |
 
 ## Recorded validation
 
@@ -382,6 +382,22 @@ no page errors. All twenty example pages boot without page errors when tiles and
 services are blocked. The 20-tutorial Gist plan measures 1295 KiB inside the
 1.30 MiB budget (raised deliberately for the twentieth tutorial).
 
+The lint/format baseline passes **361 unit tests** and the complete browser
+suite: **41/41 scenarios/batteries on each of WebGL 1, WebGPU and forced basic
+WebGL 1**, with `npm run lint` and `npm run format:check` reporting zero
+findings. ESLint runs type-checked typescript-eslint rules with one
+project-aware configuration per tree (the project service for `src/`, the test
+and consumer type-test configurations for the rest), the publication tests
+consume the build scripts through declaration files instead of
+`@ts-expect-error`, and Prettier owns code and documentation formatting; the
+shared Gist stylesheet stays hand-tuned because it is embedded in every Gist.
+`npm run check` enforces both before the build. The fixes the checks surfaced
+are behavior-neutral or strict improvements: a label built from an object
+property no longer renders `[object Object]`, `match` ignores non-primitive
+values, a batch callback failure always rethrows an `Error`, and arrays
+validated at public boundaries keep their element type instead of degrading to
+`any` under `Array.isArray`.
+
 The recorded browser environment was headless Chromium on an Apple M5 Pro,
 using ANGLE Metal for WebGL and `apple metal-3` for WebGPU. Pixel comparisons
 against decoded source bitmaps and between backends found zero differences at
@@ -534,7 +550,9 @@ installed Chromium-family browser for E2E. No browser or compiler is downloaded
 automatically. Video fixture regeneration additionally requires `ffmpeg`.
 
 ```bash
-npm run check                        # build, source/test/consumer types, unit tests
+npm run check                        # lint, formatting, build, types, unit tests
+npm run lint                         # ESLint only
+npm run format:check                 # Prettier only
 python3 demo/generate-tiles.py        # deterministic local PNG/SVG tiles + pixel oracle
 npm run demo                         # http://localhost:8400/demo/
 npm run e2e                          # WebGL 1, starts the server if needed
@@ -543,6 +561,13 @@ npm run e2e -- --basic               # forced reduced WebGL 1 profile
 npm run e2e -- --list
 npm run e2e -- --scenario drag-point-follows-pointer --verbose
 ```
+
+Linting is type-checked: `eslint.config.mjs` gives each tree a project-aware
+configuration (the project service for `src/`, the test and consumer type-test
+configurations for the rest), and `scripts/*.d.mts` type the publication tooling
+for its tests instead of leaving it untyped. Prettier owns code, documentation
+and page formatting; the shared Gist stylesheet is excluded because it is
+embedded in every published Gist.
 
 Use `--browser /path/to/Chromium` to select a browser. The runner can also
 discover installed Chrome or a local Playwright browser cache. It connects
@@ -562,24 +587,24 @@ assert liveness and report cadence, rather than claiming reference performance.
 Open the paths below under `http://localhost:8400/demo/`. Most test pages accept
 `?backend=webgpu` (or `&backend=webgpu` with existing query parameters).
 
-| Page | Purpose |
-| --- | --- |
-| `index.html` | Interactive library demo; local tiles by default, live providers via `?tiles=osm` or the basemap buttons |
-| `scale.html` | 500,000-point example with measured import/render/pan HUD |
-| `compare.html` | Opt-in matched Maplet / Leaflet 500,000-point comparison; see `benchmarks/README.md` |
-| `tiles.html?mode=svg` | Offline tile orientation, pixel sampling and seams |
-| `tiles.html?mode=osm` | Live OpenStreetMap tile comparison |
-| `tiles.html?mode=esri-imagery&live=1` | Live JPEG provider comparison |
-| `wms.html` / `wms.html?mode=live` | Deterministic local WMS checks (GetMap semantics, GetCapabilities discovery) / optional public WMS |
-| `interaction.html`, `pick.html` | Events, gestures, selection and readback stalls |
-| `labels.html`, `fonts.html`, `icons.html` | Text, shaping fixtures, image assets and anchor rotation |
-| `mvt.html` | Vector-tile identity, fragments, failure handling and overzoom |
-| `parity.html`, `loss.html` | Backend parity and recovery |
-| `ui.html`, `detail.html` | Controls, geolocation, detail lifecycle and accessibility |
-| `media.html`, `import.html` | Image/video updates and worker imports |
-| `csp.html?csp=worker-none` | Explicit worker failure followed by inline imports |
-| `soak.html` | Repeated lifecycle and large-import cleanup |
-| `gpu-probe.html`, `probe.html` | Shader/pipeline and minimal pixel/pick diagnostics |
+| Page                                      | Purpose                                                                                                  |
+| ----------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `index.html`                              | Interactive library demo; local tiles by default, live providers via `?tiles=osm` or the basemap buttons |
+| `scale.html`                              | 500,000-point example with measured import/render/pan HUD                                                |
+| `compare.html`                            | Opt-in matched Maplet / Leaflet 500,000-point comparison; see `benchmarks/README.md`                     |
+| `tiles.html?mode=svg`                     | Offline tile orientation, pixel sampling and seams                                                       |
+| `tiles.html?mode=osm`                     | Live OpenStreetMap tile comparison                                                                       |
+| `tiles.html?mode=esri-imagery&live=1`     | Live JPEG provider comparison                                                                            |
+| `wms.html` / `wms.html?mode=live`         | Deterministic local WMS checks (GetMap semantics, GetCapabilities discovery) / optional public WMS       |
+| `interaction.html`, `pick.html`           | Events, gestures, selection and readback stalls                                                          |
+| `labels.html`, `fonts.html`, `icons.html` | Text, shaping fixtures, image assets and anchor rotation                                                 |
+| `mvt.html`                                | Vector-tile identity, fragments, failure handling and overzoom                                           |
+| `parity.html`, `loss.html`                | Backend parity and recovery                                                                              |
+| `ui.html`, `detail.html`                  | Controls, geolocation, detail lifecycle and accessibility                                                |
+| `media.html`, `import.html`               | Image/video updates and worker imports                                                                   |
+| `csp.html?csp=worker-none`                | Explicit worker failure followed by inline imports                                                       |
+| `soak.html`                               | Repeated lifecycle and large-import cleanup                                                              |
+| `gpu-probe.html`, `probe.html`            | Shader/pipeline and minimal pixel/pick diagnostics                                                       |
 
 Failure screenshots are generated in `demo/checks/`, which is ignored by Git.
 The test pages and E2E sources remain in the repository because they are

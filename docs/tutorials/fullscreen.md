@@ -10,9 +10,9 @@ the corner button or `document.exitFullscreen()`.
 import { fullscreenMode } from '@fir3st/maplet';
 
 const fullscreen = map.use(fullscreenMode({ control: true, onChange: (active) => report(active) }));
-await fullscreen.api.toggle();   // a real request needs a user gesture
-fullscreen.api.active;           // follows fullscreenchange, never guessed
-fullscreen.remove();             // exits and removes the button and listener
+await fullscreen.api.toggle(); // a real request needs a user gesture
+fullscreen.api.active; // follows fullscreenchange, never guessed
+fullscreen.remove(); // exits and removes the button and listener
 ```
 
 - `enter()`, `exit()` and `toggle()` resolve a boolean instead of throwing:

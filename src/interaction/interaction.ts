@@ -82,7 +82,12 @@ export class InteractionController {
   private readonly view: ViewImpl;
   private readonly backend: Pick<MapBackend, 'pick'>;
   private readonly options: InteractionOptions;
-  private readonly listeners: { target: EventTarget; type: string; fn: EventListener; options?: AddEventListenerOptions }[] = [];
+  private readonly listeners: {
+    target: EventTarget;
+    type: string;
+    fn: EventListener;
+    options?: AddEventListenerOptions;
+  }[] = [];
   private gesture: ActiveGesture | null = null;
   private hovered: PickResult | null = null;
   private hoverScheduled = false;
@@ -122,8 +127,8 @@ export class InteractionController {
     this.bind(element, 'pointerdown', this.onPointerDown as EventListener);
     this.bind(element, 'pointermove', this.onPointerMove as EventListener);
     this.bind(element, 'pointerup', this.onPointerUp as unknown as EventListener);
-    this.bind(element, 'pointercancel', this.onPointerCancel as EventListener);
-    this.bind(element, 'pointerleave', this.onPointerLeave as EventListener);
+    this.bind(element, 'pointercancel', this.onPointerCancel);
+    this.bind(element, 'pointerleave', this.onPointerLeave);
     this.bind(element, 'wheel', this.onWheel as EventListener, { passive: false });
     this.bind(element, 'dblclick', this.onDoubleClick as EventListener);
     this.bind(element, 'contextmenu', (event) => event.preventDefault());
@@ -166,7 +171,12 @@ export class InteractionController {
     this.gestureGate = gate;
   }
 
-  private allowGesture(kind: GestureKind, event: Event, pointerType: string, pointers: number): boolean {
+  private allowGesture(
+    kind: GestureKind,
+    event: Event,
+    pointerType: string,
+    pointers: number,
+  ): boolean {
     return (
       this.gestureGate === null ||
       this.gestureGate({ kind, pointerType, pointers, originalEvent: event }) !== false
@@ -207,7 +217,12 @@ export class InteractionController {
   }
 
   private startPan(pointerId: number, point: ScreenPoint, originalEvent: Event): void {
-    this.gesture = { kind: 'pan', pointers: new Map([[pointerId, point]]), startPoint: point, moved: false };
+    this.gesture = {
+      kind: 'pan',
+      pointers: new Map([[pointerId, point]]),
+      startPoint: point,
+      moved: false,
+    };
     this.emitPointer('movestart', point, originalEvent);
     this.element.style.cursor = 'grabbing';
   }
@@ -242,7 +257,10 @@ export class InteractionController {
       this.pendingDrag = null;
       this.gesture = {
         kind: 'pinch',
-        pointers: new Map([[pending.pointerId, pending.point], [event.pointerId, point]]),
+        pointers: new Map([
+          [pending.pointerId, pending.point],
+          [event.pointerId, point],
+        ]),
         startPoint: pending.point,
         moved: false,
       };
@@ -253,7 +271,13 @@ export class InteractionController {
 
     const boxSelecting = this.options.boxSelection && event.shiftKey && event.button === 0;
     if (boxSelecting) {
-      this.gesture = { kind: 'box', pointers: new Map([[event.pointerId, point]]), startPoint: point, boxStart: point, moved: false };
+      this.gesture = {
+        kind: 'box',
+        pointers: new Map([[event.pointerId, point]]),
+        startPoint: point,
+        boxStart: point,
+        moved: false,
+      };
       this.emitPointer('movestart', point, event);
       return;
     }
@@ -352,7 +376,8 @@ export class InteractionController {
       if (!this.allowGesture('featureDrag', event, event.pointerType, 1)) {
         // A blocked drag never emits dragstart/drag; it still counts as moved so
         // releasing does not turn it into a click.
-        if (Math.hypot(point.x - downPoint.x, point.y - downPoint.y) >= DRAG_THRESHOLD_PX) gesture.moved = true;
+        if (Math.hypot(point.x - downPoint.x, point.y - downPoint.y) >= DRAG_THRESHOLD_PX)
+          gesture.moved = true;
         return;
       }
       if (!gesture.moved) {
@@ -375,14 +400,7 @@ export class InteractionController {
         const delta = this.deltaLatLng(drag.startPointer, position);
         source.mutateDrag(drag.feature, addPosition(drag.origin, delta));
       }
-      this.emitFeatureEvent(
-        'drag',
-        drag.feature,
-        drag.layerId,
-        point,
-        event,
-        this.scene.revision,
-      );
+      this.emitFeatureEvent('drag', drag.feature, drag.layerId, point, event, this.scene.revision);
       return;
     }
     if (gesture.kind === 'box' && gesture.boxStart) {
@@ -408,7 +426,12 @@ export class InteractionController {
       const remaining = Array.from(gesture.pointers.values())[0] ?? point;
       this.pinchDistance = undefined;
       this.pinchMidpoint = undefined;
-      this.gesture = { kind: 'pan', pointers: gesture.pointers, startPoint: remaining, moved: true };
+      this.gesture = {
+        kind: 'pan',
+        pointers: gesture.pointers,
+        startPoint: remaining,
+        moved: true,
+      };
       return;
     }
     if (gesture.pointers.size > 0) return;
@@ -512,7 +535,10 @@ export class InteractionController {
     event.preventDefault();
     const point = this.pointOf(event);
     const delta = -event.deltaY / 1000;
-    const clamped = Math.max(-0.5, Math.min(0.5, event.deltaMode === 1 ? -event.deltaY / 30 : delta));
+    const clamped = Math.max(
+      -0.5,
+      Math.min(0.5, event.deltaMode === 1 ? -event.deltaY / 30 : delta),
+    );
     if (Math.abs(clamped) < 1e-4) return;
     this.view.zoomAround(point, clamped);
   };
@@ -526,7 +552,10 @@ export class InteractionController {
   private onKeyDown = (event: KeyboardEvent): void => {
     if (this.destroyed || !this.options.keyboard) return;
     const target = event.target as HTMLElement | null;
-    if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+    if (
+      target &&
+      (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
+    ) {
       return; // never steal input from form fields (INPUT-07)
     }
     const panStep = 60;
@@ -572,7 +601,8 @@ export class InteractionController {
       if (this.destroyed) return;
       void this.updateHover(this.lastPointer, event);
     };
-    const raf = (globalThis as { requestAnimationFrame?: (cb: () => void) => number }).requestAnimationFrame;
+    const raf = (globalThis as { requestAnimationFrame?: (cb: () => void) => number })
+      .requestAnimationFrame;
     if (raf) raf(run);
     else setTimeout(run, 50);
   }
@@ -640,7 +670,14 @@ export class InteractionController {
     point: ScreenPoint,
     originalEvent: Event,
   ): void {
-    this.emitFeatureEvent(type, hit.feature, hit.layerId, point, originalEvent, this.scene.renderedRevision);
+    this.emitFeatureEvent(
+      type,
+      hit.feature,
+      hit.layerId,
+      point,
+      originalEvent,
+      this.scene.renderedRevision,
+    );
   }
 
   private emitFeatureEvent(
@@ -739,7 +776,10 @@ function addPosition(position: Position, delta: { dx: number; dy: number }): Pos
   return { x: planar.x + delta.dx, y: planar.y + delta.dy };
 }
 
-function boundsFromPositions(a: Position, b: Position): import('../math/bounds.ts').Bounds<Position> {
+function boundsFromPositions(
+  a: Position,
+  b: Position,
+): import('../math/bounds.ts').Bounds<Position> {
   if ('lat' in a && 'lat' in b) {
     return {
       southwest: { lat: Math.min(a.lat, b.lat), lng: Math.min(a.lng, b.lng) },

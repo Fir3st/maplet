@@ -66,10 +66,7 @@ function formatUrl(template, subdomains, z, x, y) {
   if (subdomains && subdomains.length > 0) {
     url = url.replaceAll('{s}', subdomains[Math.abs(x + y) % subdomains.length]);
   }
-  return url
-    .replaceAll('{z}', String(z))
-    .replaceAll('{x}', String(x))
-    .replaceAll('{y}', String(y));
+  return url.replaceAll('{z}', String(z)).replaceAll('{x}', String(x)).replaceAll('{y}', String(y));
 }
 
 function tileCenter(z, x, y) {
@@ -83,11 +80,14 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const COMPARE_TILE = { z: 3, x: 4, y: 2 }; // central Europe: land water roads labels
 const map = await createMap('map', {
-    renderer: { primary: new URLSearchParams(location.search).get('backend') === 'webgpu' ? 'webgpu' : 'webgl1', fallback: false },
-    size: { width: SIZE, height: SIZE },
-    ...provider
-        ? { center: tileCenter(COMPARE_TILE.z, COMPARE_TILE.x, COMPARE_TILE.y), zoom: COMPARE_TILE.z }
-        : { center: tileCenter(2, 1, 1), zoom: 2 }
+  renderer: {
+    primary: new URLSearchParams(location.search).get('backend') === 'webgpu' ? 'webgpu' : 'webgl1',
+    fallback: false,
+  },
+  size: { width: SIZE, height: SIZE },
+  ...(provider
+    ? { center: tileCenter(COMPARE_TILE.z, COMPARE_TILE.x, COMPARE_TILE.y), zoom: COMPARE_TILE.z }
+    : { center: tileCenter(2, 1, 1), zoom: 2 }),
 });
 
 const sourceOptions = provider
@@ -98,11 +98,17 @@ const sourceOptions = provider
       maxZoom: effectiveLive ? 19 : 8,
       attribution: provider.attribution,
     }
-  : { url: './tiles-svg/{z}/{x}/{y}.svg', minZoom: 0, maxZoom: 3, attribution: 'Local SVG tiles (maplet)' };
+  : {
+      url: './tiles-svg/{z}/{x}/{y}.svg',
+      minZoom: 0,
+      maxZoom: 3,
+      attribution: 'Local SVG tiles (maplet)',
+    };
 const source = map.data.rasterTiles({ id: 'tiles', ...sourceOptions });
 map.addLayer({ id: 'tiles', type: 'raster', source, style: { opacity: 1 } });
 window.__maplet = { map, source };
-document.getElementById('mode-label').textContent = `${mode}${provider ? (effectiveLive ? ' · live' : ' · cache') : ''}`;
+document.getElementById('mode-label').textContent =
+  `${mode}${provider ? (effectiveLive ? ' · live' : ' · cache') : ''}`;
 
 const sample = async (x, y) => {
   const pixel = await map.debug.samplePixel({ x, y });
@@ -253,7 +259,13 @@ async function providerChecks() {
   }
   const comparisons = [];
   if (pixels) {
-    for (const [u, v] of [[64, 64], [192, 80], [96, 208], [200, 180], [128, 128]]) {
+    for (const [u, v] of [
+      [64, 64],
+      [192, 80],
+      [96, 208],
+      [200, 180],
+      [128, 128],
+    ]) {
       const got = await sample(OFFSET + u, OFFSET + v);
       const index = (v * TILE + u) * 4;
       const decoded = [pixels[index], pixels[index + 1], pixels[index + 2], pixels[index + 3]];
@@ -280,7 +292,8 @@ async function providerChecks() {
     ready,
     decodeError,
     comparisons,
-    comparePass: !decodeError && comparisons.every((entry) => entry.delta <= TOL && entry.alpha >= 250),
+    comparePass:
+      !decodeError && comparisons.every((entry) => entry.delta <= TOL && entry.alpha >= 250),
     fallback,
     urlSwitch,
     seam,
@@ -297,7 +310,10 @@ async function fallbackChecks() {
   map.setView({ center: tileCenter(5, 19, 10), zoom: 5 });
   const ready = await waitFor(async () => (await sample(SIZE / 2, SIZE / 2))[3] >= 250);
   const probes = [];
-  for (const child of [{ x: 19, y: 10 }, { x: 19, y: 9 }]) {
+  for (const child of [
+    { x: 19, y: 10 },
+    { x: 19, y: 9 },
+  ]) {
     const rect = {
       sx: OFFSET + (child.x - 19) * TILE,
       sy: OFFSET + (child.y - 10) * TILE,
@@ -328,7 +344,12 @@ async function fallbackChecks() {
       delta: maxDelta(got, expected),
     });
   }
-  return { view: '5/19/10', ready, probes, pass: ready && probes.every((entry) => entry.alpha >= 250 && entry.delta <= TOL) };
+  return {
+    view: '5/19/10',
+    ready,
+    probes,
+    pass: ready && probes.every((entry) => entry.alpha >= 250 && entry.delta <= TOL),
+  };
 }
 
 /**
@@ -371,7 +392,12 @@ async function switchChecks() {
 
 async function seamChecks() {
   map.setView({ center: { lat: 0, lng: 0 }, zoom: 2.4 });
-  const quadrants = [[112, 112], [400, 112], [112, 400], [400, 400]];
+  const quadrants = [
+    [112, 112],
+    [400, 112],
+    [112, 400],
+    [400, 400],
+  ];
   const ready = await waitFor(async () => {
     for (const [x, y] of quadrants) {
       if ((await sample(x, y))[3] < 250) return false;

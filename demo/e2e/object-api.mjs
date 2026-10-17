@@ -25,11 +25,15 @@ export async function objectApi({ session, expect, options }) {
   await session.click(screen.x, screen.y);
   await session.waitFor("window.__objects.events.includes('map')", 5000, 'direct click bubbling');
   const clicked = await session.evaluate('window.__objects.events');
-  expect.equal(clicked.join(','), 'object,layer,map', 'direct object/layer/map clicks bubble in order');
+  expect.equal(
+    clicked.join(','),
+    'object,layer,map',
+    'direct object/layer/map clicks bubble in order',
+  );
   await session.mouse('mousePressed', screen.x, screen.y);
-  await new Promise(resolve => setTimeout(resolve, 100));
+  await new Promise((resolve) => setTimeout(resolve, 100));
   await session.mouse('mouseMoved', screen.x + 40, screen.y + 20, { dragging: true });
-  await new Promise(resolve => setTimeout(resolve, 100));
+  await new Promise((resolve) => setTimeout(resolve, 100));
   await session.mouse('mouseReleased', screen.x + 40, screen.y + 20);
   await session.waitFor("window.__objects.events.includes('dragend')", 5000, 'direct drag event');
   const result = await session.evaluate(`(async () => {
@@ -53,12 +57,24 @@ export async function objectApi({ session, expect, options }) {
     return { dropped, pixel, hit: hits[0]?.feature.id, hidden: hiddenHits.length, count, stale,
       newGeneration: replacement.ref.generation !== before.generation, dragends: events.filter(type => type === 'dragend').length };
   })()`);
-  expect.ok(Math.abs(result.dropped.x - screen.x - 40) < 1 && Math.abs(result.dropped.y - screen.y - 20) < 1, 'inline point drag follows the pointer');
-  expect.ok(Math.abs(result.pixel.r - 220) <= 3 && Math.abs(result.pixel.g - 38) <= 3 && Math.abs(result.pixel.b - 38) <= 3, 'property style changes reach the GPU');
+  expect.ok(
+    Math.abs(result.dropped.x - screen.x - 40) < 1 &&
+      Math.abs(result.dropped.y - screen.y - 20) < 1,
+    'inline point drag follows the pointer',
+  );
+  expect.ok(
+    Math.abs(result.pixel.r - 220) <= 3 &&
+      Math.abs(result.pixel.g - 38) <= 3 &&
+      Math.abs(result.pixel.b - 38) <= 3,
+    'property style changes reach the GPU',
+  );
   expect.equal(result.hit, 'a', 'new inline point layer participates in picking');
   expect.equal(result.hidden, 0, 'object hide excludes picking');
   expect.equal(result.count, 1, 'hide keeps source data');
-  expect.ok(result.stale && result.newGeneration, 'old objects do not rebind when their id is reused');
+  expect.ok(
+    result.stale && result.newGeneration,
+    'old objects do not rebind when their id is reused',
+  );
   expect.equal(result.dragends, 1, 'once(dragend) ignores preceding hover/click events');
   await session.click(60, 60);
   await session.waitFor("window.__objects.events.includes('background')", 5000, 'background click');

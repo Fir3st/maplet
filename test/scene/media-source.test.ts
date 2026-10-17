@@ -69,12 +69,16 @@ test('MEDIA-01: bounds are normalized and mixed position kinds are rejected', ()
     () =>
       normalizeMediaBounds({
         southwest: { lat: 50, lng: 14 },
-        northeast: { x: 10, y: 20 } as never,
+        northeast: { x: 10, y: 20 },
       }),
     (error: unknown) => isMapletError(error) && error.code === 'invalid-argument',
   );
   assert.throws(
-    () => normalizeMediaBounds({ southwest: { lat: Number.NaN, lng: 14 }, northeast: { lat: 50, lng: 15 } }),
+    () =>
+      normalizeMediaBounds({
+        southwest: { lat: Number.NaN, lng: 14 },
+        northeast: { lat: 50, lng: 15 },
+      }),
     (error: unknown) => isMapletError(error) && error.code === 'invalid-argument',
   );
 });
@@ -105,14 +109,13 @@ test('MEDIA-03: region pixels are premultiplied row by row for partial uploads',
   // 2x2 region with a stride of 12 (3 pixels per row), only the first 2 used.
   const stride = 12;
   const pixels = new Uint8Array([
-    200, 100, 50, 255, 0, 100, 200, 128, 9, 9, 9, 9,
-    10, 20, 30, 0, 255, 255, 255, 128, 7, 7, 7, 7,
+    200, 100, 50, 255, 0, 100, 200, 128, 9, 9, 9, 9, 10, 20, 30, 0, 255, 255, 255, 128, 7, 7, 7, 7,
   ]);
   const region = { x: 0, y: 0, width: 2, height: 2 };
-  assert.deepEqual([...premultiplyRegion(pixels, stride, region)], [
-    200, 100, 50, 255, 0, 50, 100, 128,
-    0, 0, 0, 0, 128, 128, 128, 128,
-  ]);
+  assert.deepEqual(
+    [...premultiplyRegion(pixels, stride, region)],
+    [200, 100, 50, 255, 0, 50, 100, 128, 0, 0, 0, 0, 128, 128, 128, 128],
+  );
 });
 
 test('MEDIA-07: rotation is validated, defaults to zero and reaches the snapshot', () => {

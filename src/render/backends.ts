@@ -35,7 +35,10 @@ export interface MapBackend extends FrameDriver {
     options: { readonly limit: number },
   ): Promise<readonly PickResult[]>;
   /** Diagnostics: renders one frame and reads a single pixel from the back buffer. */
-  samplePixel(scene: Scene, point: ScreenPoint): Promise<{ r: number; g: number; b: number; a: number }>;
+  samplePixel(
+    scene: Scene,
+    point: ScreenPoint,
+  ): Promise<{ r: number; g: number; b: number; a: number }>;
   destroy(): void;
   /**
    * Registers the device/context loss callback. A lost backend stops rendering;
@@ -65,7 +68,10 @@ export async function createBackend(
     case 'webgpu':
       return createWebGpuBackend(options);
     case 'none':
-      throw new MapletError('invalid-argument', 'the "none" backend is not created through the factory');
+      throw new MapletError(
+        'invalid-argument',
+        'the "none" backend is not created through the factory',
+      );
   }
   fail('gpu-unavailable', `unknown backend: ${String(kind)}`, {});
 }

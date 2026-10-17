@@ -14,7 +14,7 @@
 
 import { normalizePosition, type PositionInput } from '../api/coordinates.ts';
 import { assertArgument, fail } from '../api/errors.ts';
-import { isGeoPosition, isPlanarPosition, type Position } from '../api/types.ts';
+import { isArrayValue, isGeoPosition, isPlanarPosition, type Position } from '../api/types.ts';
 import type { Crs } from '../math/crs.ts';
 import type { Plugin } from '../plugins.ts';
 
@@ -99,11 +99,14 @@ function normalizeGradient(
 ): readonly (readonly [number, string])[] {
   if (gradient === undefined || gradient === null) return DEFAULT_GRADIENT;
   assertArgument(
-    Array.isArray(gradient) && gradient.length >= 2,
+    isArrayValue(gradient) && gradient.length >= 2,
     'heatmap gradient needs at least two [offset, color] stops',
   );
   const stops = gradient.map((stop) => {
-    assertArgument(Array.isArray(stop) && stop.length === 2, 'heatmap gradient stops are [offset, color] pairs');
+    assertArgument(
+      isArrayValue(stop) && stop.length === 2,
+      'heatmap gradient stops are [offset, color] pairs',
+    );
     const offset = assertNumber(stop[0], 'heatmap gradient offsets must be finite numbers');
     assertArgument(
       typeof stop[1] === 'string' && stop[1].length > 0,
@@ -116,7 +119,10 @@ function normalizeGradient(
 
 function isHeatPosition(value: unknown): boolean {
   if (Array.isArray(value)) {
-    return value.length === 2 && value.every((entry) => typeof entry === 'number' && Number.isFinite(entry));
+    return (
+      value.length === 2 &&
+      value.every((entry) => typeof entry === 'number' && Number.isFinite(entry))
+    );
   }
   if (isGeoPosition(value)) return Number.isFinite(value.lat) && Number.isFinite(value.lng);
   if (isPlanarPosition(value)) return Number.isFinite(value.x) && Number.isFinite(value.y);
@@ -125,17 +131,26 @@ function isHeatPosition(value: unknown): boolean {
 
 /** Validates one sample and keeps only the declared fields. */
 function normalizePoint(point: HeatPoint): HeatPoint {
-  assertArgument(typeof point === 'object' && point !== null, 'heatmap points are { position, weight? } objects');
+  assertArgument(
+    typeof point === 'object' && point !== null,
+    'heatmap points are { position, weight? } objects',
+  );
   assertArgument(
     isHeatPosition(point.position),
     'heatmap positions must be finite { lat, lng }, { x, y } or [lat, lng] values',
   );
   if (point.weight === undefined) return { position: point.position };
-  return { position: point.position, weight: assertNumber(point.weight, 'heatmap weights must be finite numbers') };
+  return {
+    position: point.position,
+    weight: assertNumber(point.weight, 'heatmap weights must be finite numbers'),
+  };
 }
 
 /** Renders the ramp into a 256-entry packed-RGBA lookup; alpha follows intensity. */
-function createPalette(document: Document, stops: readonly (readonly [number, string])[]): Uint32Array {
+function createPalette(
+  document: Document,
+  stops: readonly (readonly [number, string])[],
+): Uint32Array {
   const canvas = document.createElement('canvas');
   canvas.width = LUT_SIZE;
   canvas.height = 1;
@@ -232,23 +247,43 @@ export function heatmap(options: HeatmapOptions = {}): Plugin<HeatmapApi> {
       }
       let nextPeak = peak;
       if (update.max !== undefined) {
-        nextPeak = update.max === null ? null : assertNumber(update.max, 'heatmap max must be a finite number or null');
+        nextPeak =
+          update.max === null
+            ? null
+            : assertNumber(update.max, 'heatmap max must be a finite number or null');
         assertArgument(nextPeak === null || nextPeak > 0, 'heatmap max must be greater than zero');
       }
       let nextMinOpacity = minOpacity;
       if (update.minOpacity !== undefined) {
-        nextMinOpacity = assertNumber(update.minOpacity, 'heatmap minOpacity must be a finite number');
-        assertArgument(nextMinOpacity >= 0 && nextMinOpacity <= 1, 'heatmap minOpacity must be between 0 and 1');
+        nextMinOpacity = assertNumber(
+          update.minOpacity,
+          'heatmap minOpacity must be a finite number',
+        );
+        assertArgument(
+          nextMinOpacity >= 0 && nextMinOpacity <= 1,
+          'heatmap minOpacity must be between 0 and 1',
+        );
       }
       let nextMaxOpacity = maxOpacity;
       if (update.maxOpacity !== undefined) {
-        nextMaxOpacity = assertNumber(update.maxOpacity, 'heatmap maxOpacity must be a finite number');
-        assertArgument(nextMaxOpacity >= 0 && nextMaxOpacity <= 1, 'heatmap maxOpacity must be between 0 and 1');
+        nextMaxOpacity = assertNumber(
+          update.maxOpacity,
+          'heatmap maxOpacity must be a finite number',
+        );
+        assertArgument(
+          nextMaxOpacity >= 0 && nextMaxOpacity <= 1,
+          'heatmap maxOpacity must be between 0 and 1',
+        );
       }
-      assertArgument(nextMinOpacity <= nextMaxOpacity, 'heatmap minOpacity cannot exceed maxOpacity');
-      const nextGradient = update.gradient === undefined ? gradient : normalizeGradient(update.gradient);
+      assertArgument(
+        nextMinOpacity <= nextMaxOpacity,
+        'heatmap minOpacity cannot exceed maxOpacity',
+      );
+      const nextGradient =
+        update.gradient === undefined ? gradient : normalizeGradient(update.gradient);
       let nextZIndex: number | null = null;
-      if (update.zIndex !== undefined) nextZIndex = assertNumber(update.zIndex, 'heatmap zIndex must be a finite number');
+      if (update.zIndex !== undefined)
+        nextZIndex = assertNumber(update.zIndex, 'heatmap zIndex must be a finite number');
 
       if (nextRadius !== radius || nextBlur !== blur) stamp = null;
       if (nextGradient !== gradient) palette = null;
@@ -275,7 +310,9 @@ export function heatmap(options: HeatmapOptions = {}): Plugin<HeatmapApi> {
       invalidate();
     };
     /** Normalizes positions and weights once per change, not once per frame. */
-    const prepare = (crs: Crs): readonly { readonly position: Position; readonly alpha: number }[] => {
+    const prepare = (
+      crs: Crs,
+    ): readonly { readonly position: Position; readonly alpha: number }[] => {
       if (prepared && prepared.epoch === epoch) return prepared.samples;
       const weighted: { position: Position; weight: number }[] = [];
       let largest = 0;
@@ -294,10 +331,12 @@ export function heatmap(options: HeatmapOptions = {}): Plugin<HeatmapApi> {
       return samples;
     };
 
-    context.render.onFrame(({ plan, positionToScreen }) => {
+    context.render.onFrame((frame) => {
+      const { plan } = frame;
       const width = plan.view.width;
       const height = plan.view.height;
-      if (!(width > 0) || !(height > 0) || !(plan.deviceWidth > 0) || !(plan.deviceHeight > 0)) return;
+      if (!(width > 0) || !(height > 0) || !(plan.deviceWidth > 0) || !(plan.deviceHeight > 0))
+        return;
       const scale = Math.max(
         MIN_FIELD_SCALE,
         Math.min(plan.dpr, MAX_FIELD_SCALE, Math.sqrt(MAX_FIELD_PIXELS / (width * height))),
@@ -317,8 +356,13 @@ export function heatmap(options: HeatmapOptions = {}): Plugin<HeatmapApi> {
         stamp ??= createStamp(document, radius, blur);
         overlay.globalCompositeOperation = 'lighter';
         for (const sample of samples) {
-          const screen = positionToScreen(sample.position);
-          if (screen.x < -radius || screen.y < -radius || screen.x > width + radius || screen.y > height + radius) {
+          const screen = frame.positionToScreen(sample.position);
+          if (
+            screen.x < -radius ||
+            screen.y < -radius ||
+            screen.x > width + radius ||
+            screen.y > height + radius
+          ) {
             continue;
           }
           overlay.globalAlpha = sample.alpha;

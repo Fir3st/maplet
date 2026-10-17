@@ -7,6 +7,7 @@ search.addEventListener('input', () => {
     tutorial.hidden = !tutorial.textContent.toLocaleLowerCase().includes(query);
     if (!tutorial.hidden) count++;
   }
-  document.querySelector('#result-count').textContent = `${count} ${count === 1 ? 'tutorial' : 'tutorials'}`;
+  document.querySelector('#result-count').textContent =
+    `${count} ${count === 1 ? 'tutorial' : 'tutorials'}`;
   document.querySelector('#empty').hidden = count > 0;
 });

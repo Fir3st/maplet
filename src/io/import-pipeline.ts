@@ -30,10 +30,30 @@
  * degrades to the copy semantics. `SharedArrayBuffer` is never required.
  */
 
-import { isMapletError, isMapletErrorCode, MapletError, type MapletErrorCode, type MapletErrorDetail } from '../api/errors.ts';
+import {
+  isMapletError,
+  isMapletErrorCode,
+  MapletError,
+  type MapletErrorCode,
+  type MapletErrorDetail,
+} from '../api/errors.ts';
 import type { FeatureInput } from '../scene/source.ts';
-import { prepareImport, type ImportJobRequest, type PointImportJobRequest, type PartsImportJobRequest, type PartsImport, type WorkerImportRequest, type PreparedImport } from './prepare.ts';
-import { validateColumnarMetadata, validatePointBatch, validatePartsBatch, type ColumnarBatch, type ColumnarPointBatch } from './columnar.ts';
+import {
+  prepareImport,
+  type ImportJobRequest,
+  type PointImportJobRequest,
+  type PartsImportJobRequest,
+  type PartsImport,
+  type WorkerImportRequest,
+  type PreparedImport,
+} from './prepare.ts';
+import {
+  validateColumnarMetadata,
+  validatePointBatch,
+  validatePartsBatch,
+  type ColumnarBatch,
+  type ColumnarPointBatch,
+} from './columnar.ts';
 import { validPreparedParts } from './parts.ts';
 import { GEOMETRY_KIND } from '../geometry/geometry.ts';
 import type { FeatureId } from '../api/types.ts';
@@ -91,7 +111,11 @@ interface WorkerReply {
   readonly error?: unknown;
 }
 
-function parseReply(data: unknown, request: WorkerImportRequest, requestId: number): WorkerReply | null {
+function parseReply(
+  data: unknown,
+  request: WorkerImportRequest,
+  requestId: number,
+): WorkerReply | null {
   if (typeof data !== 'object' || data === null) return null;
   const reply = data as WorkerReply;
   if (typeof reply.requestId !== 'number' || typeof reply.ok !== 'boolean') return null;
@@ -101,19 +125,34 @@ function parseReply(data: unknown, request: WorkerImportRequest, requestId: numb
   if (reply.requestId !== requestId) return reply;
   if (reply.ok) {
     if (request.kind === 'columnar-points') {
-      try { validatePointBatch(reply.features as ColumnarPointBatch, { positionKind: request.positionKind }); }
-      catch { return null; }
+      try {
+        validatePointBatch(reply.features as ColumnarPointBatch, {
+          positionKind: request.positionKind,
+        });
+      } catch {
+        return null;
+      }
     } else if (request.kind === 'columnar-parts') {
       const parts = reply.features as PartsImport;
       if (request.projectionCode !== undefined) {
         if (!validPreparedParts(parts)) return null;
-        if (parts.geometries.some((geometry) => request.batch.kind === 'polygon'
-          ? geometry.kind !== GEOMETRY_KIND.polygon
-          : geometry.kind !== GEOMETRY_KIND.lineString && geometry.kind !== GEOMETRY_KIND.multiLineString)) return null;
+        if (
+          parts.geometries.some((geometry) =>
+            request.batch.kind === 'polygon'
+              ? geometry.kind !== GEOMETRY_KIND.polygon
+              : geometry.kind !== GEOMETRY_KIND.lineString &&
+                geometry.kind !== GEOMETRY_KIND.multiLineString,
+          )
+        )
+          return null;
       } else {
         if (!parts || parts.kind !== 'raw-parts') return null;
         if (parts.batch?.kind !== request.batch.kind) return null;
-        try { validatePartsBatch(parts.batch, { positionKind: request.positionKind }); } catch { return null; }
+        try {
+          validatePartsBatch(parts.batch, { positionKind: request.positionKind });
+        } catch {
+          return null;
+        }
       }
     } else if (!Array.isArray(reply.features)) return null;
   }
@@ -125,12 +164,15 @@ function replyError(error: unknown): MapletError {
   const raw = error as { code?: unknown; message?: unknown; detail?: unknown };
   const code: MapletErrorCode = isMapletErrorCode(raw.code) ? raw.code : 'worker-failed';
   const message = typeof raw.message === 'string' ? raw.message : 'import preparation failed';
-  const detail = typeof raw.detail === 'object' && raw.detail !== null ? (raw.detail as MapletErrorDetail) : {};
+  const detail =
+    typeof raw.detail === 'object' && raw.detail !== null ? (raw.detail as MapletErrorDetail) : {};
   return new MapletError(code, message, detail);
 }
 
 /** Adds the logical revision to typed failures that do not carry one (TX-09). */
-function tagRevision(error: unknown, revision: number | undefined): unknown {
+function tagRevision(error: MapletError, revision: number | undefined): MapletError;
+function tagRevision(error: Error, revision: number | undefined): Error;
+function tagRevision(error: Error, revision: number | undefined): Error {
   if (revision === undefined || !isMapletError(error) || error.detail.revision !== undefined) {
     return error;
   }
@@ -141,7 +183,7 @@ function abortError(options: ImportSubmitOptions): MapletError {
   return tagRevision(
     new MapletError('aborted', 'import aborted', { reason: 'aborted' }),
     options.revision,
-  ) as MapletError;
+  );
 }
 
 function transferablesOf(request: WorkerImportRequest): Transferable[] {
@@ -191,7 +233,10 @@ export class ImportPipeline {
   }
 
   /** Prepares an import; the caller applies the returned features transactionally. */
-  submit(request: PointImportJobRequest, options?: ImportSubmitOptions): Promise<ColumnarPointBatch>;
+  submit(
+    request: PointImportJobRequest,
+    options?: ImportSubmitOptions,
+  ): Promise<ColumnarPointBatch>;
   submit(request: PartsImportJobRequest, options?: ImportSubmitOptions): Promise<PartsImport>;
   submit(request: ImportJobRequest, options?: ImportSubmitOptions): Promise<FeatureInput[]>;
   submit(request: WorkerImportRequest, options: ImportSubmitOptions = {}): Promise<PreparedImport> {
@@ -253,7 +298,9 @@ export class ImportPipeline {
     const active = this.releaseActive();
     if (active) {
       this.detachAbort(active);
-      active.reject(new MapletError('destroyed', 'import cancelled: the map has been destroyed', {}));
+      active.reject(
+        new MapletError('destroyed', 'import cancelled: the map has been destroyed', {}),
+      );
     }
     for (const job of this.queue.splice(0)) {
       this.detachAbort(job);
@@ -286,14 +333,17 @@ export class ImportPipeline {
     this.detachAbort(job);
     try {
       // Compact columns stay compact; inline still owns its input like a worker does.
-      const request = (job.request.kind === 'columnar-points' || job.request.kind === 'columnar-parts'
-        ? { ...job.request, batch: structuredClone(job.request.batch) }
-        : job.request) as WorkerImportRequest;
+      const request = (
+        job.request.kind === 'columnar-points' || job.request.kind === 'columnar-parts'
+          ? { ...job.request, batch: structuredClone(job.request.batch) }
+          : job.request
+      ) as WorkerImportRequest;
       const features = prepareImport(request);
       this.used.inline++;
       job.resolve(features);
     } catch (error) {
-      job.reject(tagRevision(error, job.options.revision));
+      const failure = error instanceof Error ? error : new Error(String(error));
+      job.reject(tagRevision(failure, job.options.revision));
     }
   }
 
@@ -315,16 +365,23 @@ export class ImportPipeline {
       let request = job.request;
       if (request.kind === 'columnar-points' || request.kind === 'columnar-parts') {
         const { ids, properties, ...columns } = request.batch;
-        const count = request.kind === 'columnar-points' ? columns.positions.length / 2 :
-          validatePartsBatch(request.batch, { positionKind: request.positionKind, context: `columnar(${request.sourceId})` });
+        const count =
+          request.kind === 'columnar-points'
+            ? columns.positions.length / 2
+            : validatePartsBatch(request.batch, {
+                positionKind: request.positionKind,
+                context: `columnar(${request.sourceId})`,
+              });
         validateColumnarMetadata(request.batch, count, `columnar(${request.sourceId})`);
         // Validated IDs are primitives: copy their array without serializing half
         // a million strings. Property graphs still use the native clone, including
         // cycles, aliases and platform objects; they never round-trip to the worker.
         const ownedIds = ids === undefined ? undefined : new Array<FeatureId | undefined>(count);
         if (ownedIds) for (let i = 0; i < count; i++) ownedIds[i] = ids![i];
-        job.metadata = { ...(ownedIds === undefined ? {} : { ids: ownedIds }),
-          ...(properties === undefined ? {} : { properties: structuredClone(properties) }) };
+        job.metadata = {
+          ...(ownedIds === undefined ? {} : { ids: ownedIds }),
+          ...(properties === undefined ? {} : { properties: structuredClone(properties) }),
+        };
         job.featureCount = count;
         request = { ...request, batch: columns } as WorkerImportRequest;
       }
@@ -396,8 +453,15 @@ export class ImportPipeline {
     }
     if (reply.ok && job.featureCount !== null) {
       const result = reply.features as ColumnarPointBatch | PartsImport;
-      const count = result.kind === 'prepared-parts' ? result.geometries.length : result.kind === 'raw-parts' ?
-        validatePartsBatch(result.batch, { positionKind: job.request.kind === 'geojson' ? 'geographic' : job.request.positionKind }) : result.positions.length / 2;
+      const count =
+        result.kind === 'prepared-parts'
+          ? result.geometries.length
+          : result.kind === 'raw-parts'
+            ? validatePartsBatch(result.batch, {
+                positionKind:
+                  job.request.kind === 'geojson' ? 'geographic' : job.request.positionKind,
+              })
+            : result.positions.length / 2;
       if (count !== job.featureCount) {
         this.failWorker(job, 'the import worker changed the feature count');
         return;

@@ -18,7 +18,10 @@ export class ExpandedFill {
     for (let i = 1; i <= vertices; i++) this.offsets[i]! += this.offsets[i - 1]!;
     this.rows = new Uint32Array(this.indices.length);
     const cursor = this.offsets.slice();
-    this.indices.forEach((vertex, row) => { this.rows[cursor[vertex]!] = row; cursor[vertex]!++; });
+    this.indices.forEach((vertex, row) => {
+      this.rows[cursor[vertex]!] = row;
+      cursor[vertex]!++;
+    });
     this.update(batch);
   }
 
@@ -33,13 +36,18 @@ export class ExpandedFill {
       const changed: number[] = [];
       for (const range of batch.upload.ranges) {
         for (let vertex = range.start / FILL_STRIDE; vertex < range.end / FILL_STRIDE; vertex++) {
-          for (let at = this.offsets[vertex]!; at < this.offsets[vertex + 1]!; at++) { const row = this.rows[at]!; write(row); changed.push(row); }
+          for (let at = this.offsets[vertex]!; at < this.offsets[vertex + 1]!; at++) {
+            const row = this.rows[at]!;
+            write(row);
+            changed.push(row);
+          }
         }
       }
       changed.sort((a, b) => a - b);
       const ranges: { start: number; end: number }[] = [];
       for (const row of changed) {
-        const start = row * FILL_STRIDE, last = ranges[ranges.length - 1];
+        const start = row * FILL_STRIDE,
+          last = ranges[ranges.length - 1];
         if (last && start <= last.end) last.end = Math.max(last.end, start + FILL_STRIDE);
         else ranges.push({ start, end: start + FILL_STRIDE });
       }

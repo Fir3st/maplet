@@ -11,11 +11,13 @@ import { createMap } from '../../dist/index.js';
 const backend = new URLSearchParams(location.search).get('backend');
 
 const map = await createMap('map', {
-    renderer: backend === 'webgpu'
-        ? { primary: 'webgpu', fallback: false }
-        : { primary: 'webgl1', fallback: false },
-    size: { width: 640, height: 480 },
-    center: { lat: 50.0, lng: 14.05 }, zoom: 10
+  renderer:
+    backend === 'webgpu'
+      ? { primary: 'webgpu', fallback: false }
+      : { primary: 'webgl1', fallback: false },
+  size: { width: 640, height: 480 },
+  center: { lat: 50.0, lng: 14.05 },
+  zoom: 10,
 });
 
 const backdrop = map.data.vector({ id: 'backdrop' });
@@ -30,15 +32,37 @@ await backdrop.features.replace([
   },
 ]);
 
-const points = map.data.vector({ id: 'points' });await points.features.replace([
-  { id: 'p1', geometry: { type: 'point', position: { lat: 50.02, lng: 14.02 } }, properties: { name: 'P1', status: 'ok' } },
-  { id: 'p2', geometry: { type: 'point', position: { lat: 50.02, lng: 14.08 } }, properties: { name: 'P2', status: 'ok' } },
-  { id: 'p3', geometry: { type: 'point', position: { lat: 49.955, lng: 14.12 } }, properties: { name: 'P3', status: 'warn' } },
+const points = map.data.vector({ id: 'points' });
+await points.features.replace([
+  {
+    id: 'p1',
+    geometry: { type: 'point', position: { lat: 50.02, lng: 14.02 } },
+    properties: { name: 'P1', status: 'ok' },
+  },
+  {
+    id: 'p2',
+    geometry: { type: 'point', position: { lat: 50.02, lng: 14.08 } },
+    properties: { name: 'P2', status: 'ok' },
+  },
+  {
+    id: 'p3',
+    geometry: { type: 'point', position: { lat: 49.955, lng: 14.12 } },
+    properties: { name: 'P3', status: 'warn' },
+  },
 ]);
 
 const links = map.data.vector({ id: 'links' });
 await links.features.replace([
-  { id: 'l1', geometry: { type: 'lineString', positions: [{ lat: 50.02, lng: 14.02 }, { lat: 50.02, lng: 14.08 }] } },
+  {
+    id: 'l1',
+    geometry: {
+      type: 'lineString',
+      positions: [
+        { lat: 50.02, lng: 14.02 },
+        { lat: 50.02, lng: 14.08 },
+      ],
+    },
+  },
 ]);
 
 const shapes = map.data.vector({ id: 'shapes' });
@@ -57,20 +81,30 @@ const routes = map.data.vector({ id: 'routes' });
 await routes.features.replace([
   {
     id: 'r1',
-    geometry: { type: 'lineString', positions: [{ lat: 49.94, lng: 14.0 }, { lat: 49.94, lng: 14.1 }] },
+    geometry: {
+      type: 'lineString',
+      positions: [
+        { lat: 49.94, lng: 14.0 },
+        { lat: 49.94, lng: 14.1 },
+      ],
+    },
   },
 ]);
 
 const targets = map.data.vector({ id: 'targets' });
 await targets.features.replace([
-  { id: 't1', geometry: { type: 'point', position: { lat: 50.0, lng: 14.04 } }, properties: { name: 'T1' } },
+  {
+    id: 't1',
+    geometry: { type: 'point', position: { lat: 50.0, lng: 14.04 } },
+    properties: { name: 'T1' },
+  },
 ]);
 
 map.addLayer({
   id: 'backdrop',
   type: 'fills',
   source: backdrop,
-  interactive: false ,
+  interactive: false,
   style: { fillColor: '#ffffff', fillOpacity: 1, strokeWidthPx: 0 },
 });
 map.addLayer({
@@ -101,7 +135,8 @@ map.addLayer({
   id: 'points',
   type: 'points',
   source: points,
-  interactive: true, draggable: true ,
+  interactive: true,
+  draggable: true,
   style: { radiusPx: 6, color: '#2563eb' },
 });
 
@@ -115,7 +150,12 @@ map.bindings.add({
   },
 });
 
-map.relations.add({ id: 'p1-p2', type: 'near', from: points.features.ref('p1'), to: points.features.ref('p2') });
+map.relations.add({
+  id: 'p1-p2',
+  type: 'near',
+  from: points.features.ref('p1'),
+  to: points.features.ref('p2'),
+});
 
 map.addControl({ id: 'zoom', kind: 'zoom', position: 'top-left' });
 

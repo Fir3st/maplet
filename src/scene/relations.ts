@@ -196,7 +196,7 @@ export class RelationsStore {
       properties: relation.properties,
       endpointPolicy: relation.endpointPolicy,
       missing: relation.missing,
-    }) as RelationSnapshot;
+    });
   }
 
   /**

@@ -23,7 +23,9 @@ function finalize() {
   finalized = true;
   result.ms = Math.round(performance.now() - started);
   result.pass =
-    result.errors.length === 0 && result.checks.length === 9 && result.checks.every((entry) => entry.pass);
+    result.errors.length === 0 &&
+    result.checks.length === 9 &&
+    result.checks.every((entry) => entry.pass);
   window.__importCheckResult = result;
   document.title = 'import-check-done';
   const summary = document.getElementById('summary');
@@ -34,11 +36,13 @@ function finalize() {
 let started = 0;
 
 const map = await createMap('map', {
-    renderer: new URLSearchParams(location.search).get('backend') === 'webgpu'
-        ? { primary: 'webgpu', fallback: false }
-        : { primary: 'webgl1', fallback: false },
-    size: { width: 640, height: 480 },
-    center: { lat: 50, lng: 14.05 }, zoom: 10
+  renderer:
+    new URLSearchParams(location.search).get('backend') === 'webgpu'
+      ? { primary: 'webgpu', fallback: false }
+      : { primary: 'webgl1', fallback: false },
+  size: { width: 640, height: 480 },
+  center: { lat: 50, lng: 14.05 },
+  zoom: 10,
 });
 
 window.__importMap = map;
@@ -48,7 +52,7 @@ map.addLayer({
   type: 'points',
   source: marks,
   style: { radiusPx: 7, color: '#2563eb' },
-  interactive: true ,
+  interactive: true,
 });
 map.addLayer({
   id: 'marks-lines',
@@ -133,10 +137,31 @@ await check('IO-05 malformed batches are refused before publication', async () =
     ['plain array', { kind: 'point', positions: [1, 2] }],
     ['NaN coordinate', { kind: 'point', positions: Float64Array.of(1, Number.NaN) }],
     ['ids length', { kind: 'point', positions: Float64Array.of(1, 2, 3, 4), ids: ['only-one'] }],
-    ['point with offsets', { kind: 'point', positions: Float64Array.of(1, 2), partOffsets: Int32Array.of(0, 1) }],
-    ['offsets past the buffer', { kind: 'lineString', positions: Float64Array.of(0, 0, 1, 1), partOffsets: Int32Array.of(0, 9) }],
-    ['feature offsets past the parts', { kind: 'polygon', positions: Float64Array.of(0, 0, 1, 0, 1, 1), partOffsets: Int32Array.of(0, 3), featurePartOffsets: Int32Array.of(0, 4) }],
-    ['altitudes length', { kind: 'point', positions: Float64Array.of(1, 2), altitudes: Float64Array.of(1, 2) }],
+    [
+      'point with offsets',
+      { kind: 'point', positions: Float64Array.of(1, 2), partOffsets: Int32Array.of(0, 1) },
+    ],
+    [
+      'offsets past the buffer',
+      {
+        kind: 'lineString',
+        positions: Float64Array.of(0, 0, 1, 1),
+        partOffsets: Int32Array.of(0, 9),
+      },
+    ],
+    [
+      'feature offsets past the parts',
+      {
+        kind: 'polygon',
+        positions: Float64Array.of(0, 0, 1, 0, 1, 1),
+        partOffsets: Int32Array.of(0, 3),
+        featurePartOffsets: Int32Array.of(0, 4),
+      },
+    ],
+    [
+      'altitudes length',
+      { kind: 'point', positions: Float64Array.of(1, 2), altitudes: Float64Array.of(1, 2) },
+    ],
     ['unknown kind', { kind: 'circle', positions: Float64Array.of(1, 2) }],
   ];
   const outcomes = [];
@@ -221,7 +246,10 @@ await check('IO-09 aborting queued and mid-flight imports publishes nothing', as
   await sleep(700); // the worker finishes the aborted job; its late reply must be dropped
   const countAfterWait = marks.features.count();
   const usedAfterWait = map.debug.imports().used.worker;
-  const lateReplyIgnored = countAfterWait === countAfterBusy && events.length === eventsAfterAbort && usedAfterWait === usedAfterAbort;
+  const lateReplyIgnored =
+    countAfterWait === countAfterBusy &&
+    events.length === eventsAfterAbort &&
+    usedAfterWait === usedAfterAbort;
   // The worker survived and serves the next import.
   await marks.importColumnar(pointGrid(10, 10, 50, 14, 0.001, 0.001));
   const after = map.debug.imports();
@@ -306,7 +334,14 @@ await check('GeoJSON imports run through the same worker pipeline', async () => 
       blue(pixel) &&
       bad?.code === 'import-invalid' &&
       aborted?.code === 'aborted',
-    detail: { before, usedWorker, count: marks.features.count(), pixel: describe(pixel), bad, aborted },
+    detail: {
+      before,
+      usedWorker,
+      count: marks.features.count(),
+      pixel: describe(pixel),
+      bad,
+      aborted,
+    },
   };
 });
 
@@ -323,7 +358,9 @@ await check('imported identity drives get, query.at, update and export', async (
   const screen = map.positionToScreen({ lat: 50.02, lng: 14.02 });
   const hits = await map.query.rendered(screen);
   const exported = marks.exportGeoJson({ ids: [7] });
-  await marks.features.update(7, { geometry: { type: 'point', position: { lat: 50.04, lng: 14.06 } } });
+  await marks.features.update(7, {
+    geometry: { type: 'point', position: { lat: 50.04, lng: 14.06 } },
+  });
   await map.whenRendered(map.stats().revision);
   const oldPixel = await pixelAt({ lat: 50.02, lng: 14.02 });
   const newPixel = await pixelAt({ lat: 50.04, lng: 14.06 });
@@ -370,26 +407,38 @@ await check('IO-05 line and polygon altitudes survive the worker round trip', as
   const trailGeometry = marks.features.get('trail').geometry;
   const ridgeGeometry = marks.features.get('ridge').geometry;
   const exported = marks.exportGeoJson();
-  const trailCoordinates = exported.features.find((feature) => feature.id === 'trail').geometry.coordinates;
-  const ridgeCoordinates = exported.features.find((feature) => feature.id === 'ridge').geometry.coordinates;
+  const trailCoordinates = exported.features.find((feature) => feature.id === 'trail').geometry
+    .coordinates;
+  const ridgeCoordinates = exported.features.find((feature) => feature.id === 'ridge').geometry
+    .coordinates;
   const imports = map.debug.imports();
   const pixel = await pixelAt({ lat: 50.0, lng: 14.0 });
   const trailAltitudes = trailGeometry.positions.map((position) => position.altitude ?? null);
   const ridgeAltitudes = ridgeGeometry.rings[0].map((position) => position.altitude ?? null);
   return {
     pass:
-      imports.backend === 'worker' && imports.used.worker === before + 2 &&
+      imports.backend === 'worker' &&
+      imports.used.worker === before + 2 &&
       String(commit.revision).length > 0 &&
       trailDetached &&
       trailAltitudes.join(',') === '210,,240' &&
       ridgeAltitudes.join(',') === '300,320,340,360,300' &&
-      trailCoordinates[0].length === 3 && trailCoordinates[0][2] === 210 &&
-      trailCoordinates[1].length === 2 && trailCoordinates[2][2] === 240 &&
-      ridgeCoordinates[0][0][2] === 300 && ridgeCoordinates[0][4][2] === 300 &&
+      trailCoordinates[0].length === 3 &&
+      trailCoordinates[0][2] === 210 &&
+      trailCoordinates[1].length === 2 &&
+      trailCoordinates[2][2] === 240 &&
+      ridgeCoordinates[0][0][2] === 300 &&
+      ridgeCoordinates[0][4][2] === 300 &&
       green(pixel),
     detail: {
-      imports, served: imports.used.worker - before, trailDetached, trailAltitudes, ridgeAltitudes,
-      trailCoordinates, ridgeCoordinates, pixel: describe(pixel),
+      imports,
+      served: imports.used.worker - before,
+      trailDetached,
+      trailAltitudes,
+      ridgeAltitudes,
+      trailCoordinates,
+      ridgeCoordinates,
+      pixel: describe(pixel),
     },
   };
 });

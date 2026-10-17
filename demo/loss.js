@@ -18,10 +18,11 @@ const { z, x, y } = oracle.tile;
 const mercator = crs.webMercator();
 const worldCenter = { x: ((x + 0.5) * 256) / 2 ** z, y: ((y + 0.5) * 256) / 2 ** z };
 const viewCenter = mercator.fromWorld(worldCenter);
-const geoAt = (dx, dy) => mercator.fromWorld({
-  x: worldCenter.x + dx / 2 ** z,
-  y: worldCenter.y + dy / 2 ** z,
-});
+const geoAt = (dx, dy) =>
+  mercator.fromWorld({
+    x: worldCenter.x + dx / 2 ** z,
+    y: worldCenter.y + dy / 2 ** z,
+  });
 
 const POINTS = {
   dot: geoAt(0, -136),
@@ -34,8 +35,9 @@ async function buildMainMap() {
   const map = await createMap('map-main', {
     renderer: { primary: 'webgpu', fallback: 'webgl1' },
     size: { width: SIZE, height: SIZE },
-    center: viewCenter, zoom: z
-});
+    center: viewCenter,
+    zoom: z,
+  });
   map.data.rasterTiles({
     id: 'tiles',
     url: './tiles-svg/{z}/{x}/{y}.svg',
@@ -45,7 +47,11 @@ async function buildMainMap() {
   map.addLayer({ id: 'tiles', type: 'raster', source: 'tiles' });
   const nodes = map.data.vector({ id: 'nodes' });
   await nodes.features.replace([
-    { id: 'dot', geometry: { type: 'point', position: POINTS.dot }, properties: { color: '#dc2626' } },
+    {
+      id: 'dot',
+      geometry: { type: 'point', position: POINTS.dot },
+      properties: { color: '#dc2626' },
+    },
     { id: 'a', geometry: { type: 'point', position: POINTS.a }, properties: { color: '#2563eb' } },
     { id: 'b', geometry: { type: 'point', position: POINTS.b }, properties: { color: '#2563eb' } },
   ]);
@@ -79,8 +85,9 @@ async function buildFailMap() {
   const map = await createMap('map-fail', {
     renderer: { primary: 'webgpu', fallback: 'webgl1' },
     size: { width: 192, height: 192 },
-    center: viewCenter, zoom: z
-});
+    center: viewCenter,
+    zoom: z,
+  });
   const source = map.data.vector({ id: 'pois' });
   await source.features.replace([
     { id: 'center', geometry: { type: 'point', position: viewCenter }, properties: {} },
@@ -120,7 +127,12 @@ async function waitFor(check, timeoutMs = 8000, intervalMs = 60) {
 }
 
 function maxDelta(a, b) {
-  return Math.max(Math.abs(a.r - b.r), Math.abs(a.g - b.g), Math.abs(a.b - b.b), Math.abs(a.a - b.a));
+  return Math.max(
+    Math.abs(a.r - b.r),
+    Math.abs(a.g - b.g),
+    Math.abs(a.b - b.b),
+    Math.abs(a.a - b.a),
+  );
 }
 
 async function sampleMatches(map, point, expected, tolerance) {
@@ -186,10 +198,14 @@ await check('LOSS-00 starts on webgpu and renders', async () => {
 });
 
 await check('LOSS-01 raster tiles render before loss', async () => {
-  const ok = await waitFor(async () => {
-    const pixel = await main.map.debug.samplePixel({ x: 30, y: 470 });
-    return pixel.a > 200;
-  }, 6000, 120);
+  const ok = await waitFor(
+    async () => {
+      const pixel = await main.map.debug.samplePixel({ x: 30, y: 470 });
+      return pixel.a > 200;
+    },
+    6000,
+    120,
+  );
   return { pass: ok, detail: { canvasCount: canvasCount('map-main') } };
 });
 
@@ -198,7 +214,8 @@ await check('LOSS-02 device loss recovers on the same backend (GPU-07)', async (
   const beforeCanvas = canvasCount('map-main');
   main.map.debug.forceBackendLoss();
   const recovered = await waitFor(
-    async () => mainEvents.slice(before).some((event) => event.backend === 'webgpu') &&
+    async () =>
+      mainEvents.slice(before).some((event) => event.backend === 'webgpu') &&
       main.map.capabilities().backend === 'webgpu',
     10000,
     60,
@@ -247,7 +264,8 @@ await check('LOSS-04 fallback switch when webgpu cannot be recreated (GPU-09)', 
     const before = mainEvents.length;
     main.map.debug.forceBackendLoss();
     const recovered = await waitFor(
-      async () => mainEvents.slice(before).some((event) => event.backend === 'webgl1') &&
+      async () =>
+        mainEvents.slice(before).some((event) => event.backend === 'webgl1') &&
         main.map.capabilities().backend === 'webgl1',
       10000,
       60,
@@ -284,7 +302,8 @@ await check('LOSS-05 GL context loss recovers with the same state (GPU-08)', asy
   const wasWebgl1 = main.map.capabilities().backend === 'webgl1';
   main.map.debug.forceBackendLoss();
   const recovered = await waitFor(
-    async () => mainEvents.slice(before).some((event) => event.backend === 'webgl1') &&
+    async () =>
+      mainEvents.slice(before).some((event) => event.backend === 'webgl1') &&
       main.map.capabilities().backend === 'webgl1',
     10000,
     60,
@@ -308,90 +327,103 @@ await check('LOSS-05 GL context loss recovers with the same state (GPU-08)', asy
   };
 });
 
-await check('LOSS-06 pending queries during a loss settle with a defined result (GPU-07)', async () => {
-  const pendingPick = failing.map.query.rendered({ x: 96, y: 96 });
-  const pendingSample = failing.map.debug.samplePixel({ x: 96, y: 96 });
-  const before = failEvents.length;
-  failing.map.debug.forceBackendLoss();
-  const settled = await Promise.race([
-    Promise.allSettled([pendingPick, pendingSample]).then((entries) =>
-      entries.map((entry) =>
-        entry.status === 'fulfilled'
-          ? { status: 'fulfilled' }
-          : { status: 'rejected', code: entry.reason?.code ?? String(entry.reason) },
-      ),
-    ),
-    sleep(4000).then(() => null),
-  ]);
-  const recovered = await waitFor(
-    async () => failEvents.slice(before).some((event) => event.backend === 'webgpu'),
-    10000,
-    60,
-  );
-  const defined =
-    settled !== null &&
-    settled.every(
-      (entry) => entry.status === 'fulfilled' || entry.code === 'gpu-unavailable',
-    );
-  return {
-    pass: defined && recovered,
-    detail: { settled, recovered },
-  };
-});
-
-await check('LOSS-07 both recovery paths failing is announced without retries (GPU-10)', async () => {
-  const descriptor = Object.getOwnPropertyDescriptor(Navigator.prototype, 'gpu');
-  const originalGetContext = HTMLCanvasElement.prototype.getContext;
-  Object.defineProperty(Navigator.prototype, 'gpu', { configurable: true, get: () => undefined });
-  HTMLCanvasElement.prototype.getContext = function (type, ...rest) {
-    if (type === 'webgl' || type === 'experimental-webgl') return null;
-    return originalGetContext.call(this, type, ...rest);
-  };
-  try {
+await check(
+  'LOSS-06 pending queries during a loss settle with a defined result (GPU-07)',
+  async () => {
+    const pendingPick = failing.map.query.rendered({ x: 96, y: 96 });
+    const pendingSample = failing.map.debug.samplePixel({ x: 96, y: 96 });
     const before = failEvents.length;
     failing.map.debug.forceBackendLoss();
-    const announced = await waitFor(
-      async () => failEvents.slice(before).some((event) => event.backend === 'unavailable'),
+    const settled = await Promise.race([
+      Promise.allSettled([pendingPick, pendingSample]).then((entries) =>
+        entries.map((entry) =>
+          entry.status === 'fulfilled'
+            ? { status: 'fulfilled' }
+            : { status: 'rejected', code: entry.reason?.code ?? String(entry.reason) },
+        ),
+      ),
+      sleep(4000).then(() => null),
+    ]);
+    const recovered = await waitFor(
+      async () => failEvents.slice(before).some((event) => event.backend === 'webgpu'),
       10000,
       60,
     );
-    const capabilities = failing.map.capabilities();
-    const notes = capabilities.notes.join(' | ');
-    const settled = failEvents.length;
-    await sleep(700);
-    const noRetries = failEvents.length === settled;
-    let pickError = null;
-    try {
-      await failing.map.query.rendered({ x: 96, y: 96 });
-    } catch (error) {
-      pickError = error?.code ?? String(error);
-    }
-    let sampleError = null;
-    try {
-      await failing.map.debug.samplePixel({ x: 96, y: 96 });
-    } catch (error) {
-      sampleError = error?.code ?? String(error);
-    }
+    const defined =
+      settled !== null &&
+      settled.every((entry) => entry.status === 'fulfilled' || entry.code === 'gpu-unavailable');
     return {
-      pass:
-        announced &&
-        capabilities.backend === 'unavailable' &&
-        notes.includes('webgpu recovery failed') &&
-        notes.includes('webgl1 recovery failed') &&
-        noRetries &&
-        pickError === 'gpu-unavailable' &&
-        sampleError === 'gpu-unavailable' &&
-        canvasCount('map-fail') === 0,
-      detail: { capabilities, noRetries, pickError, sampleError, canvasCount: canvasCount('map-fail') },
+      pass: defined && recovered,
+      detail: { settled, recovered },
     };
-  } finally {
-    HTMLCanvasElement.prototype.getContext = originalGetContext;
-    if (descriptor) Object.defineProperty(Navigator.prototype, 'gpu', descriptor);
-  }
-});
+  },
+);
+
+await check(
+  'LOSS-07 both recovery paths failing is announced without retries (GPU-10)',
+  async () => {
+    const descriptor = Object.getOwnPropertyDescriptor(Navigator.prototype, 'gpu');
+    const originalGetContext = HTMLCanvasElement.prototype.getContext;
+    Object.defineProperty(Navigator.prototype, 'gpu', { configurable: true, get: () => undefined });
+    HTMLCanvasElement.prototype.getContext = function (type, ...rest) {
+      if (type === 'webgl' || type === 'experimental-webgl') return null;
+      return originalGetContext.call(this, type, ...rest);
+    };
+    try {
+      const before = failEvents.length;
+      failing.map.debug.forceBackendLoss();
+      const announced = await waitFor(
+        async () => failEvents.slice(before).some((event) => event.backend === 'unavailable'),
+        10000,
+        60,
+      );
+      const capabilities = failing.map.capabilities();
+      const notes = capabilities.notes.join(' | ');
+      const settled = failEvents.length;
+      await sleep(700);
+      const noRetries = failEvents.length === settled;
+      let pickError = null;
+      try {
+        await failing.map.query.rendered({ x: 96, y: 96 });
+      } catch (error) {
+        pickError = error?.code ?? String(error);
+      }
+      let sampleError = null;
+      try {
+        await failing.map.debug.samplePixel({ x: 96, y: 96 });
+      } catch (error) {
+        sampleError = error?.code ?? String(error);
+      }
+      return {
+        pass:
+          announced &&
+          capabilities.backend === 'unavailable' &&
+          notes.includes('webgpu recovery failed') &&
+          notes.includes('webgl1 recovery failed') &&
+          noRetries &&
+          pickError === 'gpu-unavailable' &&
+          sampleError === 'gpu-unavailable' &&
+          canvasCount('map-fail') === 0,
+        detail: {
+          capabilities,
+          noRetries,
+          pickError,
+          sampleError,
+          canvasCount: canvasCount('map-fail'),
+        },
+      };
+    } finally {
+      HTMLCanvasElement.prototype.getContext = originalGetContext;
+      if (descriptor) Object.defineProperty(Navigator.prototype, 'gpu', descriptor);
+    }
+  },
+);
 
 result.ms = Math.round(performance.now() - started);
-result.pass = result.errors.length === 0 && result.checks.every((entry) => entry.pass) && result.checks.length === 8;
+result.pass =
+  result.errors.length === 0 &&
+  result.checks.every((entry) => entry.pass) &&
+  result.checks.length === 8;
 window.__lossCheckResult = result;
 window.__loss = { main, failing, mainEvents, failEvents };
 document.title = 'loss-check-done';

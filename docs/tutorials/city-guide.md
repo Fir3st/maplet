@@ -14,13 +14,15 @@ map.addTiles('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
 });
 map.addControl('attribution');
 
-const markers = map.addMarkers(places.map(place => ({
-  id: place.id,
-  position: place.at,
-  iconTint: KINDS[place.kind].tint,
-  tooltip: `${place.name} · ${KINDS[place.kind].label}`,
-  popup: { content: popupNode(place) },   // a Node renders as-is, a string as text
-})));
+const markers = map.addMarkers(
+  places.map((place) => ({
+    id: place.id,
+    position: place.at,
+    iconTint: KINDS[place.kind].tint,
+    tooltip: `${place.name} · ${KINDS[place.kind].label}`,
+    popup: { content: popupNode(place) }, // a Node renders as-is, a string as text
+  })),
+);
 
 await map.flyTo({ center: place.at, zoom: 15 }, { duration: 600 });
 markers[index].openPopup();

@@ -6,22 +6,40 @@ import { openExample, action, ready, report, haversineMeters } from './shared.js
 // is drawn from that exported data, not from this input.
 const trail = {
   type: 'FeatureCollection',
-  features: [{
-    type: 'Feature', id: 'ridge-trail', properties: { name: 'Ridge trail' },
-    geometry: { type: 'LineString', coordinates: [
-      [15.7120, 50.7230, 769], [15.7168, 50.7252, 842], [15.7201, 50.7279, 897],
-      [15.7238, 50.7293, 968], [15.7274, 50.7301, 1054], [15.7312, 50.7297, 1148],
-      [15.7349, 50.7308, 1236], [15.7388, 50.7326, 1329], [15.7421, 50.7347, 1408],
-      [15.7448, 50.7368, 1469], [15.7469, 50.7386, 1541], [15.7483, 50.7395, 1602],
-    ] },
-  }],
+  features: [
+    {
+      type: 'Feature',
+      id: 'ridge-trail',
+      properties: { name: 'Ridge trail' },
+      geometry: {
+        type: 'LineString',
+        coordinates: [
+          [15.712, 50.723, 769],
+          [15.7168, 50.7252, 842],
+          [15.7201, 50.7279, 897],
+          [15.7238, 50.7293, 968],
+          [15.7274, 50.7301, 1054],
+          [15.7312, 50.7297, 1148],
+          [15.7349, 50.7308, 1236],
+          [15.7388, 50.7326, 1329],
+          [15.7421, 50.7347, 1408],
+          [15.7448, 50.7368, 1469],
+          [15.7469, 50.7386, 1541],
+          [15.7483, 50.7395, 1602],
+        ],
+      },
+    },
+  ],
 };
 
-const map = await openExample({ geographic: true, center: [50.7305, 15.7300], zoom: 14 });
+const map = await openExample({ geographic: true, center: [50.7305, 15.73], zoom: 14 });
 const trails = map.data.vector({ id: 'trails' });
 await trails.importGeoJson(trail);
 map.addLayer({
-  id: 'ridge-trail', type: 'lines', source: trails, interactive: false,
+  id: 'ridge-trail',
+  type: 'lines',
+  source: trails,
+  interactive: false,
   style: { color: '#bd573b', widthPx: 5, cap: 'round' },
 });
 
@@ -29,12 +47,20 @@ map.addLayer({
 // and the export hands it back on every vertex that has one.
 const coordinates = trails.exportGeoJson().features[0].geometry.coordinates;
 const profile = coordinates.map(([lng, lat, altitude], index) => ({
-  index, lng, lat, altitude, at: { lat, lng },
+  index,
+  lng,
+  lat,
+  altitude,
+  at: { lat, lng },
 }));
 const lowest = Math.min(...profile.map((point) => point.altitude));
 const highest = Math.max(...profile.map((point) => point.altitude));
-const summit = profile.reduce((best, point) => point.altitude > best.altitude ? point : best, profile[0]);
-let distance = 0, ascent = 0;
+const summit = profile.reduce(
+  (best, point) => (point.altitude > best.altitude ? point : best),
+  profile[0],
+);
+let distance = 0,
+  ascent = 0;
 for (let i = 1; i < profile.length; i++) {
   distance += haversineMeters(profile[i - 1].at, profile[i].at);
   ascent += Math.max(0, profile[i].altitude - profile[i - 1].altitude);
@@ -63,18 +89,27 @@ ascentCell.textContent = `${Math.round(ascent)} m`;
 const SVG = 'http://www.w3.org/2000/svg';
 const PAD = { left: 6, right: 6, top: 16, bottom: 22 };
 const chartX = (index) => PAD.left + (index / (profile.length - 1)) * (300 - PAD.left - PAD.right);
-const chartY = (altitude) => 132 - PAD.bottom - ((altitude - lowest) / (highest - lowest)) * (132 - PAD.top - PAD.bottom);
+const chartY = (altitude) =>
+  132 - PAD.bottom - ((altitude - lowest) / (highest - lowest)) * (132 - PAD.top - PAD.bottom);
 const chart = document.createElementNS(SVG, 'svg');
 chart.setAttribute('viewBox', '0 0 300 132');
 chart.setAttribute('role', 'img');
-chart.setAttribute('aria-label', `Elevation profile of the ridge trail, ${lowest} to ${highest} metres`);
+chart.setAttribute(
+  'aria-label',
+  `Elevation profile of the ridge trail, ${lowest} to ${highest} metres`,
+);
 chart.style.width = '100%';
 chart.style.height = 'auto';
 chart.style.display = 'block';
-const points = profile.map((point) => `${chartX(point.index).toFixed(1)} ${chartY(point.altitude).toFixed(1)}`);
+const points = profile.map(
+  (point) => `${chartX(point.index).toFixed(1)} ${chartY(point.altitude).toFixed(1)}`,
+);
 const area = document.createElementNS(SVG, 'path');
-area.setAttribute('d', `M ${chartX(0).toFixed(1)} ${132 - PAD.bottom} L ${points.join(' L ')} ` +
-  `L ${chartX(profile.length - 1).toFixed(1)} ${132 - PAD.bottom} Z`);
+area.setAttribute(
+  'd',
+  `M ${chartX(0).toFixed(1)} ${132 - PAD.bottom} L ${points.join(' L ')} ` +
+    `L ${chartX(profile.length - 1).toFixed(1)} ${132 - PAD.bottom} Z`,
+);
 area.setAttribute('fill', 'rgba(189, 87, 59, 0.16)');
 const line = document.createElementNS(SVG, 'polyline');
 line.setAttribute('points', points.join(' '));
@@ -122,7 +157,8 @@ slider.max = String(profile.length - 1);
 slider.step = '1';
 slider.setAttribute('aria-label', 'Position on the profile');
 const hint = document.createElement('p');
-hint.textContent = 'Move over the profile or scrub the slider: the pin follows the route. ' +
+hint.textContent =
+  'Move over the profile or scrub the slider: the pin follows the route. ' +
   'The chart is drawn from exportGeoJson(), so it proves every altitude survived the import.';
 panel.append(heading, chart, slider, rows, hint);
 
@@ -152,7 +188,11 @@ chart.addEventListener('pointermove', (event) => {
   const chartPosition = ((event.clientX - rect.left) / rect.width) * 300;
   let nearest = profile[0];
   for (const point of profile) {
-    if (Math.abs(chartX(point.index) - chartPosition) < Math.abs(chartX(nearest.index) - chartPosition)) nearest = point;
+    if (
+      Math.abs(chartX(point.index) - chartPosition) <
+      Math.abs(chartX(nearest.index) - chartPosition)
+    )
+      nearest = point;
   }
   if (nearest !== active) setActive(nearest);
 });

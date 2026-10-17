@@ -50,14 +50,47 @@ test('MVT decode: points, lines and polygons with typed properties', () => {
           name: 'roads',
           extent: 512,
           features: [
-            { id: 2, type: 2, geometry: geomLine([[[0, 0], [100, 0], [100, 50]]]) },
-            { id: 3, type: 2, geometry: geomLine([[[0, 0], [10, 0]], [[20, 20], [30, 20]]]) },
+            {
+              id: 2,
+              type: 2,
+              geometry: geomLine([
+                [
+                  [0, 0],
+                  [100, 0],
+                  [100, 50],
+                ],
+              ]),
+            },
+            {
+              id: 3,
+              type: 2,
+              geometry: geomLine([
+                [
+                  [0, 0],
+                  [10, 0],
+                ],
+                [
+                  [20, 20],
+                  [30, 20],
+                ],
+              ]),
+            },
             {
               id: 4,
               type: 3,
               geometry: geomPolygon([
-                [[0, 0], [100, 0], [100, 100], [0, 100]],
-                [[20, 20], [20, 40], [40, 40], [40, 20]],
+                [
+                  [0, 0],
+                  [100, 0],
+                  [100, 100],
+                  [0, 100],
+                ],
+                [
+                  [20, 20],
+                  [20, 40],
+                  [40, 40],
+                  [40, 20],
+                ],
               ]),
             },
           ],
@@ -93,7 +126,11 @@ test('MVT decode: points, lines and polygons with typed properties', () => {
 
   const multi = roads.features[1]!;
   if (multi.geometry.kind !== 'line') throw new Error('expected line');
-  assert.deepEqual(Array.from(multi.geometry.parts), [0, 2, 2, 2], 'two MoveTo starts produce two parts');
+  assert.deepEqual(
+    Array.from(multi.geometry.parts),
+    [0, 2, 2, 2],
+    'two MoveTo starts produce two parts',
+  );
 
   const polygon = roads.features[2]!;
   if (polygon.geometry.kind !== 'polygon') throw new Error('expected polygon');
@@ -153,7 +190,10 @@ function indexOfSequence(haystack: readonly number[], needle: readonly number[])
 }
 
 test('MVT-08: malformed bytes are rejected as import-invalid', () => {
-  assert.throws(() => decodeMvtTile(Uint8Array.from([0x1a, 0x05, 0x01, 0x02])), /truncated|exceeds the supported range/);
+  assert.throws(
+    () => decodeMvtTile(Uint8Array.from([0x1a, 0x05, 0x01, 0x02])),
+    /truncated|exceeds the supported range/,
+  );
   assert.throws(() => decodeMvtTile(Uint8Array.from([0x0f])), /unsupported wire type/);
   assert.throws(() => decodeMvtTile(Uint8Array.from([0x1a, 0x80])), /truncated varint|truncated/);
 });
@@ -181,7 +221,7 @@ test('MVT-08: extreme vertex offsets reject the feature, not the scene', () => {
 test('MVT decode: empty and unknown fields are skipped safely', () => {
   const tileBytes = encodeTile([encodeLayer(layer({ name: 'empty' }))]);
   // Append an unknown top-level length-delimited field (field 9).
-  const withUnknown = Uint8Array.from([...tileBytes, 9 << 3 | 2, 3, 1, 2, 3]);
+  const withUnknown = Uint8Array.from([...tileBytes, (9 << 3) | 2, 3, 1, 2, 3]);
   const tile = decodeMvtTile(withUnknown);
   assert.equal(tile.tile.layers.length, 1);
   assert.equal(tile.tile.layers[0]!.features.length, 0);

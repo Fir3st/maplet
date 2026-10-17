@@ -1,42 +1,89 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8" />
-<title>Maplet CSP fallback checks</title>
-<style>
-  html, body { margin: 0; font: 13px/1.5 system-ui, sans-serif; background: #111827; color: #e5e7eb; }
-  main { display: flex; gap: 16px; padding: 16px; align-items: flex-start; }
-  .map { position: relative; background: #ffffff; flex: none; }
-  #map { width: 420px; height: 320px; }
-  .label { font: 600 12px ui-monospace, monospace; color: #9ca3af; margin: 4px 0 0; }
-  h1 { font-size: 15px; margin: 0 0 6px; }
-  #summary { font-weight: 600; }
-  #summary.pass { color: #4ade80; }
-  #summary.fail { color: #f87171; }
-  #details { white-space: pre-wrap; font: 11px/1.45 ui-monospace, monospace; max-width: 620px; max-height: 84vh; overflow: auto; color: #9ca3af; }
-  .hint { color: #9ca3af; margin: 0 0 10px; }
-</style>
-</head>
-<body>
-<main>
-  <div>
-    <div id="map" class="map" aria-label="CSP fallback checks map"></div>
-    <p class="label">import pipeline without a worker</p>
-  </div>
-  <div>
-    <h1>Maplet CSP fallback</h1>
-    <p class="hint">
-      The import worker is blocked by <code>Content-Security-Policy: worker-src 'none'</code>
-      (open with <code>?csp=worker-none</code> against the dev server; a bundler
-      that does not rewrite <code>new URL(…, import.meta.url)</code> leaves the
-      page in the same state). The first preparation must fail explicitly with
-      <code>worker-failed</code>, every later one must run inline and stay
-      inline. Results: <code>window.__cspCheckResult</code>.
-    </p>
-    <p id="summary">running…</p>
-    <pre id="details"></pre>
-  </div>
-</main>
-<script type="module" src="./csp.js"></script>
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <title>Maplet CSP fallback checks</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        font:
+          13px/1.5 system-ui,
+          sans-serif;
+        background: #111827;
+        color: #e5e7eb;
+      }
+      main {
+        display: flex;
+        gap: 16px;
+        padding: 16px;
+        align-items: flex-start;
+      }
+      .map {
+        position: relative;
+        background: #ffffff;
+        flex: none;
+      }
+      #map {
+        width: 420px;
+        height: 320px;
+      }
+      .label {
+        font:
+          600 12px ui-monospace,
+          monospace;
+        color: #9ca3af;
+        margin: 4px 0 0;
+      }
+      h1 {
+        font-size: 15px;
+        margin: 0 0 6px;
+      }
+      #summary {
+        font-weight: 600;
+      }
+      #summary.pass {
+        color: #4ade80;
+      }
+      #summary.fail {
+        color: #f87171;
+      }
+      #details {
+        white-space: pre-wrap;
+        font:
+          11px/1.45 ui-monospace,
+          monospace;
+        max-width: 620px;
+        max-height: 84vh;
+        overflow: auto;
+        color: #9ca3af;
+      }
+      .hint {
+        color: #9ca3af;
+        margin: 0 0 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div>
+        <div id="map" class="map" aria-label="CSP fallback checks map"></div>
+        <p class="label">import pipeline without a worker</p>
+      </div>
+      <div>
+        <h1>Maplet CSP fallback</h1>
+        <p class="hint">
+          The import worker is blocked by
+          <code>Content-Security-Policy: worker-src 'none'</code> (open with
+          <code>?csp=worker-none</code> against the dev server; a bundler that does not rewrite
+          <code>new URL(…, import.meta.url)</code> leaves the page in the same state). The first
+          preparation must fail explicitly with <code>worker-failed</code>, every later one must run
+          inline and stay inline. Results: <code>window.__cspCheckResult</code>.
+        </p>
+        <p id="summary">running…</p>
+        <pre id="details"></pre>
+      </div>
+    </main>
+    <script type="module" src="./csp.js"></script>
+  </body>
 </html>

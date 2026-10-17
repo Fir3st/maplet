@@ -67,11 +67,20 @@ function covered(triangles: readonly number[], x: number, y: number): boolean {
   return false;
 }
 
-const square: Ring = [[0, 0], [4, 0], [4, 4], [0, 4]];
+const square: Ring = [
+  [0, 0],
+  [4, 0],
+  [4, 4],
+  [0, 4],
+];
 
 test('triangulation preserves the area of a simple square', () => {
   const geometry = build([[square]]);
-  const triangles = triangulatePolygonWithHoles(geometry.vertices, geometry.rings, geometry.ringOuter);
+  const triangles = triangulatePolygonWithHoles(
+    geometry.vertices,
+    geometry.rings,
+    geometry.ringOuter,
+  );
   assert.ok(Math.abs(area(triangles) - 16) < 1e-9);
   assert.equal(covered(triangles, 2, 2), true);
   assert.equal(covered(triangles, 5, 2), false);
@@ -80,11 +89,25 @@ test('triangulation preserves the area of a simple square', () => {
 test('GEOM-09: a hole stays empty while the fill surrounds it', () => {
   const geometry = build([
     [
-      [[0, 0], [10, 0], [10, 10], [0, 10]],
-      [[3, 3], [3, 7], [7, 7], [7, 3]],
+      [
+        [0, 0],
+        [10, 0],
+        [10, 10],
+        [0, 10],
+      ],
+      [
+        [3, 3],
+        [3, 7],
+        [7, 7],
+        [7, 3],
+      ],
     ],
   ]);
-  const triangles = triangulatePolygonWithHoles(geometry.vertices, geometry.rings, geometry.ringOuter);
+  const triangles = triangulatePolygonWithHoles(
+    geometry.vertices,
+    geometry.rings,
+    geometry.ringOuter,
+  );
   assert.ok(Math.abs(area(triangles) - (100 - 16)) < 1e-9, `area ${area(triangles)}`);
   assert.equal(covered(triangles, 5, 5), false, 'hole center is not covered');
   assert.equal(covered(triangles, 1, 5), true, 'fill left of the hole is covered');
@@ -94,11 +117,25 @@ test('GEOM-09: a hole stays empty while the fill surrounds it', () => {
 test('GEOM-10: reversed ring orientation keeps the same fill and hole', () => {
   const geometry = build([
     [
-      [[10, 0], [0, 0], [0, 10], [10, 10]],
-      [[3, 7], [3, 3], [7, 3], [7, 7]],
+      [
+        [10, 0],
+        [0, 0],
+        [0, 10],
+        [10, 10],
+      ],
+      [
+        [3, 7],
+        [3, 3],
+        [7, 3],
+        [7, 7],
+      ],
     ],
   ]);
-  const triangles = triangulatePolygonWithHoles(geometry.vertices, geometry.rings, geometry.ringOuter);
+  const triangles = triangulatePolygonWithHoles(
+    geometry.vertices,
+    geometry.rings,
+    geometry.ringOuter,
+  );
   assert.ok(Math.abs(area(triangles) - 84) < 1e-9, `area ${area(triangles)}`);
   assert.equal(covered(triangles, 5, 5), false);
   assert.equal(covered(triangles, 5, 1), true);
@@ -107,25 +144,72 @@ test('GEOM-10: reversed ring orientation keeps the same fill and hole', () => {
 test('GEOM-11: multiple outer rings and holes stay separate', () => {
   const geometry = build([
     [
-      [[0, 0], [4, 0], [4, 4], [0, 4]],
-      [[1, 1], [1, 2], [2, 2], [2, 1]],
+      [
+        [0, 0],
+        [4, 0],
+        [4, 4],
+        [0, 4],
+      ],
+      [
+        [1, 1],
+        [1, 2],
+        [2, 2],
+        [2, 1],
+      ],
     ],
-    [[[10, 10], [14, 10], [14, 14], [10, 14]]],
+    [
+      [
+        [10, 10],
+        [14, 10],
+        [14, 14],
+        [10, 14],
+      ],
+    ],
   ]);
-  const triangles = triangulatePolygonWithHoles(geometry.vertices, geometry.rings, geometry.ringOuter);
+  const triangles = triangulatePolygonWithHoles(
+    geometry.vertices,
+    geometry.rings,
+    geometry.ringOuter,
+  );
   assert.ok(Math.abs(area(triangles) - (16 - 1 + 16)) < 1e-9, `area ${area(triangles)}`);
   assert.equal(covered(triangles, 1.5, 1.5), false, 'hole of the first polygon');
   assert.equal(covered(triangles, 12, 12), true, 'second polygon is filled');
 });
 
 test('concave polygons keep their exact area', () => {
-  const geometry = build([[[[0, 0], [2, 0], [2, 1], [1, 0.4], [0, 1]]]]);
-  const triangles = triangulatePolygonWithHoles(geometry.vertices, geometry.rings, geometry.ringOuter);
+  const geometry = build([
+    [
+      [
+        [0, 0],
+        [2, 0],
+        [2, 1],
+        [1, 0.4],
+        [0, 1],
+      ],
+    ],
+  ]);
+  const triangles = triangulatePolygonWithHoles(
+    geometry.vertices,
+    geometry.rings,
+    geometry.ringOuter,
+  );
   assert.ok(Math.abs(area(triangles) - 1.4) < 1e-6, `area ${area(triangles)}`);
 });
 
 test('degenerate rings produce no triangles instead of NaN', () => {
-  const geometry = build([[[[0, 0], [0, 0], [0, 0]]]]);
-  const triangles = triangulatePolygonWithHoles(geometry.vertices, geometry.rings, geometry.ringOuter);
+  const geometry = build([
+    [
+      [
+        [0, 0],
+        [0, 0],
+        [0, 0],
+      ],
+    ],
+  ]);
+  const triangles = triangulatePolygonWithHoles(
+    geometry.vertices,
+    geometry.rings,
+    geometry.ringOuter,
+  );
   assert.equal(triangles.length, 0);
 });

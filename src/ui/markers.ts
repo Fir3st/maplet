@@ -190,11 +190,11 @@ export function isMarkerInit(value: unknown): value is MarkerTooltipInit | Marke
 }
 
 export function markerTooltip(content: MarkerTooltipInit | MarkerContent): MarkerTooltipInit {
-  return isMarkerInit(content) ? (content as MarkerTooltipInit) : { content: content as MarkerContent };
+  return isMarkerInit(content) ? content : { content: content };
 }
 
 export function markerPopup(content: MarkerPopupInit | MarkerContent): MarkerPopupInit {
-  return isMarkerInit(content) ? (content as MarkerPopupInit) : { content: content as MarkerContent };
+  return isMarkerInit(content) ? content : { content: content };
 }
 
 function isDomNode(value: object): boolean {
@@ -326,7 +326,11 @@ export class MarkerController {
   private focusedKey: string | null = null;
   private pinFocusActive = false;
 
-  constructor(engine: MapEngine, layer: PointsLayerHandle<FeatureProperties>, container: HTMLElement | null) {
+  constructor(
+    engine: MapEngine,
+    layer: PointsLayerHandle<FeatureProperties>,
+    container: HTMLElement | null,
+  ) {
     this.engine = engine;
     this.layer = layer;
     this.container = container;
@@ -342,7 +346,11 @@ export class MarkerController {
     );
     // Absolute overlays need a positioned container (Leaflet's stylesheet does
     // the same); only touch a static container, never a positioned one.
-    if (container && typeof getComputedStyle === 'function' && getComputedStyle(container).position === 'static') {
+    if (
+      container &&
+      typeof getComputedStyle === 'function' &&
+      getComputedStyle(container).position === 'static'
+    ) {
       container.style.position = 'relative';
     }
   }
@@ -352,7 +360,8 @@ export class MarkerController {
   }
 
   addMany<P = FeatureProperties>(options: readonly MarkerOptions<P>[]): MarkerHandle<P>[] {
-    if (this.destroyed || this.layer.removed) fail('destroyed', 'the marker layer has been removed');
+    if (this.destroyed || this.layer.removed)
+      fail('destroyed', 'the marker layer has been removed');
     const handles = options.map((option) => {
       const input = {
         ...(option.id === undefined ? {} : { id: option.id }),
@@ -367,8 +376,12 @@ export class MarkerController {
         iconAnchor: option.iconAnchor === undefined ? null : { ...option.iconAnchor },
         iconTint: option.iconTint ?? null,
         draggable: option.draggable === true,
-        tooltip: option.tooltip === null || option.tooltip === undefined ? null : markerTooltip(option.tooltip),
-        popup: option.popup === null || option.popup === undefined ? null : markerPopup(option.popup),
+        tooltip:
+          option.tooltip === null || option.tooltip === undefined
+            ? null
+            : markerTooltip(option.tooltip),
+        popup:
+          option.popup === null || option.popup === undefined ? null : markerPopup(option.popup),
         tooltipElement: null,
         tooltipSticky: false,
         hidden: false,
@@ -406,7 +419,9 @@ export class MarkerController {
     return {
       id: point.id,
       ref: point.ref,
-      get removed() { return point.removed; },
+      get removed() {
+        return point.removed;
+      },
       ...featureEvents((fn, options) => point.onFeature(fn, options)),
       getPosition: () => point.getPosition(),
       setPosition: (position) => {
@@ -430,8 +445,12 @@ export class MarkerController {
       closePopup: () => {
         if (this.popup?.record === record) this.closePopupElement();
       },
-      get tooltipOpen() { return record.tooltipElement !== null; },
-      get popupOpen() { return isPopupOpen(); },
+      get tooltipOpen() {
+        return record.tooltipElement !== null;
+      },
+      get popupOpen() {
+        return isPopupOpen();
+      },
       tooltipElement: () => record.tooltipElement,
       popupElement: () => (this.popup?.record === record ? this.popup.element : null),
       show: () => this.setHidden(record, false),
@@ -527,7 +546,10 @@ export class MarkerController {
     if (event.type === 'click') {
       // Leaflet parity: a click elsewhere closes the open popup, and the
       // clicked marker then opens its own (one popup per map).
-      const record = event.layerId === this.layer.id ? this.records.get(featureRefKey(event.feature)) : undefined;
+      const record =
+        event.layerId === this.layer.id
+          ? this.records.get(featureRefKey(event.feature))
+          : undefined;
       if (record) {
         if (this.popup?.record === record) return;
         this.closePopupElement();
@@ -563,7 +585,8 @@ export class MarkerController {
 
   /** Enables, reconfigures or disables clustering (`null` shows every pin). */
   setClustering(options: MarkerClusteringOptions | null): void {
-    if (this.destroyed || this.layer.removed) fail('destroyed', 'the marker layer has been removed');
+    if (this.destroyed || this.layer.removed)
+      fail('destroyed', 'the marker layer has been removed');
     this.clustering = options === null ? null : resolveMarkerClustering(options);
     this.recomputeClusters();
   }
@@ -577,7 +600,8 @@ export class MarkerController {
     this.reposition();
     if (!this.clustering) return;
     const zoom = this.engine.view.get().zoom;
-    if (this.lastClusterZoom === null || Math.abs(zoom - this.lastClusterZoom) > 1e-9) this.recomputeClusters();
+    if (this.lastClusterZoom === null || Math.abs(zoom - this.lastClusterZoom) > 1e-9)
+      this.recomputeClusters();
   }
 
   /**
@@ -591,12 +615,20 @@ export class MarkerController {
     const clustering = this.clustering;
     const zoom = this.engine.view.get().zoom;
     this.lastClusterZoom = zoom;
-    const active = clustering !== null && (clustering.disableAtZoom === null || zoom < clustering.disableAtZoom);
+    const active =
+      clustering !== null && (clustering.disableAtZoom === null || zoom < clustering.disableAtZoom);
     const candidates: ClusterCandidate[] = [];
     const records = new Map<string, MarkerRecord>();
     if (active && clustering) {
       for (const [key, record] of this.records) {
-        if (record.badge || record.point.removed || record.dragging || record.hidden || !record.clusterable) continue;
+        if (
+          record.badge ||
+          record.point.removed ||
+          record.dragging ||
+          record.hidden ||
+          !record.clusterable
+        )
+          continue;
         const screen = this.engine.view.positionToScreen(record.point.getPosition());
         candidates.push({ key, x: screen.x, y: screen.y });
         records.set(key, record);
@@ -605,7 +637,10 @@ export class MarkerController {
     const partition =
       active && clustering
         ? clusterByProximity(candidates, clustering.radiusPx, clustering.minCount)
-        : { clusters: [] as ClusterPartition['clusters'], singles: [] as ClusterPartition['singles'] };
+        : {
+            clusters: [] as ClusterPartition['clusters'],
+            singles: [] as ClusterPartition['singles'],
+          };
     this.applyingClusters = true;
     try {
       const badgeOf = new Map<string, MarkerRecord>();
@@ -648,7 +683,7 @@ export class MarkerController {
       id: `${CLUSTER_FEATURE_PREFIX}${++this.badgeSerial}`,
       position: this.engine.view.screenToPosition({ x: 0, y: 0 }),
       properties: {},
-    }) as unknown as PointHandle<FeatureProperties>;
+    });
     const record: MarkerRecord = {
       point,
       icon: null,
@@ -746,7 +781,10 @@ export class MarkerController {
     const bounds = boundsFromPositions(positions);
     if (!bounds) return;
     const disableAtZoom = this.clustering?.disableAtZoom ?? null;
-    this.engine.view.fit(bounds, { padding: 40, ...(disableAtZoom === null ? {} : { maxZoom: disableAtZoom }) });
+    this.engine.view.fit(bounds, {
+      padding: 40,
+      ...(disableAtZoom === null ? {} : { maxZoom: disableAtZoom }),
+    });
   }
 
   /** Overlays leave the map with the pin they belong to (MARKER-11). */
@@ -905,7 +943,11 @@ export class MarkerController {
     this.focusedKey = featureRefKey(record.point.ref);
     this.placePinRing();
     if (this.pinAnnouncer) {
-      this.pinAnnouncer.textContent = focusAnnouncement(this.pinNameOf(record), index, records.length);
+      this.pinAnnouncer.textContent = focusAnnouncement(
+        this.pinNameOf(record),
+        index,
+        records.length,
+      );
     }
   }
 
@@ -932,7 +974,11 @@ export class MarkerController {
     }
     const anchor = record.iconAnchor ?? DEFAULT_MARKER_ANCHOR;
     const size = record.iconSize ?? DEFAULT_MARKER_SIZE;
-    const box = pinFocusBox({ x: screen.x + anchor.x, y: screen.y + anchor.y }, size, container.getBoundingClientRect());
+    const box = pinFocusBox(
+      { x: screen.x + anchor.x, y: screen.y + anchor.y },
+      size,
+      container.getBoundingClientRect(),
+    );
     if (!box.visible) {
       ring.style.display = 'none';
       return;
@@ -1168,7 +1214,12 @@ export class MarkerController {
     this.engine.view.set({ center });
   }
 
-  private place(element: HTMLElement, screen: ScreenPoint, offset: { x: number; y: number }, clampX: boolean): void {
+  private place(
+    element: HTMLElement,
+    screen: ScreenPoint,
+    offset: { x: number; y: number },
+    clampX: boolean,
+  ): void {
     let x = screen.x + offset.x;
     const y = screen.y + offset.y;
     const bounds = this.container?.getBoundingClientRect();

@@ -51,11 +51,7 @@ export function isMapletError(error: unknown): error is MapletError {
   return error instanceof MapletError;
 }
 
-export function fail(
-  code: MapletErrorCode,
-  message: string,
-  detail?: MapletErrorDetail,
-): never {
+export function fail(code: MapletErrorCode, message: string, detail?: MapletErrorDetail): never {
   throw new MapletError(code, message, detail ?? {});
 }
 

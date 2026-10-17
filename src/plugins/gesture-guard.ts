@@ -78,7 +78,11 @@ export function modifierHeld(modifier: GestureModifier, event: Event): boolean {
 /** Pure gate decision; exported for tests and custom gates. */
 export function gestureAllowed(
   request: GestureRequest,
-  state: { readonly unlocked: boolean; readonly modifier: GestureModifier; readonly touchPointers: number },
+  state: {
+    readonly unlocked: boolean;
+    readonly modifier: GestureModifier;
+    readonly touchPointers: number;
+  },
 ): boolean {
   if (state.unlocked) return true;
   // Continuous gestures follow the finger rule on touch surfaces; discrete
@@ -128,18 +132,22 @@ export function gestureGuard(options: GestureGuardOptions = {}): Plugin<GestureG
     const container = context.container;
     const interaction = context.map.interaction;
     if (!container) fail('unsupported-capability', 'gestureGuard requires a map container', {});
-    if (!interaction) fail('unsupported-capability', 'gestureGuard requires interactive gestures', {});
+    if (!interaction)
+      fail('unsupported-capability', 'gestureGuard requires interactive gestures', {});
     const doc = container.ownerDocument;
     let modifier = normalizeModifier(options.modifier ?? 'alt');
     const touchPointers = options.touchPointers ?? 2;
     if (!Number.isInteger(touchPointers) || touchPointers < 1) {
-      fail('invalid-argument', 'gestureGuard touchPointers must be an integer >= 1', { touchPointers });
+      fail('invalid-argument', 'gestureGuard touchPointers must be an integer >= 1', {
+        touchPointers,
+      });
     }
-    const overlayOptions = options.overlay === true || options.overlay === undefined
-      ? {}
-      : options.overlay === false
-        ? null
-        : options.overlay;
+    const overlayOptions =
+      options.overlay === true || options.overlay === undefined
+        ? {}
+        : options.overlay === false
+          ? null
+          : options.overlay;
     let unlocked = options.unlocked ?? false;
     const previousTouchAction = container.style.touchAction;
     container.style.touchAction = options.touchAction ?? 'pan-y';
@@ -173,7 +181,9 @@ export function gestureGuard(options: GestureGuardOptions = {}): Plugin<GestureG
         hint.style.cssText = HINT_STYLE;
         container.appendChild(hint);
       }
-      const text = overlayOptions.message?.(request) ?? defaultGestureHint(request, { modifier, touchPointers });
+      const text =
+        overlayOptions.message?.(request) ??
+        defaultGestureHint(request, { modifier, touchPointers });
       if (hint.textContent !== text) hint.textContent = text;
       hint.dataset.visible = 'true';
       hint.style.opacity = '1';

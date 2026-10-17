@@ -25,7 +25,10 @@ function finalize() {
   if (finalized) return;
   finalized = true;
   result.ms = Math.round(performance.now() - started);
-  result.pass = result.errors.length === 0 && result.checks.length === 11 && result.checks.every((entry) => entry.pass);
+  result.pass =
+    result.errors.length === 0 &&
+    result.checks.length === 11 &&
+    result.checks.every((entry) => entry.pass);
   window.__mediaCheckResult = result;
   document.title = 'media-check-done';
   const summary = document.getElementById('summary');
@@ -36,11 +39,13 @@ function finalize() {
 let started = 0;
 
 const map = await createMap('map', {
-    renderer: new URLSearchParams(location.search).get('backend') === 'webgpu'
-        ? { primary: 'webgpu', fallback: false }
-        : { primary: 'webgl1', fallback: false },
-    size: { width: 600, height: 600 },
-    center: { lat: 50.05, lng: 14.45 }, zoom: 12
+  renderer:
+    new URLSearchParams(location.search).get('backend') === 'webgpu'
+      ? { primary: 'webgpu', fallback: false }
+      : { primary: 'webgl1', fallback: false },
+  size: { width: 600, height: 600 },
+  center: { lat: 50.05, lng: 14.45 },
+  zoom: 12,
 });
 
 const element = document.getElementById('map');
@@ -66,9 +71,21 @@ function pixelsFixture() {
   return { width: 8, height: 8, data };
 }
 
-const imageA = map.data.image({ id: 'image-a', url: './media/corners.png', bounds: boundsFor(40, 40, 240, 240) });
-const imageB = map.data.image({ id: 'image-b', url: './media/corners-alt.png', bounds: boundsFor(200, 200, 400, 400) });
-const imagePix = map.data.image({ id: 'image-pix', pixels: pixelsFixture(), bounds: boundsFor(430, 430, 510, 510) });
+const imageA = map.data.image({
+  id: 'image-a',
+  url: './media/corners.png',
+  bounds: boundsFor(40, 40, 240, 240),
+});
+const imageB = map.data.image({
+  id: 'image-b',
+  url: './media/corners-alt.png',
+  bounds: boundsFor(200, 200, 400, 400),
+});
+const imagePix = map.data.image({
+  id: 'image-pix',
+  pixels: pixelsFixture(),
+  bounds: boundsFor(430, 430, 510, 510),
+});
 const video = map.data.video({
   id: 'video-a',
   url: './media/two-frames.mp4',
@@ -77,7 +94,11 @@ const video = map.data.video({
 });
 // A dedicated 80x160 placement for the rotation checks, clear of every other
 // fixture (the video ends at x=232, image-pix starts at x=430).
-const imageRot = map.data.image({ id: 'image-rot', url: './media/corners.png', bounds: boundsFor(300, 420, 380, 580) });
+const imageRot = map.data.image({
+  id: 'image-rot',
+  url: './media/corners.png',
+  bounds: boundsFor(300, 420, 380, 580),
+});
 
 const shapes = map.data.vector({ id: 'shapes' });
 await shapes.features.replace([
@@ -167,7 +188,9 @@ await check('MEDIA-01 image corners, opacity and layer order', async () => {
     near(samples.bOverPlate, [124, 185, 138, 255]) &&
     // B (magenta @ 0.5) over nothing: premultiplied readback.
     near(samples.bOverBackground, [128, 0, 128, 128]);
-  const detail = Object.fromEntries(Object.entries(samples).map(([key, pixel]) => [key, describe(pixel)]));
+  const detail = Object.fromEntries(
+    Object.entries(samples).map(([key, pixel]) => [key, describe(pixel)]),
+  );
   return { pass, detail };
 });
 
@@ -221,8 +244,12 @@ await check('MEDIA-07 rotation maps texture corners and picking to the turned qu
       pickNewLeft === 1 &&
       pickOldTop === 0,
     detail: {
-      before: Object.fromEntries(Object.entries(before).map(([key, pixel]) => [key, describe(pixel)])),
-      rotated: Object.fromEntries(Object.entries(rotated).map(([key, pixel]) => [key, describe(pixel)])),
+      before: Object.fromEntries(
+        Object.entries(before).map(([key, pixel]) => [key, describe(pixel)]),
+      ),
+      rotated: Object.fromEntries(
+        Object.entries(rotated).map(([key, pixel]) => [key, describe(pixel)]),
+      ),
       revision: [revisionBefore, snapshot.revision],
       pixelVersion: [pixelVersionBefore, snapshot.pixelVersion],
       picks: [pickNewRight, pickNewLeft, pickOldTop],
@@ -261,7 +288,9 @@ await check('MEDIA-07 rotation at an arbitrary angle keeps only the turned place
       pickTurnedAway === 0 &&
       pickLeftOfDiamond === 0,
     detail: {
-      pixels: Object.fromEntries(Object.entries(pixels).map(([key, pixel]) => [key, describe(pixel)])),
+      pixels: Object.fromEntries(
+        Object.entries(pixels).map(([key, pixel]) => [key, describe(pixel)]),
+      ),
       revision: [revisionBeforeTurn, snapshot.revision],
       picks: [pickFilled, pickTurnedAway, pickLeftOfDiamond],
     },
@@ -399,8 +428,14 @@ await check('MEDIA-03 updateRegion changes only the given pixels', async () => {
       nearTexel(after.five, [150, 60, 128, 255]) &&
       imagePix.snapshot().pixelVersion === pixelVersionBeforeRegion + 1,
     detail: {
-      before: { one: describe(before.one), three: describe(before.three), five: describe(before.five) },
-      after: Object.fromEntries(Object.entries(after).map(([key, pixel]) => [key, describe(pixel)])),
+      before: {
+        one: describe(before.one),
+        three: describe(before.three),
+        five: describe(before.five),
+      },
+      after: Object.fromEntries(
+        Object.entries(after).map(([key, pixel]) => [key, describe(pixel)]),
+      ),
       pixelVersion: [pixelVersionBeforeRegion, imagePix.snapshot().pixelVersion],
     },
   };
@@ -419,7 +454,9 @@ await check('MEDIA-04 invalid regions are refused before any change', async () =
     }
   };
   attempt(() => imagePix.updateRegion({ x: 7, y: 7, width: 2, height: 2 }, new Uint8Array(16)));
-  attempt(() => imagePix.updateRegion({ x: 0, y: 0, width: 2, height: 2 }, new Uint8Array(16), { stride: 4 }));
+  attempt(() =>
+    imagePix.updateRegion({ x: 0, y: 0, width: 2, height: 2 }, new Uint8Array(16), { stride: 4 }),
+  );
   attempt(() => imagePix.updateRegion({ x: 0, y: 0, width: 2, height: 2 }, new Uint8Array(8)));
   await sleep(80);
   const after = await sample(445, 445);
@@ -470,95 +507,106 @@ await check('MEDIA-05 video frames update the texture and pause stops the pump',
   };
 });
 
-await check('MEDIA-09 video URL changes reload the feed, resume playback and keep pixels on failure', async () => {
-  // Park the loop on its second frame so a restart is unambiguous.
-  video.play();
-  await pollSample(136, 484, blue, 5000);
-  video.pause();
-  const boundsBefore = video.snapshot().bounds;
-  const revisionBefore = video.snapshot().revision;
-  const pixelVersionBefore = video.snapshot().pixelVersion;
-  // Paused switch: the descriptor update enters loading without touching the
-  // uploaded pixels, then the new feed's first frame (green) arrives.
-  video.update({ url: './media/green-yellow.mp4' });
-  const loading = video.snapshot();
-  const loaded = await video.ready();
-  const firstFrame = await pollSample(136, 484, green, 5000);
-  // A switch while playing keeps the requested state: the pump resumes on its
-  // own and the loop advances to its second frame (yellow).
-  video.play();
-  await pollSample(136, 484, yellow, 5000);
-  video.update({ url: './media/green-yellow.mp4' });
-  const restarted = await pollSample(136, 484, green, 5000);
-  const resumed = await pollSample(136, 484, yellow, 5000);
-  const playingAfterSwitch = video.playing;
-  video.pause();
-  // A rapid second update supersedes the in-flight load: the last one wins.
-  video.update({ url: './media/two-frames.mp4' });
-  video.update({ url: './media/green-yellow.mp4' });
-  await video.ready();
-  const lastWins = await pollSample(136, 484, green, 5000);
-  video.pause();
-  // A failed URL is an explicit error and the last uploaded frame stays.
-  video.update({ url: './media/missing.mp4' });
-  const failed = await video.ready();
-  const retained = await sample(136, 484);
-  // An empty URL is refused before any change; a valid switch recovers.
-  let emptyUrl = null;
-  try {
-    video.update({ url: '' });
-  } catch (error) {
-    emptyUrl = error?.code ?? String(error);
-  }
-  const refused = video.snapshot();
-  video.update({ url: './media/two-frames.mp4' });
-  const recovered = await video.ready();
-  video.play();
-  const redAgain = await pollSample(136, 484, red, 5000);
-  const blueAgain = await pollSample(136, 484, blue, 5000);
-  video.pause();
-  const final = video.snapshot();
-  return {
-    pass:
-      loading.state === 'loading' &&
-      loading.pixelVersion === pixelVersionBefore &&
-      loaded.state === 'ready' &&
-      loaded.revision > revisionBefore &&
-      loaded.pixelVersion > pixelVersionBefore &&
-      video.playing === false &&
-      green(firstFrame) &&
-      playingAfterSwitch === true &&
-      green(restarted) &&
-      yellow(resumed) &&
-      green(lastWins) &&
-      failed.state === 'error' &&
-      /missing\.mp4/.test(failed.error ?? '') &&
-      green(retained) &&
-      emptyUrl === 'invalid-argument' &&
-      refused.state === 'error' &&
-      refused.revision === failed.revision &&
-      recovered.state === 'ready' &&
-      red(redAgain) &&
-      blue(blueAgain) &&
-      final.playError === null &&
-      final.bounds.southwest.lat === boundsBefore.southwest.lat &&
-      final.bounds.southwest.lng === boundsBefore.southwest.lng &&
-      final.bounds.northeast.lat === boundsBefore.northeast.lat &&
-      final.bounds.northeast.lng === boundsBefore.northeast.lng,
-    detail: {
-      loading: { state: loading.state, pixelVersion: loading.pixelVersion },
-      loaded: { state: loaded.state, revision: loaded.revision, pixelVersion: loaded.pixelVersion },
-      pausedSwitch: { first: describe(firstFrame), playing: video.playing },
-      playingSwitch: { restart: describe(restarted), resumed: describe(resumed), playing: playingAfterSwitch },
-      lastWins: describe(lastWins),
-      failure: { state: failed.state, error: failed.error, retained: describe(retained) },
-      refused: { code: emptyUrl, state: refused.state },
-      recovered: { state: recovered.state, red: describe(redAgain), blue: describe(blueAgain) },
-      revisions: [revisionBefore, final.revision],
-      pixelVersions: [pixelVersionBefore, final.pixelVersion],
-    },
-  };
-});
+await check(
+  'MEDIA-09 video URL changes reload the feed, resume playback and keep pixels on failure',
+  async () => {
+    // Park the loop on its second frame so a restart is unambiguous.
+    video.play();
+    await pollSample(136, 484, blue, 5000);
+    video.pause();
+    const boundsBefore = video.snapshot().bounds;
+    const revisionBefore = video.snapshot().revision;
+    const pixelVersionBefore = video.snapshot().pixelVersion;
+    // Paused switch: the descriptor update enters loading without touching the
+    // uploaded pixels, then the new feed's first frame (green) arrives.
+    video.update({ url: './media/green-yellow.mp4' });
+    const loading = video.snapshot();
+    const loaded = await video.ready();
+    const firstFrame = await pollSample(136, 484, green, 5000);
+    // A switch while playing keeps the requested state: the pump resumes on its
+    // own and the loop advances to its second frame (yellow).
+    video.play();
+    await pollSample(136, 484, yellow, 5000);
+    video.update({ url: './media/green-yellow.mp4' });
+    const restarted = await pollSample(136, 484, green, 5000);
+    const resumed = await pollSample(136, 484, yellow, 5000);
+    const playingAfterSwitch = video.playing;
+    video.pause();
+    // A rapid second update supersedes the in-flight load: the last one wins.
+    video.update({ url: './media/two-frames.mp4' });
+    video.update({ url: './media/green-yellow.mp4' });
+    await video.ready();
+    const lastWins = await pollSample(136, 484, green, 5000);
+    video.pause();
+    // A failed URL is an explicit error and the last uploaded frame stays.
+    video.update({ url: './media/missing.mp4' });
+    const failed = await video.ready();
+    const retained = await sample(136, 484);
+    // An empty URL is refused before any change; a valid switch recovers.
+    let emptyUrl = null;
+    try {
+      video.update({ url: '' });
+    } catch (error) {
+      emptyUrl = error?.code ?? String(error);
+    }
+    const refused = video.snapshot();
+    video.update({ url: './media/two-frames.mp4' });
+    const recovered = await video.ready();
+    video.play();
+    const redAgain = await pollSample(136, 484, red, 5000);
+    const blueAgain = await pollSample(136, 484, blue, 5000);
+    video.pause();
+    const final = video.snapshot();
+    return {
+      pass:
+        loading.state === 'loading' &&
+        loading.pixelVersion === pixelVersionBefore &&
+        loaded.state === 'ready' &&
+        loaded.revision > revisionBefore &&
+        loaded.pixelVersion > pixelVersionBefore &&
+        video.playing === false &&
+        green(firstFrame) &&
+        playingAfterSwitch === true &&
+        green(restarted) &&
+        yellow(resumed) &&
+        green(lastWins) &&
+        failed.state === 'error' &&
+        /missing\.mp4/.test(failed.error ?? '') &&
+        green(retained) &&
+        emptyUrl === 'invalid-argument' &&
+        refused.state === 'error' &&
+        refused.revision === failed.revision &&
+        recovered.state === 'ready' &&
+        red(redAgain) &&
+        blue(blueAgain) &&
+        final.playError === null &&
+        final.bounds.southwest.lat === boundsBefore.southwest.lat &&
+        final.bounds.southwest.lng === boundsBefore.southwest.lng &&
+        final.bounds.northeast.lat === boundsBefore.northeast.lat &&
+        final.bounds.northeast.lng === boundsBefore.northeast.lng,
+      detail: {
+        loading: { state: loading.state, pixelVersion: loading.pixelVersion },
+        loaded: {
+          state: loaded.state,
+          revision: loaded.revision,
+          pixelVersion: loaded.pixelVersion,
+        },
+        pausedSwitch: { first: describe(firstFrame), playing: video.playing },
+        playingSwitch: {
+          restart: describe(restarted),
+          resumed: describe(resumed),
+          playing: playingAfterSwitch,
+        },
+        lastWins: describe(lastWins),
+        failure: { state: failed.state, error: failed.error, retained: describe(retained) },
+        refused: { code: emptyUrl, state: refused.state },
+        recovered: { state: recovered.state, red: describe(redAgain), blue: describe(blueAgain) },
+        revisions: [revisionBefore, final.revision],
+        pixelVersions: [pixelVersionBefore, final.pixelVersion],
+      },
+    };
+  },
+);
 
 await check('LIFE-05 the scheduler draws while playing and returns to idle', async () => {
   video.play();
@@ -601,9 +649,16 @@ await check('MEDIA-06 removal and destroy during playback apply no late frame', 
   // unhandled rejection, no callback after destroy. `?keep=1` skips the destroy
   // so the page stays inspectable while debugging the battery.
   if (new URLSearchParams(location.search).has('keep')) {
-    return { pass: lateFrames === 0 && removed.a === 0 && errorsBeforeDestroy === 0, detail: { lateFrames, removed: describe(removed), keep: true } };
+    return {
+      pass: lateFrames === 0 && removed.a === 0 && errorsBeforeDestroy === 0,
+      detail: { lateFrames, removed: describe(removed), keep: true },
+    };
   }
-  map.data.video({ id: 'video-late', url: './media/two-frames.mp4', bounds: boundsFor(300, 420, 492, 548) });
+  map.data.video({
+    id: 'video-late',
+    url: './media/two-frames.mp4',
+    bounds: boundsFor(300, 420, 492, 548),
+  });
   map.destroy();
   await sleep(500);
   return {

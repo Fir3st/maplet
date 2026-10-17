@@ -1,32 +1,67 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8" />
-<title>Maplet / Leaflet · 500,000-point comparison</title>
-<link rel="stylesheet" href="./vendor/leaflet.css" />
-<style>
-  html, body { margin: 0; font: 13px/1.5 system-ui, sans-serif; background: #0f172a; color: #e2e8f0; }
-  main { display: flex; gap: 16px; padding: 16px; align-items: flex-start; }
-  #map { position: relative; flex: none; width: 720px; height: 520px; background: #fff; }
-  aside { max-width: 340px; }
-  h1 { font-size: 16px; }
-  pre { white-space: pre-wrap; font: 11px/1.45 ui-monospace, monospace; }
-  .comparison-point { background: #2563eb; border-radius: 50%; }
-</style>
-</head>
-<body>
-<main>
-  <div id="map" aria-label="500,000 interactive points"></div>
-  <aside>
-    <h1>Maplet / Leaflet comparison</h1>
-    <p>The same 500,000-point grid, 720 × 520 viewport, zoom 10 and two-pixel
-      blue circles. Use <code>?engine=maplet</code>, <code>?engine=leaflet-canvas</code>
-      or <code>?engine=leaflet-dom</code>. Maplet also accepts <code>&amp;backend=webgpu</code>.</p>
-    <p>Fresh-process setup, a short pan and a longer warmed-up pan are measured
-      separately. These are observations on this machine, not universal performance guarantees.</p>
-    <pre id="details">running…</pre>
-  </aside>
-</main>
-<script type="module" src="./compare.js"></script>
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <title>Maplet / Leaflet · 500,000-point comparison</title>
+    <link rel="stylesheet" href="./vendor/leaflet.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        font:
+          13px/1.5 system-ui,
+          sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+      }
+      main {
+        display: flex;
+        gap: 16px;
+        padding: 16px;
+        align-items: flex-start;
+      }
+      #map {
+        position: relative;
+        flex: none;
+        width: 720px;
+        height: 520px;
+        background: #fff;
+      }
+      aside {
+        max-width: 340px;
+      }
+      h1 {
+        font-size: 16px;
+      }
+      pre {
+        white-space: pre-wrap;
+        font:
+          11px/1.45 ui-monospace,
+          monospace;
+      }
+      .comparison-point {
+        background: #2563eb;
+        border-radius: 50%;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div id="map" aria-label="500,000 interactive points"></div>
+      <aside>
+        <h1>Maplet / Leaflet comparison</h1>
+        <p>
+          The same 500,000-point grid, 720 × 520 viewport, zoom 10 and two-pixel blue circles. Use
+          <code>?engine=maplet</code>, <code>?engine=leaflet-canvas</code> or
+          <code>?engine=leaflet-dom</code>. Maplet also accepts <code>&amp;backend=webgpu</code>.
+        </p>
+        <p>
+          Fresh-process setup, a short pan and a longer warmed-up pan are measured separately. These
+          are observations on this machine, not universal performance guarantees.
+        </p>
+        <pre id="details">running…</pre>
+      </aside>
+    </main>
+    <script type="module" src="./compare.js"></script>
+  </body>
 </html>

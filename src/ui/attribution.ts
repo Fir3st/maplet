@@ -35,5 +35,7 @@ export function attributionsForLayers(
   layers: readonly AttributionLayerRef[],
 ): string[] {
   const used = new Set(layers.map((layer) => layer.sourceId));
-  return dedupeAttributions(sources.filter((source) => used.has(source.sourceId)).map((source) => source.attribution));
+  return dedupeAttributions(
+    sources.filter((source) => used.has(source.sourceId)).map((source) => source.attribution),
+  );
 }

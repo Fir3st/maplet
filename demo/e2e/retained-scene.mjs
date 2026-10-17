@@ -107,5 +107,6 @@ export async function retainedScene({ session, expect, options }) {
     map.destroy();
     return result;
   })()`);
-  for (const check of checks) expect.ok(check.pass, `${check.name}: ${JSON.stringify(check.detail ?? null)}`);
+  for (const check of checks)
+    expect.ok(check.pass, `${check.name}: ${JSON.stringify(check.detail ?? null)}`);
 }

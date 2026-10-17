@@ -22,7 +22,13 @@ export interface WorldRect {
   readonly maxY: number;
 }
 
-function pointInRing(x: number, y: number, vertices: Float64Array, start: number, count: number): boolean {
+function pointInRing(
+  x: number,
+  y: number,
+  vertices: Float64Array,
+  start: number,
+  count: number,
+): boolean {
   let inside = false;
   const end = start + count;
   for (let i = start, j = end - 1; i < end; j = i++) {
@@ -37,7 +43,11 @@ function pointInRing(x: number, y: number, vertices: Float64Array, start: number
   return inside;
 }
 
-function pointInPolygonPayload(x: number, y: number, payload: Extract<PreparedGeometry, { rings: Uint32Array }>): boolean {
+function pointInPolygonPayload(
+  x: number,
+  y: number,
+  payload: Extract<PreparedGeometry, { rings: Uint32Array }>,
+): boolean {
   let inside = false;
   for (let r = 0; r < payload.rings.length; r += 2) {
     if (pointInRing(x, y, payload.ringVertices, payload.rings[r]!, payload.rings[r + 1]!)) {
@@ -48,8 +58,12 @@ function pointInPolygonPayload(x: number, y: number, payload: Extract<PreparedGe
 }
 
 function distanceToSegment(
-  px: number, py: number,
-  ax: number, ay: number, bx: number, by: number,
+  px: number,
+  py: number,
+  ax: number,
+  ay: number,
+  bx: number,
+  by: number,
 ): number {
   const dx = bx - ax;
   const dy = by - ay;
@@ -59,12 +73,7 @@ function distanceToSegment(
   return Math.hypot(px - (ax + dx * t), py - (ay + dy * t));
 }
 
-function pointWithinGeometry(
-  x: number,
-  y: number,
-  record: SlotRecord,
-  tolerance: number,
-): boolean {
+function pointWithinGeometry(x: number, y: number, record: SlotRecord, tolerance: number): boolean {
   if (!record.geometry) {
     return Math.hypot(x - record.wx, y - record.wy) <= tolerance;
   }
@@ -89,9 +98,12 @@ function pointWithinGeometry(
           const a = (start + i) * 2;
           const b = (start + i + 1) * 2;
           const distance = distanceToSegment(
-            x, y,
-            payload.vertices[a]!, payload.vertices[a + 1]!,
-            payload.vertices[b]!, payload.vertices[b + 1]!,
+            x,
+            y,
+            payload.vertices[a]!,
+            payload.vertices[a + 1]!,
+            payload.vertices[b]!,
+            payload.vertices[b + 1]!,
           );
           if (distance <= tolerance) return true;
         }
@@ -109,9 +121,12 @@ function pointWithinGeometry(
           const a = (start + i) * 2;
           const b = (start + ((i + 1) % count)) * 2;
           const distance = distanceToSegment(
-            x, y,
-            payload.ringVertices[a]!, payload.ringVertices[a + 1]!,
-            payload.ringVertices[b]!, payload.ringVertices[b + 1]!,
+            x,
+            y,
+            payload.ringVertices[a]!,
+            payload.ringVertices[a + 1]!,
+            payload.ringVertices[b]!,
+            payload.ringVertices[b + 1]!,
           );
           if (distance <= tolerance) return true;
         }
@@ -197,8 +212,10 @@ function rectIntersectsPayload(rect: WorldRect, record: SlotRecord): boolean {
           const next = start + ((i + 1) % count);
           if (
             segmentIntersectsRect(
-              x, y,
-              payload.ringVertices[next * 2]!, payload.ringVertices[next * 2 + 1]!,
+              x,
+              y,
+              payload.ringVertices[next * 2]!,
+              payload.ringVertices[next * 2 + 1]!,
               rect,
             )
           ) {
@@ -253,10 +270,12 @@ function rectContainsPayload(rect: WorldRect, record: SlotRecord): boolean {
         payload.wy <= rect.maxY
       );
     case GEOMETRY_KIND.multiPoint:
-      return record.geometry.bbox[0]! >= rect.minX &&
+      return (
+        record.geometry.bbox[0]! >= rect.minX &&
         record.geometry.bbox[2]! <= rect.maxX &&
         record.geometry.bbox[1]! >= rect.minY &&
-        record.geometry.bbox[3]! <= rect.maxY;
+        record.geometry.bbox[3]! <= rect.maxY
+      );
     case GEOMETRY_KIND.lineString:
     case GEOMETRY_KIND.multiLineString:
     case GEOMETRY_KIND.polygon:
@@ -264,13 +283,22 @@ function rectContainsPayload(rect: WorldRect, record: SlotRecord): boolean {
     case GEOMETRY_KIND.circle:
     case GEOMETRY_KIND.rectangle: {
       const bbox = record.geometry.bbox;
-      return bbox[0]! >= rect.minX && bbox[2]! <= rect.maxX && bbox[1]! >= rect.minY && bbox[3]! <= rect.maxY;
+      return (
+        bbox[0]! >= rect.minX &&
+        bbox[2]! <= rect.maxX &&
+        bbox[1]! >= rect.minY &&
+        bbox[3]! <= rect.maxY
+      );
     }
   }
 }
 
 function segmentIntersectsRect(
-  ax: number, ay: number, bx: number, by: number, rect: WorldRect,
+  ax: number,
+  ay: number,
+  bx: number,
+  by: number,
+  rect: WorldRect,
 ): boolean {
   if (
     Math.max(ax, bx) < rect.minX ||
@@ -298,8 +326,14 @@ function segmentIntersectsRect(
 }
 
 function segmentsCross(
-  ax: number, ay: number, bx: number, by: number,
-  cx: number, cy: number, dx: number, dy: number,
+  ax: number,
+  ay: number,
+  bx: number,
+  by: number,
+  cx: number,
+  cy: number,
+  dx: number,
+  dy: number,
 ): boolean {
   const d1 = (bx - ax) * (cy - ay) - (by - ay) * (cx - ax);
   const d2 = (bx - ax) * (dy - ay) - (by - ay) * (dx - ax);
@@ -345,7 +379,9 @@ export function queryDataRect(
   const hits: DataHit[] = [];
   for (const source of sources) {
     source.store.queryRect(rect.minX, rect.minY, rect.maxX, rect.maxY, (record) => {
-      const bbox = record.geometry ? record.geometry.bbox : [record.wx, record.wy, record.wx, record.wy];
+      const bbox = record.geometry
+        ? record.geometry.bbox
+        : [record.wx, record.wy, record.wx, record.wy];
       if (
         bbox[2]! < rect.minX ||
         bbox[0]! > rect.maxX ||
@@ -355,7 +391,9 @@ export function queryDataRect(
         return;
       }
       const matched =
-        relation === 'contains' ? rectContainsPayload(rect, record) : rectIntersectsPayload(rect, record);
+        relation === 'contains'
+          ? rectContainsPayload(rect, record)
+          : rectIntersectsPayload(rect, record);
       if (matched) hits.push({ record, source });
     });
   }
@@ -365,10 +403,13 @@ export function queryDataRect(
 /** Geo bounds → world rect for query input. */
 export function boundsToWorldRect(
   crs: Crs,
-  bounds: { southwest: { lat: number; lng: number } | { x: number; y: number }; northeast: { lat: number; lng: number } | { x: number; y: number } },
+  bounds: {
+    southwest: { lat: number; lng: number } | { x: number; y: number };
+    northeast: { lat: number; lng: number } | { x: number; y: number };
+  },
 ): WorldRect {
-  const sw = crs.toWorld(bounds.southwest as never);
-  const ne = crs.toWorld(bounds.northeast as never);
+  const sw = crs.toWorld(bounds.southwest);
+  const ne = crs.toWorld(bounds.northeast);
   return {
     minX: Math.min(sw.x, ne.x),
     minY: Math.min(sw.y, ne.y),

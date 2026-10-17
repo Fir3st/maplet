@@ -8,7 +8,8 @@ separate source/render-pass setup; shared sources remain available when needed.
 
 ```ts
 const map = await createMap('map', {
-  center: [50.08, 14.44], zoom: 8,
+  center: [50.08, 14.44],
+  zoom: 8,
   controls: ['zoom', 'scale', 'attribution'],
 });
 map.setView({ center: [49.2, 16.6], zoom: 10 });
@@ -35,7 +36,14 @@ pixels are not confused with metric geometry.
 
 ```ts
 map.addPoints([{ position: [50.08, 14.44] }]); // belongs to map.base
-map.addLines([{ positions: [[50.08, 14.44], [49.2, 16.6]] }]); // same base
+map.addLines([
+  {
+    positions: [
+      [50.08, 14.44],
+      [49.2, 16.6],
+    ],
+  },
+]); // same base
 
 const places = map.addLayer({ id: 'places' });
 const stations = places.addPoints([
@@ -44,8 +52,25 @@ const stations = places.addPoints([
 places.addLabels(stations.source);
 
 const routes = places.addLayer({ id: 'routes' });
-routes.addLines([{ positions: [[50.08, 14.44], [49.2, 16.6]] }]);
-routes.addPolygons([{ rings: [[[50, 14], [51, 14], [50, 15]]] }]);
+routes.addLines([
+  {
+    positions: [
+      [50.08, 14.44],
+      [49.2, 16.6],
+    ],
+  },
+]);
+routes.addPolygons([
+  {
+    rings: [
+      [
+        [50, 14],
+        [51, 14],
+        [50, 15],
+      ],
+    ],
+  },
+]);
 
 places.hide(); // stations, labels, routes and all nested content
 places.show();
@@ -94,9 +119,10 @@ several maps next to each other.
 
 ```ts
 const places = map.addLayer({ id: 'stations' });
-const stations = places.addPoints([
-  { id: 'prague', position: [50.08, 14.44], properties: { status: 'online' } },
-], { draggable: true, style: { radiusPx: 9, color: '#16a34a' } });
+const stations = places.addPoints(
+  [{ id: 'prague', position: [50.08, 14.44], properties: { status: 'online' } }],
+  { draggable: true, style: { radiusPx: 9, color: '#16a34a' } },
+);
 
 const prague = stations.get('prague'); // undefined if the id does not exist
 if (prague) {
@@ -107,7 +133,7 @@ if (prague) {
 }
 
 const added = stations.add({ position: [49.2, 16.6] }); // automatic id
-added.on('click', event => console.log(event.feature.id));
+added.on('click', (event) => console.log(event.feature.id));
 places.addLabels(stations.source); // shares the same features; defaults to name
 ```
 
@@ -159,8 +185,8 @@ that object's collection-local override. `clearStyle()` restores the collection 
 import { style } from '@fir3st/maplet';
 const colors = style.by('status', { online: '#16a34a', offline: '#dc2626' }, '#6b7280');
 stations.setStyle({ radiusPx: 9, color: colors });
-stations.on('click', event => console.log(event.feature.id, event.position));
-stations.once('dragend', event => console.log(event.position));
+stations.on('click', (event) => console.log(event.feature.id, event.position));
+stations.once('dragend', (event) => console.log(event.position));
 ```
 
 `style.by(property, cases, fallback)` handles the common property mapping without
@@ -227,25 +253,25 @@ Plugins and render callbacks receive the **new public map**, not the old engine.
 The alpha.4 redesign replaces the previous facade without compatibility aliases,
 including the separate groups API and root `expr` export.
 
-| Before | Now |
-| --- | --- |
-| `createMap({ container, view: { center, zoom } })` | `createMap(container, { center, zoom })` |
-| `map.view.set/get/fit/...` | `map.setView/getView/fitBounds/...` |
-| `sources.rasterTiles` + `layers.add` | `map.addTiles(url, options)` |
-| vector source + point layer for ordinary data | `map.addPoints([{ position, properties }], options)` |
-| `source.features.update(id, { geometry: ... })` | `points.get(id)?.setPosition(...)` |
-| `layer.features.setOverride/clearOverride` | `layer.setFeatureStyle/clearFeatureStyle` or object `setStyle/clearStyle` |
-| `map.layers.update(id, patch)` | `collection.update(patch)` (narrow a registry entry by `kind` first) |
-| `interaction: { enabled, draggable }` on a layer | `interactive, draggable` directly on collection options |
-| `layer.getVisible()` | `layer.isVisible()` (or `show`/`hide`) |
-| `on('feature', e => { if (e.type === 'click') ... })` | `on('click', ...)` on the relevant layer/object |
-| `expr.match(expr.field('status'), cases, fallback)` | `style.by('status', cases, fallback)` |
-| `map.controls.add({ kind: 'zoom' })` | `map.addControl('zoom')` |
-| explicit advanced `map.sources` | `map.data` |
-| `map.groups.add({ id })` | `map.addLayer({ id })` |
-| `map.groups.add({ parent })` | `parentLayer.addLayer()` |
-| layer option `group: id` | create through the receiving layer, or `parent: id` |
-| each `map.addPoints()` creates a root layer | each call creates a collection inside `map.base` |
+| Before                                                | Now                                                                       |
+| ----------------------------------------------------- | ------------------------------------------------------------------------- |
+| `createMap({ container, view: { center, zoom } })`    | `createMap(container, { center, zoom })`                                  |
+| `map.view.set/get/fit/...`                            | `map.setView/getView/fitBounds/...`                                       |
+| `sources.rasterTiles` + `layers.add`                  | `map.addTiles(url, options)`                                              |
+| vector source + point layer for ordinary data         | `map.addPoints([{ position, properties }], options)`                      |
+| `source.features.update(id, { geometry: ... })`       | `points.get(id)?.setPosition(...)`                                        |
+| `layer.features.setOverride/clearOverride`            | `layer.setFeatureStyle/clearFeatureStyle` or object `setStyle/clearStyle` |
+| `map.layers.update(id, patch)`                        | `collection.update(patch)` (narrow a registry entry by `kind` first)      |
+| `interaction: { enabled, draggable }` on a layer      | `interactive, draggable` directly on collection options                   |
+| `layer.getVisible()`                                  | `layer.isVisible()` (or `show`/`hide`)                                    |
+| `on('feature', e => { if (e.type === 'click') ... })` | `on('click', ...)` on the relevant layer/object                           |
+| `expr.match(expr.field('status'), cases, fallback)`   | `style.by('status', cases, fallback)`                                     |
+| `map.controls.add({ kind: 'zoom' })`                  | `map.addControl('zoom')`                                                  |
+| explicit advanced `map.sources`                       | `map.data`                                                                |
+| `map.groups.add({ id })`                              | `map.addLayer({ id })`                                                    |
+| `map.groups.add({ parent })`                          | `parentLayer.addLayer()`                                                  |
+| layer option `group: id`                              | create through the receiving layer, or `parent: id`                       |
+| each `map.addPoints()` creates a root layer           | each call creates a collection inside `map.base`                          |
 
 Historical benchmark reports describe their original API revisions; they are not
 rewritten as evidence for this API change.

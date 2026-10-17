@@ -39,9 +39,9 @@ function fakeDocument(): { readonly document: Document; readonly created: FakeCa
       const canvas: FakeCanvas = {
         width: 0,
         height: 0,
-        style: {} as Record<string, string>,
-        dataset: {} as Record<string, string>,
-        attributes: {} as Record<string, string>,
+        style: {},
+        dataset: {},
+        attributes: {},
         draws: [] as DrawCall[],
         puts: [] as ImageData[],
         removed: false,
@@ -119,12 +119,23 @@ interface Harness {
   render(dpr?: number): void;
 }
 
-const geographic = { positionKind: 'geographic', normalize: (position: unknown) => position } as unknown as Crs;
-const planar = { positionKind: 'planar', normalize: (position: unknown) => position } as unknown as Crs;
+const geographic = {
+  positionKind: 'geographic',
+  normalize: (position: unknown) => position,
+} as unknown as Crs;
+const planar = {
+  positionKind: 'planar',
+  normalize: (position: unknown) => position,
+} as unknown as Crs;
 
 function install(
   options: Parameters<typeof heatmap>[0],
-  configure: (render: { crs: Crs; width?: number; height?: number; dpr?: number }) => void = () => {},
+  configure: (render: {
+    crs: Crs;
+    width?: number;
+    height?: number;
+    dpr?: number;
+  }) => void = () => {},
 ): Harness {
   const { document, created } = fakeDocument();
   const container = {
@@ -205,11 +216,19 @@ test('HEAT-10: the plugin owns one positioned overlay canvas and cleans it up', 
     assert.match(harness.overlay.style['cssText'] ?? '', /pointer-events:none/);
     assert.equal(harness.overlay.dataset['mapletHeatmap'], 'true');
     assert.equal(harness.overlay.attributes['aria-hidden'], 'true');
-    assert.equal(harness.container.style['position'], 'relative', 'a static container is positioned');
+    assert.equal(
+      harness.container.style['position'],
+      'relative',
+      'a static container is positioned',
+    );
     assert.equal(harness.frames.length, 1, 'the plugin registers exactly one frame hook');
     for (const cleanup of harness.cleanups) cleanup();
     assert.equal(harness.overlay.removed, true);
-    assert.equal(harness.container.style['position'], '', 'cleanup restores the container position');
+    assert.equal(
+      harness.container.style['position'],
+      '',
+      'cleanup restores the container position',
+    );
     assert.equal(harness.unsubscribed(), 1, 'cleanup unregisters the frame hook');
   } finally {
     if (previousStyle === undefined) delete globalWithStyle.getComputedStyle;
@@ -222,7 +241,9 @@ test('HEAT-10: the data hook replaces, appends and clears samples', () => {
   const previousStyle = globalWithStyle.getComputedStyle;
   globalWithStyle.getComputedStyle = () => ({ position: 'relative' });
   try {
-    const harness = install({ points: [{ position: [100, 100] }, { position: [200, 200], weight: 0.5 }] });
+    const harness = install({
+      points: [{ position: [100, 100] }, { position: [200, 200], weight: 0.5 }],
+    });
     assert.equal(harness.api.count, 2);
     const installed = harness.invalidations();
     harness.api.addPoint([300, 300], 2);
@@ -259,17 +280,33 @@ test('HEAT-10: frames splat visible samples with weight-derived alphas and skip 
     harness.render();
     assert.equal(harness.overlay.draws.length, 2, 'off-view and non-positive samples are skipped');
     assert.deepEqual(harness.overlay.draws[0], { alpha: 1, x: 75, y: 75, width: 50, height: 50 });
-    assert.deepEqual(harness.overlay.draws[1], { alpha: 0.5, x: 175, y: 175, width: 50, height: 50 });
-    assert.equal(harness.overlay.composited, 'source-over', 'additive compositing is reset after splatting');
+    assert.deepEqual(harness.overlay.draws[1], {
+      alpha: 0.5,
+      x: 175,
+      y: 175,
+      width: 50,
+      height: 50,
+    });
+    assert.equal(
+      harness.overlay.composited,
+      'source-over',
+      'additive compositing is reset after splatting',
+    );
 
     // The auto peak follows the data: a heavier sample rescales the rest.
     harness.api.addPoint([400, 400], 4);
     harness.render();
-    assert.deepEqual(harness.overlay.draws.map((draw) => draw.alpha), [0.25, 0.125, 1]);
+    assert.deepEqual(
+      harness.overlay.draws.map((draw) => draw.alpha),
+      [0.25, 0.125, 1],
+    );
     // An explicit peak, an alpha floor and a bigger radius apply on the next frame.
     harness.api.setOptions({ max: 2, minOpacity: 0.3, radius: 10, blur: 0 });
     harness.render();
-    assert.deepEqual(harness.overlay.draws.map((draw) => draw.alpha), [0.5, 0.3, 1]);
+    assert.deepEqual(
+      harness.overlay.draws.map((draw) => draw.alpha),
+      [0.5, 0.3, 1],
+    );
     assert.deepEqual(harness.overlay.draws[0], { alpha: 0.5, x: 90, y: 90, width: 20, height: 20 });
 
     // Colorization maps accumulated alpha through the ramp into RGBA bytes.
@@ -331,23 +368,56 @@ test('HEAT-10: invalid positions, weights and options fail with invalid-argument
   globalWithStyle.getComputedStyle = () => ({ position: 'relative' });
   try {
     const code = (error: unknown): string | undefined => (error as { code?: string }).code;
-    assert.throws(() => install({ radius: 0 }), (error: unknown) => code(error) === 'invalid-argument');
-    assert.throws(() => install({ gradient: [] }), (error: unknown) => code(error) === 'invalid-argument');
-    assert.throws(() => install({ gradient: [[0, '#000']] }), (error: unknown) => code(error) === 'invalid-argument');
+    assert.throws(
+      () => install({ radius: 0 }),
+      (error: unknown) => code(error) === 'invalid-argument',
+    );
+    assert.throws(
+      () => install({ gradient: [] }),
+      (error: unknown) => code(error) === 'invalid-argument',
+    );
+    assert.throws(
+      () => install({ gradient: [[0, '#000']] }),
+      (error: unknown) => code(error) === 'invalid-argument',
+    );
     const harness = install({ points: [{ position: [100, 100] }] });
-    assert.throws(() => harness.api.setPoints('nope' as never), (error: unknown) => code(error) === 'invalid-argument');
-    assert.throws(() => harness.api.addPoint([1, Number.NaN]), (error: unknown) => code(error) === 'invalid-argument');
-    assert.throws(() => harness.api.setPoints([{ position: { lat: 1, lng: 2 }, weight: 'heavy' as never }]), (error: unknown) => code(error) === 'invalid-argument');
-    assert.throws(() => harness.api.setOptions({ maxOpacity: 2 }), (error: unknown) => code(error) === 'invalid-argument');
-    assert.throws(() => harness.api.setOptions({ minOpacity: 0.9, maxOpacity: 0.2 }), (error: unknown) => code(error) === 'invalid-argument');
-    assert.throws(() => harness.api.setOptions({ blur: -1 }), (error: unknown) => code(error) === 'invalid-argument');
-    assert.doesNotThrow(() => harness.api.setOptions({ gradient: null, max: null }), 'null restores the defaults');
+    assert.throws(
+      () => harness.api.setPoints('nope' as never),
+      (error: unknown) => code(error) === 'invalid-argument',
+    );
+    assert.throws(
+      () => harness.api.addPoint([1, Number.NaN]),
+      (error: unknown) => code(error) === 'invalid-argument',
+    );
+    assert.throws(
+      () => harness.api.setPoints([{ position: { lat: 1, lng: 2 }, weight: 'heavy' as never }]),
+      (error: unknown) => code(error) === 'invalid-argument',
+    );
+    assert.throws(
+      () => harness.api.setOptions({ maxOpacity: 2 }),
+      (error: unknown) => code(error) === 'invalid-argument',
+    );
+    assert.throws(
+      () => harness.api.setOptions({ minOpacity: 0.9, maxOpacity: 0.2 }),
+      (error: unknown) => code(error) === 'invalid-argument',
+    );
+    assert.throws(
+      () => harness.api.setOptions({ blur: -1 }),
+      (error: unknown) => code(error) === 'invalid-argument',
+    );
+    assert.doesNotThrow(
+      () => harness.api.setOptions({ gradient: null, max: null }),
+      'null restores the defaults',
+    );
 
     // A [lat, lng] tuple on a planar CRS fails like every other public position.
     const planarHarness = install({ points: [{ position: [100, 100] }] }, (render) => {
       render.crs = planar;
     });
-    assert.throws(() => planarHarness.render(), (error: unknown) => code(error) === 'invalid-argument');
+    assert.throws(
+      () => planarHarness.render(),
+      (error: unknown) => code(error) === 'invalid-argument',
+    );
   } finally {
     if (previousStyle === undefined) delete globalWithStyle.getComputedStyle;
     else globalWithStyle.getComputedStyle = previousStyle;
@@ -360,12 +430,24 @@ test('HEAT-10: a rejected update leaves the previous state intact', () => {
   globalWithStyle.getComputedStyle = () => ({ position: 'relative' });
   try {
     const code = (error: unknown): string | undefined => (error as { code?: string }).code;
-    const harness = install({ points: [{ position: [100, 100], weight: 1 }, { position: [200, 200], weight: 0.5 }] });
+    const harness = install({
+      points: [
+        { position: [100, 100], weight: 1 },
+        { position: [200, 200], weight: 0.5 },
+      ],
+    });
     harness.api.setOptions({ minOpacity: 0.8 });
     // The invalid maxOpacity would contradict the earlier floor; the patch must not apply.
-    assert.throws(() => harness.api.setOptions({ maxOpacity: 0.5 }), (error: unknown) => code(error) === 'invalid-argument');
+    assert.throws(
+      () => harness.api.setOptions({ maxOpacity: 0.5 }),
+      (error: unknown) => code(error) === 'invalid-argument',
+    );
     harness.render();
-    assert.deepEqual(harness.overlay.draws.map((draw) => draw.alpha), [1, 0.8], 'the previous opacity floor still applies');
+    assert.deepEqual(
+      harness.overlay.draws.map((draw) => draw.alpha),
+      [1, 0.8],
+      'the previous opacity floor still applies',
+    );
     const before = harness.api.count;
     assert.throws(
       () => harness.api.addPoints([{ position: [10, 10] }, { position: [20, 'x'] as never }]),
@@ -383,7 +465,12 @@ test('HEAT-10: the plugin needs a container', () => {
   const context = {
     map: {},
     container: null,
-    render: { invalidate: () => {}, onFrame: () => () => {}, transform: () => () => {}, use: () => () => {} },
+    render: {
+      invalidate: () => {},
+      onFrame: () => () => {},
+      transform: () => () => {},
+      use: () => () => {},
+    },
     signal: new AbortController().signal,
     onCleanup: (cleanup: () => void) => cleanups.push(cleanup),
   } as unknown as PluginContext;

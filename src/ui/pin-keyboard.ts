@@ -42,8 +42,13 @@ export function stepFocusIndex(current: number, count: number, step: FocusStep):
 }
 
 /** A sprite centre is reachable while it lies inside the container. */
-export function pinFocusVisible(centre: ScreenPoint, viewport: { readonly width: number; readonly height: number }): boolean {
-  return centre.x >= 0 && centre.y >= 0 && centre.x <= viewport.width && centre.y <= viewport.height;
+export function pinFocusVisible(
+  centre: ScreenPoint,
+  viewport: { readonly width: number; readonly height: number },
+): boolean {
+  return (
+    centre.x >= 0 && centre.y >= 0 && centre.x <= viewport.width && centre.y <= viewport.height
+  );
 }
 
 /** Ring box wrapping one sprite; the box hugs the sprite, the ring shadows outside it. */

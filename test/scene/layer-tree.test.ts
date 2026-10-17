@@ -4,8 +4,27 @@ import { crs, type PointGeometry, type Position } from '../../src/index.ts';
 import { makeMap } from '../helpers/fixture.ts';
 
 const point = (id: string) => ({ id, position: { x: 0, y: 0 }, properties: { name: id } });
-const line = [{ id: 'route', positions: [{ x: -1, y: 0 }, { x: 1, y: 0 }] }];
-const polygon = [{ id: 'area', rings: [[{ x: -1, y: -1 }, { x: 1, y: -1 }, { x: 0, y: 1 }]] }];
+const line = [
+  {
+    id: 'route',
+    positions: [
+      { x: -1, y: 0 },
+      { x: 1, y: 0 },
+    ],
+  },
+];
+const polygon = [
+  {
+    id: 'area',
+    rings: [
+      [
+        { x: -1, y: -1 },
+        { x: 1, y: -1 },
+        { x: 0, y: 1 },
+      ],
+    ],
+  },
+];
 const planarMap = () => makeMap({ projection: crs.simple(), center: { x: 0, y: 0 }, zoom: 0 });
 
 test('layer tree: map object helpers append collections to one shared base layer', async () => {
@@ -36,7 +55,8 @@ test('layer tree: map object helpers append collections to one shared base layer
 test('layer tree: every layer contains mixed objects, shared labels and nested layers', async () => {
   const { map } = await planarMap();
   const places = map.addLayer({ id: 'places' });
-  const addLayer = new Proxy(places, {}).addLayer;
+  const proxiedPlaces = new Proxy(places, {});
+  const addLayer = proxiedPlaces.addLayer.bind(proxiedPlaces);
   const local = addLayer({ id: 'local' });
   const points = places.addPoints([point('a')]);
   const lines = places.addLines(line);
@@ -46,9 +66,19 @@ test('layer tree: every layer contains mixed objects, shared labels and nested l
   assert.deepEqual(map.layers.list(), [places]);
   assert.deepEqual(places.layers.list(), [local, points, lines]);
   assert.deepEqual(local.layers.list(), [polygons, labels]);
-  assert.deepEqual(places.layers.list({ recursive: true }), [local, polygons, labels, points, lines]);
+  assert.deepEqual(places.layers.list({ recursive: true }), [
+    local,
+    polygons,
+    labels,
+    points,
+    lines,
+  ]);
   assert.equal(map.layers.get(local.id), local, 'global discovery resolves descendants');
-  assert.equal(places.layers.get(polygons.id), undefined, 'scoped discovery only resolves direct children');
+  assert.equal(
+    places.layers.get(polygons.id),
+    undefined,
+    'scoped discovery only resolves direct children',
+  );
   points.get('a')!.setProperties({ name: 'Renamed' });
   assert.equal(map.debug.layerLabels(labels.id)[0]?.text, 'Renamed');
   points.hide();
@@ -99,13 +129,21 @@ test('layer tree: sibling indexing, reparenting and cycle rejection preserve the
   assert.throws(() => outer.move({ after: points.id }), /subtree/);
   assert.deepEqual(outer.layers.list(), [b, a]);
   points.move({ into: b.id });
-  assert.equal(points.parentId, b.id, 'collection wrappers expose the live parent, not a copied getter value');
+  assert.equal(
+    points.parentId,
+    b.id,
+    'collection wrappers expose the live parent, not a copied getter value',
+  );
   assert.deepEqual(a.layers.list(), []);
   assert.deepEqual(b.layers.list(), [points]);
   b.move({ into: null, index: 0 });
   assert.equal(b.parentId, null);
   outer.remove();
-  assert.equal(points.removed, false, 'moved-out descendants survive removal of their former parent');
+  assert.equal(
+    points.removed,
+    false,
+    'moved-out descendants survive removal of their former parent',
+  );
   assert.equal(points.count(), 1);
   map.destroy();
 });
@@ -186,8 +224,10 @@ test('layer tree: nested imported sources do not create eager per-feature object
   const { map } = await planarMap();
   const source = map.data.vector<PointGeometry<Position>>({ id: 'large' });
   await source.importColumnar({ kind: 'point', positions: new Float64Array(100_000 * 2) });
-  const get = source.features.get;
-  source.features.get = () => { throw new Error('unexpected per-feature snapshot'); };
+  const get = source.features.get.bind(source.features);
+  source.features.get = () => {
+    throw new Error('unexpected per-feature snapshot');
+  };
   const parent = map.addLayer();
   const child = parent.addLayer();
   const points = child.addPoints(source);

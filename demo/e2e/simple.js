@@ -8,42 +8,57 @@ import { createMap, crs } from '../../dist/index.js';
 const backend = new URLSearchParams(location.search).get('backend');
 
 const map = await createMap('map', {
-    projection: crs.simple(),
-    renderer: backend === 'webgpu'
-        ? { primary: 'webgpu', fallback: false }
-        : { primary: 'webgl1', fallback: false },
-    size: { width: 640, height: 480 },
-    center: { x: 0, y: 0 }, zoom: 6,
-    minZoom: 0,
-    maxZoom: 12
+  projection: crs.simple(),
+  renderer:
+    backend === 'webgpu'
+      ? { primary: 'webgpu', fallback: false }
+      : { primary: 'webgl1', fallback: false },
+  size: { width: 640, height: 480 },
+  center: { x: 0, y: 0 },
+  zoom: 6,
+  minZoom: 0,
+  maxZoom: 12,
 });
 
 const floor = map.data.vector({ id: 'floor' });
 await floor.features.replace([
   {
     id: 'white',
-    geometry: { type: 'rectangle', southwest: { x: -0.05, y: 0.04 }, northeast: { x: 0.05, y: -0.04 } },
+    geometry: {
+      type: 'rectangle',
+      southwest: { x: -0.05, y: 0.04 },
+      northeast: { x: 0.05, y: -0.04 },
+    },
   },
 ]);
 
 const marks = map.data.vector({ id: 'marks' });
 await marks.features.replace([
-  { id: 'm1', geometry: { type: 'point', position: { x: -0.006, y: 0.003 } }, properties: { name: 'M1' } },
-  { id: 'm2', geometry: { type: 'point', position: { x: 0.009, y: -0.005 } }, properties: { name: 'M2' } },
+  {
+    id: 'm1',
+    geometry: { type: 'point', position: { x: -0.006, y: 0.003 } },
+    properties: { name: 'M1' },
+  },
+  {
+    id: 'm2',
+    geometry: { type: 'point', position: { x: 0.009, y: -0.005 } },
+    properties: { name: 'M2' },
+  },
 ]);
 
 map.addLayer({
   id: 'floor',
   type: 'fills',
   source: floor,
-  interactive: false ,
+  interactive: false,
   style: { fillColor: '#ffffff', fillOpacity: 1, strokeWidthPx: 0 },
 });
 map.addLayer({
   id: 'marks',
   type: 'points',
   source: marks,
-  interactive: true, draggable: true ,
+  interactive: true,
+  draggable: true,
   style: { radiusPx: 8, color: '#db2777' },
 });
 

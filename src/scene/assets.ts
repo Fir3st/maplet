@@ -164,7 +164,10 @@ export class AssetRegistry {
    */
   addFont(id: string, family: string, src: string): FontAssetImpl {
     assertArgument(typeof id === 'string' && id.length > 0, 'assets.addFont requires an id');
-    assertArgument(typeof family === 'string' && family.length > 0, 'assets.addFont requires a family');
+    assertArgument(
+      typeof family === 'string' && family.length > 0,
+      'assets.addFont requires a family',
+    );
     assertArgument(typeof src === 'string' && src.length > 0, 'assets.addFont requires a src');
     if (this.images.has(id) || this.fonts.has(id)) {
       fail('duplicate-id', `asset already exists: ${id}`, { assetId: id });
@@ -172,7 +175,9 @@ export class AssetRegistry {
     const asset = new FontAssetImpl(id, family, src);
     this.fonts.set(id, asset);
     const canLoad =
-      typeof FontFace === 'function' && typeof document !== 'undefined' && document.fonts !== undefined;
+      typeof FontFace === 'function' &&
+      typeof document !== 'undefined' &&
+      document.fonts !== undefined;
     if (!canLoad) {
       // Headless (no DOM): the asset is visible as an explicit error state.
       asset.state = 'error';

@@ -14,10 +14,7 @@
   "processBudgetSeconds": 120,
   "workload": {
     "points": 500000,
-    "viewportCssPx": [
-      720,
-      520
-    ],
+    "viewportCssPx": [720, 520],
     "zoom": 10,
     "interactive": true
   },
@@ -1710,35 +1707,19 @@
       "elapsedSeconds": 70.46,
       "measurements": [
         {
-          "order": [
-            "layer:click",
-            "leaf:click",
-            "root:click",
-            "map:click"
-          ]
+          "order": ["layer:click", "leaf:click", "root:click", "map:click"]
         },
         {
-          "order": [
-            "layer:click",
-            "stop"
-          ]
+          "order": ["layer:click", "stop"]
         },
         {
           "hovered": true,
           "sawOver": true,
-          "pixelHover": [
-            255,
-            0,
-            0
-          ],
+          "pixelHover": [255, 0, 0],
           "cursorHover": "move",
           "hoveredAfter": false,
           "sawOut": true,
-          "pixelAway": [
-            22,
-            163,
-            74
-          ],
+          "pixelAway": [22, 163, 74],
           "cursorAway": "grab"
         },
         {
@@ -1746,53 +1727,21 @@
           "bHovered": true
         },
         {
-          "before": [
-            22,
-            163,
-            74,
-            255
-          ],
-          "hidden": [
-            0,
-            0,
-            0,
-            0
-          ],
+          "before": [22, 163, 74, 255],
+          "hidden": [0, 0, 0, 0],
           "hitsHidden": 0,
-          "back": [
-            22,
-            163,
-            74,
-            255
-          ],
-          "hitsBack": [
-            "a"
-          ],
+          "back": [22, 163, 74, 255],
+          "hitsBack": ["a"],
           "dataCount": 2
         },
         {
           "selectedState": true,
-          "selectedPixel": [
-            245,
-            158,
-            11
-          ],
-          "clearedPixel": [
-            22,
-            163,
-            74
-          ]
+          "selectedPixel": [245, 158, 11],
+          "clearedPixel": [22, 163, 74]
         },
         {
-          "lng": [
-            14.100000000000005,
-            14.182397460937505
-          ],
-          "zoom": [
-            10,
-            10,
-            10.5
-          ],
+          "lng": [14.100000000000005, 14.182397460937505],
+          "zoom": [10, 10, 10.5],
           "formGuard": true
         },
         {
@@ -1804,14 +1753,8 @@
           "zoomWhilePan": 12
         },
         {
-          "before": [
-            49.999999999999986,
-            13.99999999999999
-          ],
-          "after": [
-            49.98234206933653,
-            14.05493164062499
-          ],
+          "before": [49.999999999999986, 13.99999999999999],
+          "after": [49.98234206933653, 14.05493164062499],
           "midErrorM": 0,
           "endErrorM": 0,
           "viewMoved": false,
@@ -1835,31 +1778,18 @@
           ]
         },
         {
-          "full": [
-            "b",
-            "a"
-          ],
-          "limitedTo2": [
-            "b",
-            "a"
-          ],
-          "limitedTo1": [
-            "b"
-          ],
+          "full": ["b", "a"],
+          "limitedTo2": ["b", "a"],
+          "limitedTo1": ["b"],
           "empty": [],
-          "isolated": [
-            "a"
-          ]
+          "isolated": ["a"]
         },
         {
           "syncSpanMs": 1,
           "recordedMs": 1,
           "recordedReadMs": 1,
           "readback": "blocking",
-          "hits": [
-            "b",
-            "a"
-          ]
+          "hits": ["b", "a"]
         },
         {
           "burst": 40,
@@ -1876,17 +1806,8 @@
                 "x": 80,
                 "y": 80
               },
-              "pixel": [
-                40,
-                215,
-                0,
-                255
-              ],
-              "expected": [
-                40,
-                215,
-                0
-              ],
+              "pixel": [40, 215, 0, 255],
+              "expected": [40, 215, 0],
               "delta": 0
             },
             {
@@ -1894,17 +1815,8 @@
                 "x": 432,
                 "y": 80
               },
-              "pixel": [
-                215,
-                215,
-                0,
-                255
-              ],
-              "expected": [
-                215,
-                215,
-                0
-              ],
+              "pixel": [215, 215, 0, 255],
+              "expected": [215, 215, 0],
               "delta": 0
             },
             {
@@ -1912,17 +1824,8 @@
                 "x": 80,
                 "y": 432
               },
-              "pixel": [
-                40,
-                40,
-                0,
-                255
-              ],
-              "expected": [
-                40,
-                40,
-                0
-              ],
+              "pixel": [40, 40, 0, 255],
+              "expected": [40, 40, 0],
               "delta": 0
             },
             {
@@ -1930,50 +1833,21 @@
                 "x": 432,
                 "y": 432
               },
-              "pixel": [
-                215,
-                40,
-                0,
-                255
-              ],
-              "expected": [
-                215,
-                40,
-                0
-              ],
+              "pixel": [215, 40, 0, 255],
+              "expected": [215, 40, 0],
               "delta": 0
             }
           ],
-          "marker": [
-            255,
-            0,
-            255,
-            255
-          ],
-          "off": [
-            152,
-            127,
-            0,
-            255
-          ]
+          "marker": [255, 0, 255, 255],
+          "off": [152, 127, 0, 255]
         },
         {
           "swapped": true,
           "epsg4326": true,
           "crs84": true,
           "crs84Geography": true,
-          "marker": [
-            255,
-            0,
-            255,
-            255
-          ],
-          "offMarker": [
-            152,
-            127,
-            32,
-            255
-          ]
+          "marker": [255, 0, 255, 255],
+          "offMarker": [152, 127, 32, 255]
         },
         {
           "modern": true,
@@ -1984,17 +1858,8 @@
                 "x": 80,
                 "y": 80
               },
-              "pixel": [
-                40,
-                215,
-                96,
-                255
-              ],
-              "expected": [
-                40,
-                215,
-                96
-              ],
+              "pixel": [40, 215, 96, 255],
+              "expected": [40, 215, 96],
               "delta": 0
             },
             {
@@ -2002,17 +1867,8 @@
                 "x": 432,
                 "y": 80
               },
-              "pixel": [
-                215,
-                215,
-                96,
-                255
-              ],
-              "expected": [
-                215,
-                215,
-                96
-              ],
+              "pixel": [215, 215, 96, 255],
+              "expected": [215, 215, 96],
               "delta": 0
             },
             {
@@ -2020,17 +1876,8 @@
                 "x": 80,
                 "y": 432
               },
-              "pixel": [
-                40,
-                40,
-                96,
-                255
-              ],
-              "expected": [
-                40,
-                40,
-                96
-              ],
+              "pixel": [40, 40, 96, 255],
+              "expected": [40, 40, 96],
               "delta": 0
             },
             {
@@ -2038,26 +1885,12 @@
                 "x": 432,
                 "y": 432
               },
-              "pixel": [
-                215,
-                40,
-                96,
-                255
-              ],
-              "expected": [
-                215,
-                40,
-                96
-              ],
+              "pixel": [215, 40, 96, 255],
+              "expected": [215, 40, 96],
               "delta": 0
             }
           ],
-          "legacyMarker": [
-            255,
-            0,
-            255,
-            255
-          ]
+          "legacyMarker": [255, 0, 255, 255]
         },
         {
           "decoded": {
@@ -2072,35 +1905,15 @@
           "geography": true
         },
         {
-          "held": [
-            152,
-            127,
-            0,
-            255
-          ],
-          "baseline": [
-            151,
-            128,
-            0
-          ],
+          "held": [152, 127, 0, 255],
+          "baseline": [151, 128, 0],
           "swapMs": 239,
-          "late": [
-            152,
-            127,
-            255,
-            255
-          ]
+          "late": [152, 127, 255, 255]
         },
         {
-          "rasterHits": [
-            "wms:wms"
-          ],
-          "nearHotspotHits": [
-            "wms:wms"
-          ],
-          "hotspotHits": [
-            "hotspots:hotspot-a"
-          ],
+          "rasterHits": ["wms:wms"],
+          "nearHotspotHits": ["wms:wms"],
+          "hotspotHits": ["hotspots:hotspot-a"],
           "clicks": [
             {
               "sourceId": "wms",
@@ -2121,18 +1934,12 @@
         {
           "withCollision": 0,
           "withoutCollision": 16,
-          "order": [
-            "ALFA-ALFA",
-            "BETA-BETA"
-          ]
+          "order": ["ALFA-ALFA", "BETA-BETA"]
         },
         {
           "hovered": true,
           "cursor": "pointer",
-          "events": [
-            "mouseover:dia",
-            "click:dia"
-          ]
+          "events": ["mouseover:dia", "click:dia"]
         },
         {
           "turned": {
@@ -2175,12 +1982,7 @@
               "rotated": true
             }
           ],
-          "sideHits": [
-            false,
-            false,
-            false,
-            false
-          ]
+          "sideHits": [false, false, false, false]
         },
         {
           "inkBefore": 214,
@@ -2200,12 +2002,7 @@
             "height": 0,
             "error": "failed to load ./definitely-missing.png"
           },
-          "fallbackPixel": [
-            22,
-            163,
-            74,
-            255
-          ],
+          "fallbackPixel": [22, 163, 74, 255],
           "spritesForBroken": 0
         },
         {
@@ -2214,38 +2011,16 @@
           "height": 40,
           "planSprites": 501,
           "drawCalls": 5,
-          "white": [
-            255,
-            253,
-            253,
-            255
-          ],
-          "red": [
-            225,
-            29,
-            72,
-            255
-          ]
+          "white": [255, 253, 253, 255],
+          "red": [225, 29, 72, 255]
         },
         {
           "corner": [],
-          "middle": [
-            "center"
-          ]
+          "middle": ["center"]
         },
         {
-          "atAnchor": [
-            0,
-            0,
-            0,
-            0
-          ],
-          "above": [
-            255,
-            255,
-            255,
-            255
-          ]
+          "atAnchor": [0, 0, 0, 0],
+          "above": [255, 255, 255, 255]
         },
         {
           "grid": 49,
@@ -2264,28 +2039,10 @@
           }
         },
         {
-          "anchor": [
-            406,
-            316
-          ],
-          "body": [
-            225,
-            29,
-            72,
-            255
-          ],
-          "left": [
-            0,
-            0,
-            0,
-            0
-          ],
-          "top": [
-            0,
-            0,
-            0,
-            0
-          ],
+          "anchor": [406, 316],
+          "body": [225, 29, 72, 255],
+          "left": [0, 0, 0, 0],
+          "top": [0, 0, 0, 0],
           "box": {
             "minX": 0,
             "maxX": 22,
@@ -2294,15 +2051,9 @@
           }
         },
         {
-          "states": [
-            "loading",
-            "ready"
-          ],
+          "states": ["loading", "ready"],
           "snapshot": "ready",
-          "frames": [
-            2,
-            3
-          ],
+          "frames": [2, 3],
           "latencyMs": 102
         },
         {
@@ -2311,80 +2062,26 @@
           "polygons": 2,
           "lineType": "multiLineString",
           "lines": 2,
-          "halfA": [
-            233,
-            150,
-            10,
-            242
-          ],
-          "halfB": [
-            233,
-            150,
-            10,
-            242
-          ],
+          "halfA": [233, 150, 10, 242],
+          "halfB": [233, 150, 10, 242],
           "selectedOnce": 1
         },
         {
           "roadType": "lineString",
           "buildingType": "polygon",
-          "visible": [
-            233,
-            150,
-            10,
-            242
-          ],
-          "hidden": [
-            0,
-            0,
-            0,
-            0
-          ]
+          "visible": [233, 150, 10, 242],
+          "hidden": [0, 0, 0, 0]
         },
         {
-          "ids": [
-            "8",
-            "1",
-            "2",
-            "9007199254740993",
-            "tl:1/1/0:3#0"
-          ]
+          "ids": ["8", "1", "2", "9007199254740993", "tl:1/1/0:3#0"]
         },
         {
-          "fill": [
-            233,
-            150,
-            10,
-            242
-          ],
-          "hole": [
-            220,
-            38,
-            38,
-            255
-          ],
-          "road": [
-            37,
-            99,
-            235,
-            255
-          ],
-          "bigRoad": [
-            37,
-            99,
-            235,
-            255
-          ],
-          "poi": [
-            220,
-            38,
-            38,
-            255
-          ],
-          "labels": [
-            "Praha",
-            "Bez ID"
-          ],
+          "fill": [233, 150, 10, 242],
+          "hole": [220, 38, 38, 255],
+          "road": [37, 99, 235, 255],
+          "bigRoad": [37, 99, 235, 255],
+          "poi": [220, 38, 38, 255],
+          "labels": ["Praha", "Bez ID"],
           "ink": 241,
           "fillHit": {
             "sceneId": "scene-1",
@@ -2413,19 +2110,11 @@
             "fragments": 0
           },
           "brokenFeatures": 0,
-          "fill": [
-            233,
-            150,
-            10,
-            242
-          ]
+          "fill": [233, 150, 10, 242]
         },
         {
           "hovered": true,
-          "events": [
-            "mouseover:vt-pois:10:pois",
-            "click:vt-pois:10:pois"
-          ]
+          "events": ["mouseover:vt-pois:10:pois", "click:vt-pois:10:pois"]
         },
         {
           "loaded": [
@@ -2439,18 +2128,8 @@
           "failedAfter": 0,
           "distance12": 128.0000000000582,
           "distance13": 256.0000000001164,
-          "poiPixel": [
-            220,
-            38,
-            38,
-            255
-          ],
-          "roadPixel": [
-            37,
-            99,
-            235,
-            255
-          ]
+          "poiPixel": [220, 38, 38, 255],
+          "roadPixel": [37, 99, 235, 255]
         },
         {
           "settled": 12,
@@ -2474,31 +2153,15 @@
             "backend": "webgpu",
             "requestedPrimary": "webgpu",
             "requestedFallback": false,
-            "notes": [
-              "webgpu bgra8unorm",
-              "apple metal-3"
-            ]
+            "notes": ["webgpu bgra8unorm", "apple metal-3"]
           }
         },
         {
           "probe": {
             "label": "glyph",
-            "at": [
-              376,
-              396
-            ],
-            "webgl1": [
-              16,
-              16,
-              16,
-              255
-            ],
-            "webgpu": [
-              16,
-              16,
-              16,
-              255
-            ],
+            "at": [376, 396],
+            "webgl1": [16, 16, 16, 255],
+            "webgpu": [16, 16, 16, 255],
             "delta": 0,
             "pass": true
           },
@@ -2520,25 +2183,18 @@
           "backend": "webgl1",
           "requestedPrimary": "webgpu",
           "requestedFallback": "webgl1",
-          "notes": [
-            "webgpu unavailable (gpu-unavailable: navigator.gpu is not available)"
-          ]
+          "notes": ["webgpu unavailable (gpu-unavailable: navigator.gpu is not available)"]
         },
         {
           "capabilities": {
             "backend": "webgpu",
             "requestedPrimary": "webgpu",
             "requestedFallback": "webgl1",
-            "notes": [
-              "webgpu bgra8unorm",
-              "apple metal-3"
-            ]
+            "notes": ["webgpu bgra8unorm", "apple metal-3"]
           },
           "pixel": true,
           "state": {
-            "selection": [
-              "dot"
-            ],
+            "selection": ["dot"],
             "hovered": true,
             "generation": 1,
             "bindingType": "lineString",
@@ -2561,9 +2217,7 @@
             }
           ],
           "state": {
-            "selection": [
-              "dot"
-            ],
+            "selection": ["dot"],
             "hovered": true,
             "generation": 1,
             "bindingType": "lineString",
@@ -2579,14 +2233,10 @@
           "expectedGen": 1
         },
         {
-          "hits": [
-            "dot"
-          ],
+          "hits": ["dot"],
           "viewOk": true,
           "state": {
-            "selection": [
-              "dot"
-            ],
+            "selection": ["dot"],
             "hovered": true,
             "generation": 1,
             "bindingType": "lineString",
@@ -2606,9 +2256,7 @@
             }
           ],
           "state": {
-            "selection": [
-              "dot"
-            ],
+            "selection": ["dot"],
             "hovered": true,
             "generation": 1,
             "bindingType": "lineString",
@@ -2620,16 +2268,12 @@
             "zoom": 2
           },
           "pixel": true,
-          "hits": [
-            "dot"
-          ]
+          "hits": ["dot"]
         },
         {
           "wasWebgl1": true,
           "state": {
-            "selection": [
-              "dot"
-            ],
+            "selection": ["dot"],
             "hovered": true,
             "generation": 1,
             "bindingType": "lineString",
@@ -2703,11 +2347,7 @@
             "visible": true,
             "checked": true
           },
-          "listed": [
-            "grp",
-            "layer-a",
-            "layer-b"
-          ]
+          "listed": ["grp", "layer-a", "layer-b"]
         },
         {
           "afterClick": {
@@ -2790,9 +2430,7 @@
         {
           "beforeCancel": 2,
           "updates": 2,
-          "cleared": [
-            1
-          ],
+          "cleared": [1],
           "stopped": true
         },
         {
@@ -2855,11 +2493,7 @@
         {
           "bounded": true,
           "clickedSelects": true,
-          "pressed": [
-            "false",
-            "true",
-            "false"
-          ],
+          "pressed": ["false", "true", "false"],
           "live": "1 selected: D"
         },
         {
@@ -2894,10 +2528,7 @@
           "postWidth": 150,
           "oracleWidth": 151,
           "widthDelta": 1,
-          "builds": [
-            2,
-            3
-          ]
+          "builds": [2, 3]
         },
         {
           "snapshot": {
@@ -2981,14 +2612,8 @@
           "oldArea": "rgba(0,0,0,0)",
           "newArea": "rgba(0,255,255,255)",
           "revisions": {
-            "a": [
-              0,
-              2
-            ],
-            "b": [
-              0,
-              0
-            ]
+            "a": [0, 2],
+            "b": [0, 0]
           }
         },
         {
@@ -2998,9 +2623,7 @@
             "layerId": "media-a"
           },
           "clicks": 1,
-          "platePick": [
-            "plate:plate"
-          ]
+          "platePick": ["plate:plate"]
         },
         {
           "before": {
@@ -3016,17 +2639,10 @@
             "threeThree": "rgba(10,240,13,255)",
             "five": "rgba(151,62,128,255)"
           },
-          "pixelVersion": [
-            0,
-            1
-          ]
+          "pixelVersion": [0, 1]
         },
         {
-          "codes": [
-            "invalid-region",
-            "invalid-region",
-            "invalid-region"
-          ],
+          "codes": ["invalid-region", "invalid-region", "invalid-region"],
           "pixelVersion": 1,
           "before": "rgba(31,32,128,255)",
           "after": "rgba(31,32,128,255)"
@@ -3035,18 +2651,9 @@
           "first": "rgba(254,0,0,255)",
           "second": "rgba(0,0,255,255)",
           "settled": "rgba(0,0,255,255)",
-          "frames": [
-            6,
-            7
-          ],
-          "pixelVersion": [
-            3,
-            3
-          ],
-          "revision": [
-            0,
-            0
-          ]
+          "frames": [6, 7],
+          "pixelVersion": [3, 3],
+          "revision": [0, 0]
         },
         {
           "firstFrame": "rgba(254,0,0,255)",
@@ -3074,51 +2681,15 @@
         },
         {
           "outcomes": [
-            [
-              "odd positions",
-              "import-invalid",
-              "number"
-            ],
-            [
-              "plain array",
-              "import-invalid",
-              "number"
-            ],
-            [
-              "NaN coordinate",
-              "import-invalid",
-              "number"
-            ],
-            [
-              "ids length",
-              "import-invalid",
-              "number"
-            ],
-            [
-              "point with offsets",
-              "import-invalid",
-              "number"
-            ],
-            [
-              "offsets past the buffer",
-              "import-invalid",
-              "number"
-            ],
-            [
-              "feature offsets past the parts",
-              "import-invalid",
-              "number"
-            ],
-            [
-              "altitudes length",
-              "import-invalid",
-              "number"
-            ],
-            [
-              "unknown kind",
-              "import-invalid",
-              "number"
-            ]
+            ["odd positions", "import-invalid", "number"],
+            ["plain array", "import-invalid", "number"],
+            ["NaN coordinate", "import-invalid", "number"],
+            ["ids length", "import-invalid", "number"],
+            ["point with offsets", "import-invalid", "number"],
+            ["offsets past the buffer", "import-invalid", "number"],
+            ["feature offsets past the parts", "import-invalid", "number"],
+            ["altitudes length", "import-invalid", "number"],
+            ["unknown kind", "import-invalid", "number"]
           ],
           "before": 5000,
           "after": 5000
@@ -3194,10 +2765,7 @@
             "id": 7,
             "geometry": {
               "type": "Point",
-              "coordinates": [
-                14.020000000000001,
-                50.02000000000002
-              ]
+              "coordinates": [14.020000000000001, 50.02000000000002]
             },
             "properties": {
               "name": "seven"
@@ -3314,30 +2882,10 @@
           "pixel": "rgba(37,99,235)",
           "updatedProperty": 176,
           "lastUpdate": 176,
-          "bare": [
-            1,
-            11,
-            18
-          ],
-          "bareAfterMap": [
-            13,
-            16,
-            18
-          ],
-          "setTimes": [
-            0,
-            0,
-            0,
-            0,
-            0
-          ],
-          "waitTimes": [
-            15,
-            17,
-            16,
-            17,
-            17
-          ],
+          "bare": [1, 11, 18],
+          "bareAfterMap": [13, 16, 18],
+          "setTimes": [0, 0, 0, 0, 0],
+          "waitTimes": [15, 17, 16, 17, 17],
           "visibility": "visible",
           "heapStartMB": 1
         },
@@ -3396,35 +2944,19 @@
       "elapsedSeconds": 70.87,
       "measurements": [
         {
-          "order": [
-            "layer:click",
-            "leaf:click",
-            "root:click",
-            "map:click"
-          ]
+          "order": ["layer:click", "leaf:click", "root:click", "map:click"]
         },
         {
-          "order": [
-            "layer:click",
-            "stop"
-          ]
+          "order": ["layer:click", "stop"]
         },
         {
           "hovered": true,
           "sawOver": true,
-          "pixelHover": [
-            255,
-            0,
-            0
-          ],
+          "pixelHover": [255, 0, 0],
           "cursorHover": "move",
           "hoveredAfter": false,
           "sawOut": true,
-          "pixelAway": [
-            22,
-            163,
-            74
-          ],
+          "pixelAway": [22, 163, 74],
           "cursorAway": "grab"
         },
         {
@@ -3432,53 +2964,21 @@
           "bHovered": true
         },
         {
-          "before": [
-            22,
-            163,
-            74,
-            255
-          ],
-          "hidden": [
-            0,
-            0,
-            0,
-            0
-          ],
+          "before": [22, 163, 74, 255],
+          "hidden": [0, 0, 0, 0],
           "hitsHidden": 0,
-          "back": [
-            22,
-            163,
-            74,
-            255
-          ],
-          "hitsBack": [
-            "a"
-          ],
+          "back": [22, 163, 74, 255],
+          "hitsBack": ["a"],
           "dataCount": 2
         },
         {
           "selectedState": true,
-          "selectedPixel": [
-            245,
-            158,
-            11
-          ],
-          "clearedPixel": [
-            22,
-            163,
-            74
-          ]
+          "selectedPixel": [245, 158, 11],
+          "clearedPixel": [22, 163, 74]
         },
         {
-          "lng": [
-            14.100000000000005,
-            14.182397460937505
-          ],
-          "zoom": [
-            10,
-            10,
-            10.5
-          ],
+          "lng": [14.100000000000005, 14.182397460937505],
+          "zoom": [10, 10, 10.5],
           "formGuard": true
         },
         {
@@ -3490,14 +2990,8 @@
           "zoomWhilePan": 12
         },
         {
-          "before": [
-            49.999999999999986,
-            13.99999999999999
-          ],
-          "after": [
-            49.98234206933653,
-            14.05493164062499
-          ],
+          "before": [49.999999999999986, 13.99999999999999],
+          "after": [49.98234206933653, 14.05493164062499],
           "midErrorM": 0,
           "endErrorM": 0,
           "viewMoved": false,
@@ -3521,31 +3015,18 @@
           ]
         },
         {
-          "full": [
-            "a",
-            "b"
-          ],
-          "limitedTo2": [
-            "a",
-            "b"
-          ],
-          "limitedTo1": [
-            "a"
-          ],
+          "full": ["a", "b"],
+          "limitedTo2": ["a", "b"],
+          "limitedTo1": ["a"],
           "empty": [],
-          "isolated": [
-            "a"
-          ]
+          "isolated": ["a"]
         },
         {
           "syncSpanMs": 0.1,
           "recordedMs": 0.1,
           "recordedReadMs": 0,
           "readback": "async",
-          "hits": [
-            "a",
-            "b"
-          ]
+          "hits": ["a", "b"]
         },
         {
           "burst": 40,
@@ -3563,17 +3044,8 @@
                 "x": 80,
                 "y": 80
               },
-              "pixel": [
-                40,
-                215,
-                0,
-                255
-              ],
-              "expected": [
-                40,
-                215,
-                0
-              ],
+              "pixel": [40, 215, 0, 255],
+              "expected": [40, 215, 0],
               "delta": 0
             },
             {
@@ -3581,17 +3053,8 @@
                 "x": 432,
                 "y": 80
               },
-              "pixel": [
-                215,
-                215,
-                0,
-                255
-              ],
-              "expected": [
-                215,
-                215,
-                0
-              ],
+              "pixel": [215, 215, 0, 255],
+              "expected": [215, 215, 0],
               "delta": 0
             },
             {
@@ -3599,17 +3062,8 @@
                 "x": 80,
                 "y": 432
               },
-              "pixel": [
-                40,
-                40,
-                0,
-                255
-              ],
-              "expected": [
-                40,
-                40,
-                0
-              ],
+              "pixel": [40, 40, 0, 255],
+              "expected": [40, 40, 0],
               "delta": 0
             },
             {
@@ -3617,50 +3071,21 @@
                 "x": 432,
                 "y": 432
               },
-              "pixel": [
-                215,
-                40,
-                0,
-                255
-              ],
-              "expected": [
-                215,
-                40,
-                0
-              ],
+              "pixel": [215, 40, 0, 255],
+              "expected": [215, 40, 0],
               "delta": 0
             }
           ],
-          "marker": [
-            255,
-            0,
-            255,
-            255
-          ],
-          "off": [
-            152,
-            127,
-            0,
-            255
-          ]
+          "marker": [255, 0, 255, 255],
+          "off": [152, 127, 0, 255]
         },
         {
           "swapped": true,
           "epsg4326": true,
           "crs84": true,
           "crs84Geography": true,
-          "marker": [
-            255,
-            0,
-            255,
-            255
-          ],
-          "offMarker": [
-            152,
-            127,
-            32,
-            255
-          ]
+          "marker": [255, 0, 255, 255],
+          "offMarker": [152, 127, 32, 255]
         },
         {
           "modern": true,
@@ -3671,17 +3096,8 @@
                 "x": 80,
                 "y": 80
               },
-              "pixel": [
-                40,
-                215,
-                96,
-                255
-              ],
-              "expected": [
-                40,
-                215,
-                96
-              ],
+              "pixel": [40, 215, 96, 255],
+              "expected": [40, 215, 96],
               "delta": 0
             },
             {
@@ -3689,17 +3105,8 @@
                 "x": 432,
                 "y": 80
               },
-              "pixel": [
-                215,
-                215,
-                96,
-                255
-              ],
-              "expected": [
-                215,
-                215,
-                96
-              ],
+              "pixel": [215, 215, 96, 255],
+              "expected": [215, 215, 96],
               "delta": 0
             },
             {
@@ -3707,17 +3114,8 @@
                 "x": 80,
                 "y": 432
               },
-              "pixel": [
-                40,
-                40,
-                96,
-                255
-              ],
-              "expected": [
-                40,
-                40,
-                96
-              ],
+              "pixel": [40, 40, 96, 255],
+              "expected": [40, 40, 96],
               "delta": 0
             },
             {
@@ -3725,26 +3123,12 @@
                 "x": 432,
                 "y": 432
               },
-              "pixel": [
-                215,
-                40,
-                96,
-                255
-              ],
-              "expected": [
-                215,
-                40,
-                96
-              ],
+              "pixel": [215, 40, 96, 255],
+              "expected": [215, 40, 96],
               "delta": 0
             }
           ],
-          "legacyMarker": [
-            255,
-            0,
-            255,
-            255
-          ]
+          "legacyMarker": [255, 0, 255, 255]
         },
         {
           "decoded": {
@@ -3759,35 +3143,15 @@
           "geography": true
         },
         {
-          "held": [
-            152,
-            127,
-            0,
-            255
-          ],
-          "baseline": [
-            151,
-            128,
-            0
-          ],
+          "held": [152, 127, 0, 255],
+          "baseline": [151, 128, 0],
           "swapMs": 239,
-          "late": [
-            152,
-            127,
-            255,
-            255
-          ]
+          "late": [152, 127, 255, 255]
         },
         {
-          "rasterHits": [
-            "wms:wms"
-          ],
-          "nearHotspotHits": [
-            "wms:wms"
-          ],
-          "hotspotHits": [
-            "hotspots:hotspot-a"
-          ],
+          "rasterHits": ["wms:wms"],
+          "nearHotspotHits": ["wms:wms"],
+          "hotspotHits": ["hotspots:hotspot-a"],
           "clicks": [
             {
               "sourceId": "wms",
@@ -3808,18 +3172,12 @@
         {
           "withCollision": 0,
           "withoutCollision": 16,
-          "order": [
-            "ALFA-ALFA",
-            "BETA-BETA"
-          ]
+          "order": ["ALFA-ALFA", "BETA-BETA"]
         },
         {
           "hovered": true,
           "cursor": "pointer",
-          "events": [
-            "mouseover:dia",
-            "click:dia"
-          ]
+          "events": ["mouseover:dia", "click:dia"]
         },
         {
           "turned": {
@@ -3862,12 +3220,7 @@
               "rotated": true
             }
           ],
-          "sideHits": [
-            false,
-            false,
-            false,
-            false
-          ]
+          "sideHits": [false, false, false, false]
         },
         {
           "inkBefore": 214,
@@ -3887,12 +3240,7 @@
             "height": 0,
             "error": "failed to load ./definitely-missing.png"
           },
-          "fallbackPixel": [
-            22,
-            163,
-            74,
-            255
-          ],
+          "fallbackPixel": [22, 163, 74, 255],
           "spritesForBroken": 0
         },
         {
@@ -3901,38 +3249,16 @@
           "height": 40,
           "planSprites": 501,
           "drawCalls": 5,
-          "white": [
-            255,
-            253,
-            253,
-            255
-          ],
-          "red": [
-            225,
-            29,
-            72,
-            255
-          ]
+          "white": [255, 253, 253, 255],
+          "red": [225, 29, 72, 255]
         },
         {
           "corner": [],
-          "middle": [
-            "center"
-          ]
+          "middle": ["center"]
         },
         {
-          "atAnchor": [
-            0,
-            0,
-            0,
-            0
-          ],
-          "above": [
-            255,
-            255,
-            255,
-            255
-          ]
+          "atAnchor": [0, 0, 0, 0],
+          "above": [255, 255, 255, 255]
         },
         {
           "grid": 49,
@@ -3951,28 +3277,10 @@
           }
         },
         {
-          "anchor": [
-            406,
-            316
-          ],
-          "body": [
-            225,
-            29,
-            72,
-            255
-          ],
-          "left": [
-            0,
-            0,
-            0,
-            0
-          ],
-          "top": [
-            0,
-            0,
-            0,
-            0
-          ],
+          "anchor": [406, 316],
+          "body": [225, 29, 72, 255],
+          "left": [0, 0, 0, 0],
+          "top": [0, 0, 0, 0],
           "box": {
             "minX": 0,
             "maxX": 22,
@@ -3981,15 +3289,9 @@
           }
         },
         {
-          "states": [
-            "loading",
-            "ready"
-          ],
+          "states": ["loading", "ready"],
           "snapshot": "ready",
-          "frames": [
-            1,
-            2
-          ],
+          "frames": [1, 2],
           "latencyMs": 101
         },
         {
@@ -3998,80 +3300,26 @@
           "polygons": 2,
           "lineType": "multiLineString",
           "lines": 2,
-          "halfA": [
-            233,
-            150,
-            10,
-            242
-          ],
-          "halfB": [
-            233,
-            150,
-            10,
-            242
-          ],
+          "halfA": [233, 150, 10, 242],
+          "halfB": [233, 150, 10, 242],
           "selectedOnce": 1
         },
         {
           "roadType": "lineString",
           "buildingType": "polygon",
-          "visible": [
-            233,
-            150,
-            10,
-            242
-          ],
-          "hidden": [
-            0,
-            0,
-            0,
-            0
-          ]
+          "visible": [233, 150, 10, 242],
+          "hidden": [0, 0, 0, 0]
         },
         {
-          "ids": [
-            "1",
-            "2",
-            "9007199254740993",
-            "tl:1/1/0:3#0",
-            "8"
-          ]
+          "ids": ["1", "2", "9007199254740993", "tl:1/1/0:3#0", "8"]
         },
         {
-          "fill": [
-            233,
-            150,
-            10,
-            242
-          ],
-          "hole": [
-            220,
-            38,
-            38,
-            255
-          ],
-          "road": [
-            37,
-            99,
-            235,
-            255
-          ],
-          "bigRoad": [
-            37,
-            99,
-            235,
-            255
-          ],
-          "poi": [
-            220,
-            38,
-            38,
-            255
-          ],
-          "labels": [
-            "Praha",
-            "Bez ID"
-          ],
+          "fill": [233, 150, 10, 242],
+          "hole": [220, 38, 38, 255],
+          "road": [37, 99, 235, 255],
+          "bigRoad": [37, 99, 235, 255],
+          "poi": [220, 38, 38, 255],
+          "labels": ["Praha", "Bez ID"],
           "ink": 241,
           "fillHit": {
             "sceneId": "scene-1",
@@ -4100,19 +3348,11 @@
             "fragments": 0
           },
           "brokenFeatures": 0,
-          "fill": [
-            233,
-            150,
-            10,
-            242
-          ]
+          "fill": [233, 150, 10, 242]
         },
         {
           "hovered": true,
-          "events": [
-            "mouseover:vt-pois:10:pois",
-            "click:vt-pois:10:pois"
-          ]
+          "events": ["mouseover:vt-pois:10:pois", "click:vt-pois:10:pois"]
         },
         {
           "loaded": [
@@ -4126,18 +3366,8 @@
           "failedAfter": 0,
           "distance12": 128.0000000000582,
           "distance13": 256.0000000001164,
-          "poiPixel": [
-            220,
-            38,
-            38,
-            255
-          ],
-          "roadPixel": [
-            37,
-            99,
-            235,
-            255
-          ]
+          "poiPixel": [220, 38, 38, 255],
+          "roadPixel": [37, 99, 235, 255]
         },
         {
           "settled": 10,
@@ -4161,31 +3391,15 @@
             "backend": "webgpu",
             "requestedPrimary": "webgpu",
             "requestedFallback": false,
-            "notes": [
-              "webgpu bgra8unorm",
-              "apple metal-3"
-            ]
+            "notes": ["webgpu bgra8unorm", "apple metal-3"]
           }
         },
         {
           "probe": {
             "label": "glyph",
-            "at": [
-              376,
-              396
-            ],
-            "webgl1": [
-              16,
-              16,
-              16,
-              255
-            ],
-            "webgpu": [
-              16,
-              16,
-              16,
-              255
-            ],
+            "at": [376, 396],
+            "webgl1": [16, 16, 16, 255],
+            "webgpu": [16, 16, 16, 255],
             "delta": 0,
             "pass": true
           },
@@ -4207,25 +3421,18 @@
           "backend": "webgl1",
           "requestedPrimary": "webgpu",
           "requestedFallback": "webgl1",
-          "notes": [
-            "webgpu unavailable (gpu-unavailable: navigator.gpu is not available)"
-          ]
+          "notes": ["webgpu unavailable (gpu-unavailable: navigator.gpu is not available)"]
         },
         {
           "capabilities": {
             "backend": "webgpu",
             "requestedPrimary": "webgpu",
             "requestedFallback": "webgl1",
-            "notes": [
-              "webgpu bgra8unorm",
-              "apple metal-3"
-            ]
+            "notes": ["webgpu bgra8unorm", "apple metal-3"]
           },
           "pixel": true,
           "state": {
-            "selection": [
-              "dot"
-            ],
+            "selection": ["dot"],
             "hovered": true,
             "generation": 1,
             "bindingType": "lineString",
@@ -4248,9 +3455,7 @@
             }
           ],
           "state": {
-            "selection": [
-              "dot"
-            ],
+            "selection": ["dot"],
             "hovered": true,
             "generation": 1,
             "bindingType": "lineString",
@@ -4266,14 +3471,10 @@
           "expectedGen": 1
         },
         {
-          "hits": [
-            "dot"
-          ],
+          "hits": ["dot"],
           "viewOk": true,
           "state": {
-            "selection": [
-              "dot"
-            ],
+            "selection": ["dot"],
             "hovered": true,
             "generation": 1,
             "bindingType": "lineString",
@@ -4293,9 +3494,7 @@
             }
           ],
           "state": {
-            "selection": [
-              "dot"
-            ],
+            "selection": ["dot"],
             "hovered": true,
             "generation": 1,
             "bindingType": "lineString",
@@ -4307,16 +3506,12 @@
             "zoom": 2
           },
           "pixel": true,
-          "hits": [
-            "dot"
-          ]
+          "hits": ["dot"]
         },
         {
           "wasWebgl1": true,
           "state": {
-            "selection": [
-              "dot"
-            ],
+            "selection": ["dot"],
             "hovered": true,
             "generation": 1,
             "bindingType": "lineString",
@@ -4390,11 +3585,7 @@
             "visible": true,
             "checked": true
           },
-          "listed": [
-            "grp",
-            "layer-a",
-            "layer-b"
-          ]
+          "listed": ["grp", "layer-a", "layer-b"]
         },
         {
           "afterClick": {
@@ -4477,9 +3668,7 @@
         {
           "beforeCancel": 2,
           "updates": 2,
-          "cleared": [
-            1
-          ],
+          "cleared": [1],
           "stopped": true
         },
         {
@@ -4542,11 +3731,7 @@
         {
           "bounded": true,
           "clickedSelects": true,
-          "pressed": [
-            "false",
-            "true",
-            "false"
-          ],
+          "pressed": ["false", "true", "false"],
           "live": "1 selected: D"
         },
         {
@@ -4581,10 +3766,7 @@
           "postWidth": 150,
           "oracleWidth": 151,
           "widthDelta": 1,
-          "builds": [
-            1,
-            2
-          ]
+          "builds": [1, 2]
         },
         {
           "snapshot": {
@@ -4668,14 +3850,8 @@
           "oldArea": "rgba(0,0,0,0)",
           "newArea": "rgba(0,255,255,255)",
           "revisions": {
-            "a": [
-              0,
-              2
-            ],
-            "b": [
-              0,
-              0
-            ]
+            "a": [0, 2],
+            "b": [0, 0]
           }
         },
         {
@@ -4685,9 +3861,7 @@
             "layerId": "media-a"
           },
           "clicks": 1,
-          "platePick": [
-            "plate:plate"
-          ]
+          "platePick": ["plate:plate"]
         },
         {
           "before": {
@@ -4703,17 +3877,10 @@
             "threeThree": "rgba(10,240,13,255)",
             "five": "rgba(151,62,128,255)"
           },
-          "pixelVersion": [
-            0,
-            1
-          ]
+          "pixelVersion": [0, 1]
         },
         {
-          "codes": [
-            "invalid-region",
-            "invalid-region",
-            "invalid-region"
-          ],
+          "codes": ["invalid-region", "invalid-region", "invalid-region"],
           "pixelVersion": 1,
           "before": "rgba(31,32,128,255)",
           "after": "rgba(31,32,128,255)"
@@ -4722,18 +3889,9 @@
           "first": "rgba(248,36,0,255)",
           "second": "rgba(26,35,255,255)",
           "settled": "rgba(26,35,255,255)",
-          "frames": [
-            6,
-            7
-          ],
-          "pixelVersion": [
-            3,
-            3
-          ],
-          "revision": [
-            0,
-            0
-          ]
+          "frames": [6, 7],
+          "pixelVersion": [3, 3],
+          "revision": [0, 0]
         },
         {
           "firstFrame": "rgba(248,36,0,255)",
@@ -4761,51 +3919,15 @@
         },
         {
           "outcomes": [
-            [
-              "odd positions",
-              "import-invalid",
-              "number"
-            ],
-            [
-              "plain array",
-              "import-invalid",
-              "number"
-            ],
-            [
-              "NaN coordinate",
-              "import-invalid",
-              "number"
-            ],
-            [
-              "ids length",
-              "import-invalid",
-              "number"
-            ],
-            [
-              "point with offsets",
-              "import-invalid",
-              "number"
-            ],
-            [
-              "offsets past the buffer",
-              "import-invalid",
-              "number"
-            ],
-            [
-              "feature offsets past the parts",
-              "import-invalid",
-              "number"
-            ],
-            [
-              "altitudes length",
-              "import-invalid",
-              "number"
-            ],
-            [
-              "unknown kind",
-              "import-invalid",
-              "number"
-            ]
+            ["odd positions", "import-invalid", "number"],
+            ["plain array", "import-invalid", "number"],
+            ["NaN coordinate", "import-invalid", "number"],
+            ["ids length", "import-invalid", "number"],
+            ["point with offsets", "import-invalid", "number"],
+            ["offsets past the buffer", "import-invalid", "number"],
+            ["feature offsets past the parts", "import-invalid", "number"],
+            ["altitudes length", "import-invalid", "number"],
+            ["unknown kind", "import-invalid", "number"]
           ],
           "before": 5000,
           "after": 5000
@@ -4881,10 +4003,7 @@
             "id": 7,
             "geometry": {
               "type": "Point",
-              "coordinates": [
-                14.020000000000001,
-                50.02000000000002
-              ]
+              "coordinates": [14.020000000000001, 50.02000000000002]
             },
             "properties": {
               "name": "seven"
@@ -5002,30 +4121,10 @@
           "pixel": "rgba(37,99,235)",
           "updatedProperty": 176,
           "lastUpdate": 176,
-          "bare": [
-            0,
-            9,
-            17
-          ],
-          "bareAfterMap": [
-            15,
-            16,
-            17
-          ],
-          "setTimes": [
-            0,
-            0,
-            0,
-            0,
-            0
-          ],
-          "waitTimes": [
-            16,
-            16,
-            17,
-            17,
-            17
-          ],
+          "bare": [0, 9, 17],
+          "bareAfterMap": [15, 16, 17],
+          "setTimes": [0, 0, 0, 0, 0],
+          "waitTimes": [16, 16, 17, 17, 17],
           "visibility": "visible",
           "heapStartMB": 1
         },
@@ -5084,35 +4183,19 @@
       "elapsedSeconds": 70.03,
       "measurements": [
         {
-          "order": [
-            "layer:click",
-            "leaf:click",
-            "root:click",
-            "map:click"
-          ]
+          "order": ["layer:click", "leaf:click", "root:click", "map:click"]
         },
         {
-          "order": [
-            "layer:click",
-            "stop"
-          ]
+          "order": ["layer:click", "stop"]
         },
         {
           "hovered": true,
           "sawOver": true,
-          "pixelHover": [
-            255,
-            0,
-            0
-          ],
+          "pixelHover": [255, 0, 0],
           "cursorHover": "move",
           "hoveredAfter": false,
           "sawOut": true,
-          "pixelAway": [
-            22,
-            163,
-            74
-          ],
+          "pixelAway": [22, 163, 74],
           "cursorAway": "grab"
         },
         {
@@ -5120,53 +4203,21 @@
           "bHovered": true
         },
         {
-          "before": [
-            22,
-            163,
-            74,
-            255
-          ],
-          "hidden": [
-            0,
-            0,
-            0,
-            0
-          ],
+          "before": [22, 163, 74, 255],
+          "hidden": [0, 0, 0, 0],
           "hitsHidden": 0,
-          "back": [
-            22,
-            163,
-            74,
-            255
-          ],
-          "hitsBack": [
-            "a"
-          ],
+          "back": [22, 163, 74, 255],
+          "hitsBack": ["a"],
           "dataCount": 2
         },
         {
           "selectedState": true,
-          "selectedPixel": [
-            245,
-            158,
-            11
-          ],
-          "clearedPixel": [
-            22,
-            163,
-            74
-          ]
+          "selectedPixel": [245, 158, 11],
+          "clearedPixel": [22, 163, 74]
         },
         {
-          "lng": [
-            14.100000000000005,
-            14.182397460937505
-          ],
-          "zoom": [
-            10,
-            10,
-            10.5
-          ],
+          "lng": [14.100000000000005, 14.182397460937505],
+          "zoom": [10, 10, 10.5],
           "formGuard": true
         },
         {
@@ -5178,14 +4229,8 @@
           "zoomWhilePan": 12
         },
         {
-          "before": [
-            49.999999999999986,
-            13.99999999999999
-          ],
-          "after": [
-            49.98234206933653,
-            14.05493164062499
-          ],
+          "before": [49.999999999999986, 13.99999999999999],
+          "after": [49.98234206933653, 14.05493164062499],
           "midErrorM": 0,
           "endErrorM": 0,
           "viewMoved": false,
@@ -5209,31 +4254,18 @@
           ]
         },
         {
-          "full": [
-            "b",
-            "a"
-          ],
-          "limitedTo2": [
-            "b",
-            "a"
-          ],
-          "limitedTo1": [
-            "b"
-          ],
+          "full": ["b", "a"],
+          "limitedTo2": ["b", "a"],
+          "limitedTo1": ["b"],
           "empty": [],
-          "isolated": [
-            "a"
-          ]
+          "isolated": ["a"]
         },
         {
           "syncSpanMs": 0.7,
           "recordedMs": 0.7,
           "recordedReadMs": 0.7,
           "readback": "blocking",
-          "hits": [
-            "b",
-            "a"
-          ]
+          "hits": ["b", "a"]
         },
         {
           "burst": 40,
@@ -5250,17 +4282,8 @@
                 "x": 80,
                 "y": 80
               },
-              "pixel": [
-                40,
-                215,
-                0,
-                255
-              ],
-              "expected": [
-                40,
-                215,
-                0
-              ],
+              "pixel": [40, 215, 0, 255],
+              "expected": [40, 215, 0],
               "delta": 0
             },
             {
@@ -5268,17 +4291,8 @@
                 "x": 432,
                 "y": 80
               },
-              "pixel": [
-                215,
-                215,
-                0,
-                255
-              ],
-              "expected": [
-                215,
-                215,
-                0
-              ],
+              "pixel": [215, 215, 0, 255],
+              "expected": [215, 215, 0],
               "delta": 0
             },
             {
@@ -5286,17 +4300,8 @@
                 "x": 80,
                 "y": 432
               },
-              "pixel": [
-                40,
-                40,
-                0,
-                255
-              ],
-              "expected": [
-                40,
-                40,
-                0
-              ],
+              "pixel": [40, 40, 0, 255],
+              "expected": [40, 40, 0],
               "delta": 0
             },
             {
@@ -5304,50 +4309,21 @@
                 "x": 432,
                 "y": 432
               },
-              "pixel": [
-                215,
-                40,
-                0,
-                255
-              ],
-              "expected": [
-                215,
-                40,
-                0
-              ],
+              "pixel": [215, 40, 0, 255],
+              "expected": [215, 40, 0],
               "delta": 0
             }
           ],
-          "marker": [
-            255,
-            0,
-            255,
-            255
-          ],
-          "off": [
-            152,
-            127,
-            0,
-            255
-          ]
+          "marker": [255, 0, 255, 255],
+          "off": [152, 127, 0, 255]
         },
         {
           "swapped": true,
           "epsg4326": true,
           "crs84": true,
           "crs84Geography": true,
-          "marker": [
-            255,
-            0,
-            255,
-            255
-          ],
-          "offMarker": [
-            152,
-            127,
-            32,
-            255
-          ]
+          "marker": [255, 0, 255, 255],
+          "offMarker": [152, 127, 32, 255]
         },
         {
           "modern": true,
@@ -5358,17 +4334,8 @@
                 "x": 80,
                 "y": 80
               },
-              "pixel": [
-                40,
-                215,
-                96,
-                255
-              ],
-              "expected": [
-                40,
-                215,
-                96
-              ],
+              "pixel": [40, 215, 96, 255],
+              "expected": [40, 215, 96],
               "delta": 0
             },
             {
@@ -5376,17 +4343,8 @@
                 "x": 432,
                 "y": 80
               },
-              "pixel": [
-                215,
-                215,
-                96,
-                255
-              ],
-              "expected": [
-                215,
-                215,
-                96
-              ],
+              "pixel": [215, 215, 96, 255],
+              "expected": [215, 215, 96],
               "delta": 0
             },
             {
@@ -5394,17 +4352,8 @@
                 "x": 80,
                 "y": 432
               },
-              "pixel": [
-                40,
-                40,
-                96,
-                255
-              ],
-              "expected": [
-                40,
-                40,
-                96
-              ],
+              "pixel": [40, 40, 96, 255],
+              "expected": [40, 40, 96],
               "delta": 0
             },
             {
@@ -5412,26 +4361,12 @@
                 "x": 432,
                 "y": 432
               },
-              "pixel": [
-                215,
-                40,
-                96,
-                255
-              ],
-              "expected": [
-                215,
-                40,
-                96
-              ],
+              "pixel": [215, 40, 96, 255],
+              "expected": [215, 40, 96],
               "delta": 0
             }
           ],
-          "legacyMarker": [
-            255,
-            0,
-            255,
-            255
-          ]
+          "legacyMarker": [255, 0, 255, 255]
         },
         {
           "decoded": {
@@ -5446,35 +4381,15 @@
           "geography": true
         },
         {
-          "held": [
-            152,
-            127,
-            0,
-            255
-          ],
-          "baseline": [
-            151,
-            128,
-            0
-          ],
+          "held": [152, 127, 0, 255],
+          "baseline": [151, 128, 0],
           "swapMs": 240,
-          "late": [
-            152,
-            127,
-            255,
-            255
-          ]
+          "late": [152, 127, 255, 255]
         },
         {
-          "rasterHits": [
-            "wms:wms"
-          ],
-          "nearHotspotHits": [
-            "wms:wms"
-          ],
-          "hotspotHits": [
-            "hotspots:hotspot-a"
-          ],
+          "rasterHits": ["wms:wms"],
+          "nearHotspotHits": ["wms:wms"],
+          "hotspotHits": ["hotspots:hotspot-a"],
           "clicks": [
             {
               "sourceId": "wms",
@@ -5495,18 +4410,12 @@
         {
           "withCollision": 0,
           "withoutCollision": 16,
-          "order": [
-            "ALFA-ALFA",
-            "BETA-BETA"
-          ]
+          "order": ["ALFA-ALFA", "BETA-BETA"]
         },
         {
           "hovered": true,
           "cursor": "pointer",
-          "events": [
-            "mouseover:dia",
-            "click:dia"
-          ]
+          "events": ["mouseover:dia", "click:dia"]
         },
         {
           "turned": {
@@ -5549,12 +4458,7 @@
               "rotated": true
             }
           ],
-          "sideHits": [
-            false,
-            false,
-            false,
-            false
-          ]
+          "sideHits": [false, false, false, false]
         },
         {
           "inkBefore": 214,
@@ -5574,12 +4478,7 @@
             "height": 0,
             "error": "failed to load ./definitely-missing.png"
           },
-          "fallbackPixel": [
-            22,
-            163,
-            74,
-            255
-          ],
+          "fallbackPixel": [22, 163, 74, 255],
           "spritesForBroken": 0
         },
         {
@@ -5588,38 +4487,16 @@
           "height": 40,
           "planSprites": 501,
           "drawCalls": 5,
-          "white": [
-            255,
-            253,
-            253,
-            255
-          ],
-          "red": [
-            225,
-            29,
-            72,
-            255
-          ]
+          "white": [255, 253, 253, 255],
+          "red": [225, 29, 72, 255]
         },
         {
           "corner": [],
-          "middle": [
-            "center"
-          ]
+          "middle": ["center"]
         },
         {
-          "atAnchor": [
-            0,
-            0,
-            0,
-            0
-          ],
-          "above": [
-            255,
-            255,
-            255,
-            255
-          ]
+          "atAnchor": [0, 0, 0, 0],
+          "above": [255, 255, 255, 255]
         },
         {
           "grid": 49,
@@ -5638,28 +4515,10 @@
           }
         },
         {
-          "anchor": [
-            406,
-            316
-          ],
-          "body": [
-            225,
-            29,
-            72,
-            255
-          ],
-          "left": [
-            0,
-            0,
-            0,
-            0
-          ],
-          "top": [
-            0,
-            0,
-            0,
-            0
-          ],
+          "anchor": [406, 316],
+          "body": [225, 29, 72, 255],
+          "left": [0, 0, 0, 0],
+          "top": [0, 0, 0, 0],
           "box": {
             "minX": 0,
             "maxX": 22,
@@ -5668,15 +4527,9 @@
           }
         },
         {
-          "states": [
-            "loading",
-            "ready"
-          ],
+          "states": ["loading", "ready"],
           "snapshot": "ready",
-          "frames": [
-            2,
-            3
-          ],
+          "frames": [2, 3],
           "latencyMs": 101
         },
         {
@@ -5685,80 +4538,26 @@
           "polygons": 2,
           "lineType": "multiLineString",
           "lines": 2,
-          "halfA": [
-            233,
-            150,
-            10,
-            242
-          ],
-          "halfB": [
-            233,
-            150,
-            10,
-            242
-          ],
+          "halfA": [233, 150, 10, 242],
+          "halfB": [233, 150, 10, 242],
           "selectedOnce": 1
         },
         {
           "roadType": "lineString",
           "buildingType": "polygon",
-          "visible": [
-            233,
-            150,
-            10,
-            242
-          ],
-          "hidden": [
-            0,
-            0,
-            0,
-            0
-          ]
+          "visible": [233, 150, 10, 242],
+          "hidden": [0, 0, 0, 0]
         },
         {
-          "ids": [
-            "8",
-            "1",
-            "2",
-            "9007199254740993",
-            "tl:1/1/0:3#0"
-          ]
+          "ids": ["8", "1", "2", "9007199254740993", "tl:1/1/0:3#0"]
         },
         {
-          "fill": [
-            233,
-            150,
-            10,
-            242
-          ],
-          "hole": [
-            220,
-            38,
-            38,
-            255
-          ],
-          "road": [
-            37,
-            99,
-            235,
-            255
-          ],
-          "bigRoad": [
-            37,
-            99,
-            235,
-            255
-          ],
-          "poi": [
-            220,
-            38,
-            38,
-            255
-          ],
-          "labels": [
-            "Praha",
-            "Bez ID"
-          ],
+          "fill": [233, 150, 10, 242],
+          "hole": [220, 38, 38, 255],
+          "road": [37, 99, 235, 255],
+          "bigRoad": [37, 99, 235, 255],
+          "poi": [220, 38, 38, 255],
+          "labels": ["Praha", "Bez ID"],
           "ink": 241,
           "fillHit": {
             "sceneId": "scene-1",
@@ -5787,19 +4586,11 @@
             "fragments": 0
           },
           "brokenFeatures": 0,
-          "fill": [
-            233,
-            150,
-            10,
-            242
-          ]
+          "fill": [233, 150, 10, 242]
         },
         {
           "hovered": true,
-          "events": [
-            "mouseover:vt-pois:10:pois",
-            "click:vt-pois:10:pois"
-          ]
+          "events": ["mouseover:vt-pois:10:pois", "click:vt-pois:10:pois"]
         },
         {
           "loaded": [
@@ -5813,18 +4604,8 @@
           "failedAfter": 0,
           "distance12": 128.0000000000582,
           "distance13": 256.0000000001164,
-          "poiPixel": [
-            220,
-            38,
-            38,
-            255
-          ],
-          "roadPixel": [
-            37,
-            99,
-            235,
-            255
-          ]
+          "poiPixel": [220, 38, 38, 255],
+          "roadPixel": [37, 99, 235, 255]
         },
         {
           "settled": 13,
@@ -5851,10 +4632,7 @@
             "backend": "webgpu",
             "requestedPrimary": "webgpu",
             "requestedFallback": false,
-            "notes": [
-              "webgpu bgra8unorm",
-              "apple metal-3"
-            ]
+            "notes": ["webgpu bgra8unorm", "apple metal-3"]
           }
         },
         {
@@ -5867,22 +4645,9 @@
         {
           "probe": {
             "label": "glyph",
-            "at": [
-              376,
-              396
-            ],
-            "webgl1": [
-              16,
-              16,
-              16,
-              255
-            ],
-            "webgpu": [
-              16,
-              16,
-              16,
-              255
-            ],
+            "at": [376, 396],
+            "webgl1": [16, 16, 16, 255],
+            "webgpu": [16, 16, 16, 255],
             "delta": 0,
             "pass": true
           },
@@ -5915,16 +4680,11 @@
             "backend": "webgpu",
             "requestedPrimary": "webgpu",
             "requestedFallback": "webgl1",
-            "notes": [
-              "webgpu bgra8unorm",
-              "apple metal-3"
-            ]
+            "notes": ["webgpu bgra8unorm", "apple metal-3"]
           },
           "pixel": true,
           "state": {
-            "selection": [
-              "dot"
-            ],
+            "selection": ["dot"],
             "hovered": true,
             "generation": 1,
             "bindingType": "lineString",
@@ -5947,9 +4707,7 @@
             }
           ],
           "state": {
-            "selection": [
-              "dot"
-            ],
+            "selection": ["dot"],
             "hovered": true,
             "generation": 1,
             "bindingType": "lineString",
@@ -5965,14 +4723,10 @@
           "expectedGen": 1
         },
         {
-          "hits": [
-            "dot"
-          ],
+          "hits": ["dot"],
           "viewOk": true,
           "state": {
-            "selection": [
-              "dot"
-            ],
+            "selection": ["dot"],
             "hovered": true,
             "generation": 1,
             "bindingType": "lineString",
@@ -5992,9 +4746,7 @@
             }
           ],
           "state": {
-            "selection": [
-              "dot"
-            ],
+            "selection": ["dot"],
             "hovered": true,
             "generation": 1,
             "bindingType": "lineString",
@@ -6006,16 +4758,12 @@
             "zoom": 2
           },
           "pixel": true,
-          "hits": [
-            "dot"
-          ]
+          "hits": ["dot"]
         },
         {
           "wasWebgl1": true,
           "state": {
-            "selection": [
-              "dot"
-            ],
+            "selection": ["dot"],
             "hovered": true,
             "generation": 1,
             "bindingType": "lineString",
@@ -6089,11 +4837,7 @@
             "visible": true,
             "checked": true
           },
-          "listed": [
-            "grp",
-            "layer-a",
-            "layer-b"
-          ]
+          "listed": ["grp", "layer-a", "layer-b"]
         },
         {
           "afterClick": {
@@ -6176,9 +4920,7 @@
         {
           "beforeCancel": 2,
           "updates": 2,
-          "cleared": [
-            1
-          ],
+          "cleared": [1],
           "stopped": true
         },
         {
@@ -6241,11 +4983,7 @@
         {
           "bounded": true,
           "clickedSelects": true,
-          "pressed": [
-            "false",
-            "true",
-            "false"
-          ],
+          "pressed": ["false", "true", "false"],
           "live": "1 selected: D"
         },
         {
@@ -6280,10 +5018,7 @@
           "postWidth": 150,
           "oracleWidth": 151,
           "widthDelta": 1,
-          "builds": [
-            2,
-            3
-          ]
+          "builds": [2, 3]
         },
         {
           "snapshot": {
@@ -6367,14 +5102,8 @@
           "oldArea": "rgba(0,0,0,0)",
           "newArea": "rgba(0,255,255,255)",
           "revisions": {
-            "a": [
-              0,
-              2
-            ],
-            "b": [
-              0,
-              0
-            ]
+            "a": [0, 2],
+            "b": [0, 0]
           }
         },
         {
@@ -6384,9 +5113,7 @@
             "layerId": "media-a"
           },
           "clicks": 1,
-          "platePick": [
-            "plate:plate"
-          ]
+          "platePick": ["plate:plate"]
         },
         {
           "before": {
@@ -6402,17 +5129,10 @@
             "threeThree": "rgba(10,240,13,255)",
             "five": "rgba(151,62,128,255)"
           },
-          "pixelVersion": [
-            0,
-            1
-          ]
+          "pixelVersion": [0, 1]
         },
         {
-          "codes": [
-            "invalid-region",
-            "invalid-region",
-            "invalid-region"
-          ],
+          "codes": ["invalid-region", "invalid-region", "invalid-region"],
           "pixelVersion": 1,
           "before": "rgba(31,32,128,255)",
           "after": "rgba(31,32,128,255)"
@@ -6421,18 +5141,9 @@
           "first": "rgba(254,0,0,255)",
           "second": "rgba(0,0,255,255)",
           "settled": "rgba(0,0,255,255)",
-          "frames": [
-            6,
-            7
-          ],
-          "pixelVersion": [
-            3,
-            3
-          ],
-          "revision": [
-            0,
-            0
-          ]
+          "frames": [6, 7],
+          "pixelVersion": [3, 3],
+          "revision": [0, 0]
         },
         {
           "firstFrame": "rgba(254,0,0,255)",
@@ -6460,51 +5171,15 @@
         },
         {
           "outcomes": [
-            [
-              "odd positions",
-              "import-invalid",
-              "number"
-            ],
-            [
-              "plain array",
-              "import-invalid",
-              "number"
-            ],
-            [
-              "NaN coordinate",
-              "import-invalid",
-              "number"
-            ],
-            [
-              "ids length",
-              "import-invalid",
-              "number"
-            ],
-            [
-              "point with offsets",
-              "import-invalid",
-              "number"
-            ],
-            [
-              "offsets past the buffer",
-              "import-invalid",
-              "number"
-            ],
-            [
-              "feature offsets past the parts",
-              "import-invalid",
-              "number"
-            ],
-            [
-              "altitudes length",
-              "import-invalid",
-              "number"
-            ],
-            [
-              "unknown kind",
-              "import-invalid",
-              "number"
-            ]
+            ["odd positions", "import-invalid", "number"],
+            ["plain array", "import-invalid", "number"],
+            ["NaN coordinate", "import-invalid", "number"],
+            ["ids length", "import-invalid", "number"],
+            ["point with offsets", "import-invalid", "number"],
+            ["offsets past the buffer", "import-invalid", "number"],
+            ["feature offsets past the parts", "import-invalid", "number"],
+            ["altitudes length", "import-invalid", "number"],
+            ["unknown kind", "import-invalid", "number"]
           ],
           "before": 5000,
           "after": 5000
@@ -6580,10 +5255,7 @@
             "id": 7,
             "geometry": {
               "type": "Point",
-              "coordinates": [
-                14.020000000000001,
-                50.02000000000002
-              ]
+              "coordinates": [14.020000000000001, 50.02000000000002]
             },
             "properties": {
               "name": "seven"
@@ -6700,30 +5372,10 @@
           "pixel": "rgba(37,99,235)",
           "updatedProperty": 176,
           "lastUpdate": 176,
-          "bare": [
-            0,
-            14,
-            17
-          ],
-          "bareAfterMap": [
-            13,
-            17,
-            17
-          ],
-          "setTimes": [
-            1,
-            0,
-            0,
-            0,
-            0
-          ],
-          "waitTimes": [
-            17,
-            16,
-            16,
-            17,
-            17
-          ],
+          "bare": [0, 14, 17],
+          "bareAfterMap": [13, 17, 17],
+          "setTimes": [1, 0, 0, 0, 0],
+          "waitTimes": [17, 16, 16, 17, 17],
           "visibility": "visible",
           "heapStartMB": 0.9
         },

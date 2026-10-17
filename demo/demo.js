@@ -16,10 +16,14 @@ const log = (line) => {
 };
 
 const map = await createMap('map', {
-    projection: crs.webMercator(),
-    renderer: forceBackend === 'webgpu' ? { primary: 'webgpu', fallback: 'webgl1' } : { primary: 'webgl1', fallback: false },
-    center: { lat: 50.08, lng: 14.44 }, zoom: 8,
-    interaction: { boxSelection: true }
+  projection: crs.webMercator(),
+  renderer:
+    forceBackend === 'webgpu'
+      ? { primary: 'webgpu', fallback: 'webgl1' }
+      : { primary: 'webgl1', fallback: false },
+  center: { lat: 50.08, lng: 14.44 },
+  zoom: 8,
+  interaction: { boxSelection: true },
 });
 log(`backend: ${map.capabilities().backend} ${map.capabilities().notes.join('; ')}`);
 
@@ -28,12 +32,26 @@ log(`backend: ${map.capabilities().backend} ${map.capabilities().notes.join('; '
    like any other tile layer, with its required attribution shown under the
    map. `osm-de-cache` is the optional offline copy fetched by demo/fetch-tiles.py. */
 const TILE_MODES = {
-  local: { url: './tiles/{z}/{x}/{y}.png', nativeZoom: 6, attribution: 'Local test tiles (Maplet)' },
-  svg: { url: './tiles-svg/{z}/{x}/{y}.svg', nativeZoom: 6, attribution: 'Local SVG tiles (Maplet)' },
+  local: {
+    url: './tiles/{z}/{x}/{y}.png',
+    nativeZoom: 6,
+    attribution: 'Local test tiles (Maplet)',
+  },
+  svg: {
+    url: './tiles-svg/{z}/{x}/{y}.svg',
+    nativeZoom: 6,
+    attribution: 'Local SVG tiles (Maplet)',
+  },
   // Live URLs, requested by the browser exactly like Leaflet's quick start
   // (`L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution })`).
-  osm: { url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', attribution: '© OpenStreetMap contributors' },
-  'osm-de': { url: 'https://tile.openstreetmap.de/{z}/{x}/{y}.png', attribution: '© OpenStreetMap contributors (openstreetmap.de style)' },
+  osm: {
+    url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '© OpenStreetMap contributors',
+  },
+  'osm-de': {
+    url: 'https://tile.openstreetmap.de/{z}/{x}/{y}.png',
+    attribution: '© OpenStreetMap contributors (openstreetmap.de style)',
+  },
   opentopomap: {
     url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
     subdomains: ['a', 'b', 'c'],
@@ -44,7 +62,11 @@ const TILE_MODES = {
     attribution: 'Powered by Esri — Source: Esri, Maxar, Earthstar Geographics',
   },
   // Offline copy of the OSM-DE style (see demo/fetch-tiles.py).
-  'osm-de-cache': { url: './tiles-providers/osm-de/{z}/{x}/{y}.png', nativeZoom: 8, attribution: '© OpenStreetMap contributors (offline cache)' },
+  'osm-de-cache': {
+    url: './tiles-providers/osm-de/{z}/{x}/{y}.png',
+    nativeZoom: 8,
+    attribution: '© OpenStreetMap contributors (offline cache)',
+  },
 };
 
 const background = map.data.rasterTiles({
@@ -82,22 +104,43 @@ map.addControl({ kind: 'scale', id: 'scale' });
 
 const stations = map.data.vector({ id: 'stations' });
 await stations.features.replace([
-  { id: 'a', geometry: { type: 'point', position: { lat: 50.08, lng: 14.44 } }, properties: { name: 'Praha', status: 'online', pop: 1300000 } },
-  { id: 'b', geometry: { type: 'point', position: { lat: 49.19, lng: 16.61 } }, properties: { name: 'Brno', status: 'online', pop: 380000 } },
-  { id: 'c', geometry: { type: 'point', position: { lat: 49.74, lng: 13.37 } }, properties: { name: 'Plzeň', status: 'offline', pop: 170000 } },
-  { id: 'd', geometry: { type: 'point', position: { lat: 49.59, lng: 17.25 } }, properties: { name: 'Olomouc', status: 'offline', pop: 100000 } },
+  {
+    id: 'a',
+    geometry: { type: 'point', position: { lat: 50.08, lng: 14.44 } },
+    properties: { name: 'Praha', status: 'online', pop: 1300000 },
+  },
+  {
+    id: 'b',
+    geometry: { type: 'point', position: { lat: 49.19, lng: 16.61 } },
+    properties: { name: 'Brno', status: 'online', pop: 380000 },
+  },
+  {
+    id: 'c',
+    geometry: { type: 'point', position: { lat: 49.74, lng: 13.37 } },
+    properties: { name: 'Plzeň', status: 'offline', pop: 170000 },
+  },
+  {
+    id: 'd',
+    geometry: { type: 'point', position: { lat: 49.59, lng: 17.25 } },
+    properties: { name: 'Olomouc', status: 'offline', pop: 100000 },
+  },
 ]);
 const stationLayer = map.addLayer({
   id: 'station-points',
   type: 'points',
   source: stations,
-  interactive: true, draggable: true ,
+  interactive: true,
+  draggable: true,
   style: {
     // Interaction style: hover/selection state sits above the property match.
     radiusPx: expr.when(
       expr.state('selected'),
       13,
-      expr.when(expr.state('hovered'), 12, expr.match(expr.field('status'), { online: 9, offline: 6 }, 6)),
+      expr.when(
+        expr.state('hovered'),
+        12,
+        expr.match(expr.field('status'), { online: 9, offline: 6 }, 6),
+      ),
     ),
     color: expr.when(
       expr.state('selected'),
@@ -117,7 +160,17 @@ const stationLayer = map.addLayer({
 stationLayer.onFeature((event) => log(`layer: ${event.type} ${String(event.feature.id)}`));
 const connections = map.data.vector({ id: 'connections' });
 await connections.features.replace([
-  { id: 'link-1', geometry: { type: 'lineString', positions: [{ lat: 50.08, lng: 14.44 }, { lat: 49.19, lng: 16.61 }] }, properties: {} },
+  {
+    id: 'link-1',
+    geometry: {
+      type: 'lineString',
+      positions: [
+        { lat: 50.08, lng: 14.44 },
+        { lat: 49.19, lng: 16.61 },
+      ],
+    },
+    properties: {},
+  },
 ]);
 map.addLayer({
   id: 'connection-lines',
@@ -131,7 +184,11 @@ map.addLayer({
 map.bindings.add({
   id: 'link-1-geometry',
   target: connections.features.ref('link-1'),
-  geometry: { kind: 'lineBetween', from: stations.features.ref('b'), to: stations.features.ref('c') },
+  geometry: {
+    kind: 'lineBetween',
+    from: stations.features.ref('b'),
+    to: stations.features.ref('c'),
+  },
 });
 
 const shapes = map.data.vector({ id: 'shapes' });
@@ -185,7 +242,8 @@ map.on('commit', (event) => {
 map.on('selectchange', (event) => log(`selection: ${event.selected.length}`));
 map.onFeature((event) => {
   if (event.type === 'click') log(`clicked ${String(event.feature.id)} (${event.layerId})`);
-  if (event.type === 'dragend') log(`moved ${String(event.feature.id)} → ${JSON.stringify(event.position)}`);
+  if (event.type === 'dragend')
+    log(`moved ${String(event.feature.id)} → ${JSON.stringify(event.position)}`);
 });
 map.on('pointer', (event) => {
   if (event.type === 'click') log('clicked background');
@@ -213,7 +271,10 @@ document.getElementById('btn-points').onclick = () => {
   const add = () => {
     stations.features.add({
       id: `extra-${i}`,
-      geometry: { type: 'point', position: { lat: 49 + Math.sin(i) * 1.2, lng: 13.5 + Math.cos(i * 1.7) * 2.2 } },
+      geometry: {
+        type: 'point',
+        position: { lat: 49 + Math.sin(i) * 1.2, lng: 13.5 + Math.cos(i * 1.7) * 2.2 },
+      },
       properties: { name: `Point ${i}`, status: i % 3 === 0 ? 'offline' : 'online' },
     });
     if (++i < 500) requestAnimationFrame(add);
@@ -244,12 +305,16 @@ document.getElementById('btn-fills').onclick = () => {
   log(`polygon instances: ${map.debug.layerInstances('shape-fills')}`);
 };
 document.getElementById('btn-bind').onclick = async () => {
-  stations.features.update('b', { geometry: { type: 'point', position: { lat: 49.5, lng: 17.2 } } });
+  stations.features.update('b', {
+    geometry: { type: 'point', position: { lat: 49.5, lng: 17.2 } },
+  });
   await map.whenRendered(map.stats().revision);
   log('updated point b and its connected line in one revision');
 };
 document.getElementById('btn-move').onclick = () => {
-  stations.features.update('a', { geometry: { type: 'point', position: { lat: 50.2, lng: 14.9 } } });
+  stations.features.update('a', {
+    geometry: { type: 'point', position: { lat: 50.2, lng: 14.9 } },
+  });
 };
 let hiddenC = false;
 document.getElementById('btn-hide').onclick = () => {

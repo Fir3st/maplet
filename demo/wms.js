@@ -66,9 +66,10 @@ function finalize() {
 let started = performance.now();
 
 const map = await createMap('map', {
-    renderer: { primary: backend, fallback: false },
-    size: { width: SIZE, height: SIZE },
-    center: CENTER, zoom: ZOOM
+  renderer: { primary: backend, fallback: false },
+  size: { width: SIZE, height: SIZE },
+  center: CENTER,
+  zoom: ZOOM,
 });
 
 const mark = `${CENTER.lng},${CENTER.lat}`;
@@ -78,21 +79,26 @@ const source = map.data.wms({
   layers: live ? 'OSM-WMS' : 'roads',
   version: '1.1.1',
   crs: 'EPSG:4326',
-  attribution: live ? '© terrestris GmbH & Co. KG, OpenStreetMap contributors' : '© Maplet WMS fixtures',
+  attribution: live
+    ? '© terrestris GmbH & Co. KG, OpenStreetMap contributors'
+    : '© Maplet WMS fixtures',
   ...(live ? {} : { params: { MARK: mark } }),
 });
-map.addLayer({ id: 'wms-layer', type: 'raster', source, interactive: true  });
+map.addLayer({ id: 'wms-layer', type: 'raster', source, interactive: true });
 
 if (!live) {
   const hotspots = map.data.vector({ id: 'hotspots' });
   await hotspots.features.replace([
-    { id: 'hotspot-a', geometry: { type: 'point', position: map.screenToPosition({ x: 150, y: 120 }) } },
+    {
+      id: 'hotspot-a',
+      geometry: { type: 'point', position: map.screenToPosition({ x: 150, y: 120 }) },
+    },
   ]);
   map.addLayer({
     id: 'hotspots',
     type: 'points',
     source: hotspots,
-    interactive: true ,
+    interactive: true,
     style: { radiusPx: 6, color: '#f59e0b' },
   });
 }
@@ -102,7 +108,11 @@ const sample = async (point) => {
   return [pixel.r, pixel.g, pixel.b, pixel.a];
 };
 const channelDelta = (pixel, expected) =>
-  Math.max(Math.abs(pixel[0] - expected[0]), Math.abs(pixel[1] - expected[1]), Math.abs(pixel[2] - expected[2]));
+  Math.max(
+    Math.abs(pixel[0] - expected[0]),
+    Math.abs(pixel[1] - expected[1]),
+    Math.abs(pixel[2] - expected[2]),
+  );
 
 async function until(check, timeoutMs = 15000, intervalMs = 80) {
   const deadline = Date.now() + timeoutMs;
@@ -244,7 +254,12 @@ if (live) {
     };
     const response = await fetch(url);
     const bytes = new Uint8Array(await response.arrayBuffer());
-    const png = bytes.length > 8 && bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47;
+    const png =
+      bytes.length > 8 &&
+      bytes[0] === 0x89 &&
+      bytes[1] === 0x50 &&
+      bytes[2] === 0x4e &&
+      bytes[3] === 0x47;
     const expected = {
       layers: 'roads & rails/1',
       styles: 'bold red',
@@ -264,33 +279,41 @@ if (live) {
     };
   });
 
-  await check('WMS-05 setParams: held bitmaps, superseding swap, late response discarded', async () => {
-    const baseline = expectedColor(OFF_MARK, { version: '1.1.1', crs: 'EPSG:4326', projected: false, alt: false });
-    const t0 = performance.now();
-    // A slow request starts; the previous bitmaps must stay visible meanwhile.
-    source.update({ params: { delay: '700', MARK: mark } });
-    source.setParams({ layers: 'slow' });
-    await sleep(150);
-    const held = await sample(OFF_MARK);
-    // A faster replacement arrives while the slow tiles are still in flight.
-    source.update({ params: { MARK: mark } });
-    source.setParams({ layers: 'alt' });
-    const swapped = await until(async () => (await sample(OFF_MARK))[2] === 255);
-    const swapMs = Math.round(performance.now() - t0);
-    await sleep(1200); // the superseded slow responses land late
-    const late = await sample(OFF_MARK);
-    // The held bitmap covers the delay and the late tiles never replace the
-    // accepted (alt) ones. The swap itself waits for the whole tile row, so no
-    // wall-clock bound is asserted here.
-    return {
-      pass:
-        held[3] === 255 &&
-        channelDelta(held, baseline) <= TOL &&
-        swapped !== null &&
-        late[2] === 255,
-      detail: { held, baseline, swapMs, late },
-    };
-  });
+  await check(
+    'WMS-05 setParams: held bitmaps, superseding swap, late response discarded',
+    async () => {
+      const baseline = expectedColor(OFF_MARK, {
+        version: '1.1.1',
+        crs: 'EPSG:4326',
+        projected: false,
+        alt: false,
+      });
+      const t0 = performance.now();
+      // A slow request starts; the previous bitmaps must stay visible meanwhile.
+      source.update({ params: { delay: '700', MARK: mark } });
+      source.setParams({ layers: 'slow' });
+      await sleep(150);
+      const held = await sample(OFF_MARK);
+      // A faster replacement arrives while the slow tiles are still in flight.
+      source.update({ params: { MARK: mark } });
+      source.setParams({ layers: 'alt' });
+      const swapped = await until(async () => (await sample(OFF_MARK))[2] === 255);
+      const swapMs = Math.round(performance.now() - t0);
+      await sleep(1200); // the superseded slow responses land late
+      const late = await sample(OFF_MARK);
+      // The held bitmap covers the delay and the late tiles never replace the
+      // accepted (alt) ones. The swap itself waits for the whole tile row, so no
+      // wall-clock bound is asserted here.
+      return {
+        pass:
+          held[3] === 255 &&
+          channelDelta(held, baseline) <= TOL &&
+          swapped !== null &&
+          late[2] === 255,
+        detail: { held, baseline, swapMs, late },
+      };
+    },
+  );
 
   await check('WMS-06 the bitmap provides one interactive area, no invented ids', async () => {
     const rasterHits = await map.query.rendered({ x: 200, y: 300 }, { limit: 8 });
@@ -352,34 +375,45 @@ if (live) {
     };
   });
 
-  await check('WMS-07 GetCapabilities discovery reports layers, CRS, formats and defaults', async () => {
-    const capabilities = await map.data.wmsCapabilities('/wms');
-    const layers = capabilities.layers.map((layer) => ({ name: layer.name, title: layer.title, queryable: layer.queryable, crs: layer.crs }));
-    return {
-      pass:
-        capabilities.version === '1.3.0' &&
-        capabilities.title === 'Maplet WMS fixture' &&
-        (capabilities.abstract ?? '').includes('red = longitude') &&
-        JSON.stringify(capabilities.formats) === JSON.stringify(['image/jpeg', 'image/png']) &&
-        JSON.stringify(capabilities.crs) === JSON.stringify(['EPSG:3857', 'EPSG:4326', 'CRS:84', 'EPSG:5514']) &&
-        capabilities.bounds?.southwest.lng === 12.2 &&
-        capabilities.bounds?.northeast.lat === 51.5 &&
-        JSON.stringify(layers.map((layer) => layer.name)) === JSON.stringify(['roads', 'alt', 'slow']) &&
-        JSON.stringify(capabilities.preferred) === JSON.stringify({ version: '1.3.0', crs: 'CRS:84', format: 'image/png' }) &&
-        layers[0].queryable === true &&
-        layers[1].queryable === false &&
-        layers[2].crs.includes('EPSG:5514'),
-      detail: {
-        version: capabilities.version,
-        title: capabilities.title,
-        formats: capabilities.formats,
-        crs: capabilities.crs,
-        bounds: capabilities.bounds,
-        layers,
-        preferred: capabilities.preferred,
-      },
-    };
-  });
+  await check(
+    'WMS-07 GetCapabilities discovery reports layers, CRS, formats and defaults',
+    async () => {
+      const capabilities = await map.data.wmsCapabilities('/wms');
+      const layers = capabilities.layers.map((layer) => ({
+        name: layer.name,
+        title: layer.title,
+        queryable: layer.queryable,
+        crs: layer.crs,
+      }));
+      return {
+        pass:
+          capabilities.version === '1.3.0' &&
+          capabilities.title === 'Maplet WMS fixture' &&
+          (capabilities.abstract ?? '').includes('red = longitude') &&
+          JSON.stringify(capabilities.formats) === JSON.stringify(['image/jpeg', 'image/png']) &&
+          JSON.stringify(capabilities.crs) ===
+            JSON.stringify(['EPSG:3857', 'EPSG:4326', 'CRS:84', 'EPSG:5514']) &&
+          capabilities.bounds?.southwest.lng === 12.2 &&
+          capabilities.bounds?.northeast.lat === 51.5 &&
+          JSON.stringify(layers.map((layer) => layer.name)) ===
+            JSON.stringify(['roads', 'alt', 'slow']) &&
+          JSON.stringify(capabilities.preferred) ===
+            JSON.stringify({ version: '1.3.0', crs: 'CRS:84', format: 'image/png' }) &&
+          layers[0].queryable === true &&
+          layers[1].queryable === false &&
+          layers[2].crs.includes('EPSG:5514'),
+        detail: {
+          version: capabilities.version,
+          title: capabilities.title,
+          formats: capabilities.formats,
+          crs: capabilities.crs,
+          bounds: capabilities.bounds,
+          layers,
+          preferred: capabilities.preferred,
+        },
+      };
+    },
+  );
 
   await check('WMS-08 a layer built from the discovered defaults renders the service', async () => {
     const capabilities = await map.data.wmsCapabilities('/wms');
@@ -403,7 +437,10 @@ if (live) {
         const result = await verifyGeography(state);
         return result.pass ? result : null;
       }, 10000);
-      const url = new URL(map.debug.layerTiles('wms-discovered-layer')[0]?.url ?? 'about:blank', location.href);
+      const url = new URL(
+        map.debug.layerTiles('wms-discovered-layer')[0]?.url ?? 'about:blank',
+        location.href,
+      );
       const requested = {
         crs: url.searchParams.get('crs'),
         version: url.searchParams.get('version'),
@@ -424,88 +461,123 @@ if (live) {
     }
   });
 
-  await check('WMS-09 unsupported CRS and non-document responses fail with clear errors', async () => {
-    const failures = [];
-    const expectFailure = async (run, code) => {
-      try {
-        await run();
-        failures.push(`no error, expected ${code}`);
-      } catch (error) {
-        if (error?.code !== code) failures.push(`${String(error?.code)}: ${String(error?.message).slice(0, 90)}`);
-      }
-    };
-    await expectFailure(
-      () => map.data.wms({ id: 'bad-crs', url: '/wms', layers: 'slow', crs: 'EPSG:5514' }),
-      'invalid-argument',
-    );
-    await expectFailure(() => map.data.wmsCapabilities('./nope-404.xml'), 'import-invalid');
-    await expectFailure(() => map.data.wmsCapabilities('./wms.html'), 'import-invalid');
-    const legacy = await map.data.wmsCapabilities('./wms-legacy.xml');
-    return {
-      pass:
-        failures.length === 0 &&
-        legacy.version === '1.1.1' &&
-        legacy.preferred === undefined &&
-        legacy.crs.join() === 'EPSG:5514' &&
-        legacy.layers[0]?.name === 'grid' &&
-        legacy.layers[0]?.queryable === true,
-      detail: {
-        failures,
-        legacy: { version: legacy.version, preferred: legacy.preferred, crs: legacy.crs, layer: legacy.layers[0]?.name },
-      },
-    };
-  });
+  await check(
+    'WMS-09 unsupported CRS and non-document responses fail with clear errors',
+    async () => {
+      const failures = [];
+      const expectFailure = async (run, code) => {
+        try {
+          await run();
+          failures.push(`no error, expected ${code}`);
+        } catch (error) {
+          if (error?.code !== code)
+            failures.push(`${String(error?.code)}: ${String(error?.message).slice(0, 90)}`);
+        }
+      };
+      await expectFailure(
+        () => map.data.wms({ id: 'bad-crs', url: '/wms', layers: 'slow', crs: 'EPSG:5514' }),
+        'invalid-argument',
+      );
+      await expectFailure(() => map.data.wmsCapabilities('./nope-404.xml'), 'import-invalid');
+      await expectFailure(() => map.data.wmsCapabilities('./wms.html'), 'import-invalid');
+      const legacy = await map.data.wmsCapabilities('./wms-legacy.xml');
+      return {
+        pass:
+          failures.length === 0 &&
+          legacy.version === '1.1.1' &&
+          legacy.preferred === undefined &&
+          legacy.crs.join() === 'EPSG:5514' &&
+          legacy.layers[0]?.name === 'grid' &&
+          legacy.layers[0]?.queryable === true,
+        detail: {
+          failures,
+          legacy: {
+            version: legacy.version,
+            preferred: legacy.preferred,
+            crs: legacy.crs,
+            layer: legacy.layers[0]?.name,
+          },
+        },
+      };
+    },
+  );
 
   await check('WMS-10 a partial zoom reuses the requested tiles', async () => {
-    const before = map.debug.layerTiles('wms-layer').map((tile) => ({ key: tile.tileKey, url: tile.url }));
+    const before = map.debug
+      .layerTiles('wms-layer')
+      .map((tile) => ({ key: tile.tileKey, url: tile.url }));
     map.setView({ center: CENTER, zoom: map.getZoom() + 0.4 });
-    const after = map.debug.layerTiles('wms-layer').map((tile) => ({ key: tile.tileKey, url: tile.url }));
+    const after = map.debug
+      .layerTiles('wms-layer')
+      .map((tile) => ({ key: tile.tileKey, url: tile.url }));
     // The tile grid only deepens per integer zoom level, so part of a level of
     // scrolling requests nothing and the same decoded tiles scale with the view.
     const reused = after.every((tile) => {
       const match = before.find((entry) => entry.key === tile.key);
       return match !== undefined && match.url === tile.url;
     });
-    const missing = after.find((tile) => !before.some((entry) => entry.key === tile.key))?.key ?? null;
+    const missing =
+      after.find((tile) => !before.some((entry) => entry.key === tile.key))?.key ?? null;
     return {
       pass: after.length > 0 && reused,
-      detail: { tiles: after.length, reused, missing, zoom: Math.round(map.getZoom() * 1000) / 1000 },
+      detail: {
+        tiles: after.length,
+        reused,
+        missing,
+        zoom: Math.round(map.getZoom() * 1000) / 1000,
+      },
     };
   });
 
-  await check('WMS-11 a zoom change stays covered by the previous level while the new one loads', async () => {
-    // Slow every tile of the next level down and let the current level settle
-    // (the fixture sleeps per request), so the previous level is decoded when
-    // the view changes.
-    source.update({ params: { delay: '400', MARK: mark } });
-    await until(async () => (await sample(MARK_POINT))[3] === 255, 4000);
-    await sleep(1800);
-    const zoomBefore = map.getZoom();
-    map.setView({ center: CENTER, zoom: zoomBefore + 1 });
-    const markerAfter = map.positionToScreen(CENTER);
-    await sleep(120);
-    // The new level is still loading, so the ancestors stand in: the marker is
-    // painted at its projected position and a gradient sample matches the
-    // absolute fixture window, i.e. the stand-in is geographically correct.
-    const covered = await sample(markerAfter);
-    const gradientPoint = { x: 128, y: 96 };
-    const gradient = await sample(gradientPoint);
-    const expected = expectedColor(gradientPoint, { version: '1.1.1', crs: 'EPSG:4326', projected: false, alt: false });
-    const standInKeys = map.debug.layerTiles('wms-layer')[0]?.fallbacks[0]?.url;
-    await sleep(1200);
-    const settled = await sample(markerAfter);
-    const level = map.debug.layerTiles('wms-layer')[0]?.tileKey?.split('/')[0];
-    const magenta = (pixel) => channelDelta(pixel, MARKER) <= TOL;
-    return {
-      pass:
-        magenta(covered) &&
-        channelDelta(gradient, expected) <= TOL &&
-        magenta(settled) &&
-        typeof standInKeys === 'string' &&
-        level === String(Math.floor(zoomBefore + 1)),
-      detail: { covered, gradient, expected, settled, zoomBefore, level, standIn: standInKeys?.slice(-46) },
-    };
-  });
+  await check(
+    'WMS-11 a zoom change stays covered by the previous level while the new one loads',
+    async () => {
+      // Slow every tile of the next level down and let the current level settle
+      // (the fixture sleeps per request), so the previous level is decoded when
+      // the view changes.
+      source.update({ params: { delay: '400', MARK: mark } });
+      await until(async () => (await sample(MARK_POINT))[3] === 255, 4000);
+      await sleep(1800);
+      const zoomBefore = map.getZoom();
+      map.setView({ center: CENTER, zoom: zoomBefore + 1 });
+      const markerAfter = map.positionToScreen(CENTER);
+      await sleep(120);
+      // The new level is still loading, so the ancestors stand in: the marker is
+      // painted at its projected position and a gradient sample matches the
+      // absolute fixture window, i.e. the stand-in is geographically correct.
+      const covered = await sample(markerAfter);
+      const gradientPoint = { x: 128, y: 96 };
+      const gradient = await sample(gradientPoint);
+      const expected = expectedColor(gradientPoint, {
+        version: '1.1.1',
+        crs: 'EPSG:4326',
+        projected: false,
+        alt: false,
+      });
+      const standInKeys = map.debug.layerTiles('wms-layer')[0]?.fallbacks[0]?.url;
+      await sleep(1200);
+      const settled = await sample(markerAfter);
+      const level = map.debug.layerTiles('wms-layer')[0]?.tileKey?.split('/')[0];
+      const magenta = (pixel) => channelDelta(pixel, MARKER) <= TOL;
+      return {
+        pass:
+          magenta(covered) &&
+          channelDelta(gradient, expected) <= TOL &&
+          magenta(settled) &&
+          typeof standInKeys === 'string' &&
+          level === String(Math.floor(zoomBefore + 1)),
+        detail: {
+          covered,
+          gradient,
+          expected,
+          settled,
+          zoomBefore,
+          level,
+          standIn: standInKeys?.slice(-46),
+        },
+      };
+    },
+  );
 
   finalize();
 }

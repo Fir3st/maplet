@@ -22,7 +22,12 @@ import type { Crs } from '../math/crs.ts';
 import { boundsToWorldRect } from './query.ts';
 import { compileFilter } from './expression.ts';
 import type { Position } from '../api/types.ts';
-import { createSourceHandle, SourceImpl, type SourceCommitPayload, type VectorSourceHandle } from './source.ts';
+import {
+  createSourceHandle,
+  SourceImpl,
+  type SourceCommitPayload,
+  type VectorSourceHandle,
+} from './source.ts';
 import type { SlotRecord } from './store.ts';
 import { RelationsStore } from './relations.ts';
 import { BindingStore } from './bindings.ts';
@@ -111,7 +116,9 @@ export class Scene {
   transformFramePlan: ((plan: FramePlan) => FramePlan) | null = null;
   afterFrame: ((plan?: FramePlan) => void) | null = null;
   overrideFrameDriver: FrameDriver | null = null;
-  overridePick: ((point: ScreenPoint, options: { readonly limit: number }) => Promise<readonly PickResult[]>) | null = null;
+  overridePick:
+    | ((point: ScreenPoint, options: { readonly limit: number }) => Promise<readonly PickResult[]>)
+    | null = null;
 
   private publishedRevision = 0;
   /** Broad render invalidation; view and local source edits do not bump it. */
@@ -120,7 +127,7 @@ export class Scene {
   private framesValue = 0;
   private destroyedValue = false;
   private batchOpen = false;
-  private batchFailed: unknown = null;
+  private batchFailed: Error | null = null;
   private undoLog: (() => void)[] = [];
   private readonly pendingSources = new Set<SourceImpl>();
   private readonly sources = new Map<string, SourceImpl>();
@@ -350,7 +357,8 @@ export class Scene {
       driver.requestFrame(this);
     } else {
       queueMicrotask(() => {
-        if (!this.overrideFrameDriver && sequence === this.frameRequestSequence) this.completeFrame();
+        if (!this.overrideFrameDriver && sequence === this.frameRequestSequence)
+          this.completeFrame();
       });
     }
   }
@@ -358,7 +366,12 @@ export class Scene {
   /** Called by the frame driver (or the microtask fallback) when a frame is done. */
   completeFrame(revision = this.publishedRevision, plan?: FramePlan): void {
     if (this.destroyedValue) return;
-    try { this.afterFrame?.(plan); } catch (error) { this.failFrame(error); return; }
+    try {
+      this.afterFrame?.(plan);
+    } catch (error) {
+      this.failFrame(error);
+      return;
+    }
     if (this.destroyedValue) return;
     this.frameRequested = false;
     this.framesValue++;
@@ -431,7 +444,14 @@ export class Scene {
   }
 
   recordBatchFailure(error: unknown): void {
-    if (this.batchFailed === null) this.batchFailed = error;
+    if (this.batchFailed === null)
+      this.batchFailed = error instanceof Error ? error : new Error(String(error));
+  }
+
+  /** Rethrows the first failure recorded by the batch callback, if any. The
+   *  callback mutates the property, so the read must cross a call boundary. */
+  private rethrowBatchFailure(): void {
+    if (this.batchFailed !== null) throw this.batchFailed;
   }
 
   get inBatch(): boolean {
@@ -529,13 +549,9 @@ export class Scene {
     try {
       const result = fn();
       checkThenable(result);
-      if (this.batchFailed !== null) {
-        throw this.batchFailed;
-      }
+      this.rethrowBatchFailure();
       const payloads = this.finishTransaction();
-      if (this.batchFailed !== null) {
-        throw this.batchFailed;
-      }
+      this.rethrowBatchFailure();
       this.undoLog.length = 0;
       this.batchOpen = false;
       this.publish(payloads);
@@ -549,7 +565,7 @@ export class Scene {
       this.batchOpen = false;
       const failure = this.batchFailed ?? error;
       this.batchFailed = null;
-      throw failure;
+      throw failure instanceof Error ? failure : new Error(String(failure));
     }
   }
 
@@ -625,7 +641,10 @@ export class Scene {
    * frame changes only request a frame, so a playing video does not rebuild the
    * plan every frame but still returns to idle once paused (LIFE-05).
    */
-  createMediaSource(kind: MediaSourceKind, options: ImageSourceOptions | VideoSourceOptions): MediaSourceHandle {
+  createMediaSource(
+    kind: MediaSourceKind,
+    options: ImageSourceOptions | VideoSourceOptions,
+  ): MediaSourceHandle {
     this.assertAlive('sources.media');
     if (this.hasSource(options.id)) {
       fail('duplicate-id', `source already exists: ${options.id}`, { sourceId: options.id });
@@ -700,7 +719,14 @@ export class Scene {
     return this.sourceHandles.get(id);
   }
 
-  getSourceHandle(id: string): VectorSourceHandle | RasterSourceHandle | VectorTilesSourceHandle | MediaSourceHandle | undefined {
+  getSourceHandle(
+    id: string,
+  ):
+    | VectorSourceHandle
+    | RasterSourceHandle
+    | VectorTilesSourceHandle
+    | MediaSourceHandle
+    | undefined {
     return (
       this.sourceHandles.get(id) ??
       this.rasterHandles.get(id) ??
@@ -851,7 +877,7 @@ export class Scene {
    * INPUT-08: selection respects layer interaction and overrides.
    */
   querySelection(bounds: import('../math/bounds.ts').Bounds<Position>): FeatureRef[] {
-    const rect = boundsToWorldRect(this.crs, bounds as never);
+    const rect = boundsToWorldRect(this.crs, bounds);
     const refs: FeatureRef[] = [];
     const seen = new Set<string>();
     for (const layer of this.layers.flatten()) {

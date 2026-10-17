@@ -33,10 +33,10 @@ test('UI-03: a notice shared by two sources survives removing one of them', () =
     ['© SHARED', '© B'],
   );
   // Source a (and its layer) is removed; c still carries the shared notice.
-  assert.deepEqual(
-    attributionsForLayers(sources, [{ sourceId: 'b' }, { sourceId: 'c' }]),
-    ['© B', '© SHARED'],
-  );
+  assert.deepEqual(attributionsForLayers(sources, [{ sourceId: 'b' }, { sourceId: 'c' }]), [
+    '© B',
+    '© SHARED',
+  ]);
   // Removing the last source with the shared notice removes it.
   assert.deepEqual(attributionsForLayers(sources, [{ sourceId: 'b' }]), ['© B']);
   assert.deepEqual(attributionsForLayers(sources, []), []);

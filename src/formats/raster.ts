@@ -113,7 +113,11 @@ export function tilesForWorldRect(
   maxY: number,
   zoom: number,
   tileSize: number,
-  options: { wrap: boolean; minZoom: number; maxZoom: number } = { wrap: false, minZoom: 0, maxZoom: 24 },
+  options: { wrap: boolean; minZoom: number; maxZoom: number } = {
+    wrap: false,
+    minZoom: 0,
+    maxZoom: 24,
+  },
 ): TileCoord[] {
   const tiles = 2 ** zoom;
   const worldTiles = (256 * 2 ** zoom) / tileSize;

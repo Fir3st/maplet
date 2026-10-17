@@ -1,41 +1,88 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8" />
-<title>Maplet import checks</title>
-<style>
-  html, body { margin: 0; font: 13px/1.5 system-ui, sans-serif; background: #111827; color: #e5e7eb; }
-  main { display: flex; gap: 16px; padding: 16px; align-items: flex-start; }
-  .map { position: relative; background: #ffffff; flex: none; }
-  #map { width: 640px; height: 480px; }
-  .label { font: 600 12px ui-monospace, monospace; color: #9ca3af; margin: 4px 0 0; }
-  h1 { font-size: 15px; margin: 0 0 6px; }
-  #summary { font-weight: 600; }
-  #summary.pass { color: #4ade80; }
-  #summary.fail { color: #f87171; }
-  #details { white-space: pre-wrap; font: 11px/1.45 ui-monospace, monospace; max-width: 640px; max-height: 84vh; overflow: auto; color: #9ca3af; }
-  .hint { color: #9ca3af; margin: 0 0 10px; }
-</style>
-</head>
-<body>
-<main>
-  <div>
-    <div id="map" class="map" aria-label="Import checks map"></div>
-    <p class="label">columnar + worker import rendering</p>
-  </div>
-  <div>
-    <h1>Maplet imports</h1>
-    <p class="hint">
-      IO-05..IO-11 and LIFE-09: strict columnar validation before publication,
-      copy vs move buffer ownership, worker preparation with abort before and
-      during the flight, bounded queue backpressure, GeoJSON through the same
-      pipeline, and imported identity in get/query/export. Results:
-      <code>window.__importCheckResult</code>.
-    </p>
-    <p id="summary">running…</p>
-    <pre id="details"></pre>
-  </div>
-</main>
-<script type="module" src="./import.js"></script>
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <title>Maplet import checks</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        font:
+          13px/1.5 system-ui,
+          sans-serif;
+        background: #111827;
+        color: #e5e7eb;
+      }
+      main {
+        display: flex;
+        gap: 16px;
+        padding: 16px;
+        align-items: flex-start;
+      }
+      .map {
+        position: relative;
+        background: #ffffff;
+        flex: none;
+      }
+      #map {
+        width: 640px;
+        height: 480px;
+      }
+      .label {
+        font:
+          600 12px ui-monospace,
+          monospace;
+        color: #9ca3af;
+        margin: 4px 0 0;
+      }
+      h1 {
+        font-size: 15px;
+        margin: 0 0 6px;
+      }
+      #summary {
+        font-weight: 600;
+      }
+      #summary.pass {
+        color: #4ade80;
+      }
+      #summary.fail {
+        color: #f87171;
+      }
+      #details {
+        white-space: pre-wrap;
+        font:
+          11px/1.45 ui-monospace,
+          monospace;
+        max-width: 640px;
+        max-height: 84vh;
+        overflow: auto;
+        color: #9ca3af;
+      }
+      .hint {
+        color: #9ca3af;
+        margin: 0 0 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div>
+        <div id="map" class="map" aria-label="Import checks map"></div>
+        <p class="label">columnar + worker import rendering</p>
+      </div>
+      <div>
+        <h1>Maplet imports</h1>
+        <p class="hint">
+          IO-05..IO-11 and LIFE-09: strict columnar validation before publication, copy vs move
+          buffer ownership, worker preparation with abort before and during the flight, bounded
+          queue backpressure, GeoJSON through the same pipeline, and imported identity in
+          get/query/export. Results:
+          <code>window.__importCheckResult</code>.
+        </p>
+        <p id="summary">running…</p>
+        <pre id="details"></pre>
+      </div>
+    </main>
+    <script type="module" src="./import.js"></script>
+  </body>
 </html>

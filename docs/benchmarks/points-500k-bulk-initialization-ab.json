@@ -7,10 +7,7 @@
   "benchmarkSha256": "c57b21e50609b574aec3673d7d8f022b8987cf0a2cd603a652b7282597310362",
   "workload": {
     "points": 500000,
-    "viewportCssPx": [
-      720,
-      520
-    ],
+    "viewportCssPx": [720, 520],
     "zoom": 10,
     "radiusCssPx": 2,
     "color": "#2563eb",

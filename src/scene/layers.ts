@@ -233,9 +233,9 @@ export class LayerImpl {
 
   overrideKey(target: FeatureRef | FeatureId): string {
     if (typeof target === 'object' && target !== null && 'id' in target && 'generation' in target) {
-      return featureRefKey(target as FeatureRef);
+      return featureRefKey(target);
     }
-    return featureRefKey({ id: target as FeatureId });
+    return featureRefKey({ id: target });
   }
 
   setOverride(target: FeatureRef | FeatureId, override: FeatureOverride): void {
@@ -411,10 +411,15 @@ export class LayerRegistry {
     this.notify();
   }
 
-  update(id: string, patch: Partial<Pick<LayerSpec, 'style' | 'filter' | 'namespace' | 'visible' | 'label' | 'interaction'>>): LayerImpl {
+  update(
+    id: string,
+    patch: Partial<
+      Pick<LayerSpec, 'style' | 'filter' | 'namespace' | 'visible' | 'label' | 'interaction'>
+    >,
+  ): LayerImpl {
     const layer = this.layers.get(id);
     if (!layer) fail('not-found', `layer not found: ${id}`, { id });
-    if (patch.style !== undefined) layer.style = patch.style as LayerStyleMap[LayerKind];
+    if (patch.style !== undefined) layer.style = patch.style;
     if (patch.filter !== undefined) layer.filter = patch.filter;
     if (patch.namespace !== undefined) layer.namespace = patch.namespace;
     if (patch.visible !== undefined) layer.visible = patch.visible;
@@ -484,7 +489,8 @@ export class LayerRegistry {
     if (!entry) fail('not-found', `layer or group not found: ${id}`, { id });
     if ('into' in target) {
       const container = target.into === null ? null : this.groups.get(target.into);
-      if (container === undefined) fail('not-found', `group not found: ${target.into}`, { group: target.into });
+      if (container === undefined)
+        fail('not-found', `group not found: ${target.into}`, { group: target.into });
       if (entry === container) fail('invalid-argument', 'cannot move a group into itself', { id });
       if (container && entry instanceof GroupImpl && entry.isAncestorOf(container)) {
         fail('invalid-argument', `cannot move group ${id} into its own descendant`, { id });

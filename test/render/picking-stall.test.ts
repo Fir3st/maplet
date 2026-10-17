@@ -44,8 +44,10 @@ test('PICK-12: the recorder keeps spans, readback split, semantics and totals', 
 
 test('PICK-12: monotonicNow advances inside a busy span', () => {
   const before = monotonicNow();
-  let spin = 0;
-  while (monotonicNow() - before < 1) spin++;
+  // Busy-wait for a measurable span; the loop body intentionally does nothing.
+  while (monotonicNow() - before < 1) {
+    /* spin */
+  }
   assert.ok(monotonicNow() - before >= 1, 'the clock advanced at least a millisecond');
 });
 

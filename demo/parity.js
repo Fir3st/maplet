@@ -38,9 +38,21 @@ const geoAt = (dx, dy) => mercator.fromWorld(worldAt(dx, dy));
 // silently sampled tiles or off-screen space.)
 const SCENE = {
   points: [
-    { id: 'circle', at: geoAt(-170, -170), properties: { shape: 'circle', color: '#dc2626', radiusPx: 10 } },
-    { id: 'square', at: geoAt(-120, -170), properties: { shape: 'square', color: '#16a34a', radiusPx: 9 } },
-    { id: 'triangle', at: geoAt(-70, -170), properties: { shape: 'triangle', color: '#2563eb', radiusPx: 9 } },
+    {
+      id: 'circle',
+      at: geoAt(-170, -170),
+      properties: { shape: 'circle', color: '#dc2626', radiusPx: 10 },
+    },
+    {
+      id: 'square',
+      at: geoAt(-120, -170),
+      properties: { shape: 'square', color: '#16a34a', radiusPx: 9 },
+    },
+    {
+      id: 'triangle',
+      at: geoAt(-70, -170),
+      properties: { shape: 'triangle', color: '#2563eb', radiusPx: 9 },
+    },
   ],
   solidLine: [geoAt(-190, -110), geoAt(-90, -110)],
   dashedLine: [geoAt(-190, -70), geoAt(-90, -70)],
@@ -54,8 +66,9 @@ async function buildMap(container, primary) {
   const map = await createMap(container, {
     renderer: { primary, fallback: false },
     size: { width: SIZE, height: SIZE },
-    center: viewCenter, zoom: z
-});
+    center: viewCenter,
+    zoom: z,
+  });
   map.assets.addImage({ id: 'pin', src: PIN_URL });
   const raster = map.data.rasterTiles({
     id: 'tiles',
@@ -66,9 +79,21 @@ async function buildMap(container, primary) {
   map.addLayer({ id: 'tiles', type: 'raster', source: raster });
   const vector = map.data.vector({ id: 'shapes' });
   await vector.features.replace([
-    { id: 'circle', geometry: { type: 'point', position: SCENE.points[0].at }, properties: SCENE.points[0].properties },
-    { id: 'square', geometry: { type: 'point', position: SCENE.points[1].at }, properties: SCENE.points[1].properties },
-    { id: 'triangle', geometry: { type: 'point', position: SCENE.points[2].at }, properties: SCENE.points[2].properties },
+    {
+      id: 'circle',
+      geometry: { type: 'point', position: SCENE.points[0].at },
+      properties: SCENE.points[0].properties,
+    },
+    {
+      id: 'square',
+      geometry: { type: 'point', position: SCENE.points[1].at },
+      properties: SCENE.points[1].properties,
+    },
+    {
+      id: 'triangle',
+      geometry: { type: 'point', position: SCENE.points[2].at },
+      properties: SCENE.points[2].properties,
+    },
     { id: 'solid', geometry: { type: 'lineString', positions: SCENE.solidLine }, properties: {} },
     { id: 'dashed', geometry: { type: 'lineString', positions: SCENE.dashedLine }, properties: {} },
     {
@@ -76,7 +101,11 @@ async function buildMap(container, primary) {
       geometry: { type: 'polygon', rings: [SCENE.fillOuter, SCENE.fillHole] },
       properties: {},
     },
-    { id: 'label', geometry: { type: 'point', position: SCENE.labelAt }, properties: { name: 'Příliš žluťoučký kůň' } },
+    {
+      id: 'label',
+      geometry: { type: 'point', position: SCENE.labelAt },
+      properties: { name: 'Příliš žluťoučký kůň' },
+    },
     { id: 'icon', geometry: { type: 'point', position: SCENE.iconAt }, properties: {} },
   ]);
   map.addLayer({
@@ -155,7 +184,13 @@ function maxDelta(a, b) {
 
 async function sampleBoth(label, point, tolerance = 4) {
   const [left, right] = await Promise.all([sampleOn(glMap, point), sampleOn(gpuMap, point)]);
-  const entry = { label, at: [point.x, point.y], webgl1: left, webgpu: right, delta: maxDelta(left, right) };
+  const entry = {
+    label,
+    at: [point.x, point.y],
+    webgl1: left,
+    webgpu: right,
+    delta: maxDelta(left, right),
+  };
   result.samples.push(entry);
   return { ...entry, pass: entry.delta <= tolerance };
 }
@@ -179,7 +214,10 @@ async function check(name, fn) {
     result.errors.push(`${name}: ${String(error)}`);
     // MapletError carries structured detail (e.g. shader logs); keep it in the
     // failure report so a broken program is diagnosable from the runner output.
-    const detail = error && typeof error === 'object' && 'detail' in error ? { message: String(error), detail: error.detail } : String(error);
+    const detail =
+      error && typeof error === 'object' && 'detail' in error
+        ? { message: String(error), detail: error.detail }
+        : String(error);
     result.checks.push({ name, pass: false, detail });
   }
 }
@@ -190,9 +228,7 @@ const started = performance.now();
 await sleep(1200);
 
 await check('capabilities name the requested backends', async () => ({
-  pass:
-    glMap.capabilities().backend === 'webgl1' &&
-    gpuMap.capabilities().backend === 'webgpu',
+  pass: glMap.capabilities().backend === 'webgl1' && gpuMap.capabilities().backend === 'webgpu',
   detail: {
     webgl1: glMap.capabilities(),
     webgpu: gpuMap.capabilities(),
@@ -359,10 +395,11 @@ await check('fallback creates a WebGL 1 scene when WebGPU is unavailable', async
   let error = null;
   try {
     fallbackMap = await createMap(container, {
-    renderer: { primary: 'webgpu', fallback: 'webgl1' },
-    size: { width: 64, height: 64 },
-    center: viewCenter, zoom: z
-});
+      renderer: { primary: 'webgpu', fallback: 'webgl1' },
+      size: { width: 64, height: 64 },
+      center: viewCenter,
+      zoom: z,
+    });
     const capabilities = fallbackMap.capabilities();
     return {
       pass:

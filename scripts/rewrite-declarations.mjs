@@ -43,11 +43,14 @@ for (const file of declarationFiles(distDir)) {
 const leftovers = [];
 for (const file of declarationFiles(distDir)) {
   const source = readFileSync(file, 'utf8');
-  for (const match of source.matchAll(SPECIFIER)) leftovers.push(`${path.relative(distDir, file)}: ${match[2]}.ts`);
+  for (const match of source.matchAll(SPECIFIER))
+    leftovers.push(`${path.relative(distDir, file)}: ${match[2]}.ts`);
 }
 if (leftovers.length > 0) {
   console.error(`declaration specifiers still point at .ts:\n  ${leftovers.join('\n  ')}`);
   process.exitCode = 1;
 } else {
-  console.log(`declarations: rewrote ${rewrites} specifier(s) in ${files} file(s), none left pointing at .ts`);
+  console.log(
+    `declarations: rewrote ${rewrites} specifier(s) in ${files} file(s), none left pointing at .ts`,
+  );
 }

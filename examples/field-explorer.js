@@ -1,8 +1,8 @@
 import { openExample, action, ready, report, style, boundsFromPositions } from './shared.js';
 
 const OSM = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-const map = await openExample({ geographic: true, center: [50.0805, 14.4300], zoom: 12.2 });
-const basemap = map.addTiles(OSM, { id: 'basemap', attribution: '© OpenStreetMap contributors' });
+const map = await openExample({ geographic: true, center: [50.0805, 14.43], zoom: 12.2 });
+map.addTiles(OSM, { id: 'basemap', attribution: '© OpenStreetMap contributors' });
 map.addControl('attribution');
 
 const KINDS = { charging: 'Charging', service: 'Service', retail: 'Retail' };
@@ -25,7 +25,7 @@ const sites = Array.from({ length: 48 }, (_, index) => {
   const number = String(index + 1).padStart(2, '0');
   return {
     id: `site-${number}`,
-    position: { lat: 50.043 + random() * 0.078, lng: 14.330 + random() * 0.115 },
+    position: { lat: 50.043 + random() * 0.078, lng: 14.33 + random() * 0.115 },
     properties: {
       code: `S${number}`,
       kind: kindOrder[index % kindOrder.length],
@@ -34,18 +34,22 @@ const sites = Array.from({ length: 48 }, (_, index) => {
     },
   };
 });
-const byId = new Map(sites.map(site => [site.id, site]));
+const byId = new Map(sites.map((site) => [site.id, site]));
 
 const layer = map.addLayer({ id: 'field' });
 const points = layer.addPoints(sites, {
   id: 'sites',
   style: {
     radiusPx: style.when(style.state('selected'), 9, style.when(style.state('hovered'), 8, 6)),
-    color: style.by('status', {
-      open: STATUS.open.color,
-      busy: STATUS.busy.color,
-      closed: STATUS.closed.color,
-    }, '#66776d'),
+    color: style.by(
+      'status',
+      {
+        open: STATUS.open.color,
+        busy: STATUS.busy.color,
+        closed: STATUS.closed.color,
+      },
+      '#66776d',
+    ),
     // Filtering flips this one shared flag: the dots and their labels both read
     // it, so a filtered-out site can never leave a floating code behind.
     opacity: style.when(style.state('disabled'), 0, 1),
@@ -85,7 +89,9 @@ points.on('click', (event) => {
   map.selection.clear();
   points.get(site.id)?.select();
   map.detail.open(event.feature, { content: detailNode });
-  report(`${site.properties.code} · ${KINDS[site.properties.kind]} · ${STATUS[site.properties.status].label} · capacity ${site.properties.capacity}.`);
+  report(
+    `${site.properties.code} · ${KINDS[site.properties.kind]} · ${STATUS[site.properties.status].label} · capacity ${site.properties.capacity}.`,
+  );
 });
 
 const extra = document.querySelector('#example-extra');
@@ -101,7 +107,9 @@ const panel = (title) => {
 
 let kind = 'all';
 let openOnly = false;
-const matches = (site) => (kind === 'all' || site.properties.kind === kind) && (!openOnly || site.properties.status === 'open');
+const matches = (site) =>
+  (kind === 'all' || site.properties.kind === kind) &&
+  (!openOnly || site.properties.status === 'open');
 
 const filterPanel = panel('Filter');
 const chips = document.createElement('div');
@@ -112,7 +120,11 @@ for (const [key, label] of [['all', 'All'], ...Object.entries(KINDS)]) {
   chip.type = 'button';
   chip.textContent = label;
   chip.setAttribute('aria-pressed', String(key === kind));
-  chip.addEventListener('click', () => { kind = key; apply(); report(`${label}: the map, the labels and the count update together.`); });
+  chip.addEventListener('click', () => {
+    kind = key;
+    apply();
+    report(`${label}: the map, the labels and the count update together.`);
+  });
   chips.append(chip);
   chipButtons.set(key, chip);
 }
@@ -120,7 +132,13 @@ const openLabel = document.createElement('label');
 const openBox = document.createElement('input');
 openBox.type = 'checkbox';
 openLabel.append(openBox, 'Only sites open now');
-openBox.addEventListener('change', () => { openOnly = openBox.checked; apply(); report(openOnly ? 'Closed and busy sites are hidden, not deleted.' : 'Every state is shown again.'); });
+openBox.addEventListener('change', () => {
+  openOnly = openBox.checked;
+  apply();
+  report(
+    openOnly ? 'Closed and busy sites are hidden, not deleted.' : 'Every state is shown again.',
+  );
+});
 const count = document.createElement('p');
 filterPanel.append(chips, openLabel, count);
 
@@ -157,10 +175,12 @@ function updateInView() {
   lastViewKey = key;
   const result = map.query.area(bounds, { sources: [points.source.id], limit: 200 });
   const matching = result.items
-    .map(item => byId.get(String(item.ref.id)))
-    .filter(site => site && matches(site));
+    .map((item) => byId.get(String(item.ref.id)))
+    .filter((site) => site && matches(site));
   inView.textContent = `${matching.length} matching ${matching.length === 1 ? 'site' : 'sites'} in view`;
-  inViewDetail.textContent = result.next ? 'More results than one page; pan closer for the rest.' : `Matching sites total ${sites.filter(matches).length}.`;
+  inViewDetail.textContent = result.next
+    ? 'More results than one page; pan closer for the rest.'
+    : `Matching sites total ${sites.filter(matches).length}.`;
 }
 
 function apply() {
@@ -181,8 +201,11 @@ map.on('viewend', updateInView);
 
 action('Fit the matching sites', () => {
   const matching = sites.filter(matches);
-  const bounds = boundsFromPositions(matching.map(site => site.position));
-  if (!bounds) { report('No site matches the current filter.'); return; }
+  const bounds = boundsFromPositions(matching.map((site) => site.position));
+  if (!bounds) {
+    report('No site matches the current filter.');
+    return;
+  }
   map.fitBounds(bounds, { padding: 60, maxZoom: 15 });
   report(`The view now covers ${matching.length} matching sites.`);
 });

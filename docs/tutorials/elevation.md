@@ -12,12 +12,23 @@ changes where a vertex is projected, but it survives import, storage and export
 for **every geometry type**, lines and polygon rings included.
 
 ```ts
-await trails.importGeoJson({ type: 'FeatureCollection', features: [{
-  type: 'Feature', id: 'ridge-trail', properties: { name: 'Ridge trail' },
-  geometry: { type: 'LineString', coordinates: [
-    [15.7120, 50.7230, 769], [15.7168, 50.7252, 842], // [lng, lat, altitude]
-  ] },
-}] });
+await trails.importGeoJson({
+  type: 'FeatureCollection',
+  features: [
+    {
+      type: 'Feature',
+      id: 'ridge-trail',
+      properties: { name: 'Ridge trail' },
+      geometry: {
+        type: 'LineString',
+        coordinates: [
+          [15.712, 50.723, 769],
+          [15.7168, 50.7252, 842], // [lng, lat, altitude]
+        ],
+      },
+    },
+  ],
+});
 ```
 
 A vertex without an altitude simply exports two coordinates. Normalization

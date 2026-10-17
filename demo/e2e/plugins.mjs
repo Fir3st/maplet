@@ -62,16 +62,32 @@ export async function plugins({ session, expect, options }) {
   })()`);
   const red = (p) => p.r > 240 && p.g < 10 && p.b < 10 && p.a > 240;
   expect.ok(red(result.original), 'baseline renders red');
-  expect.ok(result.transformed.b > 240 && result.transformed.r < 10, 'plan transform changes real GPU pixels');
-  expect.ok(red(result.restored) && red(result.final), 'both removals restore original GPU rendering');
+  expect.ok(
+    result.transformed.b > 240 && result.transformed.r < 10,
+    'plan transform changes real GPU pixels',
+  );
+  expect.ok(
+    red(result.restored) && red(result.final),
+    'both removals restore original GPU rendering',
+  );
   expect.equal(result.featureCount, 1, 'render changes preserve source data');
   expect.ok(result.htmlAdded && result.htmlRemoved, 'HTML mounts and cleans up');
-  expect.ok(result.hooks > 0 && result.overlayPixel[1] === 255, 'onFrame paints a projected Canvas overlay');
-  expect.ok(result.defaultHidden && result.customBackend === 'custom', 'replacement hides the built-in canvas');
+  expect.ok(
+    result.hooks > 0 && result.overlayPixel[1] === 255,
+    'onFrame paints a projected Canvas overlay',
+  );
+  expect.ok(
+    result.defaultHidden && result.customBackend === 'custom',
+    'replacement hides the built-in canvas',
+  );
   expect.equal(result.customPixel[1], 255, 'replacement renderer actually paints');
   expect.equal(result.customPick, 'p', 'replacement delegates picking');
   expect.equal(result.disposed, 1, 'renderer is destroyed exactly once');
-  expect.equal(result.backend, options.webgpu ? 'webgpu' : 'webgl1', 'removal restores the requested backend');
+  expect.equal(
+    result.backend,
+    options.webgpu ? 'webgpu' : 'webgl1',
+    'removal restores the requested backend',
+  );
 
   const customOnly = await session.evaluate(`(async () => {
     const { createMap, crs } = await import('/dist/index.js');
@@ -121,9 +137,22 @@ export async function plugins({ session, expect, options }) {
       return { hit, miss, size, canvases: container.querySelectorAll('canvas').length, changedHtml: control.element().title, keyboardPanned: map.getView().center.x !== oldCenter, interactive: map.interaction !== null };
     } finally { map.destroy(); container.remove(); }
   })()`);
-  expect.equal(customOnly.canvases, 1, 'custom-only creation does not initialize a built-in GPU canvas');
-  expect.ok(customOnly.size.width === 320 && customOnly.size.height === 240, 'custom-only creation measures its actual container');
+  expect.equal(
+    customOnly.canvases,
+    1,
+    'custom-only creation does not initialize a built-in GPU canvas',
+  );
+  expect.ok(
+    customOnly.size.width === 320 && customOnly.size.height === 240,
+    'custom-only creation measures its actual container',
+  );
   expect.equal(customOnly.changedHtml, 'Changed by plugin', 'plugin can modify existing controls');
-  expect.ok(customOnly.hit === 'p' && customOnly.miss === 0, 'custom-only renderer hit testing agrees with painted geometry');
-  expect.ok(customOnly.interactive && customOnly.keyboardPanned, 'custom-only map retains keyboard map interaction');
+  expect.ok(
+    customOnly.hit === 'p' && customOnly.miss === 0,
+    'custom-only renderer hit testing agrees with painted geometry',
+  );
+  expect.ok(
+    customOnly.interactive && customOnly.keyboardPanned,
+    'custom-only map retains keyboard map interaction',
+  );
 }

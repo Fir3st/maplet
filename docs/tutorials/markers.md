@@ -15,7 +15,12 @@ const depot = map.addMarker({
 });
 map.addMarkers([
   { position: { lat: 50.09, lng: 14.44 }, iconTint: '#16724c' },
-  { position: { lat: 50.1, lng: 14.45 }, icon: 'my-pin', iconSize: 24, iconAnchor: { x: 0, y: -12 } },
+  {
+    position: { lat: 50.1, lng: 14.45 },
+    icon: 'my-pin',
+    iconSize: 24,
+    iconAnchor: { x: 0, y: -12 },
+  },
 ]);
 ```
 
@@ -46,7 +51,7 @@ const crane = map.addMarker({
   // A permanent tooltip advertises the pin without hover.
   tooltip: { content: 'Dock crane — drag me', permanent: true },
 });
-crane.on('dragend', event => console.log(event.screen));
+crane.on('dragend', (event) => console.log(event.screen));
 crane.setDraggable(false); // turn dragging off again at runtime
 ```
 

@@ -10,7 +10,11 @@ function pinsPlugin({ map, onCleanup }) {
   const layer = map.addLayer({ id: 'plugin-pins' });
   onCleanup(layer.remove);
   const pins = layer.addPoints([]);
-  return { add(position) { return pins.add({ position }); } };
+  return {
+    add(position) {
+      return pins.add({ position });
+    },
+  };
 }
 const installed = map.use(pinsPlugin);
 installed.api.add([50.08, 14.44]);

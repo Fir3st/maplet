@@ -213,7 +213,10 @@ export class BindingStore {
 
   /* ------------------------------- ownership ------------------------------- */
 
-  private ownedFields(targetNodeKey: string): { geometry: string | null; fields: Map<string, string> } {
+  private ownedFields(targetNodeKey: string): {
+    geometry: string | null;
+    fields: Map<string, string>;
+  } {
     let record = this.ownership.get(targetNodeKey);
     if (!record) {
       record = { geometry: null, fields: new Map() };
@@ -491,7 +494,10 @@ export class BindingStore {
     const target = total * fraction;
     let walked = 0;
     for (let i = 2; i < vertices.length; i += 2) {
-      const segment = Math.hypot(vertices[i]! - vertices[i - 2]!, vertices[i + 1]! - vertices[i - 1]!);
+      const segment = Math.hypot(
+        vertices[i]! - vertices[i - 2]!,
+        vertices[i + 1]! - vertices[i - 1]!,
+      );
       if (walked + segment >= target || i === vertices.length - 2) {
         const t = segment === 0 ? 0 : (target - walked) / segment;
         return [
@@ -546,7 +552,10 @@ export class BindingStore {
     const ordered = Array.from(affected).sort((a, b) => {
       const bindingA = this.bindings.get(a)!;
       const bindingB = this.bindings.get(b)!;
-      return (this.rank.get(this.targetNodeKey(bindingA)) ?? 0) - (this.rank.get(this.targetNodeKey(bindingB)) ?? 0);
+      return (
+        (this.rank.get(this.targetNodeKey(bindingA)) ?? 0) -
+        (this.rank.get(this.targetNodeKey(bindingB)) ?? 0)
+      );
     });
     this.evaluating = true;
     try {

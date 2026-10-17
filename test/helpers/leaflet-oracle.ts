@@ -64,7 +64,7 @@ export function leafletOracle(): Promise<LeafletOracle> {
     // so the module is loaded opaquely and described by `LeafletOracle` above.
     const specifier = '../../demo/vendor/leaflet.esm.js';
     oraclePromise = import(specifier).then((L: unknown) => {
-      const anyL = L as unknown as {
+      const anyL = L as {
         version: string;
         latLng(lat: number, lng: number): LeafletLatLng;
         CRS: {
@@ -85,8 +85,7 @@ export function leafletOracle(): Promise<LeafletOracle> {
         latLng: (lat, lng) => anyL.latLng(lat, lng),
         mercatorProject: (lat, lng, zoom) =>
           anyL.CRS.EPSG3857.latLngToPoint(anyL.latLng(lat, lng), zoom),
-        mercatorUnproject: (x, y, zoom) =>
-          anyL.CRS.EPSG3857.pointToLatLng({ x, y }, zoom),
+        mercatorUnproject: (x, y, zoom) => anyL.CRS.EPSG3857.pointToLatLng({ x, y }, zoom),
         distanceMeters: (a, b) => anyL.CRS.Earth.distance(a, b),
         wrapLng: (lng) => anyL.CRS.EPSG3857.wrapLatLng(anyL.latLng(0, lng)).lng,
         boundsOf: (points) => {

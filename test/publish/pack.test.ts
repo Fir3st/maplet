@@ -33,9 +33,16 @@ function distModules(): string[] {
 }
 
 test('npm pack includes the runtime assets and no development files', () => {
-  const output = execFileSync('npm', ['pack', '--dry-run', '--json'], { cwd: root, encoding: 'utf8' });
+  const output = execFileSync('npm', ['pack', '--dry-run', '--json'], {
+    cwd: root,
+    encoding: 'utf8',
+  });
   const [report] = JSON.parse(output) as [{ filename: string; files: { path: string }[] }];
-  assert.match(report.filename, /^fir3st-maplet-.*\.tgz$/, 'archive must use the GitHub Packages scope');
+  assert.match(
+    report.filename,
+    /^fir3st-maplet-.*\.tgz$/,
+    'archive must use the GitHub Packages scope',
+  );
   const files = report.files.map((entry) => entry.path);
   for (const required of [
     'package.json',
@@ -52,14 +59,28 @@ test('npm pack includes the runtime assets and no development files', () => {
     assert.ok(files.includes(required), `packed archive is missing ${required}`);
   }
   for (const file of files) {
-    for (const prefix of ['src/', 'test/', 'demo/', 'docs/', 'scripts/', 'examples/', '.example-build/', '.github/']) {
+    for (const prefix of [
+      'src/',
+      'test/',
+      'demo/',
+      'docs/',
+      'scripts/',
+      'examples/',
+      '.example-build/',
+      '.github/',
+    ]) {
       assert.ok(!file.startsWith(prefix), `development file packed: ${file}`);
     }
   }
 });
 
 test('package targets the repository-linked GitHub npm registry', () => {
-  const manifest = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
+  const manifest = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')) as {
+    name: string;
+    private?: boolean;
+    publishConfig: { registry: string };
+    repository: { url: string };
+  };
   assert.equal(manifest.name, '@fir3st/maplet');
   assert.notEqual(manifest.private, true, 'private packages cannot be published');
   assert.equal(manifest.publishConfig.registry, 'https://npm.pkg.github.com');
@@ -72,7 +93,10 @@ test('every exports subpath resolves to a packed file', () => {
   };
   for (const [subpath, target] of Object.entries(manifest.exports)) {
     for (const [kind, file] of Object.entries(target)) {
-      assert.ok(existsSync(join(root, file)), `exports["${subpath}"].${kind} points at missing ${file}`);
+      assert.ok(
+        existsSync(join(root, file)),
+        `exports["${subpath}"].${kind} points at missing ${file}`,
+      );
     }
   }
 });

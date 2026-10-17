@@ -44,7 +44,7 @@ export class RasterSourceImpl {
   }
 
   tilesGrid(): TileGridOptions {
-    if (this.kind === 'rasterTiles') return tileGridOptions(this.options as RasterTilesOptions);
+    if (this.kind === 'rasterTiles') return tileGridOptions(this.options);
     return wmsTileGridOptions(this.options as WmsOptions);
   }
 
@@ -52,7 +52,7 @@ export class RasterSourceImpl {
     // An unsupported CRS is refused at the descriptor boundary, before any
     // frame plan could send degree coordinates to a projected service (WMS-06).
     if (this.kind === 'wms' && patch.crs !== undefined) assertSupportedWmsCrs(patch.crs);
-    this.options = { ...this.options, ...patch } as RasterTilesOptions | WmsOptions;
+    this.options = { ...this.options, ...patch };
     this.revision++;
     this.emitter.emit('change', this.snapshot());
   }

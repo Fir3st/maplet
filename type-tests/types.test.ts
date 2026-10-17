@@ -81,7 +81,7 @@ export async function typeContracts(container: HTMLElement): Promise<void> {
   }
 
   // Detached methods keep their types without a receiver (TYPE-07).
-  const setView = map.setView;
+  const setView = map.setView.bind(map);
   const commit = setView({ zoom: 5 });
   void commit.revision;
 
@@ -89,7 +89,10 @@ export async function typeContracts(container: HTMLElement): Promise<void> {
   crs.define({
     code: 'TYPE:TEST',
     positionKind: 'planar',
-    toWorld: (position) => ({ x: (position as PlanarPosition).x, y: (position as PlanarPosition).y }),
+    toWorld: (position) => ({
+      x: (position as PlanarPosition).x,
+      y: (position as PlanarPosition).y,
+    }),
     fromWorld: (world) => ({ x: world.x, y: world.y }),
   });
   // @ts-expect-error missing fromWorld violates CustomCrsSpec
@@ -100,7 +103,9 @@ export async function typeContracts(container: HTMLElement): Promise<void> {
 
   // TYPE-05: event payloads discriminate and unknown names/fields fail to compile.
   const stopFeature = map.onFeature((event) => {
-    const kind: 'click' | 'mouseover' | 'mouseout' | 'mousemove' | 'dragstart' | 'drag' | 'dragend' = event.type;
+    const kind:
+      'click' | 'mouseover' | 'mouseout' | 'mousemove' | 'dragstart' | 'drag' | 'dragend' =
+      event.type;
     const hitId: string | number = event.feature.id;
     const screen: { readonly x: number; readonly y: number } = event.screen;
     event.stopPropagation();
@@ -179,12 +184,15 @@ export async function typeContracts(container: HTMLElement): Promise<void> {
   void viewBounds.southwest;
 
   // TYPE-07: detached methods keep their types without a receiver.
-  const addStation = stations.features.add;
+  const addStation = stations.features.add.bind(stations.features);
   const added = addStation({ id: 'b', geometry: { type: 'point', position: { lat: 1, lng: 1 } } });
   const addedRef: FeatureRef<PointGeometry, StationProperties> = added.refs[0]!;
   void addedRef;
-  const importColumnar = stations.importColumnar;
-  const columnar: Commit = await importColumnar({ kind: 'point', positions: Float64Array.of(14, 50) });
+  const importColumnar = stations.importColumnar.bind(stations);
+  const columnar: Commit = await importColumnar({
+    kind: 'point',
+    positions: Float64Array.of(14, 50),
+  });
   void columnar.revision;
   const offCommit = map.on('commit', () => {});
   offCommit();

@@ -103,7 +103,8 @@ See [marker contracts](decisions.md#markers), the
 
 ```ts
 map.addTiles('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  maxZoom: 19, attribution: '© OpenStreetMap contributors',
+  maxZoom: 19,
+  attribution: '© OpenStreetMap contributors',
 });
 map.addControl('attribution');
 ```
@@ -139,8 +140,13 @@ declares no requestable CRS. See [Discover a WMS endpoint](tutorials/wms-endpoin
 
 ```ts
 const source = map.data.vectorTiles({ id: 'basemap-data', url: '/tiles/{z}/{x}/{y}.pbf' });
-map.addLayer({ id: 'roads', type: 'lines', source, namespace: 'roads',
-  style: { color: '#66776d', widthPx: 2 } });
+map.addLayer({
+  id: 'roads',
+  type: 'lines',
+  source,
+  namespace: 'roads',
+  style: { color: '#66776d', widthPx: 2 },
+});
 ```
 
 MVT sources are viewport-driven and read-only. `namespace` selects a source-layer

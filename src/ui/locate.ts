@@ -88,7 +88,8 @@ export function createLocator(getProvider: () => GeolocationLike | null | undefi
       timeout?: number;
       maximumAge?: number;
     } = {};
-    if (options?.enableHighAccuracy !== undefined) result.enableHighAccuracy = options.enableHighAccuracy;
+    if (options?.enableHighAccuracy !== undefined)
+      result.enableHighAccuracy = options.enableHighAccuracy;
     if (options?.timeoutMs !== undefined) result.timeout = options.timeoutMs;
     if (options?.maximumAgeMs !== undefined) result.maximumAge = options.maximumAgeMs;
     return result;

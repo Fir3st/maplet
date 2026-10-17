@@ -15,20 +15,20 @@ other map on its first activation; `show`, `get`, `activeId`, `ids`, `onChange`
 and `destroy` drive the active view. See
 [multiple map views](maps.md#multiple-map-views).
 
-| Option | Default | Meaning |
-| --- | --- | --- |
-| `projection` | Web Mercator | Coordinate reference system |
-| `renderer` | WebGPU → WebGL 1 | Built-in backend or explicit fallback policy |
-| `controls` | `[]` | Optional HTML controls |
-| `center` | Geographic `{ lat: 0, lng: 0 }` or planar `{ x: 0, y: 0 }` | Initial position |
-| `zoom` | `2` | Initial scale, inside configured zoom limits |
-| `minZoom`, `maxZoom` | `0`, `24` | Allowed view zoom range |
-| `maxBounds` | `null` | Optional view bounds limit |
-| `size` | `800 × 600` | Initial size; a sized DOM container takes precedence |
-| `clock` | `defaultClock()` | Animation clock |
-| `interactive` | `true` for DOM maps | Pointer, wheel and keyboard interaction |
-| `interaction` | Per-gesture defaults | Gesture settings, opt-in box selection and the `setGestureGate` hook |
-| `plugins` | `[]` | Synchronous setup functions installed in order |
+| Option               | Default                                                    | Meaning                                                              |
+| -------------------- | ---------------------------------------------------------- | -------------------------------------------------------------------- |
+| `projection`         | Web Mercator                                               | Coordinate reference system                                          |
+| `renderer`           | WebGPU → WebGL 1                                           | Built-in backend or explicit fallback policy                         |
+| `controls`           | `[]`                                                       | Optional HTML controls                                               |
+| `center`             | Geographic `{ lat: 0, lng: 0 }` or planar `{ x: 0, y: 0 }` | Initial position                                                     |
+| `zoom`               | `2`                                                        | Initial scale, inside configured zoom limits                         |
+| `minZoom`, `maxZoom` | `0`, `24`                                                  | Allowed view zoom range                                              |
+| `maxBounds`          | `null`                                                     | Optional view bounds limit                                           |
+| `size`               | `800 × 600`                                                | Initial size; a sized DOM container takes precedence                 |
+| `clock`              | `defaultClock()`                                           | Animation clock                                                      |
+| `interactive`        | `true` for DOM maps                                        | Pointer, wheel and keyboard interaction                              |
+| `interaction`        | Per-gesture defaults                                       | Gesture settings, opt-in box selection and the `setGestureGate` hook |
+| `plugins`            | `[]`                                                       | Synchronous setup functions installed in order                       |
 
 Gesture options `pan`, `wheelZoom`, `doubleClickZoom`, `pinchZoom`, `hover`,
 `dragFeatures` and `keyboard` default to `true`; `boxSelection` defaults to `false`.
@@ -59,15 +59,15 @@ Tab into the map reaches one hidden pin stop; arrows walk a ring cursor
 the focused pin exactly like a click, and Escape closes the popup then leaves
 the cursor.
 
-| Handle | Main operations |
-| --- | --- |
-| Logical layer | `layers`, `show`, `hide`, `isVisible`, `setVisible`, `move`, `remove`, events |
-| Styled collection | Layer operations plus `setStyle`, `setFilter`, `update`, per-feature style overrides |
-| Vector collection | `source`, `get`, `add`, `addMany`, `updateFeature`, `setData`, `count`, `getBounds` |
-| Object | `ref`, `get`, `setGeometry`, `setProperties`, `setStyle`, `clearStyle`, `show`, `hide`, `select`, `deselect`, `remove` |
-| Point | `getPosition`, `setPosition` |
-| Line | `setPositions` |
-| Polygon | `setRings` |
+| Handle            | Main operations                                                                                                        |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Logical layer     | `layers`, `show`, `hide`, `isVisible`, `setVisible`, `move`, `remove`, events                                          |
+| Styled collection | Layer operations plus `setStyle`, `setFilter`, `update`, per-feature style overrides                                   |
+| Vector collection | `source`, `get`, `add`, `addMany`, `updateFeature`, `setData`, `count`, `getBounds`                                    |
+| Object            | `ref`, `get`, `setGeometry`, `setProperties`, `setStyle`, `clearStyle`, `show`, `hide`, `select`, `deselect`, `remove` |
+| Point             | `getPosition`, `setPosition`                                                                                           |
+| Line              | `setPositions`                                                                                                         |
+| Polygon           | `setRings`                                                                                                             |
 
 Collection options are optional `id`, `visible`, `style`, `filter`, `namespace`,
 `interactive`, `draggable` and `parent`. Containers use only `id`, `visible` and
@@ -80,17 +80,17 @@ moves to root. See [layer and lifetime contracts](api.md).
 
 ## Data and services
 
-| Property | Purpose |
-| --- | --- |
-| `data` | Explicit vector, raster, WMS (incl. GetCapabilities discovery), MVT, image and video sources |
-| `assets` | Reusable image and font registration |
-| `relations` | Connections, neighbors and bounded traversal |
-| `bindings` | Derived geometry/properties and ownership |
-| `state`, `selection` | Shared interaction state and selected references |
-| `query` | Data queries and rendered picking |
-| `controls`, `detail`, `locate` | HTML controls, feature details and geolocation |
-| `render` | Plan transforms, frame hooks and custom renderers |
-| `interaction`, `debug` | Gesture options and read-only diagnostics |
+| Property                       | Purpose                                                                                      |
+| ------------------------------ | -------------------------------------------------------------------------------------------- |
+| `data`                         | Explicit vector, raster, WMS (incl. GetCapabilities discovery), MVT, image and video sources |
+| `assets`                       | Reusable image and font registration                                                         |
+| `relations`                    | Connections, neighbors and bounded traversal                                                 |
+| `bindings`                     | Derived geometry/properties and ownership                                                    |
+| `state`, `selection`           | Shared interaction state and selected references                                             |
+| `query`                        | Data queries and rendered picking                                                            |
+| `controls`, `detail`, `locate` | HTML controls, feature details and geolocation                                               |
+| `render`                       | Plan transforms, frame hooks and custom renderers                                            |
+| `interaction`, `debug`         | Gesture options and read-only diagnostics                                                    |
 
 Explicit sources survive layer removal. Inline sources follow last-use ownership.
 See [data and transactions](data.md), [interaction](interaction.md) and [plugins](plugins.md).

@@ -10,7 +10,7 @@
  */
 
 import { assertArgument, fail } from '../api/errors.ts';
-import type { Unsubscribe } from '../api/types.ts';
+import { isArrayValue, type Unsubscribe } from '../api/types.ts';
 import { createMap, type MapHandle, type MapOptions } from '../map.ts';
 
 export interface MapSwitcherEntry {
@@ -52,13 +52,22 @@ interface EntryState {
 let switcherSequence = 0;
 
 export async function createMapSwitcher(options: MapSwitcherOptions): Promise<MapSwitcherHandle> {
-  assertArgument(options !== null && typeof options === 'object', 'createMapSwitcher expects an options object');
+  assertArgument(
+    options !== null && typeof options === 'object',
+    'createMapSwitcher expects an options object',
+  );
   const entries = options.maps;
-  assertArgument(Array.isArray(entries) && entries.length > 0, 'createMapSwitcher requires at least one map entry');
+  assertArgument(
+    isArrayValue(entries) && entries.length > 0,
+    'createMapSwitcher requires at least one map entry',
+  );
   const ids = new Set<string>();
   for (const entry of entries) {
     assertArgument(entry !== null && typeof entry === 'object', 'each map entry must be an object');
-    assertArgument(typeof entry.id === 'string' && entry.id.length > 0, 'each map entry requires a nonempty id');
+    assertArgument(
+      typeof entry.id === 'string' && entry.id.length > 0,
+      'each map entry requires a nonempty id',
+    );
     assertArgument(!ids.has(entry.id), `duplicate map entry id: ${entry.id}`, { id: entry.id });
     ids.add(entry.id);
     assertArgument(
@@ -72,13 +81,17 @@ export async function createMapSwitcher(options: MapSwitcherOptions): Promise<Ma
   assertArgument(
     options.container !== undefined &&
       (typeof options.container === 'string' ||
-        (typeof options.container === 'object' && typeof (options.container as HTMLElement)?.appendChild === 'function')),
+        (typeof options.container === 'object' &&
+          typeof options.container?.appendChild === 'function')),
     'createMapSwitcher requires a container element or id',
   );
   if (typeof document === 'undefined') {
     fail('environment', 'createMapSwitcher requires a browser environment');
   }
-  const host = typeof options.container === 'string' ? resolveSwitcherContainer(options.container) : options.container;
+  const host =
+    typeof options.container === 'string'
+      ? resolveSwitcherContainer(options.container)
+      : options.container;
 
   const prefix = `maplet-switcher-${++switcherSequence}`;
   const root = document.createElement('div');

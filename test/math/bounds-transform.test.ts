@@ -38,7 +38,13 @@ function assertPlanarBounds(
   assert.ok('x' in bounds.southwest, 'expected planar bounds');
 }
 
-function transform(lat: number, lng: number, zoom: number, width = 800, height = 600): ViewTransform {
+function transform(
+  lat: number,
+  lng: number,
+  zoom: number,
+  width = 800,
+  height = 600,
+): ViewTransform {
   return {
     crs: WGS84,
     width,
@@ -132,7 +138,10 @@ test('MATH-11: bounds of several points, empty set and a single point', () => {
   assertGeoBounds(merged);
   assert.equal(merged.northeast.lat, 52);
   assert.equal(mergeBounds(null, null), null);
-  const planar = boundsFromPositions([{ x: 0, y: -1 }, { x: 5, y: -3 }]);
+  const planar = boundsFromPositions([
+    { x: 0, y: -1 },
+    { x: 5, y: -3 },
+  ]);
   assertPlanarBounds(planar);
   assert.equal(planar.southwest.y, -3);
   assert.equal(boundsContains(planar, { x: 1, y: -2 }), true);
@@ -178,11 +187,7 @@ test('MATH-12: antimeridian bounds pick the short allowed interval', () => {
 
 test('MATH-14: bounds and wrap match the Leaflet oracle for preserved contracts', async () => {
   const oracle = await leafletOracle();
-  const points = [
-    oracle.latLng(40, 14),
-    oracle.latLng(50, 20),
-    oracle.latLng(45, 10),
-  ];
+  const points = [oracle.latLng(40, 14), oracle.latLng(50, 20), oracle.latLng(45, 10)];
   const expected = oracle.boundsOf(points);
   const bounds = boundsFromPositions([
     { lat: 40, lng: 14 },

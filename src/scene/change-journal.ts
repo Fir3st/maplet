@@ -5,7 +5,9 @@ export class ChangeJournal<T> {
   private invalidatedAt = 0;
   private readonly capacity = 4096;
 
-  get epoch(): number { return this.epochValue; }
+  get epoch(): number {
+    return this.epochValue;
+  }
 
   note(value: T): void {
     this.entries[this.epochValue % this.capacity] = value;

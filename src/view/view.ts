@@ -171,7 +171,7 @@ export class ViewImpl {
   }
 
   private clamped(center: WorldPoint, zoom: number): { center: WorldPoint; zoom: number } {
-    let nextZoom = clamp(zoom, this.minZoom, this.maxZoom);
+    const nextZoom = clamp(zoom, this.minZoom, this.maxZoom);
     let nextCenter = center;
     if (this.maxBounds) {
       const boundsWorld = this.boundsToWorldRect(this.maxBounds);
@@ -184,7 +184,11 @@ export class ViewImpl {
       } else {
         nextCenter = {
           ...nextCenter,
-          x: clamp(nextCenter.x, boundsWorld.minX + viewHalfWidth, boundsWorld.maxX - viewHalfWidth),
+          x: clamp(
+            nextCenter.x,
+            boundsWorld.minX + viewHalfWidth,
+            boundsWorld.maxX - viewHalfWidth,
+          ),
         };
       }
       if (boundsHeight <= viewHalfHeight * 2) {
@@ -192,7 +196,11 @@ export class ViewImpl {
       } else {
         nextCenter = {
           ...nextCenter,
-          y: clamp(nextCenter.y, boundsWorld.minY + viewHalfHeight, boundsWorld.maxY - viewHalfHeight),
+          y: clamp(
+            nextCenter.y,
+            boundsWorld.minY + viewHalfHeight,
+            boundsWorld.maxY - viewHalfHeight,
+          ),
         };
       }
     }
@@ -200,7 +208,10 @@ export class ViewImpl {
   }
 
   private boundsToWorldRect(bounds: Bounds<Position>): {
-    minX: number; minY: number; maxX: number; maxY: number;
+    minX: number;
+    minY: number;
+    maxX: number;
+    maxY: number;
   } {
     const sw = this.crs.toWorld(bounds.southwest);
     const ne = this.crs.toWorld(bounds.northeast);
@@ -240,11 +251,9 @@ export class ViewImpl {
   /** Applies a view update. Returns the commit revision of the published frame state. */
   set(update: ViewUpdate): Commit {
     const requestedZoom = update.zoom ?? this.zoomValue;
-    assertArgument(
-      Number.isFinite(requestedZoom),
-      'view zoom must be a finite number',
-      { zoom: update.zoom },
-    );
+    assertArgument(Number.isFinite(requestedZoom), 'view zoom must be a finite number', {
+      zoom: update.zoom,
+    });
     let requestedCenter = this.centerWorld;
     if (update.center !== undefined) {
       requestedCenter = this.crs.toWorld(this.crs.normalize(update.center));
@@ -470,7 +479,10 @@ function wrap180(lng: number): number {
 }
 
 function normalizePadding(padding: number | FitPadding | undefined): {
-  top: number; right: number; bottom: number; left: number;
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
 } {
   if (padding === undefined) return { top: 0, right: 0, bottom: 0, left: 0 };
   if (typeof padding === 'number') {

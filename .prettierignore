@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.example-build/
+.playwright-mcp/
+demo/vendor/
+demo/tiles/
+demo/tiles-providers/
+demo/checks/
+*.tgz
+
+# The stylesheet is embedded in every published Gist (20 copies against the
+# 1.30 MiB publication budget), so its compact hand-tuned form is kept.
+examples/style.css

@@ -7,7 +7,13 @@
  */
 
 import type { Position } from '../api/types.ts';
-import { EARTH_RADIUS_METERS, WORLD_SCALE, type Crs, type Distance, type DistanceUnit } from './crs.ts';
+import {
+  EARTH_RADIUS_METERS,
+  WORLD_SCALE,
+  type Crs,
+  type Distance,
+  type DistanceUnit,
+} from './crs.ts';
 import { worldScaleAt } from './transform.ts';
 
 export function distanceBetween(crs: Crs, a: Position, b: Position): Distance {
@@ -42,21 +48,15 @@ export interface ScaleBar {
 }
 
 const NICE_STEPS = [
-  1, 2, 5, 10, 20, 50, 100, 200, 500,
-  1000, 2000, 5000, 10000, 20000, 50000, 100000,
-  200000, 500000, 1000000, 2000000, 5000000,
+  1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 500000,
+  1000000, 2000000, 5000000,
 ];
 
 /**
  * Picks a round distance that fits `maxPixels` at the current scale. The unit
  * follows the CRS; Simple reports its planar units, not earth metres. UI-04.
  */
-export function scaleBar(
-  crs: Crs,
-  center: Position,
-  zoom: number,
-  maxPixels = 120,
-): ScaleBar {
+export function scaleBar(crs: Crs, center: Position, zoom: number, maxPixels = 120): ScaleBar {
   const perPixel = metersPerPixel(crs, center, zoom);
   const targetValue = perPixel.value * maxPixels;
   let value = NICE_STEPS[NICE_STEPS.length - 1]!;

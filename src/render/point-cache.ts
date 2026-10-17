@@ -4,32 +4,65 @@ import type { Scene } from '../scene/scene.ts';
 import type { SourceImpl } from '../scene/source.ts';
 import type { SlotRecord } from '../scene/store.ts';
 import type { LayerImpl, PointsLayerStyle, PointShape } from '../scene/layers.ts';
-import { compileFilter, evaluateStyleValue, type ExpressionContext, type ExpressionInput, type ColorValue } from '../scene/expression.ts';
+import {
+  compileFilter,
+  evaluateStyleValue,
+  type ExpressionContext,
+  type ExpressionInput,
+  type ColorValue,
+} from '../scene/expression.ts';
 import { transformOrigin, worldScaleAt, type ViewTransform } from '../math/transform.ts';
-import { POINT_STRIDE, POINT_SHAPES, FLAG_INTERACTIVE, FLAG_HIDDEN, type PickEntry, type PickEntries, type PlanBatch, type BufferUpload } from './frame-plan.ts';
+import {
+  POINT_STRIDE,
+  POINT_SHAPES,
+  FLAG_INTERACTIVE,
+  FLAG_HIDDEN,
+  type PickEntry,
+  type PickEntries,
+  type PlanBatch,
+  type BufferUpload,
+} from './frame-plan.ts';
 import { parseColor, type Rgba } from './color.ts';
 
-interface Rect { minX: number; minY: number; maxX: number; maxY: number }
+interface Rect {
+  minX: number;
+  minY: number;
+  maxX: number;
+  maxY: number;
+}
 const BLUE: Rgba = [0.23, 0.51, 0.96, 1];
 const TRANSPARENT: Rgba = [0, 0, 0, 0];
 
-function valueReader<T>(input: ExpressionInput<T> | undefined, fallback: T): (ctx: ExpressionContext) => T {
+function valueReader<T>(
+  input: ExpressionInput<T> | undefined,
+  fallback: T,
+): (ctx: ExpressionContext) => T {
   if (input === undefined) return () => fallback;
   if (typeof input === 'object' && input !== null && 'evaluate' in input) {
     if (!input.constant) return (ctx) => evaluateStyleValue(input, fallback, ctx);
-    const value = input.evaluate({ properties: {}, state: { hovered: false, selected: false, disabled: false }, zoom: 0 });
+    const value = input.evaluate({
+      properties: {},
+      state: { hovered: false, selected: false, disabled: false },
+      zoom: 0,
+    });
     return () => value;
   }
-  return () => input as T;
+  return () => input;
 }
 
-function colorReader(input: ExpressionInput<ColorValue> | undefined, fallback: Rgba): (ctx: ExpressionContext) => Rgba {
+function colorReader(
+  input: ExpressionInput<ColorValue> | undefined,
+  fallback: Rgba,
+): (ctx: ExpressionContext) => Rgba {
   const read = valueReader(input, fallback);
   let last: ColorValue | undefined;
   let color = fallback;
   return (ctx) => {
     const next = read(ctx);
-    if (next !== last || Array.isArray(next)) { color = parseColor(next, fallback); last = next; }
+    if (next !== last || Array.isArray(next)) {
+      color = parseColor(next, fallback);
+      last = next;
+    }
     return color;
   };
 }
@@ -77,7 +110,8 @@ export class PointCache {
     this.sourceEpoch = source.store.changes.epoch;
     this.overrideEpoch = layer.overrideChanges.epoch;
     this.rect = {
-      minX: this.origin.x - 32 / this.scale, minY: this.origin.y - 32 / this.scale,
+      minX: this.origin.x - 32 / this.scale,
+      minY: this.origin.y - 32 / this.scale,
       maxX: this.origin.x + (view.width + 32) / this.scale,
       maxY: this.origin.y + (view.height + 32) / this.scale,
     };
@@ -91,16 +125,26 @@ export class PointCache {
     this.strokeColor = colorReader(style.strokeColor, TRANSPARENT);
     this.zIndex = valueReader(style.zIndex, 0);
     const candidates: { record: SlotRecord; z: number }[] = [];
-    source.store.queryRect(this.rect.minX, this.rect.minY, this.rect.maxX, this.rect.maxY, (record) => {
-      if (!this.contains(record) || layer.namespace !== undefined && layer.namespace !== record.namespace) return;
-      candidates.push({ record, z: this.recordZ(record) });
-    });
+    source.store.queryRect(
+      this.rect.minX,
+      this.rect.minY,
+      this.rect.maxX,
+      this.rect.maxY,
+      (record) => {
+        if (
+          !this.contains(record) ||
+          (layer.namespace !== undefined && layer.namespace !== record.namespace)
+        )
+          return;
+        candidates.push({ record, z: this.recordZ(record) });
+      },
+    );
     candidates.sort((a, b) => a.z - b.z || a.record.slot - b.record.slot);
     this.data = new Float32Array(candidates.length * POINT_STRIDE);
     this.zValues = new Float64Array(candidates.length);
     this.visible = new Uint8Array(candidates.length);
-    this.pickIds = new Array(candidates.length);
-    this.pickNamespaces = new Array(candidates.length);
+    this.pickIds = new Array<FeatureId>(candidates.length);
+    this.pickNamespaces = new Array<string | undefined>(candidates.length);
     this.pickGenerations = new Float64Array(candidates.length);
     this.entries = { length: candidates.length, get: (index) => this.pickEntry(index) };
     this.slotToInstance = new Int32Array(source.store.slotCapacity);
@@ -120,14 +164,25 @@ export class PointCache {
   private pickEntry(index: number): PickEntry | undefined {
     if (index < 0 || index >= this.entries.length) return undefined;
     const namespace = this.pickNamespaces[index];
-    return { layerId: this.layer.id, feature: {
-      sceneId: this.scene.id, sourceId: this.source.id, id: this.pickIds[index]!,
-      generation: this.pickGenerations[index]!, ...(namespace === undefined ? {} : { namespace }),
-    } };
+    return {
+      layerId: this.layer.id,
+      feature: {
+        sceneId: this.scene.id,
+        sourceId: this.source.id,
+        id: this.pickIds[index]!,
+        generation: this.pickGenerations[index]!,
+        ...(namespace === undefined ? {} : { namespace }),
+      },
+    };
   }
 
   private contains(record: SlotRecord): boolean {
-    return record.wx >= this.rect.minX && record.wx <= this.rect.maxX && record.wy >= this.rect.minY && record.wy <= this.rect.maxY;
+    return (
+      record.wx >= this.rect.minX &&
+      record.wx <= this.rect.maxX &&
+      record.wy >= this.rect.minY &&
+      record.wy <= this.rect.maxY
+    );
   }
 
   private override(record: SlotRecord) {
@@ -136,7 +191,13 @@ export class PointCache {
   }
 
   private recordZ(record: SlotRecord): number {
-    return this.zIndex({ properties: record.properties, state: this.scene.state.stateOf(this.source, record), zoom: this.zoom }) + (this.override(record)?.zIndex ?? 0);
+    return (
+      this.zIndex({
+        properties: record.properties,
+        state: this.scene.state.stateOf(this.source, record),
+        zoom: this.zoom,
+      }) + (this.override(record)?.zIndex ?? 0)
+    );
   }
 
   private write(record: SlotRecord | undefined, instance: number): void {
@@ -145,9 +206,13 @@ export class PointCache {
     const wasVisible = this.visible[instance] === 1;
     const override = record ? this.override(record) : undefined;
     const state = record ? this.scene.state.stateOf(this.source, record) : undefined;
-    const visible = record !== undefined && this.contains(record) && override?.visible !== false &&
+    const visible =
+      record !== undefined &&
+      this.contains(record) &&
+      override?.visible !== false &&
       this.filter({ id: record.id, state: state! }, record.properties) &&
-      (!this.scene.bindingsActive || !this.scene.bindings.isTargetHidden(this.entries.get(instance)!.feature));
+      (!this.scene.bindingsActive ||
+        !this.scene.bindings.isTargetHidden(this.entries.get(instance)!.feature));
     if (wasVisible) this.visibleCount--;
     if (!visible) {
       this.visible[instance] = 0;
@@ -157,35 +222,53 @@ export class PointCache {
     this.visibleCount++;
     this.visible[instance] = 1;
     const ctx = { properties: record.properties, state: state!, zoom: this.zoom };
-    const color = override?.color === undefined ? this.color(ctx) : parseColor(override.color, BLUE);
+    const color =
+      override?.color === undefined ? this.color(ctx) : parseColor(override.color, BLUE);
     const stroke = this.strokeColor(ctx);
     const width = this.strokeWidth(ctx);
     const radius = override?.radiusPx ?? this.radius(ctx);
     const data = this.data;
     data[at] = (record.wx - this.origin.x) * this.scale;
     data[at + 1] = (record.wy - this.origin.y) * this.scale;
-    data[at + 2] = radius; data[at + 3] = radius;
-    data[at + 4] = color[0]; data[at + 5] = color[1]; data[at + 6] = color[2];
+    data[at + 2] = radius;
+    data[at + 3] = radius;
+    data[at + 4] = color[0];
+    data[at + 5] = color[1];
+    data[at + 6] = color[2];
     data[at + 7] = color[3] * (override?.opacity ?? this.opacity(ctx));
-    data[at + 8] = stroke[0]; data[at + 9] = stroke[1]; data[at + 10] = stroke[2];
+    data[at + 8] = stroke[0];
+    data[at + 9] = stroke[1];
+    data[at + 10] = stroke[2];
     data[at + 11] = width > 0 ? stroke[3] || 1 : 0;
     data[at + 12] = POINT_SHAPES[this.shape(ctx)] ?? 0;
-    data[at + 13] = width; data[at + 14] = instance;
-    data[at + 15] = this.layer.interactionEnabled && (override?.interactive ?? true) ? FLAG_INTERACTIVE : 0;
+    data[at + 13] = width;
+    data[at + 14] = instance;
+    data[at + 15] =
+      this.layer.interactionEnabled && (override?.interactive ?? true) ? FLAG_INTERACTIVE : 0;
   }
 
   /** false requests a fresh resident set/order, never a silently stale buffer. */
   update(view: ViewTransform): boolean {
-    if (view.zoom !== this.zoom || this.layoutRevision !== this.layer.layoutRevision || this.renderEpoch !== this.scene.renderEpoch) return false;
+    if (
+      view.zoom !== this.zoom ||
+      this.layoutRevision !== this.layer.layoutRevision ||
+      this.renderEpoch !== this.scene.renderEpoch
+    )
+      return false;
     const origin = transformOrigin(view);
-    if (origin.x < this.rect.minX || origin.y < this.rect.minY ||
-        origin.x + view.width / this.scale > this.rect.maxX || origin.y + view.height / this.scale > this.rect.maxY) return false;
+    if (
+      origin.x < this.rect.minX ||
+      origin.y < this.rect.minY ||
+      origin.x + view.width / this.scale > this.rect.maxX ||
+      origin.y + view.height / this.scale > this.rect.maxY
+    )
+      return false;
     const sourceChanges = this.source.store.changes.since(this.sourceEpoch);
     const overrideChanges = this.layer.overrideChanges.since(this.overrideEpoch);
     if (!sourceChanges || !overrideChanges) return false;
     const slots = new Set(sourceChanges);
     for (const target of overrideChanges) {
-      const ref = typeof target === 'object' ? target : { id: target as FeatureId, namespace: undefined };
+      const ref = typeof target === 'object' ? target : { id: target, namespace: undefined };
       const record = this.source.store.get(ref.id, ref.namespace);
       if (record) slots.add(record.slot);
     }
@@ -194,11 +277,23 @@ export class PointCache {
       const record = this.source.store.getBySlot(slot);
       const instance = this.slotToInstance[slot] ?? -1;
       if (instance < 0) {
-        if (record && this.contains(record) && (this.layer.namespace === undefined || record.namespace === this.layer.namespace)) return false;
+        if (
+          record &&
+          this.contains(record) &&
+          (this.layer.namespace === undefined || record.namespace === this.layer.namespace)
+        )
+          return false;
         continue;
       }
       const ref = this.entries.get(instance)!.feature;
-      if (record && (record.id !== ref.id || record.namespace !== ref.namespace || record.generation !== ref.generation || this.recordZ(record) !== this.zValues[instance])) return false;
+      if (
+        record &&
+        (record.id !== ref.id ||
+          record.namespace !== ref.namespace ||
+          record.generation !== ref.generation ||
+          this.recordZ(record) !== this.zValues[instance])
+      )
+        return false;
       changed.push(instance);
     }
     for (const instance of changed) {
@@ -217,7 +312,11 @@ export class PointCache {
         if (last && last.end === start) last.end += POINT_STRIDE;
         else ranges.push({ start, end: start + POINT_STRIDE });
       }
-      this.upload = { version: this.upload.version + 1, previousVersion: this.upload.version, ranges };
+      this.upload = {
+        version: this.upload.version + 1,
+        previousVersion: this.upload.version,
+        ranges,
+      };
     }
     return true;
   }
@@ -225,8 +324,13 @@ export class PointCache {
   batch(view: ViewTransform, pickBase: number): PlanBatch {
     const origin = transformOrigin(view);
     return {
-      layerId: this.layer.id, kind: 'points', data: this.data, count: this.entries.length,
-      visibleCount: this.visibleCount, upload: this.upload, pickBase,
+      layerId: this.layer.id,
+      kind: 'points',
+      data: this.data,
+      count: this.entries.length,
+      visibleCount: this.visibleCount,
+      upload: this.upload,
+      pickBase,
       offsetX: (this.origin.x - origin.x) * this.scale,
       offsetY: (this.origin.y - origin.y) * this.scale,
     };

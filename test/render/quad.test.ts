@@ -13,12 +13,18 @@ test('quadVertices: unrotated quad follows the UV order', () => {
   assert.equal(QUAD_UVS.length, 6);
   const vertices = quadVertices(10, 20, 100, 40, 0);
   assert.deepEqual(Array.from(vertices), [
-    10 - 50, 20 - 20,
-    10 + 50, 20 - 20,
-    10 - 50, 20 + 20,
-    10 + 50, 20 - 20,
-    10 + 50, 20 + 20,
-    10 - 50, 20 + 20,
+    10 - 50,
+    20 - 20,
+    10 + 50,
+    20 - 20,
+    10 - 50,
+    20 + 20,
+    10 + 50,
+    20 - 20,
+    10 + 50,
+    20 + 20,
+    10 - 50,
+    20 + 20,
   ]);
 });
 
@@ -34,7 +40,10 @@ test('quadVertices: 90 degrees clockwise swaps the box around the centre', () =>
 });
 
 test('quadVertices: a non-finite angle falls back to no rotation', () => {
-  assert.deepEqual(Array.from(quadVertices(1, 2, 4, 6, Number.NaN)), Array.from(quadVertices(1, 2, 4, 6, 0)));
+  assert.deepEqual(
+    Array.from(quadVertices(1, 2, 4, 6, Number.NaN)),
+    Array.from(quadVertices(1, 2, 4, 6, 0)),
+  );
 });
 
 test('quadVertices: an offset quad orbits its declared pivot', () => {

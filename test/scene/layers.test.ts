@@ -57,7 +57,12 @@ test('LAYER-05: a runtime filter updates membership without deleting data', asyn
   const { map } = await makeMap();
   const source = map.data.vector({ id: 's' });
   source.features.add(items(4));
-  map.addLayer({ id: 'filtered', type: 'points', source, filter: { field: 'status', eq: 'online' } });
+  map.addLayer({
+    id: 'filtered',
+    type: 'points',
+    source,
+    filter: { field: 'status', eq: 'online' },
+  });
   assert.equal(map.debug.countLayerRecords('filtered'), 2);
   assert.equal(map.debug.layerInstances('filtered'), 2);
   source.features.update(1, { properties: { status: 'online' } });
@@ -96,9 +101,17 @@ test('INPUT-10: a feature is draggable through the layer flag or its own overrid
   layer.setOverride(ref, { draggable: false });
   assert.equal(featureIsDraggable(layer, ref), false);
   layer.draggable = true;
-  assert.equal(featureIsDraggable(layer, ref), false, 'a feature override opts out of a draggable layer');
+  assert.equal(
+    featureIsDraggable(layer, ref),
+    false,
+    'a feature override opts out of a draggable layer',
+  );
   layer.clearOverride(ref);
-  assert.equal(featureIsDraggable(layer, ref), true, 'without an override the layer flag covers every feature');
+  assert.equal(
+    featureIsDraggable(layer, ref),
+    true,
+    'without an override the layer flag covers every feature',
+  );
 });
 
 test('LAYER-07/08/09: logical layers toggle descendants, reject cycles and release membership', async () => {
@@ -229,9 +242,17 @@ test('STYLE-05: interaction style reacts to state.hovered above the base express
   const ref = source.features.ref(0);
   assert.equal(map.debug.layerColor('layer'), '#00ff00');
   map.state.set(ref, { hovered: true });
-  assert.equal(map.debug.layerColor('layer'), '#ff0000', 'hover state re-evaluates the interaction style');
+  assert.equal(
+    map.debug.layerColor('layer'),
+    '#ff0000',
+    'hover state re-evaluates the interaction style',
+  );
   map.state.set(ref, { hovered: false });
-  assert.equal(map.debug.layerColor('layer'), '#00ff00', 'clearing the state restores the base value');
+  assert.equal(
+    map.debug.layerColor('layer'),
+    '#00ff00',
+    'clearing the state restores the base value',
+  );
   map.destroy();
 });
 
@@ -254,15 +275,32 @@ test('TEXT-01/07: label plan follows text, identity, zoom range and priority ord
   const { map } = await makeMap();
   const source = map.data.vector({ id: 's' });
   source.features.add([
-    { id: 'a', geometry: { type: 'point', position: { lat: 50, lng: 14 } }, properties: { name: 'Praha', rank: 1 } },
-    { id: 'b', geometry: { type: 'point', position: { lat: 50.001, lng: 14 } }, properties: { rank: 2 } },
-    { id: 'c', geometry: { type: 'point', position: { lat: 50.002, lng: 14 } }, properties: { name: '   ', rank: 3 } },
+    {
+      id: 'a',
+      geometry: { type: 'point', position: { lat: 50, lng: 14 } },
+      properties: { name: 'Praha', rank: 1 },
+    },
+    {
+      id: 'b',
+      geometry: { type: 'point', position: { lat: 50.001, lng: 14 } },
+      properties: { rank: 2 },
+    },
+    {
+      id: 'c',
+      geometry: { type: 'point', position: { lat: 50.002, lng: 14 } },
+      properties: { name: '   ', rank: 3 },
+    },
   ]);
   const labels = map.addLayer({
     id: 'lbl',
     type: 'labels',
     source,
-    style: { text: expr.field('name'), offsetPx: { x: 4, y: -10 }, collision: true, priority: expr.field('rank') },
+    style: {
+      text: expr.field('name'),
+      offsetPx: { x: 4, y: -10 },
+      collision: true,
+      priority: expr.field('rank'),
+    },
   });
   const before = map.debug.layerLabels('lbl');
   assert.equal(before.length, 1, 'features without usable text produce no label');
@@ -296,12 +334,27 @@ test('MEDIA-08: an unavailable icon asset falls back to the shape, never a silen
   const { map } = await makeMap();
   const source = map.data.vector({ id: 's' });
   source.features.add(items(2));
-  const asset = map.assets.addImage({ id: 'pin', src: 'data:image/gif;base64,R0lGODlhAQABAAAAACw=' });
-  assert.equal(asset.snapshot().state, 'error', 'headless environments surface an explicit error state');
+  const asset = map.assets.addImage({
+    id: 'pin',
+    src: 'data:image/gif;base64,R0lGODlhAQABAAAAACw=',
+  });
+  assert.equal(
+    asset.snapshot().state,
+    'error',
+    'headless environments surface an explicit error state',
+  );
   assert.ok(asset.snapshot().error, 'the reason is visible');
   map.addLayer({ id: 'pts', type: 'points', source, style: { icon: 'pin', radiusPx: 6 } });
-  assert.equal(map.debug.layerSprites('pts').length, 0, 'no sprite is planned without a decoded asset');
-  assert.equal(map.debug.layerInstances('pts'), 2, 'the declared shape fallback carries the features');
+  assert.equal(
+    map.debug.layerSprites('pts').length,
+    0,
+    'no sprite is planned without a decoded asset',
+  );
+  assert.equal(
+    map.debug.layerInstances('pts'),
+    2,
+    'the declared shape fallback carries the features',
+  );
   map.assets.remove('pin');
   assert.equal(map.debug.layerInstances('pts'), 2, 'removing the asset keeps the fallback stable');
   map.destroy();
@@ -318,7 +371,11 @@ test('STYLE-07/08: instance order is stable by zIndex and slot', async () => {
   const layer = map.addLayer({ id: 'layer', type: 'points', source });
   layer.setFeatureStyle(source.features.ref('c'), { zIndex: 5 });
   layer.setFeatureStyle(source.features.ref('b'), { zIndex: 5 });
-  assert.deepEqual([...map.debug.layerPickOrder('layer')], ['a', 'b', 'c'], 'stable slot tie-break');
+  assert.deepEqual(
+    [...map.debug.layerPickOrder('layer')],
+    ['a', 'b', 'c'],
+    'stable slot tie-break',
+  );
   map.destroy();
 });
 
@@ -401,7 +458,13 @@ test('QUERY-01/02/03/04/06/07/08: data queries, pagination, filters and identity
   source.features.add([
     {
       id: 'line',
-      geometry: { type: 'lineString', positions: [{ lat: 0, lng: -100 }, { lat: 0, lng: 100 }] },
+      geometry: {
+        type: 'lineString',
+        positions: [
+          { lat: 0, lng: -100 },
+          { lat: 0, lng: 100 },
+        ],
+      },
       properties: { kind: 'road' },
     },
     {
@@ -420,15 +483,33 @@ test('QUERY-01/02/03/04/06/07/08: data queries, pagination, filters and identity
       properties: { kind: 'zone' },
     },
   ]);
-  hidden.features.add({ id: 'hidden-point', geometry: { type: 'point', position: { lat: 0, lng: 0 } }, properties: {} });
+  hidden.features.add({
+    id: 'hidden-point',
+    geometry: { type: 'point', position: { lat: 0, lng: 0 } },
+    properties: {},
+  });
   const queryBounds = { southwest: { lat: -1, lng: -1 }, northeast: { lat: 1, lng: 1 } };
-  assert.equal(map.query.area(queryBounds).items.length, 3, 'data queries see stored features of every source');
+  assert.equal(
+    map.query.area(queryBounds).items.length,
+    3,
+    'data queries see stored features of every source',
+  );
   const onlyRoads = map.query.area(queryBounds, { sources: ['roads'] });
   assert.equal(onlyRoads.items.length, 2, 'source filter never mixes foreign sources');
-  assert.ok(onlyRoads.items.some((item) => item.ref.id === 'line'), 'line intersecting with endpoints outside is found');
-  assert.ok(onlyRoads.items.some((item) => item.ref.id === 'around'), 'surrounding polygon is found');
+  assert.ok(
+    onlyRoads.items.some((item) => item.ref.id === 'line'),
+    'line intersecting with endpoints outside is found',
+  );
+  assert.ok(
+    onlyRoads.items.some((item) => item.ref.id === 'around'),
+    'surrounding polygon is found',
+  );
   map.addLayer({ id: 'zones-layer', type: 'fills', source: hidden, visible: false });
-  assert.equal(map.query.area(queryBounds, { sources: ['zones'] }).items.length, 1, 'hidden layers keep data queryable');
+  assert.equal(
+    map.query.area(queryBounds, { sources: ['zones'] }).items.length,
+    1,
+    'hidden layers keep data queryable',
+  );
 
   const many = map.data.vector({ id: 'many' });
   const points = Array.from({ length: 23 }, (_, i) => ({
@@ -436,13 +517,17 @@ test('QUERY-01/02/03/04/06/07/08: data queries, pagination, filters and identity
     geometry: { type: 'point' as const, position: { lat: i * 1e-4, lng: i * 1e-4 } },
     properties: {},
   }));
-  await many.features.replace(points as never[]);
+  await many.features.replace(points);
   const pageBounds = { southwest: { lat: -1, lng: -1 }, northeast: { lat: 1, lng: 1 } };
   const seen = new Set<number>();
   let cursor: { offset: number; revision: number } | undefined;
   let pages = 0;
   for (;;) {
-    const result = map.query.area(pageBounds, { sources: ['many'], limit: 5, ...(cursor ? { cursor } : {}) });
+    const result = map.query.area(pageBounds, {
+      sources: ['many'],
+      limit: 5,
+      ...(cursor ? { cursor } : {}),
+    });
     for (const item of result.items) seen.add(item.ref.id as number);
     pages++;
     if (!result.next) break;
@@ -454,7 +539,7 @@ test('QUERY-01/02/03/04/06/07/08: data queries, pagination, filters and identity
   assert.ok(first.next);
   many.features.update(22, { properties: { changed: true } });
   try {
-    map.query.area(pageBounds, { sources: ['many'], limit: 5, cursor: first.next! });
+    map.query.area(pageBounds, { sources: ['many'], limit: 5, cursor: first.next });
     assert.fail('expected invalid-state');
   } catch (error) {
     assert.ok(isMapletError(error));
@@ -475,7 +560,11 @@ test('STYLE-10: a static scene reuses one plan without re-evaluating per frame',
   map.debug.layerInstances('layer');
   const first = map.debug.planBuildCount();
   map.debug.layerInstances('layer');
-  assert.equal(map.debug.planBuildCount(), first, 'the cached plan is reused while the revision is unchanged');
+  assert.equal(
+    map.debug.planBuildCount(),
+    first,
+    'the cached plan is reused while the revision is unchanged',
+  );
   assert.ok(first >= before);
   source.features.update(1, { properties: { status: 'online' } });
   map.debug.layerInstances('layer');

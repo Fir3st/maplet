@@ -26,18 +26,34 @@ import type {
 } from './api/types.ts';
 import { crs as crsRegistry, type Crs } from './math/crs.ts';
 import { boundsToWorldRect, queryDataAt, queryDataRect, type AreaRelation } from './scene/query.ts';
-import { type LayerKind, type LayerSpec, type MoveTarget, type FeatureOverride, type LayerImpl, type GroupImpl } from './scene/layers.ts';
 import {
-  type RasterSourceHandle,
-} from './scene/raster-source.ts';
+  type LayerKind,
+  type LayerSpec,
+  type MoveTarget,
+  type FeatureOverride,
+  type LayerImpl,
+  type GroupImpl,
+} from './scene/layers.ts';
+import { type RasterSourceHandle } from './scene/raster-source.ts';
 import { Scene } from './scene/scene.ts';
 import type { VectorSourceHandle, FeatureInput } from './scene/source.ts';
 import { SourceImpl } from './scene/source.ts';
 import type { ImportPipelineDebug } from './io/import-pipeline.ts';
 import type { Filter } from './scene/expression.ts';
 import type { FeatureState, FeatureStatePatch } from './scene/state.ts';
-import type { EndpointPolicy, NeighborOptions, RelationInput, RelationSnapshot, TraverseOptions } from './scene/relations.ts';
-import { createFontAssetHandle, createImageAssetHandle, type FontAssetHandle, type ImageAssetHandle } from './scene/assets.ts';
+import type {
+  EndpointPolicy,
+  NeighborOptions,
+  RelationInput,
+  RelationSnapshot,
+  TraverseOptions,
+} from './scene/relations.ts';
+import {
+  createFontAssetHandle,
+  createImageAssetHandle,
+  type FontAssetHandle,
+  type ImageAssetHandle,
+} from './scene/assets.ts';
 import type { BindingInput, BindingSnapshot } from './scene/bindings.ts';
 import type { RasterTilesOptions, WmsOptions } from './formats/raster.ts';
 import {
@@ -50,25 +66,38 @@ import type {
   MediaSourceHandle,
   VideoSourceOptions,
 } from './scene/media-source.ts';
-import type {
-  VectorTilesOptions,
-  VectorTilesSourceHandle,
-} from './scene/vector-tile-source.ts';
-import { ViewImpl, defaultClock, type Clock, type FitOptions, type FlyOptions, type ViewSnapshot, type ViewUpdate } from './view/view.ts';
+import type { VectorTilesOptions, VectorTilesSourceHandle } from './scene/vector-tile-source.ts';
+import {
+  ViewImpl,
+  defaultClock,
+  type Clock,
+  type FitOptions,
+  type FlyOptions,
+  type ViewSnapshot,
+  type ViewUpdate,
+} from './view/view.ts';
 import { createBackend, type BackendInitOptions, type MapBackend } from './render/backends.ts';
-import { ControlsHost, type ControlHandle, type ControlSpec, type ListControlOptions } from './ui/controls.ts';
+import {
+  ControlsHost,
+  type ControlHandle,
+  type ControlSpec,
+  type ListControlOptions,
+} from './ui/controls.ts';
 import { attributionsForLayers } from './ui/attribution.ts';
 import { DetailController } from './ui/detail.ts';
 import type { DetailHandle, DetailOptions } from './ui/detail.ts';
 import {
   createLocator,
-  type GeolocationLike,
   type LocateOptions,
   type LocateResult,
   type LocateWatch,
   type LocateWatchOptions,
 } from './ui/locate.ts';
-import { InteractionController, type GestureGate, type InteractionOptions } from './interaction/interaction.ts';
+import {
+  InteractionController,
+  type GestureGate,
+  type InteractionOptions,
+} from './interaction/interaction.ts';
 import type { SceneEventMap } from './scene/scene.ts';
 import {
   buildFramePlan,
@@ -154,7 +183,11 @@ export interface LayerHandle {
   setStyle(style: Record<string, unknown>): void;
   readonly features: LayerFeaturesHandle;
   /** Feature events for this layer, before its groups and the map (EVENT-01). */
-  on(type: 'feature', fn: (event: MapFeatureEvent) => void, options?: SubscribeOptions): Unsubscribe;
+  on(
+    type: 'feature',
+    fn: (event: MapFeatureEvent) => void,
+    options?: SubscribeOptions,
+  ): Unsubscribe;
   remove(): void;
 }
 
@@ -166,7 +199,11 @@ export interface GroupHandle {
   setVisible(visible: boolean): void;
   getVisible(): boolean;
   /** Feature events of layers under this group, before the map (EVENT-01). */
-  on(type: 'feature', fn: (event: MapFeatureEvent) => void, options?: SubscribeOptions): Unsubscribe;
+  on(
+    type: 'feature',
+    fn: (event: MapFeatureEvent) => void,
+    options?: SubscribeOptions,
+  ): Unsubscribe;
   remove(): void;
 }
 
@@ -176,13 +213,20 @@ export interface LayersHandle {
   list(): LayerHandle[];
   /** Direct child ids in painter order; omitted parent means the map root. */
   entries(parent?: string): readonly string[];
-  update(id: string, patch: Partial<Pick<LayerSpec, 'style' | 'filter' | 'namespace' | 'visible' | 'interaction'>>): void;
+  update(
+    id: string,
+    patch: Partial<Pick<LayerSpec, 'style' | 'filter' | 'namespace' | 'visible' | 'interaction'>>,
+  ): void;
   remove(id: string): void;
   move(id: string, target: MoveTarget): void;
 }
 
 export interface GroupsHandle {
-  add(spec: { readonly id: string; readonly visible?: boolean; readonly parent?: string }): GroupHandle;
+  add(spec: {
+    readonly id: string;
+    readonly visible?: boolean;
+    readonly parent?: string;
+  }): GroupHandle;
   get(id: string): GroupHandle | undefined;
   list(): GroupHandle[];
   remove(id: string): void;
@@ -211,7 +255,12 @@ export interface AssetsHandle {
 }
 
 export interface SourcesHandle {
-  vector<G = import('./api/types.ts').Geometry, P = import('./api/types.ts').FeatureProperties>(options: { readonly id: string }): VectorSourceHandle<G, P>;
+  vector<
+    G = import('./api/types.ts').Geometry,
+    P = import('./api/types.ts').FeatureProperties,
+  >(options: {
+    readonly id: string;
+  }): VectorSourceHandle<G, P>;
   rasterTiles(options: RasterTilesOptions): RasterSourceHandle;
   wms(options: WmsOptions): RasterSourceHandle;
   /**
@@ -229,7 +278,14 @@ export interface SourcesHandle {
   video(options: VideoSourceOptions): MediaSourceHandle;
   /** MVT vector tiles: viewport-loaded, read-only, one logical feature per identity. */
   vectorTiles(options: VectorTilesOptions): VectorTilesSourceHandle;
-  get(id: string): VectorSourceHandle | RasterSourceHandle | MediaSourceHandle | VectorTilesSourceHandle | undefined;
+  get(
+    id: string,
+  ):
+    | VectorSourceHandle
+    | RasterSourceHandle
+    | MediaSourceHandle
+    | VectorTilesSourceHandle
+    | undefined;
   list(): readonly string[];
   remove(id: string, options?: { readonly cascade?: boolean }): void;
 }
@@ -237,7 +293,10 @@ export interface SourcesHandle {
 export interface StateHandle {
   get(ref: FeatureRef): FeatureState;
   set(ref: FeatureRef, patch: FeatureStatePatch): void;
-  subscribe(fn: (event: { sourceId: string; id: FeatureRef['id']; state: FeatureState }) => void, options?: SubscribeOptions): Unsubscribe;
+  subscribe(
+    fn: (event: { sourceId: string; id: FeatureRef['id']; state: FeatureState }) => void,
+    options?: SubscribeOptions,
+  ): Unsubscribe;
 }
 
 export interface SelectionHandle {
@@ -246,7 +305,10 @@ export interface SelectionHandle {
   add(refs: readonly FeatureRef[]): void;
   remove(refs: readonly FeatureRef[]): void;
   clear(): void;
-  subscribe(fn: (event: { revision: number; selected: readonly FeatureRef[] }) => void, options?: SubscribeOptions): Unsubscribe;
+  subscribe(
+    fn: (event: { revision: number; selected: readonly FeatureRef[] }) => void,
+    options?: SubscribeOptions,
+  ): Unsubscribe;
 }
 
 export interface RelationsHandle {
@@ -302,9 +364,15 @@ export interface QueryHandle {
     },
   ): readonly FeatureSnapshot[];
   /** Data query over a bounds. */
-  area(bounds: import('./math/bounds.ts').Bounds<Position>, options?: AreaQueryOptions): AreaQueryResult;
+  area(
+    bounds: import('./math/bounds.ts').Bounds<Position>,
+    options?: AreaQueryOptions,
+  ): AreaQueryResult;
   /** Rendered picking; resolves with the topmost pickable instance (GPU required). */
-  rendered(point: ScreenPoint, options?: { readonly limit?: number }): Promise<readonly PickResult[]>;
+  rendered(
+    point: ScreenPoint,
+    options?: { readonly limit?: number },
+  ): Promise<readonly PickResult[]>;
 }
 
 export interface DebugHandle {
@@ -434,8 +502,16 @@ export interface MapEngine {
   whenRendered(revision?: number, options?: { readonly signal?: AbortSignal }): Promise<void>;
   capabilities(): Capabilities;
   stats(): MapStats;
-  on<K extends keyof SceneEventTypes>(type: K, fn: (event: SceneEventTypes[K]) => void, options?: SubscribeOptions): Off;
-  once<K extends keyof SceneEventTypes>(type: K, fn: (event: SceneEventTypes[K]) => void, options?: SubscribeOptions): Off;
+  on<K extends keyof SceneEventTypes>(
+    type: K,
+    fn: (event: SceneEventTypes[K]) => void,
+    options?: SubscribeOptions,
+  ): Off;
+  once<K extends keyof SceneEventTypes>(
+    type: K,
+    fn: (event: SceneEventTypes[K]) => void,
+    options?: SubscribeOptions,
+  ): Off;
   off<K extends keyof SceneEventTypes>(type: K, fn: (event: SceneEventTypes[K]) => void): void;
   destroy(): void;
   readonly destroyed: boolean;
@@ -520,7 +596,10 @@ class SwappableBackend implements MapBackend {
     return this.inner.pick(scene, point, options);
   }
 
-  samplePixel(scene: Scene, point: ScreenPoint): Promise<{ r: number; g: number; b: number; a: number }> {
+  samplePixel(
+    scene: Scene,
+    point: ScreenPoint,
+  ): Promise<{ r: number; g: number; b: number; a: number }> {
     if (this.failure) {
       fail('gpu-unavailable', this.failure, {});
     }
@@ -558,15 +637,21 @@ class SwappableBackend implements MapBackend {
 /* createMap                                                                   */
 /* -------------------------------------------------------------------------- */
 
-export async function createMapEngine(options: EngineOptions, attach: (engine: MapEngine) => MapHandle): Promise<MapHandle> {
-  assertArgument(options !== null && typeof options === 'object', 'createMap expects an options object');
+export async function createMapEngine(
+  options: EngineOptions,
+  attach: (engine: MapEngine) => MapHandle,
+): Promise<MapHandle> {
+  assertArgument(
+    options !== null && typeof options === 'object',
+    'createMap expects an options object',
+  );
   const projection = options.projection ?? crsRegistry.webMercator();
   assertArgument(
     typeof projection === 'object' &&
       projection !== null &&
-      typeof (projection as Crs).toWorld === 'function' &&
-      typeof (projection as Crs).fromWorld === 'function' &&
-      typeof (projection as Crs).normalize === 'function',
+      typeof projection.toWorld === 'function' &&
+      typeof projection.fromWorld === 'function' &&
+      typeof projection.normalize === 'function',
     'projection must be a CRS object; use crs.webMercator() or crs.define(...)',
   );
   const renderer = options.renderer ?? {};
@@ -610,7 +695,8 @@ export async function createMapEngine(options: EngineOptions, attach: (engine: M
     width = sizeOption.width;
     height = sizeOption.height;
     if (options.container !== undefined) {
-      if (typeof document === 'undefined') fail('environment', 'a map container requires a browser environment');
+      if (typeof document === 'undefined')
+        fail('environment', 'a map container requires a browser environment');
       container = resolveContainer(options.container);
       const rect = container.getBoundingClientRect();
       width = rect.width > 0 ? rect.width : sizeOption.width;
@@ -644,8 +730,7 @@ export async function createMapEngine(options: EngineOptions, attach: (engine: M
         });
         break;
       } catch (error) {
-        const message =
-          isMapletError(error) ? `${error.code}: ${error.message}` : String(error);
+        const message = isMapletError(error) ? `${error.code}: ${error.message}` : String(error);
         notes.push(`${kind} unavailable (${message})`);
         backend = null;
       }
@@ -763,15 +848,23 @@ export async function createMapEngine(options: EngineOptions, attach: (engine: M
   if (options.interactive !== false && container) {
     const picker = {
       pick: (target: Scene, point: ScreenPoint, pickOptions: { readonly limit: number }) =>
-        target.overridePick?.(point, pickOptions) ?? backendProxy?.pick(target, point, pickOptions) ?? Promise.resolve([]),
+        target.overridePick?.(point, pickOptions) ??
+        backendProxy?.pick(target, point, pickOptions) ??
+        Promise.resolve([]),
     };
-    controller = new InteractionController(container, scene, view, picker, options.interaction ?? {});
+    controller = new InteractionController(
+      container,
+      scene,
+      view,
+      picker,
+      options.interaction ?? {},
+    );
   }
 
   let resizeObserver: ResizeObserver | null = null;
   if (container && typeof ResizeObserver !== 'undefined') {
     resizeObserver = new ResizeObserver(() => {
-      const rect = container!.getBoundingClientRect();
+      const rect = container.getBoundingClientRect();
       if (rect.width === 0 || rect.height === 0) return;
       view.resize(rect.width, rect.height);
       backendProxy?.resize(rect.width, rect.height);
@@ -780,15 +873,26 @@ export async function createMapEngine(options: EngineOptions, attach: (engine: M
   }
 
   let publicMap: MapHandle;
-  const map = buildHandle(scene, view, backendProxy, controller, container, dpr, () => publicMap, () => {
-    resizeObserver?.disconnect();
-    controller?.destroy();
-  });
+  const map = buildHandle(
+    scene,
+    view,
+    backendProxy,
+    controller,
+    container,
+    dpr,
+    () => publicMap,
+    () => {
+      resizeObserver?.disconnect();
+      controller?.destroy();
+    },
+  );
   try {
     publicMap = attach(map);
     for (const plugin of options.plugins ?? []) map.use(plugin);
   } catch (error) {
-    try { map.destroy(); } catch (cleanupError) {
+    try {
+      map.destroy();
+    } catch (cleanupError) {
       throw new AggregateError([error, cleanupError], 'map plugin setup and cleanup failed');
     }
     throw error;
@@ -797,9 +901,7 @@ export async function createMapEngine(options: EngineOptions, attach: (engine: M
 }
 
 function defaultCenter(projection: Crs): Position {
-  return projection.positionKind === 'geographic'
-    ? { lat: 0, lng: 0 }
-    : { x: 0, y: 0 };
+  return projection.positionKind === 'geographic' ? { lat: 0, lng: 0 } : { x: 0, y: 0 };
 }
 
 function resolveContainer(input: HTMLElement | string | undefined): HTMLElement {
@@ -813,10 +915,10 @@ function resolveContainer(input: HTMLElement | string | undefined): HTMLElement 
     }
     return element;
   }
-  if (typeof input !== 'object' || typeof (input as HTMLElement).appendChild !== 'function') {
+  if (typeof input !== 'object' || typeof input.appendChild !== 'function') {
     fail('invalid-argument', 'container must be an element or an element id', {});
   }
-  return input as HTMLElement;
+  return input;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -833,7 +935,12 @@ function buildHandle(
   getPublicMap: () => MapHandle,
   onDestroy: () => void,
 ): MapEngine {
-  const renderExtensions = new RenderExtensions(scene, getPublicMap, (visible) => backend?.setVisible(visible), dpr);
+  const renderExtensions = new RenderExtensions(
+    scene,
+    getPublicMap,
+    (visible) => backend?.setVisible(visible),
+    dpr,
+  );
   const plugins = new PluginHost(getPublicMap, container, renderExtensions.handle);
   const worldScale = (): number => Math.pow(2, view.zoom);
   const currentPlanOptions = (): { deviceWidth: number; deviceHeight: number; dpr: number } => {
@@ -898,14 +1005,23 @@ function buildHandle(
     rasterTiles(options) {
       scene.assertAlive('sources.rasterTiles');
       assertArgument(options?.id, 'sources.rasterTiles requires an id');
-      assertArgument(typeof options.url === 'string' && options.url.length > 0, 'rasterTiles requires a url template');
+      assertArgument(
+        typeof options.url === 'string' && options.url.length > 0,
+        'rasterTiles requires a url template',
+      );
       return scene.createRasterSource(options.id, 'rasterTiles', options);
     },
     wms(options) {
       scene.assertAlive('sources.wms');
       assertArgument(options?.id, 'sources.wms requires an id');
-      assertArgument(typeof options.url === 'string' && options.url.length > 0, 'wms requires a url');
-      assertArgument(typeof options.layers === 'string' && options.layers.length > 0, 'wms requires layers');
+      assertArgument(
+        typeof options.url === 'string' && options.url.length > 0,
+        'wms requires a url',
+      );
+      assertArgument(
+        typeof options.layers === 'string' && options.layers.length > 0,
+        'wms requires layers',
+      );
       return scene.createRasterSource(options.id, 'wms', options);
     },
     wmsCapabilities(url, options) {
@@ -926,7 +1042,10 @@ function buildHandle(
       scene.assertAlive('sources.video');
       assertArgument(options?.id, 'sources.video requires an id');
       assertArgument(options.bounds, 'sources.video requires bounds');
-      assertArgument(typeof options.url === 'string' && options.url.length > 0, 'sources.video requires a url');
+      assertArgument(
+        typeof options.url === 'string' && options.url.length > 0,
+        'sources.video requires a url',
+      );
       return scene.createMediaSource('video', options);
     },
     vectorTiles(options) {
@@ -956,7 +1075,9 @@ function buildHandle(
     const handle: LayerHandle = {
       id: layer.id,
       signal: layer.lifetime.signal,
-      get parentId() { return layer.parent?.id ?? null; },
+      get parentId() {
+        return layer.parent?.id ?? null;
+      },
       get kind() {
         return layer.kind;
       },
@@ -978,7 +1099,7 @@ function buildHandle(
       },
       setStyle(style) {
         scene.assertAlive('layer.setStyle');
-        layer.style = style as typeof layer.style;
+        layer.style = style;
         layer.touch();
         scene.publishStateChange(true);
       },
@@ -1020,8 +1141,12 @@ function buildHandle(
   const buildGroupHandle = (group: GroupImpl): GroupHandle => ({
     id: group.id,
     signal: group.lifetime.signal,
-    get parentId() { return group.parent?.id ?? null; },
-    get removed() { return scene.destroyed || group.removed; },
+    get parentId() {
+      return group.parent?.id ?? null;
+    },
+    get removed() {
+      return scene.destroyed || group.removed;
+    },
     setVisible(visible) {
       scene.assertAlive('group.setVisible');
       scene.layers.setVisible(group.id, visible);
@@ -1310,7 +1435,10 @@ function buildHandle(
   };
 
   const filterHits = (
-    hits: readonly { record: import('./scene/store.ts').SlotRecord; source: import('./scene/source.ts').SourceImpl }[],
+    hits: readonly {
+      record: import('./scene/store.ts').SlotRecord;
+      source: import('./scene/source.ts').SourceImpl;
+    }[],
     options: { readonly sources?: readonly string[]; readonly namespace?: string },
   ): typeof hits => {
     let filtered = hits;
@@ -1342,8 +1470,11 @@ function buildHandle(
           revision: scene.revision,
         });
       }
-      const rect = boundsToWorldRect(scene.crs, bounds as never);
-      const hits = filterHits(queryDataRect(vectorSources(scene), rect, options.relation ?? 'intersects'), options);
+      const rect = boundsToWorldRect(scene.crs, bounds);
+      const hits = filterHits(
+        queryDataRect(vectorSources(scene), rect, options.relation ?? 'intersects'),
+        options,
+      );
       const offset = options.cursor?.offset ?? 0;
       const limit = options.limit ?? 100;
       const page = hits.slice(offset, offset + limit);
@@ -1357,7 +1488,8 @@ function buildHandle(
     },
     async rendered(point, options = {}) {
       scene.assertAlive('query.rendered');
-      if (renderExtensions.active) return renderExtensions.pick(point, { limit: options.limit ?? 1 });
+      if (renderExtensions.active)
+        return renderExtensions.pick(point, { limit: options.limit ?? 1 });
       if (!backend) {
         fail('unsupported-capability', 'rendered queries require a GPU backend', {});
       }
@@ -1392,7 +1524,9 @@ function buildHandle(
       let total = 0;
       for (const draw of plan.draws) {
         if (draw.type !== 'batch' || draw.batch.layerId !== layerId) continue;
-        total += draw.batch.visibleCount ?? (draw.batch.kind === 'fills' ? draw.batch.count / 3 : draw.batch.count);
+        total +=
+          draw.batch.visibleCount ??
+          (draw.batch.kind === 'fills' ? draw.batch.count / 3 : draw.batch.count);
       }
       return Math.round(total);
     },
@@ -1424,7 +1558,11 @@ function buildHandle(
         if (draw.type !== 'batch' || draw.batch.layerId !== layerId) continue;
         const stride = draw.batch.kind === 'fills' ? 12 : draw.batch.kind === 'lines' ? 16 : 16;
         const pickOffset = draw.batch.kind === 'fills' ? 8 : draw.batch.kind === 'lines' ? 6 : 14;
-        const count = draw.batch.indices ? draw.batch.indices.length / 3 : draw.batch.kind === 'fills' ? draw.batch.count / 3 : draw.batch.count;
+        const count = draw.batch.indices
+          ? draw.batch.indices.length / 3
+          : draw.batch.kind === 'fills'
+            ? draw.batch.count / 3
+            : draw.batch.count;
         for (let i = 0; i < count; i++) {
           const row = draw.batch.indices ? draw.batch.indices[i * 3]! : i;
           const pickIndex = draw.batch.data[row * stride + pickOffset]!;
@@ -1477,7 +1615,11 @@ function buildHandle(
       return scene.importPipeline.debug();
     },
     async samplePixel(point) {
-      if (renderExtensions.active) fail('unsupported-capability', 'samplePixel is only available for the built-in GPU renderer');
+      if (renderExtensions.active)
+        fail(
+          'unsupported-capability',
+          'samplePixel is only available for the built-in GPU renderer',
+        );
       scene.assertAlive('debug.samplePixel');
       if (!backend) {
         fail('unsupported-capability', 'pixel sampling requires a GPU backend', {});
@@ -1549,10 +1691,13 @@ function buildHandle(
           list: (options: ListControlOptions) => {
             const bounds = view.getBounds();
             if (!bounds) return [];
-            const rect = boundsToWorldRect(scene.crs, bounds as never);
+            const rect = boundsToWorldRect(scene.crs, bounds);
             const hitOptions: { sources?: readonly string[] } = {};
             if (options.sources) hitOptions.sources = options.sources;
-            const hits = filterHits(queryDataRect(vectorSources(scene), rect, 'intersects'), hitOptions);
+            const hits = filterHits(
+              queryDataRect(vectorSources(scene), rect, 'intersects'),
+              hitOptions,
+            );
             const limit = Math.max(1, Math.min(50, options.limit ?? 10));
             return hits.slice(0, limit).map((hit) => hit.source.snapshotOf(hit.record));
           },
@@ -1593,7 +1738,7 @@ function buildHandle(
 
   const locator = createLocator(() =>
     typeof navigator !== 'undefined' && 'geolocation' in navigator
-      ? (navigator.geolocation as unknown as GeolocationLike)
+      ? navigator.geolocation
       : undefined,
   );
   const activeWatches = new Set<LocateWatch>();
@@ -1602,7 +1747,8 @@ function buildHandle(
     setView: LocateOptions['setView'],
   ): void => {
     if (!setView || scene.crs.positionKind !== 'geographic') return;
-    const zoom = typeof setView === 'object' && setView.zoom !== undefined ? setView.zoom : undefined;
+    const zoom =
+      typeof setView === 'object' && setView.zoom !== undefined ? setView.zoom : undefined;
     const center = { lat: position.lat, lng: position.lng };
     view.set(zoom === undefined ? { center } : { center, zoom });
   };
@@ -1766,8 +1912,16 @@ function buildHandle(
       destroyed = true;
       const errors: unknown[] = [];
       // Plugins remove their resources while public scene handles are still alive.
-      try { plugins.destroy(); } catch (error) { errors.push(error); }
-      try { renderExtensions.destroy(); } catch (error) { errors.push(error); }
+      try {
+        plugins.destroy();
+      } catch (error) {
+        errors.push(error);
+      }
+      try {
+        renderExtensions.destroy();
+      } catch (error) {
+        errors.push(error);
+      }
       // Watches stop before the scene dies so no update can arrive afterwards.
       for (const watch of [...activeWatches]) watch.cancel();
       detailController?.destroy();
@@ -1789,7 +1943,9 @@ function buildHandle(
 
 function rgbaHex(r: number, g: number, b: number): string {
   const byte = (value: number): string =>
-    Math.max(0, Math.min(255, Math.round(value * 255))).toString(16).padStart(2, '0');
+    Math.max(0, Math.min(255, Math.round(value * 255)))
+      .toString(16)
+      .padStart(2, '0');
   return `#${byte(r)}${byte(g)}${byte(b)}`;
 }
 
@@ -1808,13 +1964,13 @@ function resolveLayerTarget(
   target: FeatureRef | string | number,
 ): FeatureRef {
   if (typeof target === 'object' && target !== null && 'id' in target && 'generation' in target) {
-    return target as FeatureRef;
+    return target;
   }
   const source = scene.getSourceImpl(layer.sourceId);
   if (!source) {
     fail('not-found', `layer ${layer.id}: source no longer exists`, { sourceId: layer.sourceId });
   }
-  const record = source.store.get(target as string | number, undefined);
+  const record = source.store.get(target, undefined);
   if (!record) {
     fail('not-found', `layer ${layer.id}: feature not found: ${String(target)}`, { id: target });
   }

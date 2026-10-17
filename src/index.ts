@@ -13,9 +13,25 @@ export {
   type MapSwitcherHandle,
   type MapSwitcherOptions,
 } from './ui/map-switcher.ts';
-export { gestureGuard, type GestureGuardApi, type GestureGuardOptions, type GestureModifier } from './plugins/gesture-guard.ts';
-export { fullscreenMode, type FullscreenApi, type FullscreenControlOptions, type FullscreenOptions } from './plugins/display-mode.ts';
-export { heatmap, type HeatPoint, type HeatmapApi, type HeatmapOptions, type HeatmapUpdate } from './plugins/heatmap.ts';
+export {
+  gestureGuard,
+  type GestureGuardApi,
+  type GestureGuardOptions,
+  type GestureModifier,
+} from './plugins/gesture-guard.ts';
+export {
+  fullscreenMode,
+  type FullscreenApi,
+  type FullscreenControlOptions,
+  type FullscreenOptions,
+} from './plugins/display-mode.ts';
+export {
+  heatmap,
+  type HeatPoint,
+  type HeatmapApi,
+  type HeatmapOptions,
+  type HeatmapUpdate,
+} from './plugins/heatmap.ts';
 export type { GestureGate, GestureKind, GestureRequest } from './interaction/interaction.ts';
 export type { Plugin, PluginContext, PluginHandle } from './plugins.ts';
 export type { CustomRenderer, RenderFrame, RenderHandle } from './render/extensions.ts';
@@ -116,13 +132,16 @@ export type {
 
 export { crs, wrapLongitude, wrapLatitude, haversineMeters } from './math/crs.ts';
 export type { Crs, CustomCrsSpec, Distance, DistanceUnit } from './math/crs.ts';
-export type {
-  Bounds,
-  GeoBounds,
-  PlanarBounds,
-} from './math/bounds.ts';
+export type { Bounds, GeoBounds, PlanarBounds } from './math/bounds.ts';
 export { style } from './api/style.ts';
-export type { Expression, ExpressionInput, ColorValue, Filter, FilterExpression, TypedField } from './scene/expression.ts';
+export type {
+  Expression,
+  ExpressionInput,
+  ColorValue,
+  Filter,
+  FilterExpression,
+  TypedField,
+} from './scene/expression.ts';
 
 export { MapletError, isMapletError } from './api/errors.ts';
 export type { MapletErrorCode } from './api/errors.ts';
@@ -182,11 +201,7 @@ export { columnarToFeatures } from './io/columnar.ts';
 export type { ImportPipelineDebug, ImportWorkerLike } from './io/import-pipeline.ts';
 export type { RasterSourceHandle, RasterSourceSnapshot } from './scene/raster-source.ts';
 export type { ImageAssetHandle, ImageAssetSnapshot, ImageAssetState } from './scene/assets.ts';
-export type {
-  FontAssetHandle,
-  FontAssetSnapshot,
-  FontAssetState,
-} from './scene/assets.ts';
+export type { FontAssetHandle, FontAssetSnapshot, FontAssetState } from './scene/assets.ts';
 export type {
   ImageSourceOptions,
   MediaBounds,
@@ -231,8 +246,20 @@ export type {
 export { decodeMvtTile } from './formats/mvt.ts';
 export type { GeoJsonFeatureCollection } from './formats/geojson.ts';
 export { parseGeoJson, featuresToGeoJson } from './formats/geojson.ts';
-export type { EndpointPolicy, RelationInput, RelationSnapshot, NeighborOptions, TraverseOptions } from './scene/relations.ts';
-export type { BindingInput, BindingSnapshot, GeometryBindingDescriptor, CopyPropertyDescriptor, OnMissingPolicy } from './scene/bindings.ts';
+export type {
+  EndpointPolicy,
+  RelationInput,
+  RelationSnapshot,
+  NeighborOptions,
+  TraverseOptions,
+} from './scene/relations.ts';
+export type {
+  BindingInput,
+  BindingSnapshot,
+  GeometryBindingDescriptor,
+  CopyPropertyDescriptor,
+  OnMissingPolicy,
+} from './scene/bindings.ts';
 export type { FeatureState, FeatureStatePatch } from './scene/state.ts';
 export type {
   LayerKind,
@@ -248,6 +275,13 @@ export type {
 } from './scene/layers.ts';
 export type { PickResult } from './render/picking.ts';
 export { defaultClock } from './view/view.ts';
-export type { Clock, FitOptions, FlyOptions, FitPadding, ViewSnapshot, ViewUpdate } from './view/view.ts';
+export type {
+  Clock,
+  FitOptions,
+  FlyOptions,
+  FitPadding,
+  ViewSnapshot,
+  ViewUpdate,
+} from './view/view.ts';
 
 export const version = '0.1.0-alpha.15';

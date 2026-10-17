@@ -19,9 +19,13 @@ window.addEventListener('error', (event) => result.errors.push(String(event.mess
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const map = await createMap('map', {
-    renderer: { primary: new URLSearchParams(location.search).get('backend') === 'webgpu' ? 'webgpu' : 'webgl1', fallback: false },
-    size: { width: SIZE, height: SIZE },
-    center: { lat: 50.0, lng: 14.0 }, zoom: 12
+  renderer: {
+    primary: new URLSearchParams(location.search).get('backend') === 'webgpu' ? 'webgpu' : 'webgl1',
+    fallback: false,
+  },
+  size: { width: SIZE, height: SIZE },
+  center: { lat: 50.0, lng: 14.0 },
+  zoom: 12,
 });
 
 const source = map.data.vector({ id: 'pois' });
@@ -46,16 +50,35 @@ const bulk = [];
 for (let i = 0; i < 500; i++) {
   bulk.push({
     id: `b${i}`,
-    geometry: { type: 'point', position: { lat: 49.94 + (i % 25) * 0.0006, lng: 13.94 + Math.floor(i / 25) * 0.0006 } },
+    geometry: {
+      type: 'point',
+      position: { lat: 49.94 + (i % 25) * 0.0006, lng: 13.94 + Math.floor(i / 25) * 0.0006 },
+    },
     properties: { name: `B${i}` },
   });
 }
 bulk.push(centerFeature);
-bulk.push({ id: 'broken', geometry: { type: 'point', position: { lat: 50.03, lng: 14.03 } }, properties: {} });
-bulk.push({ id: 'anchor', geometry: { type: 'point', position: { lat: 50.02, lng: 13.98 } }, properties: {} });
-bulk.push({ id: 'rotated', geometry: { type: 'point', position: rotatedPosition }, properties: {} });
+bulk.push({
+  id: 'broken',
+  geometry: { type: 'point', position: { lat: 50.03, lng: 14.03 } },
+  properties: {},
+});
+bulk.push({
+  id: 'anchor',
+  geometry: { type: 'point', position: { lat: 50.02, lng: 13.98 } },
+  properties: {},
+});
+bulk.push({
+  id: 'rotated',
+  geometry: { type: 'point', position: rotatedPosition },
+  properties: {},
+});
 bulk.push({ id: 'tip', geometry: { type: 'point', position: tipPosition }, properties: {} });
-bulk.push({ id: 'tinted', geometry: { type: 'point', position: tintedPosition }, properties: { tint: 'blue' } });
+bulk.push({
+  id: 'tinted',
+  geometry: { type: 'point', position: tintedPosition },
+  properties: { tint: 'blue' },
+});
 await source.features.replace(bulk);
 
 const states = [];
@@ -66,7 +89,15 @@ map.addLayer({
   id: 'icons',
   type: 'points',
   source,
-  filter: { and: [{ not: { id: 'broken' } }, { not: { id: 'anchor' } }, { not: { id: 'rotated' } }, { not: { id: 'tip' } }, { not: { id: 'tinted' } }] },
+  filter: {
+    and: [
+      { not: { id: 'broken' } },
+      { not: { id: 'anchor' } },
+      { not: { id: 'rotated' } },
+      { not: { id: 'tip' } },
+      { not: { id: 'tinted' } },
+    ],
+  },
   style: { icon: 'pin', iconSize: 24, radiusPx: 4, color: '#64748b' },
 });
 map.addLayer({
@@ -74,7 +105,13 @@ map.addLayer({
   type: 'points',
   source,
   filter: { id: 'broken' },
-  style: { icon: 'broken-pin', radiusPx: 10, color: '#16a34a', strokeColor: '#052e16', strokeWidthPx: 1 },
+  style: {
+    icon: 'broken-pin',
+    radiusPx: 10,
+    color: '#16a34a',
+    strokeColor: '#052e16',
+    strokeWidthPx: 1,
+  },
 });
 map.addLayer({
   id: 'anchored',
@@ -102,7 +139,12 @@ map.addLayer({
   type: 'points',
   source,
   filter: { id: 'tinted' },
-  style: { icon: 'pin', iconSize: 24, radiusPx: 0, iconTint: expr.by('tint', { blue: '#3366ff' }, '#ffffff') },
+  style: {
+    icon: 'pin',
+    iconSize: 24,
+    radiusPx: 0,
+    iconTint: expr.by('tint', { blue: '#3366ff' }, '#ffffff'),
+  },
 });
 
 const sample = async (x, y) => {
@@ -110,7 +152,11 @@ const sample = async (x, y) => {
   return [pixel.r, pixel.g, pixel.b, pixel.a];
 };
 const channel = (pixel, expected) =>
-  Math.max(Math.abs(pixel[0] - expected[0]), Math.abs(pixel[1] - expected[1]), Math.abs(pixel[2] - expected[2]));
+  Math.max(
+    Math.abs(pixel[0] - expected[0]),
+    Math.abs(pixel[1] - expected[1]),
+    Math.abs(pixel[2] - expected[2]),
+  );
 
 async function check(name, fn) {
   try {
@@ -159,19 +205,33 @@ await check('MEDIA-07 one texture shared by 500 instances', async () => {
       stats.drawCalls <= 6 &&
       channel(white, [255, 255, 255]) <= 12 &&
       channel(red, [225, 29, 72]) <= 40,
-    detail: { state: ready.state, width: ready.width, height: ready.height, planSprites, drawCalls: stats.drawCalls, white, red },
+    detail: {
+      state: ready.state,
+      width: ready.width,
+      height: ready.height,
+      planSprites,
+      drawCalls: stats.drawCalls,
+      white,
+      red,
+    },
   };
 });
 
 await check('PICK-05 transparent icon areas are not hits', async () => {
   const center = map.positionToScreen({ lat: 50.0, lng: 14.0 });
-  const corner = await map.query.rendered({ x: Math.round(center.x - 12), y: Math.round(center.y - 12) });
+  const corner = await map.query.rendered({
+    x: Math.round(center.x - 12),
+    y: Math.round(center.y - 12),
+  });
   const middle = await map.query.rendered({ x: Math.round(center.x), y: Math.round(center.y) });
   return {
     pass:
       !corner.some((hit) => hit.feature.id === 'center') &&
       middle.some((hit) => hit.feature.id === 'center'),
-    detail: { corner: corner.map((hit) => hit.feature.id), middle: middle.map((hit) => hit.feature.id) },
+    detail: {
+      corner: corner.map((hit) => hit.feature.id),
+      middle: middle.map((hit) => hit.feature.id),
+    },
   };
 });
 
@@ -239,9 +299,12 @@ await check('GEOM-04 rotation turns the sprite around its anchor', async () => {
     );
     if (delta > maxPixelDelta) maxPixelDelta = delta;
     if (delta <= 4) pixelMatches += 1;
-    const flatHit = (await map.query.rendered({ x: Math.round(flatAnchor.x + dx), y: Math.round(flatAnchor.y + dy) })).some(
-      (hit) => hit.feature.id === 'center',
-    );
+    const flatHit = (
+      await map.query.rendered({
+        x: Math.round(flatAnchor.x + dx),
+        y: Math.round(flatAnchor.y + dy),
+      })
+    ).some((hit) => hit.feature.id === 'center');
     const turnedHit = (await map.query.rendered({ x: index.x, y: index.y })).some(
       (hit) => hit.feature.id === 'rotated',
     );
@@ -316,7 +379,13 @@ await check('GEOM-04 rotation keeps the declared anchor at the feature position'
       maxX >= 18 &&
       minY <= -8 &&
       maxY >= 8,
-    detail: { anchor: [Math.round(anchor.x), Math.round(anchor.y)], body, left, top, box: { minX, maxX, minY, maxY } },
+    detail: {
+      anchor: [Math.round(anchor.x), Math.round(anchor.y)],
+      body,
+      left,
+      top,
+      box: { minX, maxX, minY, maxY },
+    },
   };
 });
 
@@ -334,7 +403,11 @@ await check('asset state sequence loading -> ready repaints', async () => {
     frames = map.stats().frames;
   }
   return {
-    pass: states[0] === 'loading' && states.includes('ready') && snapshot.state === 'ready' && frames > before,
+    pass:
+      states[0] === 'loading' &&
+      states.includes('ready') &&
+      snapshot.state === 'ready' &&
+      frames > before,
     detail: {
       states,
       snapshot: snapshot.state,

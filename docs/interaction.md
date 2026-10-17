@@ -3,10 +3,10 @@
 ## Feature events
 
 ```ts
-const off = points.on('click', event => {
+const off = points.on('click', (event) => {
   console.log(event.feature.id, event.position);
 });
-places.on('dragend', event => console.log(event.feature));
+places.on('dragend', (event) => console.log(event.feature));
 off();
 ```
 
@@ -22,7 +22,7 @@ dense datasets, prefer one collection listener to a listener per feature.
 Map clicks also include background clicks, with `feature: null`:
 
 ```ts
-map.on('click', event => {
+map.on('click', (event) => {
   if (event.feature) console.log('Feature', event.feature.id);
   else console.log('Background', event.position);
 });
@@ -54,11 +54,11 @@ updates other state read by style expressions. Enable box selection through
 
 ## Queries
 
-| Method | Result |
-| --- | --- |
-| `map.query.at(position, options)` | Data snapshots near a canonical position; default tolerance 4 CSS px |
-| `map.query.area(bounds, options)` | Bounded data results and a revision-bound pagination cursor |
-| `map.query.rendered(screenPoint, options)` | Async rendered picks, respecting shape, holes and interaction flags |
+| Method                                     | Result                                                               |
+| ------------------------------------------ | -------------------------------------------------------------------- |
+| `map.query.at(position, options)`          | Data snapshots near a canonical position; default tolerance 4 CSS px |
+| `map.query.area(bounds, options)`          | Bounded data results and a revision-bound pagination cursor          |
+| `map.query.rendered(screenPoint, options)` | Async rendered picks, respecting shape, holes and interaction flags  |
 
 Data queries and rendered picking are different: hidden data can remain in source
 queries. Area cursors reject with `invalid-state` after a revision change. WebGL
@@ -85,8 +85,8 @@ DOM button for every source record. Headless maps reject DOM-only operations.
 ## Feature details
 
 ```ts
-points.on('click', event => {
-  map.detail.open(event.feature, { content: feature => String(feature.properties.name) });
+points.on('click', (event) => {
+  map.detail.open(event.feature, { content: (feature) => String(feature.properties.name) });
 });
 ```
 

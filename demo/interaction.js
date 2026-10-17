@@ -20,21 +20,37 @@ window.addEventListener('error', (event) => result.errors.push(String(event.mess
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const channelDelta = (pixel, expected) =>
-  Math.max(Math.abs(pixel.r - expected[0]), Math.abs(pixel.g - expected[1]), Math.abs(pixel.b - expected[2]));
+  Math.max(
+    Math.abs(pixel.r - expected[0]),
+    Math.abs(pixel.g - expected[1]),
+    Math.abs(pixel.b - expected[2]),
+  );
 const GREEN = [22, 163, 74];
 const HOVER_RED = [255, 0, 0];
 const SELECTED_AMBER = [245, 158, 11];
 
 const map = await createMap('map', {
-    renderer: { primary: new URLSearchParams(location.search).get('backend') === 'webgpu' ? 'webgpu' : 'webgl1', fallback: false },
-    size: { width: SIZE, height: SIZE },
-    center: { lat: 50.1, lng: 14.1 }, zoom: 10
+  renderer: {
+    primary: new URLSearchParams(location.search).get('backend') === 'webgpu' ? 'webgpu' : 'webgl1',
+    fallback: false,
+  },
+  size: { width: SIZE, height: SIZE },
+  center: { lat: 50.1, lng: 14.1 },
+  zoom: 10,
 });
 
 const source = map.data.vector({ id: 'pois' });
 await source.features.replace([
-  { id: 'a', geometry: { type: 'point', position: { lat: 50.0, lng: 14.0 } }, properties: { name: 'a' } },
-  { id: 'b', geometry: { type: 'point', position: { lat: 50.2, lng: 14.2 } }, properties: { name: 'b' } },
+  {
+    id: 'a',
+    geometry: { type: 'point', position: { lat: 50.0, lng: 14.0 } },
+    properties: { name: 'a' },
+  },
+  {
+    id: 'b',
+    geometry: { type: 'point', position: { lat: 50.2, lng: 14.2 } },
+    properties: { name: 'b' },
+  },
 ]);
 const root = map.addLayer({ id: 'root' });
 const leaf = root.addLayer({ id: 'leaf' });
@@ -42,13 +58,18 @@ const layer = leaf.addLayer({
   id: 'pois-layer',
   type: 'points',
   source,
-  interactive: true, draggable: true ,
+  interactive: true,
+  draggable: true,
   style: {
     radiusPx: 10,
     color: expr.when(
       expr.state('selected'),
       '#f59e0b',
-      expr.when(expr.state('hovered'), '#ff0000', expr.match(expr.field('name'), { a: '#16a34a', b: '#2563eb' }, '#374151')),
+      expr.when(
+        expr.state('hovered'),
+        '#ff0000',
+        expr.match(expr.field('name'), { a: '#16a34a', b: '#2563eb' }, '#374151'),
+      ),
     ),
   },
 });
@@ -238,16 +259,22 @@ await check('selection style via state.selected', async () => {
 await check('INPUT-07/02 keyboard pan and zoom, form guard', async () => {
   element.focus();
   const before = map.getView();
-  element.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }));
+  element.dispatchEvent(
+    new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }),
+  );
   await sleep(120);
   const afterPan = map.getView();
-  element.dispatchEvent(new KeyboardEvent('keydown', { key: '+', bubbles: true, cancelable: true }));
+  element.dispatchEvent(
+    new KeyboardEvent('keydown', { key: '+', bubbles: true, cancelable: true }),
+  );
   await sleep(120);
   const afterZoom = map.getView();
   const input = document.createElement('input');
   element.appendChild(input);
   const lngBefore = map.getView().center.lng;
-  input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }));
+  input.dispatchEvent(
+    new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }),
+  );
   await sleep(120);
   const lngAfterInput = map.getView().center.lng;
   input.remove();

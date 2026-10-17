@@ -12,27 +12,81 @@ const gaussian = () => {
   return Math.sqrt(-2 * Math.log(first)) * Math.cos(2 * Math.PI * random());
 };
 const clusters = [
-  { id: 'old-town', name: 'Old Town', lat: 50.0840, lng: 14.4180, spread: 0.0050, count: 240, weight: 1 },
-  { id: 'holesovice', name: 'Holešovice', lat: 50.1020, lng: 14.4380, spread: 0.0035, count: 130, weight: 0.85 },
-  { id: 'vinohrady', name: 'Vinohrady', lat: 50.0740, lng: 14.4560, spread: 0.0042, count: 170, weight: 0.8 },
-  { id: 'smichov', name: 'Smíchov', lat: 50.0680, lng: 14.4000, spread: 0.0038, count: 120, weight: 0.7 },
-  { id: 'zizkov', name: 'Žižkov', lat: 50.0880, lng: 14.4600, spread: 0.0032, count: 110, weight: 0.6 },
-  { id: 'letna', name: 'Letná', lat: 50.1020, lng: 14.4130, spread: 0.0030, count: 80, weight: 0.5 },
+  {
+    id: 'old-town',
+    name: 'Old Town',
+    lat: 50.084,
+    lng: 14.418,
+    spread: 0.005,
+    count: 240,
+    weight: 1,
+  },
+  {
+    id: 'holesovice',
+    name: 'Holešovice',
+    lat: 50.102,
+    lng: 14.438,
+    spread: 0.0035,
+    count: 130,
+    weight: 0.85,
+  },
+  {
+    id: 'vinohrady',
+    name: 'Vinohrady',
+    lat: 50.074,
+    lng: 14.456,
+    spread: 0.0042,
+    count: 170,
+    weight: 0.8,
+  },
+  {
+    id: 'smichov',
+    name: 'Smíchov',
+    lat: 50.068,
+    lng: 14.4,
+    spread: 0.0038,
+    count: 120,
+    weight: 0.7,
+  },
+  {
+    id: 'zizkov',
+    name: 'Žižkov',
+    lat: 50.088,
+    lng: 14.46,
+    spread: 0.0032,
+    count: 110,
+    weight: 0.6,
+  },
+  { id: 'letna', name: 'Letná', lat: 50.102, lng: 14.413, spread: 0.003, count: 80, weight: 0.5 },
 ];
 // One sample is a small fraction of the ramp; the accumulation is what turns a
 // dense cluster hot. The explicit `max: 1` keeps single samples faint instead of
 // scaling the largest weight up to a saturated splat.
-const generate = () => clusters.flatMap((cluster) => Array.from({ length: cluster.count }, () => ({
-  position: [cluster.lat + gaussian() * cluster.spread, cluster.lng + gaussian() * cluster.spread * 1.7],
-  weight: Math.max(0.02, cluster.weight * (0.03 + random() * 0.06)),
-})));
+const generate = () =>
+  clusters.flatMap((cluster) =>
+    Array.from({ length: cluster.count }, () => ({
+      position: [
+        cluster.lat + gaussian() * cluster.spread,
+        cluster.lng + gaussian() * cluster.spread * 1.7,
+      ],
+      weight: Math.max(0.02, cluster.weight * (0.03 + random() * 0.06)),
+    })),
+  );
 
-const map = await openExample({ geographic: true, center: { lat: 50.086, lng: 14.429 }, zoom: 13.1 });
+const map = await openExample({
+  geographic: true,
+  center: { lat: 50.086, lng: 14.429 },
+  zoom: 13.1,
+});
 
 // Plain points under the field: the overlay is drawn above the map canvas, so
 // faint areas let them show through while hot cores cover them.
 map.addPoints(
-  clusters.map((cluster) => ({ id: cluster.id, position: [cluster.lat, cluster.lng], properties: { name: cluster.name } })),
+  clusters.map((cluster) => ({
+    id: cluster.id,
+    position: [cluster.lat, cluster.lng],
+    properties: { name: cluster.name },
+  })),
   { style: { radiusPx: 4, color: '#111827', strokeColor: '#ffffff', strokeWidthPx: 1.5 } },
 );
 
@@ -44,12 +98,27 @@ action('New measurements', () => {
   heat.api.setPoints(generate());
   report(`Replaced every sample: ${heat.api.count} weighted points.`);
 });
-const ramps = [null, [[0, '#312e81'], [0.45, '#0ea5e9'], [1, '#f97316']], [[0, '#052e16'], [1, '#fde047']]];
+const ramps = [
+  null,
+  [
+    [0, '#312e81'],
+    [0.45, '#0ea5e9'],
+    [1, '#f97316'],
+  ],
+  [
+    [0, '#052e16'],
+    [1, '#fde047'],
+  ],
+];
 let ramp = 0;
 action('Switch the ramp', () => {
   ramp = (ramp + 1) % ramps.length;
   heat.api.setOptions({ gradient: ramps[ramp] });
-  report(ramp === 0 ? 'Default ramp: blue through cyan and lime to red.' : `Ramp ${ramp} of ${ramps.length - 1}.`);
+  report(
+    ramp === 0
+      ? 'Default ramp: blue through cyan and lime to red.'
+      : `Ramp ${ramp} of ${ramps.length - 1}.`,
+  );
 });
 let radius = 28;
 action('Bigger splats', () => {

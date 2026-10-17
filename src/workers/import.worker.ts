@@ -49,18 +49,33 @@ scope.onmessage = (event: MessageEvent) => {
     const transfer: Transferable[] = [];
     if (!Array.isArray(features)) {
       const buffers = new Set<ArrayBuffer>();
-      const add = (view: ArrayBufferView | undefined): void => { if (view?.buffer instanceof ArrayBuffer) buffers.add(view.buffer); };
+      const add = (view: ArrayBufferView | undefined): void => {
+        if (view?.buffer instanceof ArrayBuffer) buffers.add(view.buffer);
+      };
       if (features.kind === 'prepared-parts') {
         for (const geometry of features.geometries) {
           add(geometry.bbox);
           const payload = geometry.payload;
-          if ('vertices' in payload) { add(payload.vertices); add(payload.parts); add(payload.altitudes); }
-          if ('ringVertices' in payload) { add(payload.ringVertices); add(payload.rings); add(payload.ringOuter); add(payload.altitudes); }
+          if ('vertices' in payload) {
+            add(payload.vertices);
+            add(payload.parts);
+            add(payload.altitudes);
+          }
+          if ('ringVertices' in payload) {
+            add(payload.ringVertices);
+            add(payload.rings);
+            add(payload.ringOuter);
+            add(payload.altitudes);
+          }
         }
       } else {
         const batch = features.kind === 'raw-parts' ? features.batch : features;
-        add(batch.positions); add(batch.altitudes);
-        if (batch.kind !== 'point') { add(batch.partOffsets); add(batch.featurePartOffsets); }
+        add(batch.positions);
+        add(batch.altitudes);
+        if (batch.kind !== 'point') {
+          add(batch.partOffsets);
+          add(batch.featurePartOffsets);
+        }
       }
       for (const buffer of buffers) transfer.push(buffer);
     }

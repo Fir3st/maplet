@@ -24,6 +24,7 @@
  */
 
 import { fail } from '../api/errors.ts';
+import { isArrayValue } from '../api/types.ts';
 import type { FeatureId, FeatureProperties, Geometry, Position } from '../api/types.ts';
 import type { FeatureInput } from '../scene/source.ts';
 
@@ -119,7 +120,11 @@ function readIndexArray(value: unknown, last: number, context: string): Columnar
   }
   for (let i = 1; i < value.length; i++) {
     if (value[i - 1]! >= value[i]!) {
-      invalid(`${context} must be strictly increasing`, { index: i, previous: value[i - 1], value: value[i] });
+      invalid(`${context} must be strictly increasing`, {
+        index: i,
+        previous: value[i - 1],
+        value: value[i],
+      });
     }
   }
   return value;
@@ -131,20 +136,24 @@ function readIds(
   context: string,
 ): readonly (FeatureId | undefined)[] | null {
   if (value === undefined) return null;
-  if (!Array.isArray(value) || value.length !== featureCount) {
+  if (!isArrayValue(value)) {
+    invalid(`${context}.ids must hold one entry per feature`, { length: null, featureCount });
+  }
+  const entries = value as readonly unknown[];
+  if (entries.length !== featureCount) {
     invalid(`${context}.ids must hold one entry per feature`, {
-      length: Array.isArray(value) ? value.length : null,
+      length: entries.length,
       featureCount,
     });
   }
-  for (let i = 0; i < value.length; i++) {
-    const id = value[i];
+  for (let i = 0; i < entries.length; i++) {
+    const id = entries[i];
     if (id === undefined) continue;
     if (typeof id === 'string') continue;
     if (typeof id === 'number' && Number.isSafeInteger(id)) continue;
     invalid(`${context}.ids[${i}] must be a string, a safe integer or undefined`, { id });
   }
-  return value as readonly (FeatureId | undefined)[];
+  return entries as readonly (FeatureId | undefined)[];
 }
 
 function readProperties(
@@ -153,33 +162,49 @@ function readProperties(
   context: string,
 ): readonly (FeatureProperties | undefined)[] | null {
   if (value === undefined) return null;
-  if (!Array.isArray(value) || value.length !== featureCount) {
+  if (!isArrayValue(value)) {
     invalid(`${context}.properties must hold one entry per feature`, {
-      length: Array.isArray(value) ? value.length : null,
+      length: null,
       featureCount,
     });
   }
-  for (let i = 0; i < value.length; i++) {
-    const entry = value[i];
+  const entries = value as readonly unknown[];
+  if (entries.length !== featureCount) {
+    invalid(`${context}.properties must hold one entry per feature`, {
+      length: entries.length,
+      featureCount,
+    });
+  }
+  for (let i = 0; i < entries.length; i++) {
+    const entry = entries[i];
     if (entry === undefined) continue;
     if (typeof entry !== 'object' || entry === null || Array.isArray(entry)) {
       invalid(`${context}.properties[${i}] must be an object or undefined`, { properties: entry });
     }
   }
-  return value as readonly (FeatureProperties | undefined)[];
+  return entries as readonly (FeatureProperties | undefined)[];
 }
 
 /** Metadata is validated/owned on the publishing thread, not round-tripped. */
-export function validateColumnarMetadata(batch: ColumnarBatch, count: number, context = 'columnar'): void {
+export function validateColumnarMetadata(
+  batch: ColumnarBatch,
+  count: number,
+  context = 'columnar',
+): void {
   readIds(batch.ids, count, context);
   readProperties(batch.properties, count, context);
 }
 
 /** Validate a point batch without expanding it into hundreds of thousands of objects. */
-export function validatePointBatch(batch: ColumnarPointBatch, options: ColumnarToFeaturesOptions): ColumnarPointBatch {
+export function validatePointBatch(
+  batch: ColumnarPointBatch,
+  options: ColumnarToFeaturesOptions,
+): ColumnarPointBatch {
   const context = options.context ?? 'columnar';
-  if (typeof batch !== 'object' || batch === null || batch.kind !== 'point') invalid(`${context}: expected a point batch`);
-  if ('partOffsets' in batch || 'featurePartOffsets' in batch) invalid(`${context}: a point batch has no part offsets`);
+  if (typeof batch !== 'object' || batch === null || batch.kind !== 'point')
+    invalid(`${context}: expected a point batch`);
+  if ('partOffsets' in batch || 'featurePartOffsets' in batch)
+    invalid(`${context}: a point batch has no part offsets`);
   const positions = readPositions(batch.positions, context);
   const count = positions.length / 2;
   readAltitudes(batch.altitudes, count, options.positionKind, context);
@@ -194,15 +219,29 @@ export function validatePointBatch(batch: ColumnarPointBatch, options: ColumnarT
 }
 
 /** Validate flat structure before projection; never materialize Position objects. */
-export function validatePartsBatch(batch: ColumnarPartsBatch, options: ColumnarToFeaturesOptions): number {
+export function validatePartsBatch(
+  batch: ColumnarPartsBatch,
+  options: ColumnarToFeaturesOptions,
+): number {
   const context = options.context ?? 'columnar';
-  if (typeof batch !== 'object' || batch === null || (batch.kind !== 'lineString' && batch.kind !== 'polygon')) invalid(`${context}: expected a parts batch`);
-  const positions = readPositions(batch.positions, context), vertices = positions.length / 2;
+  if (
+    typeof batch !== 'object' ||
+    batch === null ||
+    (batch.kind !== 'lineString' && batch.kind !== 'polygon')
+  )
+    invalid(`${context}: expected a parts batch`);
+  const positions = readPositions(batch.positions, context),
+    vertices = positions.length / 2;
   readAltitudes(batch.altitudes, vertices, options.positionKind, context);
   const parts = readIndexArray(batch.partOffsets, vertices, `${context}.partOffsets`).length - 1;
-  const count = batch.featurePartOffsets === undefined ? parts : readIndexArray(batch.featurePartOffsets, parts, `${context}.featurePartOffsets`).length - 1;
+  const count =
+    batch.featurePartOffsets === undefined
+      ? parts
+      : readIndexArray(batch.featurePartOffsets, parts, `${context}.featurePartOffsets`).length - 1;
   validateColumnarMetadata(batch, count, context);
-  for (let at = 0; at < positions.length; at++) if (!Number.isFinite(positions[at])) invalid(`${context}.positions[${Math.floor(at / 2)}] must be finite numbers`);
+  for (let at = 0; at < positions.length; at++)
+    if (!Number.isFinite(positions[at]))
+      invalid(`${context}.positions[${Math.floor(at / 2)}] must be finite numbers`);
   return count;
 }
 
@@ -238,7 +277,7 @@ export function columnarToFeatures(
     return Number.isNaN(altitude) ? { lng: x, lat: y } : { lng: x, lat: y, altitude };
   };
   const readRange = (start: number, end: number): Position[] => {
-    const out: Position[] = new Array(end - start);
+    const out: Position[] = new Array<Position>(end - start);
     for (let vertex = start; vertex < end; vertex++) out[vertex - start] = read(vertex);
     return out;
   };
@@ -259,7 +298,7 @@ export function columnarToFeatures(
     }
     const ids = readIds(pointBatch.ids, vertexCount, context);
     const properties = readProperties(pointBatch.properties, vertexCount, context);
-    const features: ColumnarFeatureInput[] = new Array(vertexCount);
+    const features: ColumnarFeatureInput[] = new Array<ColumnarFeatureInput>(vertexCount);
     for (let vertex = 0; vertex < vertexCount; vertex++) {
       features[vertex] = withMetadata(
         { geometry: { type: 'point', position: read(vertex) } },
@@ -267,7 +306,7 @@ export function columnarToFeatures(
         properties?.[vertex],
       );
     }
-    return features as unknown as FeatureInput[];
+    return features;
   }
 
   const partsBatch = batch as ColumnarPartsBatch;
@@ -280,7 +319,7 @@ export function columnarToFeatures(
   const featureCount = featurePartOffsets ? featurePartOffsets.length - 1 : partCount;
   const ids = readIds(partsBatch.ids, featureCount, context);
   const properties = readProperties(partsBatch.properties, featureCount, context);
-  const features: ColumnarFeatureInput[] = new Array(featureCount);
+  const features: ColumnarFeatureInput[] = new Array<ColumnarFeatureInput>(featureCount);
   for (let feature = 0; feature < featureCount; feature++) {
     const firstPart = featurePartOffsets ? featurePartOffsets[feature]! : feature;
     const lastPart = featurePartOffsets ? featurePartOffsets[feature + 1]! : feature + 1;
@@ -296,5 +335,5 @@ export function columnarToFeatures(
         : { type: 'polygon', rings: parts };
     features[feature] = withMetadata({ geometry }, ids?.[feature], properties?.[feature]);
   }
-  return features as unknown as FeatureInput[];
+  return features;
 }

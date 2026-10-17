@@ -7,7 +7,8 @@ an inline SVG grid; OpenStreetMap loads only after you choose it.
 
 ```ts
 const tiles = map.addTiles('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  maxZoom: 19, attribution: '© OpenStreetMap contributors',
+  maxZoom: 19,
+  attribution: '© OpenStreetMap contributors',
 });
 map.addControl('attribution');
 ```

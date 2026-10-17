@@ -6,7 +6,9 @@ Use Node.js 22+ and the pinned TypeScript compiler. Python 3 serves local pages.
 
 ```sh
 npm ci --ignore-scripts
-npm run check
+npm run check          # lint, formatting, build, types, unit tests
+npm run lint           # ESLint (type-checked) over every source tree
+npm run format         # Prettier write; npm run format:check verifies
 npm run examples:build
 npm run examples:serve
 ```
@@ -30,14 +32,14 @@ browser; video fixture generation additionally requires ffmpeg. See
 
 ## Repository
 
-| Directory | Contents |
-| --- | --- |
-| `src/` | Library source |
-| `test/`, `type-tests/` | Unit, integration, distribution and consumer-type tests |
-| `docs/` | Guides, tutorial prose, contracts and benchmark records |
-| `examples/` | Live tutorial JavaScript, site styling and browser helpers |
-| `demo/` | Diagnostic pages, fixture generators and GPU regression scenarios |
-| `scripts/` | Builds, declarations and publication |
+| Directory              | Contents                                                          |
+| ---------------------- | ----------------------------------------------------------------- |
+| `src/`                 | Library source                                                    |
+| `test/`, `type-tests/` | Unit, integration, distribution and consumer-type tests           |
+| `docs/`                | Guides, tutorial prose, contracts and benchmark records           |
+| `examples/`            | Live tutorial JavaScript, site styling and browser helpers        |
+| `demo/`                | Diagnostic pages, fixture generators and GPU regression scenarios |
+| `scripts/`             | Builds, declarations and publication                              |
 
 Generated builds, screenshots, caches and downloaded provider tiles are not source
 files. Preserve diagnostic fixtures and their notices; they are part of the tests.
@@ -51,7 +53,8 @@ release tag yet. Once its tag exists, documentation-only pushes redeploy the
 website without creating another package release.
 
 ```sh
-npm version prerelease --preid=alpha --no-git-tag-version
+npm version <version> --no-git-tag-version                    # stable release
+npm version prerelease --preid=alpha --no-git-tag-version     # prerelease
 ```
 
 Update the public `version` export and changelog with the manifest, commit, then

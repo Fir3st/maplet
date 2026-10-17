@@ -49,11 +49,11 @@ per version/backend and three interleaved Canvas controls use the unchanged
 Version order reverses in repetition two. All 15 setup/pan processes pass count,
 projection and pixel checks. No benchmark, profiling or build runs concurrently.
 
-| Three-run median | Maplet WebGL 1 | Maplet WebGPU | Leaflet Canvas |
-| --- | ---: | ---: | ---: |
-| Complete setup to paint opportunity | 315 ms | 275 ms | 287 ms |
-| Import / layer installation | 243 ms | 206 ms | 221 ms |
-| GC-stabilized main-thread heap increase | 127.4 MiB | 127.3 MiB | 207.1 MiB |
+| Three-run median                        | Maplet WebGL 1 | Maplet WebGPU | Leaflet Canvas |
+| --------------------------------------- | -------------: | ------------: | -------------: |
+| Complete setup to paint opportunity     |         315 ms |        275 ms |         287 ms |
+| Import / layer installation             |         243 ms |        206 ms |         221 ms |
+| GC-stabilized main-thread heap increase |      127.4 MiB |     127.3 MiB |      207.1 MiB |
 
 Immediate baseline setup medians are 367 ms / 336 ms: reductions of 14.2% / 18.2%,
 with all six paired runs improving. Final WebGL is **28 ms (9.8%) slower than
@@ -94,17 +94,17 @@ version order reverses in repetition two. No benchmark or build runs concurrentl
 The [raw final record](retained-scene-ab.json) includes evaluator/build hashes,
 individual measurements, tail intervals, functional checks and explicit timeouts.
 
-| Alternating A/B: `315c5c8` → retained scene | WebGL 1 | WebGPU |
-| --- | ---: | ---: |
-| 500k points: setup to paint opportunity, median | 465 → 405 ms | 458 → 326 ms |
-| 500k points: data loading, median | 380 → 313 ms | 378 → 242 ms |
-| 500k points: GC-stabilized JS heap increase | 138.7 → 142.0 MiB | 138.7 → 142.0 MiB |
-| 500k points: warm pan p50 | 16.7 → 16.7 ms | 16.7 → 16.7 ms |
-| Mixed vectors/symbols: warm pan p50 | 56.8 → 16.7 ms | 57.3 → 16.7 ms |
-| Mixed vectors/symbols: appearance edit p50 | 57.7 → 16.9 ms | 57.6 → 16.6 ms |
-| Mixed vectors/symbols: draw calls | 2070 → 5 | 2070 → 5 |
-| Mixed vectors/symbols: GC-stabilized JS heap increase | 20.1 → 7.5 MiB | 20.1 → 7.5 MiB |
-| Mixed vectors/symbols: GPU allocation | 17.37 → 4.44 MiB | 17.37 → 4.49 MiB |
+| Alternating A/B: `315c5c8` → retained scene           |           WebGL 1 |            WebGPU |
+| ----------------------------------------------------- | ----------------: | ----------------: |
+| 500k points: setup to paint opportunity, median       |      465 → 405 ms |      458 → 326 ms |
+| 500k points: data loading, median                     |      380 → 313 ms |      378 → 242 ms |
+| 500k points: GC-stabilized JS heap increase           | 138.7 → 142.0 MiB | 138.7 → 142.0 MiB |
+| 500k points: warm pan p50                             |    16.7 → 16.7 ms |    16.7 → 16.7 ms |
+| Mixed vectors/symbols: warm pan p50                   |    56.8 → 16.7 ms |    57.3 → 16.7 ms |
+| Mixed vectors/symbols: appearance edit p50            |    57.7 → 16.9 ms |    57.6 → 16.6 ms |
+| Mixed vectors/symbols: draw calls                     |          2070 → 5 |          2070 → 5 |
+| Mixed vectors/symbols: GC-stabilized JS heap increase |    20.1 → 7.5 MiB |    20.1 → 7.5 MiB |
+| Mixed vectors/symbols: GPU allocation                 |  17.37 → 4.44 MiB |  17.37 → 4.49 MiB |
 
 The point evaluator (`demo/compare.js`) is unchanged. The complementary mixed
 fixture (`demo/e2e/complex-scene.mjs`) uses 96 × 256-vertex lines, 64 polygons
@@ -138,14 +138,14 @@ no baseline app-stage time, median or speedup ratio is inferred. The candidate
 passes three fresh processes on each main backend and one basic-profile run,
 with complete exported geometry and actual line/fill/hole pixels and picking.
 
-| Vertex-heavy candidate only, three-run medians | WebGL 1 | WebGPU |
-| --- | ---: | ---: |
-| Import | 21.1 ms | 20.9 ms |
-| Import to first paint fence | 1070.9 ms | 1101.3 ms |
-| Warm pan p50 / p95 | 16.7 / 18.3 ms | 16.7 / 18.4 ms |
-| Appearance edit p50 / p95 | 16.6 / 31.4 ms | 16.2 / 32.0 ms |
-| Main-thread JS heap increase after GC | 11.12 MiB | 11.08 MiB |
-| GPU allocation / draw calls | 7.07 MiB / 3 | 7.12 MiB / 3 |
+| Vertex-heavy candidate only, three-run medians |        WebGL 1 |         WebGPU |
+| ---------------------------------------------- | -------------: | -------------: |
+| Import                                         |        21.1 ms |        20.9 ms |
+| Import to first paint fence                    |      1070.9 ms |      1101.3 ms |
+| Warm pan p50 / p95                             | 16.7 / 18.3 ms | 16.7 / 18.4 ms |
+| Appearance edit p50 / p95                      | 16.6 / 31.4 ms | 16.2 / 32.0 ms |
+| Main-thread JS heap increase after GC          |      11.12 MiB |      11.08 MiB |
+| GPU allocation / draw calls                    |   7.07 MiB / 3 |   7.12 MiB / 3 |
 
 This record has **31 completed passing processes and two baseline timeouts**:
 24 alternating point/mixed-scene runs and seven completed dense-candidate runs.
@@ -156,20 +156,20 @@ runs establish this fixture's behavior, not universal sustained-frame guarantees
 
 ### Bulk initialization
 
-| Measurement after bulk initialization | Maplet WebGL 1 | Maplet WebGPU | Leaflet Canvas |
-| --- | ---: | ---: | ---: |
-| Setup to paint opportunity, median | 449 ms | 444 ms | 282 ms |
-| Data loading, median | 366 ms | 363 ms | 215 ms |
-| Main-thread JS heap increase after GC | 138.7 MiB | 138.7 MiB | 207.1 MiB |
-| Warm pan interval p50, median across runs | 16.7 ms | 16.7 ms | 140.8 ms |
-| Warm pan interval p95, median across runs | 18.3 ms | 18.4 ms | 151.5 ms |
+| Measurement after bulk initialization     | Maplet WebGL 1 | Maplet WebGPU | Leaflet Canvas |
+| ----------------------------------------- | -------------: | ------------: | -------------: |
+| Setup to paint opportunity, median        |         449 ms |        444 ms |         282 ms |
+| Data loading, median                      |         366 ms |        363 ms |         215 ms |
+| Main-thread JS heap increase after GC     |      138.7 MiB |     138.7 MiB |      207.1 MiB |
+| Warm pan interval p50, median across runs |        16.7 ms |       16.7 ms |       140.8 ms |
+| Warm pan interval p95, median across runs |        18.3 ms |       18.4 ms |       151.5 ms |
 
-| Alternating A/B: `40e22ed` → bulk initialization | Maplet WebGL 1 | Maplet WebGPU |
-| --- | ---: | ---: |
-| Setup to paint opportunity, median | 606 → 449 ms (25.9% shorter) | 598 → 444 ms (25.8% shorter) |
-| Data loading, median | 518 → 366 ms (29.3% shorter) | 516 → 363 ms (29.7% shorter) |
-| Main-thread JS heap increase after GC | 139.1 → 138.7 MiB | 139.0 → 138.7 MiB |
-| Warm pan p50 | 16.7 → 16.7 ms | 16.7 → 16.7 ms |
+| Alternating A/B: `40e22ed` → bulk initialization |               Maplet WebGL 1 |                Maplet WebGPU |
+| ------------------------------------------------ | ---------------------------: | ---------------------------: |
+| Setup to paint opportunity, median               | 606 → 449 ms (25.9% shorter) | 598 → 444 ms (25.8% shorter) |
+| Data loading, median                             | 518 → 366 ms (29.3% shorter) | 516 → 363 ms (29.7% shorter) |
+| Main-thread JS heap increase after GC            |            139.1 → 138.7 MiB |            139.0 → 138.7 MiB |
+| Warm pan p50                                     |               16.7 → 16.7 ms |               16.7 → 16.7 ms |
 
 Both builds use the same endpoint/browser/fixture/evaluator, and version order
 reverses in repetition two. All **15 setup/pan runs** pass full-count, projection
@@ -195,20 +195,20 @@ the animation-frame floor and do not isolate GPU execution time.
 
 ### Direct point ingestion (preceding initialization stage)
 
-| Measurement after direct point ingest | Maplet WebGL 1 | Maplet WebGPU | Leaflet Canvas |
-| --- | ---: | ---: | ---: |
-| Setup to paint opportunity, median | 685 ms | 654 ms | 288 ms |
-| Data loading, median | 598 ms | 571 ms | 220 ms |
-| Main-thread JS heap increase after GC | 139.1 MiB | 139.0 MiB | 207.1 MiB |
-| Warm pan interval p50, median across runs | 16.7 ms | 16.7 ms | 137.1 ms |
-| Warm pan interval p95, median across runs | 16.9 ms | 17.5 ms | 167.4 ms |
+| Measurement after direct point ingest     | Maplet WebGL 1 | Maplet WebGPU | Leaflet Canvas |
+| ----------------------------------------- | -------------: | ------------: | -------------: |
+| Setup to paint opportunity, median        |         685 ms |        654 ms |         288 ms |
+| Data loading, median                      |         598 ms |        571 ms |         220 ms |
+| Main-thread JS heap increase after GC     |      139.1 MiB |     139.0 MiB |      207.1 MiB |
+| Warm pan interval p50, median across runs |        16.7 ms |       16.7 ms |       137.1 ms |
+| Warm pan interval p95, median across runs |        16.9 ms |       17.5 ms |       167.4 ms |
 
-| Alternating A/B: retained-point baseline → direct ingest | Maplet WebGL 1 | Maplet WebGPU |
-| --- | ---: | ---: |
-| Setup to paint opportunity, median | 743 → 685 ms (7.8% shorter) | 756 → 654 ms (13.5% shorter) |
-| Data loading, median | 659 → 598 ms (9.3% shorter) | 674 → 571 ms (15.3% shorter) |
-| Main-thread JS heap increase after GC | 139.1 → 139.1 MiB | 139.0 → 139.0 MiB |
-| Warm pan p50 | 16.7 → 16.7 ms | 16.7 → 16.7 ms |
+| Alternating A/B: retained-point baseline → direct ingest |              Maplet WebGL 1 |                Maplet WebGPU |
+| -------------------------------------------------------- | --------------------------: | ---------------------------: |
+| Setup to paint opportunity, median                       | 743 → 685 ms (7.8% shorter) | 756 → 654 ms (13.5% shorter) |
+| Data loading, median                                     | 659 → 598 ms (9.3% shorter) | 674 → 571 ms (15.3% shorter) |
+| Main-thread JS heap increase after GC                    |           139.1 → 139.1 MiB |            139.0 → 139.0 MiB |
+| Warm pan p50                                             |              16.7 → 16.7 ms |               16.7 → 16.7 ms |
 
 Both versions use the same demo endpoint, browser, fixture and evaluator; only
 the served `dist/` root changes. Before/after order reverses in repetition two.
@@ -230,31 +230,31 @@ isolate GPU execution time.
 
 ### Retained-point revision (preceding stage)
 
-| Measurement | Maplet WebGL 1 | Maplet WebGPU | Leaflet Canvas |
-| --- | ---: | ---: | ---: |
-| Setup to paint opportunity, median | 708 ms | 706 ms | 285 ms |
-| Data loading, median | 619 ms | 623 ms | 219 ms |
-| Main-thread JS heap increase after GC | 139.1 MiB | 139.0 MiB | 207.1 MiB |
-| Warm pan interval p50, median across runs | 16.7 ms | 16.7 ms | 137.1 ms |
-| Warm pan interval p95, median across runs | 17.2 ms | 16.9 ms | 153.7 ms |
+| Measurement                               | Maplet WebGL 1 | Maplet WebGPU | Leaflet Canvas |
+| ----------------------------------------- | -------------: | ------------: | -------------: |
+| Setup to paint opportunity, median        |         708 ms |        706 ms |         285 ms |
+| Data loading, median                      |         619 ms |        623 ms |         219 ms |
+| Main-thread JS heap increase after GC     |      139.1 MiB |     139.0 MiB |      207.1 MiB |
+| Warm pan interval p50, median across runs |        16.7 ms |       16.7 ms |       137.1 ms |
+| Warm pan interval p95, median across runs |        17.2 ms |       16.9 ms |       153.7 ms |
 
 The measured small-pan interval is **8.2× shorter than Leaflet Canvas**. Setup
 is roughly twice as fast as the immediate pre-change Maplet build, but still
 slower than Canvas. This is a fixed-workload result, not an all-maps speed claim.
 
-| Immediate before → after | Maplet WebGL 1 | Maplet WebGPU |
-| --- | ---: | ---: |
-| Setup to paint opportunity, median | 1,375 → 708 ms | 1,388 → 706 ms |
-| Data loading, median | 1,133 → 619 ms | 1,152 → 623 ms |
-| Warm pan p50 | 163.9 → 16.7 ms | 160.1 → 16.7 ms |
+| Immediate before → after              |    Maplet WebGL 1 |     Maplet WebGPU |
+| ------------------------------------- | ----------------: | ----------------: |
+| Setup to paint opportunity, median    |    1,375 → 708 ms |    1,388 → 706 ms |
+| Data loading, median                  |    1,133 → 619 ms |    1,152 → 623 ms |
+| Warm pan p50                          |   163.9 → 16.7 ms |   160.1 → 16.7 ms |
 | Main-thread JS heap increase after GC | 127.3 → 139.1 MiB | 127.3 → 139.0 MiB |
 
-| Single-point operation: p50 / p95 to paint fence | Maplet WebGL 1 | Maplet WebGPU | Leaflet Canvas |
-| --- | ---: | ---: | ---: |
-| Hide | 23.5 / 27.9 ms | 24.0 / 30.0 ms | 33.3 / 33.9 ms |
-| Show | 29.8 / 31.7 ms | 29.0 / 30.4 ms | 33.2 / 34.2 ms |
-| Change color | 30.4 / 31.4 ms | 28.9 / 30.7 ms | 33.3 / 33.6 ms |
-| Move by 40 CSS pixels | 30.1 / 31.9 ms | 28.8 / 30.8 ms | 33.3 / 34.1 ms |
+| Single-point operation: p50 / p95 to paint fence | Maplet WebGL 1 |  Maplet WebGPU | Leaflet Canvas |
+| ------------------------------------------------ | -------------: | -------------: | -------------: |
+| Hide                                             | 23.5 / 27.9 ms | 24.0 / 30.0 ms | 33.3 / 33.9 ms |
+| Show                                             | 29.8 / 31.7 ms | 29.0 / 30.4 ms | 33.2 / 34.2 ms |
+| Change color                                     | 30.4 / 31.4 ms | 28.9 / 30.7 ms | 33.3 / 33.6 ms |
+| Move by 40 CSS pixels                            | 30.1 / 31.9 ms | 28.8 / 30.8 ms | 33.3 / 34.1 ms |
 
 Against the immediate pre-change Maplet build, these p50 values are **5.4–7.2×
 shorter** (before: 162.5–178.8 ms). Their small difference from Canvas is close

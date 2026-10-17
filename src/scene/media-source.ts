@@ -16,7 +16,13 @@
 
 import { fail } from '../api/errors.ts';
 import { Emitter } from '../api/events.ts';
-import { isGeoPosition, isPlanarPosition, type Position, type SubscribeOptions, type Unsubscribe } from '../api/types.ts';
+import {
+  isGeoPosition,
+  isPlanarPosition,
+  type Position,
+  type SubscribeOptions,
+  type Unsubscribe,
+} from '../api/types.ts';
 
 export type MediaSourceKind = 'image' | 'video';
 export type MediaState = 'loading' | 'ready' | 'error';
@@ -91,7 +97,12 @@ export function normalizeMediaBounds(bounds: MediaBounds): MediaBounds {
   if (geo) {
     const a = southwest as { lat: number; lng: number };
     const b = northeast as { lat: number; lng: number };
-    if (!Number.isFinite(a.lat) || !Number.isFinite(a.lng) || !Number.isFinite(b.lat) || !Number.isFinite(b.lng)) {
+    if (
+      !Number.isFinite(a.lat) ||
+      !Number.isFinite(a.lng) ||
+      !Number.isFinite(b.lat) ||
+      !Number.isFinite(b.lng)
+    ) {
       fail('invalid-argument', 'media bounds contain a non-finite coordinate', {});
     }
     return {
@@ -101,7 +112,12 @@ export function normalizeMediaBounds(bounds: MediaBounds): MediaBounds {
   }
   const a = southwest as { x: number; y: number };
   const b = northeast as { x: number; y: number };
-  if (!Number.isFinite(a.x) || !Number.isFinite(a.y) || !Number.isFinite(b.x) || !Number.isFinite(b.y)) {
+  if (
+    !Number.isFinite(a.x) ||
+    !Number.isFinite(a.y) ||
+    !Number.isFinite(b.x) ||
+    !Number.isFinite(b.y)
+  ) {
     fail('invalid-argument', 'media bounds contain a non-finite coordinate', {});
   }
   return {
@@ -142,9 +158,16 @@ export function validateMediaRegion(
     region.width < 1 ||
     region.height < 1
   ) {
-    fail('invalid-region', 'updateRegion requires integer x/y/width/height >= 1', { region: { ...region } });
+    fail('invalid-region', 'updateRegion requires integer x/y/width/height >= 1', {
+      region: { ...region },
+    });
   }
-  if (region.x < 0 || region.y < 0 || region.x + region.width > size.width || region.y + region.height > size.height) {
+  if (
+    region.x < 0 ||
+    region.y < 0 ||
+    region.x + region.width > size.width ||
+    region.y + region.height > size.height
+  ) {
     fail('invalid-region', 'updateRegion region lies outside the bitmap', {
       region: { ...region },
       size: { width: size.width, height: size.height },
@@ -168,7 +191,11 @@ export function validateMediaRegion(
 }
 
 /** Premultiplied RGBA rows of a region, for partial GPU uploads. */
-export function premultiplyRegion(pixels: Uint8ClampedArray | Uint8Array, stride: number, region: MediaRegion): Uint8Array {
+export function premultiplyRegion(
+  pixels: Uint8ClampedArray | Uint8Array,
+  stride: number,
+  region: MediaRegion,
+): Uint8Array {
   const out = new Uint8Array(region.width * region.height * 4);
   for (let row = 0; row < region.height; row++) {
     let source = row * stride;
@@ -255,7 +282,8 @@ export class MediaSourceImpl {
       return;
     }
     const pixels = (options as ImageSourceOptions).pixels;
-    if (pixels && url) fail('invalid-argument', 'image sources take either url or pixels', { sourceId: this.id });
+    if (pixels && url)
+      fail('invalid-argument', 'image sources take either url or pixels', { sourceId: this.id });
     if (pixels) {
       if (
         !Number.isInteger(pixels.width) ||
@@ -264,7 +292,9 @@ export class MediaSourceImpl {
         pixels.height < 1 ||
         pixels.width * pixels.height * 4 > MAX_MEDIA_BYTES
       ) {
-        fail('invalid-argument', 'image pixels require positive integer width/height', { sourceId: this.id });
+        fail('invalid-argument', 'image pixels require positive integer width/height', {
+          sourceId: this.id,
+        });
       }
       if (pixels.data.length !== pixels.width * pixels.height * 4) {
         fail('invalid-argument', 'image pixels data must hold width * height * 4 RGBA bytes', {
@@ -291,7 +321,8 @@ export class MediaSourceImpl {
       this.state = 'ready';
       return;
     }
-    if (!url) fail('invalid-argument', 'image sources require a url or pixels', { sourceId: this.id });
+    if (!url)
+      fail('invalid-argument', 'image sources require a url or pixels', { sourceId: this.id });
     this.loadImage(url);
   }
 
@@ -304,8 +335,13 @@ export class MediaSourceImpl {
   }
 
   /** Descriptor update: URL (images and video), bounds and rotation. Pixel updates use `updateRegion`. */
-  update(patch: { readonly url?: string; readonly bounds?: MediaBounds; readonly rotate?: number }): void {
-    if (this.destroyed) fail('destroyed', 'the media source has been destroyed', { sourceId: this.id });
+  update(patch: {
+    readonly url?: string;
+    readonly bounds?: MediaBounds;
+    readonly rotate?: number;
+  }): void {
+    if (this.destroyed)
+      fail('destroyed', 'the media source has been destroyed', { sourceId: this.id });
     if (patch.bounds) {
       this.bounds = normalizeMediaBounds(patch.bounds);
       this.revision++;
@@ -421,10 +457,17 @@ export class MediaSourceImpl {
    * mutation (MEDIA-04); the changed rectangles are handed to the active
    * backend so the upload stays partial.
    */
-  updateRegion(region: MediaRegion, pixels: Uint8Array | Uint8ClampedArray, options?: { readonly stride?: number }): void {
-    if (this.destroyed) fail('destroyed', 'the media source has been destroyed', { sourceId: this.id });
+  updateRegion(
+    region: MediaRegion,
+    pixels: Uint8Array | Uint8ClampedArray,
+    options?: { readonly stride?: number },
+  ): void {
+    if (this.destroyed)
+      fail('destroyed', 'the media source has been destroyed', { sourceId: this.id });
     if (this.kind !== 'image') {
-      fail('invalid-state', `media source ${this.id} is not an image source`, { sourceId: this.id });
+      fail('invalid-state', `media source ${this.id} is not an image source`, {
+        sourceId: this.id,
+      });
     }
     if (this.state !== 'ready' || !this.element) {
       fail('invalid-state', `media source ${this.id} is not ready for region updates`, {
@@ -432,27 +475,40 @@ export class MediaSourceImpl {
         state: this.state,
       });
     }
-    const { stride } = validateMediaRegion(region, { stride: options?.stride, length: pixels.length }, {
-      width: this.width,
-      height: this.height,
-    });
+    const { stride } = validateMediaRegion(
+      region,
+      { stride: options?.stride, length: pixels.length },
+      {
+        width: this.width,
+        height: this.height,
+      },
+    );
     if (!this.context || !this.canvas) {
       if (!(typeof document !== 'undefined' && this.element instanceof HTMLImageElement)) {
-        fail('invalid-state', `media source ${this.id} has no writable pixel store`, { sourceId: this.id });
+        fail('invalid-state', `media source ${this.id} has no writable pixel store`, {
+          sourceId: this.id,
+        });
       }
       this.canvas = document.createElement('canvas');
       this.canvas.width = this.width;
       this.canvas.height = this.height;
       this.context = this.canvas.getContext('2d');
       if (!this.context) {
-        fail('invalid-state', `media source ${this.id} cannot create a writable pixel store`, { sourceId: this.id });
+        fail('invalid-state', `media source ${this.id} cannot create a writable pixel store`, {
+          sourceId: this.id,
+        });
       }
       this.context.drawImage(this.element, 0, 0);
       this.element = this.canvas;
     }
-    const contiguous = region.width * 4 === stride && pixels.length === region.width * region.height * 4;
+    const contiguous =
+      region.width * 4 === stride && pixels.length === region.width * region.height * 4;
     const source = contiguous ? pixels : gatherRows(pixels, stride, region);
-    this.context.putImageData(new ImageData(new Uint8ClampedArray(source), region.width, region.height), region.x, region.y);
+    this.context.putImageData(
+      new ImageData(new Uint8ClampedArray(source), region.width, region.height),
+      region.x,
+      region.y,
+    );
     this.dirty.push({ ...region });
     this.pixelVersion++;
     this.emitter.emit('frame', this.snapshot());
@@ -474,7 +530,8 @@ export class MediaSourceImpl {
   }
 
   play(): void {
-    if (this.destroyed) fail('destroyed', 'the media source has been destroyed', { sourceId: this.id });
+    if (this.destroyed)
+      fail('destroyed', 'the media source has been destroyed', { sourceId: this.id });
     const video = this.video;
     if (!video) {
       fail('invalid-state', `media source ${this.id} is not a video source`, { sourceId: this.id });
@@ -529,13 +586,14 @@ export class MediaSourceImpl {
     const epoch = ++this.pumpEpoch;
     const live = (): boolean =>
       !this.destroyed && this.playing && this.state === 'ready' && epoch === this.pumpEpoch;
-    const frameCallback = (video as HTMLVideoElement & {
+    const videoWithCallback = video as HTMLVideoElement & {
       requestVideoFrameCallback?: (callback: () => void) => number;
-    }).requestVideoFrameCallback;
+    };
+    const frameCallback = videoWithCallback.requestVideoFrameCallback?.bind(video);
     if (typeof frameCallback === 'function') {
       const step = (): void => {
         if (!live()) return;
-        this.frameToken = frameCallback.call(video, () => {
+        this.frameToken = frameCallback(() => {
           this.frameToken = null;
           if (!live()) return;
           this.onFrame();
@@ -561,8 +619,9 @@ export class MediaSourceImpl {
     this.pumpEpoch++;
     const video = this.video;
     if (this.frameToken !== null && video) {
-      (video as HTMLVideoElement & { cancelVideoFrameCallback?: (token: number) => void })
-        .cancelVideoFrameCallback?.(this.frameToken);
+      (
+        video as HTMLVideoElement & { cancelVideoFrameCallback?: (token: number) => void }
+      ).cancelVideoFrameCallback?.(this.frameToken);
       this.frameToken = null;
     }
     if (this.rafToken !== null && typeof cancelAnimationFrame === 'function') {
@@ -685,9 +744,17 @@ export interface MediaSourceHandle {
   /** Resolves once the media is usable or failed. */
   ready(): Promise<MediaSourceSnapshot>;
   /** Descriptor update: `url` (images and video), `bounds` and `rotate`. */
-  update(patch: { readonly url?: string; readonly bounds?: MediaBounds; readonly rotate?: number }): void;
+  update(patch: {
+    readonly url?: string;
+    readonly bounds?: MediaBounds;
+    readonly rotate?: number;
+  }): void;
   /** Image pixel update; validation rejects invalid regions before any change. */
-  updateRegion(region: MediaRegion, pixels: Uint8Array | Uint8ClampedArray, options?: { readonly stride?: number }): void;
+  updateRegion(
+    region: MediaRegion,
+    pixels: Uint8Array | Uint8ClampedArray,
+    options?: { readonly stride?: number },
+  ): void;
   play(): void;
   pause(): void;
   subscribe(fn: (snapshot: MediaSourceSnapshot) => void, options?: SubscribeOptions): Unsubscribe;

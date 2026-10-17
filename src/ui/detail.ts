@@ -131,7 +131,14 @@ export class DetailController {
     contentHost.dataset.detailContent = 'true';
     element.append(contentHost, closeButton);
     this.context.container.appendChild(element);
-    const managed: ManagedDetail = { ref, options, element, contentHost, open: true, removedMarker: false };
+    const managed: ManagedDetail = {
+      ref,
+      options,
+      element,
+      contentHost,
+      open: true,
+      removedMarker: false,
+    };
     this.managed = managed;
     this.update();
     return this.handle(managed);
@@ -148,7 +155,8 @@ export class DetailController {
     if (snapshot) {
       managed.element.dataset.removed = 'false';
       this.renderContent(managed, snapshot);
-      const position = managed.options.anchor ?? representativePosition(snapshot.geometry as Geometry);
+      const position =
+        managed.options.anchor ?? representativePosition(snapshot.geometry as Geometry);
       if (position) this.place(managed.element, this.context.screenOf(position));
       return;
     }
@@ -207,7 +215,10 @@ export class DetailController {
     const rect = this.context.container.getBoundingClientRect();
     const width = element.offsetWidth || 120;
     const height = element.offsetHeight || 40;
-    const x = Math.min(Math.max(screen.x, width / 2 + 6), Math.max(rect.width - width / 2 - 6, width / 2 + 6));
+    const x = Math.min(
+      Math.max(screen.x, width / 2 + 6),
+      Math.max(rect.width - width / 2 - 6, width / 2 + 6),
+    );
     const y = Math.min(Math.max(screen.y - 10, height + 6), Math.max(rect.height - 6, height + 6));
     element.style.left = `${Math.round(x)}px`;
     element.style.top = `${Math.round(y)}px`;

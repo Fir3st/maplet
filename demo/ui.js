@@ -55,7 +55,7 @@ const fix = (lat, lng, accuracy = 10) => ({ coords: { latitude: lat, longitude: 
 /* ----------------------------- scale oracle ------------------------------- */
 
 function expectedGeographicScale(zoom, lat, maxPx = 100) {
-  const mpp = (40075016.686 / 256) * Math.cos((lat * Math.PI) / 180) / 2 ** zoom;
+  const mpp = ((40075016.686 / 256) * Math.cos((lat * Math.PI) / 180)) / 2 ** zoom;
   const raw = mpp * maxPx;
   const exp = Math.floor(Math.log10(raw));
   let step = 0;
@@ -76,11 +76,12 @@ function expectedGeographicScale(zoom, lat, maxPx = 100) {
 
 const main = {};
 const map = await createMap('map-main', {
-    renderer: rendererOptions,
-    size: { width: 560, height: 420 },
-    center: viewCenter, zoom: z,
-    minZoom: 1,
-    maxZoom: 4
+  renderer: rendererOptions,
+  size: { width: 560, height: 420 },
+  center: viewCenter,
+  zoom: z,
+  minZoom: 1,
+  maxZoom: 4,
 });
 main.map = map;
 const sourceOptions = (id, attribution) => ({
@@ -103,12 +104,13 @@ main.scaleControl = map.addControl({ kind: 'scale', id: 'scale' });
 
 const planar = {};
 planar.map = await createMap('map-planar', {
-    projection: crs.simple(),
-    renderer: rendererOptions,
-    size: { width: 240, height: 160 },
-    center: { x: 0, y: 0 }, zoom: 3,
-    minZoom: 0,
-    maxZoom: 8
+  projection: crs.simple(),
+  renderer: rendererOptions,
+  size: { width: 240, height: 160 },
+  center: { x: 0, y: 0 },
+  zoom: 3,
+  minZoom: 0,
+  maxZoom: 8,
 });
 planar.scaleControl = planar.map.addControl({ kind: 'scale', id: 'scale' });
 
@@ -120,8 +122,16 @@ views.host = await createMapSwitcher({
   label: 'Demo map views',
   initial: 'red',
   maps: [
-    { id: 'red', label: 'Red view', options: { renderer: rendererOptions, center: viewCenter, zoom: z } },
-    { id: 'green', label: 'Green view', options: { renderer: rendererOptions, center: viewCenter, zoom: z } },
+    {
+      id: 'red',
+      label: 'Red view',
+      options: { renderer: rendererOptions, center: viewCenter, zoom: z },
+    },
+    {
+      id: 'green',
+      label: 'Green view',
+      options: { renderer: rendererOptions, center: viewCenter, zoom: z },
+    },
   ],
 });
 views.red = views.host.get('red');
@@ -137,8 +147,10 @@ await views.red.whenRendered();
 const containerMain = document.getElementById('map-main');
 const containerPlanar = document.getElementById('map-planar');
 const controlIn = (container, kind) => container.querySelector(`[data-maplet-control="${kind}"]`);
-const zoomButton = (container, action) => controlIn(container, 'zoom').querySelector(`[data-action="${action}"]`);
-const layerCheckbox = (container, id) => controlIn(container, 'layers').querySelector(`input[data-layer-id="${id}"]`);
+const zoomButton = (container, action) =>
+  controlIn(container, 'zoom').querySelector(`[data-action="${action}"]`);
+const layerCheckbox = (container, id) =>
+  controlIn(container, 'layers').querySelector(`input[data-layer-id="${id}"]`);
 const attributionText = (container) => controlIn(container, 'attribution').textContent;
 const scaleLabel = (container) => controlIn(container, 'scale').children[0].textContent;
 const scaleWidth = (container) => parseFloat(controlIn(container, 'scale').children[1].style.width);
@@ -162,7 +174,10 @@ await sleep(400);
 
 await check('UI-01 zoom buttons honour limits and stay in sync with the API', async () => {
   map.setView({ zoom: 4 });
-  const atMax = { inDisabled: zoomButton(containerMain, 'in').disabled, outDisabled: zoomButton(containerMain, 'out').disabled };
+  const atMax = {
+    inDisabled: zoomButton(containerMain, 'in').disabled,
+    outDisabled: zoomButton(containerMain, 'out').disabled,
+  };
   zoomButton(containerMain, 'out').click();
   const afterOut = map.getView().zoom;
   const afterOutState = zoomButton(containerMain, 'in').disabled;
@@ -170,7 +185,10 @@ await check('UI-01 zoom buttons honour limits and stay in sync with the API', as
   map.setView({ zoom: 2 });
   zoomButton(containerMain, 'out').click();
   zoomButton(containerMain, 'out').click();
-  const atMin = { zoom: map.getView().zoom, outDisabled: zoomButton(containerMain, 'out').disabled };
+  const atMin = {
+    zoom: map.getView().zoom,
+    outDisabled: zoomButton(containerMain, 'out').disabled,
+  };
   zoomButton(containerMain, 'out').click();
   const stuck = map.getView().zoom;
   zoomButton(containerMain, 'in').click();
@@ -293,7 +311,8 @@ await check('UI-04 geographic scale matches the independent oracle', async () =>
     widthPx: scaleWidth(containerMain),
   };
   const matches = (entry) =>
-    entry.label === entry.expected.label && Math.abs(entry.widthPx - entry.expected.widthPx) <= 0.05;
+    entry.label === entry.expected.label &&
+    Math.abs(entry.widthPx - entry.expected.widthPx) <= 0.05;
   return {
     pass:
       matches(atThree) &&
@@ -328,8 +347,11 @@ await check('UI-07 locate success, typed errors and unsupported', async () => {
   const success = await pending;
   const center = map.getView().center;
   const setViewOk =
-    success.ok && success.position.lat === 50.5 && success.position.accuracy === 8 &&
-    Math.abs(center.lat - 50.5) < 1e-9 && Math.abs(center.lng - 15.5) < 1e-9;
+    success.ok &&
+    success.position.lat === 50.5 &&
+    success.position.accuracy === 8 &&
+    Math.abs(center.lat - 50.5) < 1e-9 &&
+    Math.abs(center.lng - 15.5) < 1e-9;
   const optionsForwarded = fake.state.current.at(-1).options;
 
   const denied = map.locate();
@@ -402,7 +424,7 @@ await check('UI-09 controls are hit-testable and capture their own gestures', as
     const hit = document.elementFromPoint(at.x, at.y);
     return {
       tag: hit ? hit.tagName : null,
-      data: hit && hit.dataset ? hit.dataset.mapletControl ?? null : null,
+      data: hit && hit.dataset ? (hit.dataset.mapletControl ?? null) : null,
       ok: hit === element || element.contains(hit) || (hit ? hit.contains(element) : false),
     };
   });
@@ -413,19 +435,42 @@ await check('UI-09 controls are hit-testable and capture their own gestures', as
   const zoomBefore = map.getView().zoom;
   const centerBefore = map.getView().center;
   const rect = zoomButton(containerMain, 'in').getBoundingClientRect();
-  zoomButton(containerMain, 'in').dispatchEvent(new PointerEvent('pointerdown', {
-    bubbles: true, cancelable: true, pointerType: 'mouse', pointerId: 99, isPrimary: true, button: 0, buttons: 1,
-    clientX: rect.x + 4, clientY: rect.y + 4,
-  }));
+  zoomButton(containerMain, 'in').dispatchEvent(
+    new PointerEvent('pointerdown', {
+      bubbles: true,
+      cancelable: true,
+      pointerType: 'mouse',
+      pointerId: 99,
+      isPrimary: true,
+      button: 0,
+      buttons: 1,
+      clientX: rect.x + 4,
+      clientY: rect.y + 4,
+    }),
+  );
   await sleep(80);
-  containerMain.dispatchEvent(new PointerEvent('pointermove', {
-    bubbles: true, pointerType: 'mouse', pointerId: 99, isPrimary: true, buttons: 1,
-    clientX: rect.x + 90, clientY: rect.y + 70,
-  }));
-  containerMain.dispatchEvent(new PointerEvent('pointerup', {
-    bubbles: true, pointerType: 'mouse', pointerId: 99, isPrimary: true, buttons: 0,
-    clientX: rect.x + 90, clientY: rect.y + 70,
-  }));
+  containerMain.dispatchEvent(
+    new PointerEvent('pointermove', {
+      bubbles: true,
+      pointerType: 'mouse',
+      pointerId: 99,
+      isPrimary: true,
+      buttons: 1,
+      clientX: rect.x + 90,
+      clientY: rect.y + 70,
+    }),
+  );
+  containerMain.dispatchEvent(
+    new PointerEvent('pointerup', {
+      bubbles: true,
+      pointerType: 'mouse',
+      pointerId: 99,
+      isPrimary: true,
+      buttons: 0,
+      clientX: rect.x + 90,
+      clientY: rect.y + 70,
+    }),
+  );
   await sleep(350);
   const blocked =
     map.getView().zoom === zoomBefore &&
@@ -436,31 +481,62 @@ await check('UI-09 controls are hit-testable and capture their own gestures', as
   // asynchronously (feature-drag pick resolves first), so the move needs a beat.
   const mapRect = containerMain.getBoundingClientRect();
   const at = (x, y) => ({ clientX: mapRect.left + x, clientY: mapRect.top + y });
-  containerMain.dispatchEvent(new PointerEvent('pointerdown', {
-    bubbles: true, cancelable: true, pointerType: 'mouse', pointerId: 98, isPrimary: true, button: 0, buttons: 1,
-    ...at(300, 300),
-  }));
+  containerMain.dispatchEvent(
+    new PointerEvent('pointerdown', {
+      bubbles: true,
+      cancelable: true,
+      pointerType: 'mouse',
+      pointerId: 98,
+      isPrimary: true,
+      button: 0,
+      buttons: 1,
+      ...at(300, 300),
+    }),
+  );
   await sleep(80);
-  containerMain.dispatchEvent(new PointerEvent('pointermove', {
-    bubbles: true, pointerType: 'mouse', pointerId: 98, isPrimary: true, buttons: 1, ...at(250, 270),
-  }));
+  containerMain.dispatchEvent(
+    new PointerEvent('pointermove', {
+      bubbles: true,
+      pointerType: 'mouse',
+      pointerId: 98,
+      isPrimary: true,
+      buttons: 1,
+      ...at(250, 270),
+    }),
+  );
   await sleep(40);
-  containerMain.dispatchEvent(new PointerEvent('pointerup', {
-    bubbles: true, pointerType: 'mouse', pointerId: 98, isPrimary: true, buttons: 0, ...at(250, 270),
-  }));
+  containerMain.dispatchEvent(
+    new PointerEvent('pointerup', {
+      bubbles: true,
+      pointerType: 'mouse',
+      pointerId: 98,
+      isPrimary: true,
+      buttons: 0,
+      ...at(250, 270),
+    }),
+  );
   await sleep(350);
   const panWorks = Math.abs(map.getView().center.lng - centerBefore.lng) > 1e-9;
 
   // Wheel over a control must not zoom; wheel over the map must.
   const zoomAfterPan = map.getView().zoom;
-  zoomButton(containerMain, 'in').dispatchEvent(new WheelEvent('wheel', {
-    bubbles: true, cancelable: true, deltaY: -300,
-  }));
+  zoomButton(containerMain, 'in').dispatchEvent(
+    new WheelEvent('wheel', {
+      bubbles: true,
+      cancelable: true,
+      deltaY: -300,
+    }),
+  );
   await sleep(450);
   const wheelBlocked = map.getView().zoom === zoomAfterPan;
-  containerMain.dispatchEvent(new WheelEvent('wheel', {
-    bubbles: true, cancelable: true, deltaY: -300, ...at(300, 300),
-  }));
+  containerMain.dispatchEvent(
+    new WheelEvent('wheel', {
+      bubbles: true,
+      cancelable: true,
+      deltaY: -300,
+      ...at(300, 300),
+    }),
+  );
   await sleep(700);
   const wheelWorks = map.getView().zoom > zoomAfterPan;
 
@@ -470,38 +546,42 @@ await check('UI-09 controls are hit-testable and capture their own gestures', as
   };
 });
 
-await check('UI-10 the switcher creates only the initial map and exposes accessible tabs', async () => {
-  const tabs = switcherTabs();
-  const redPanel = switcherPanel('red');
-  const greenPanel = switcherPanel('green');
-  const pixel = await views.red.debug.samplePixel({ x: 280, y: 120 });
-  return {
-    pass:
-      views.host.activeId === 'red' &&
-      views.host.get('green') === undefined &&
-      views.host.ids.join(',') === 'red,green' &&
-      tabs.length === 2 &&
-      tabs[0].textContent === 'Red view' &&
-      tabs[1].textContent === 'Green view' &&
-      tabs[0].getAttribute('aria-selected') === 'true' &&
-      tabs[0].tabIndex === 0 &&
-      tabs[1].getAttribute('aria-selected') === 'false' &&
-      tabs[1].tabIndex === -1 &&
-      switcherHost.querySelector('[role="tablist"]').getAttribute('aria-label') === 'Demo map views' &&
-      getComputedStyle(redPanel).visibility === 'visible' &&
-      getComputedStyle(greenPanel).visibility === 'hidden' &&
-      pixel.r > 180 &&
-      pixel.g < 80 &&
-      pixel.b < 80 &&
-      pixel.a > 200,
-    detail: {
-      active: views.host.activeId,
-      ids: views.host.ids,
-      tabs: tabs.map((tab) => tab.textContent),
-      pixel: pixelText(pixel),
-    },
-  };
-});
+await check(
+  'UI-10 the switcher creates only the initial map and exposes accessible tabs',
+  async () => {
+    const tabs = switcherTabs();
+    const redPanel = switcherPanel('red');
+    const greenPanel = switcherPanel('green');
+    const pixel = await views.red.debug.samplePixel({ x: 280, y: 120 });
+    return {
+      pass:
+        views.host.activeId === 'red' &&
+        views.host.get('green') === undefined &&
+        views.host.ids.join(',') === 'red,green' &&
+        tabs.length === 2 &&
+        tabs[0].textContent === 'Red view' &&
+        tabs[1].textContent === 'Green view' &&
+        tabs[0].getAttribute('aria-selected') === 'true' &&
+        tabs[0].tabIndex === 0 &&
+        tabs[1].getAttribute('aria-selected') === 'false' &&
+        tabs[1].tabIndex === -1 &&
+        switcherHost.querySelector('[role="tablist"]').getAttribute('aria-label') ===
+          'Demo map views' &&
+        getComputedStyle(redPanel).visibility === 'visible' &&
+        getComputedStyle(greenPanel).visibility === 'hidden' &&
+        pixel.r > 180 &&
+        pixel.g < 80 &&
+        pixel.b < 80 &&
+        pixel.a > 200,
+      detail: {
+        active: views.host.activeId,
+        ids: views.host.ids,
+        tabs: tabs.map((tab) => tab.textContent),
+        pixel: pixelText(pixel),
+      },
+    };
+  },
+);
 
 await check('UI-10 switching keeps each map view and layer state independent', async () => {
   const red = views.red;
@@ -575,7 +655,9 @@ await check('UI-10 tabs switch with the keyboard and report active changes', asy
   const seen = [];
   const off = views.host.onChange((id) => seen.push(id));
   tabs[0].focus();
-  tabs[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }));
+  tabs[0].dispatchEvent(
+    new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }),
+  );
   await sleep(150);
   const afterRight = {
     active: views.host.activeId,
@@ -583,7 +665,9 @@ await check('UI-10 tabs switch with the keyboard and report active changes', asy
     tabIndex: tabs[1].tabIndex,
     focused: document.activeElement === tabs[1],
   };
-  tabs[1].dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true, cancelable: true }));
+  tabs[1].dispatchEvent(
+    new KeyboardEvent('keydown', { key: 'Home', bubbles: true, cancelable: true }),
+  );
   await sleep(150);
   const afterHome = {
     active: views.host.activeId,
@@ -658,7 +742,8 @@ await check('UI-07 destroy cancels watches and removes control DOM', async () =>
   }
   planar.map.destroy();
   const planarDomGone = containerPlanar.querySelector('.maplet-ui') === null;
-  if (originalGeolocation) Object.defineProperty(Navigator.prototype, 'geolocation', originalGeolocation);
+  if (originalGeolocation)
+    Object.defineProperty(Navigator.prototype, 'geolocation', originalGeolocation);
   return {
     pass:
       stopped &&
@@ -671,7 +756,10 @@ await check('UI-07 destroy cancels watches and removes control DOM', async () =>
 });
 
 result.ms = Math.round(performance.now() - started);
-result.pass = result.errors.length === 0 && result.checks.every((entry) => entry.pass) && result.checks.length === 14;
+result.pass =
+  result.errors.length === 0 &&
+  result.checks.every((entry) => entry.pass) &&
+  result.checks.length === 14;
 window.__uiCheckResult = result;
 window.__ui = { main, planar, views };
 document.title = 'ui-check-done';

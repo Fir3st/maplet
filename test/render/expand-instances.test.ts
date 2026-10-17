@@ -23,8 +23,16 @@ test('expandInstances: corner then instance data per vertex, six vertices per in
   assert.equal(expanded.length, 2 * 6 * perVertex, 'six TRIANGLES vertices per instance');
   assert.deepEqual(Array.from(expanded.slice(0, perVertex)), [-1, -1, 1, 2, 3], 'first vertex');
   const secondInstance = 6 * perVertex;
-  assert.deepEqual(Array.from(expanded.slice(secondInstance, secondInstance + perVertex)), [-1, -1, 4, 5, 6], 'second instance restarts the corners');
-  assert.deepEqual(Array.from(expanded.slice(expanded.length - perVertex)), [-1, 1, 4, 5, 6], 'last corner of the last instance');
+  assert.deepEqual(
+    Array.from(expanded.slice(secondInstance, secondInstance + perVertex)),
+    [-1, -1, 4, 5, 6],
+    'second instance restarts the corners',
+  );
+  assert.deepEqual(
+    Array.from(expanded.slice(expanded.length - perVertex)),
+    [-1, 1, 4, 5, 6],
+    'last corner of the last instance',
+  );
 });
 
 test('expandInstances: zero instances produce an empty buffer', () => {

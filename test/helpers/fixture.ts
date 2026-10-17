@@ -30,7 +30,10 @@ export function manualClock(): ManualClock {
       for (;;) {
         let next: { id: number; at: number; callback: () => void } | null = null;
         for (const [id, task] of tasks) {
-          if (task.at <= target && (!next || task.at < next.at || (task.at === next.at && id < next.id))) {
+          if (
+            task.at <= target &&
+            (!next || task.at < next.at || (task.at === next.at && id < next.id))
+          ) {
             next = { id, at: task.at, callback: task.callback };
           }
         }
@@ -57,7 +60,8 @@ export async function makeMap(options: MapOptions = {}): Promise<MapFixture> {
   const map = await createMap(null, {
     renderer: { primary: 'none' },
     size: { width: 800, height: 600 },
-    center: { lat: 50, lng: 14 }, zoom: 8,
+    center: { lat: 50, lng: 14 },
+    zoom: 8,
     clock,
     ...options,
   });

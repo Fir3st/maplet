@@ -20,9 +20,27 @@ import { layerTree } from './layer-tree.mjs';
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const batteries = [
-  { name: 'comparison:maplet', page: 'compare.html', hook: '__compareCheckResult', query: 'engine=maplet', manual: true },
-  { name: 'comparison:leaflet-canvas', page: 'compare.html', hook: '__compareCheckResult', query: 'engine=leaflet-canvas', manual: true },
-  { name: 'comparison:leaflet-dom', page: 'compare.html', hook: '__compareCheckResult', query: 'engine=leaflet-dom', manual: true },
+  {
+    name: 'comparison:maplet',
+    page: 'compare.html',
+    hook: '__compareCheckResult',
+    query: 'engine=maplet',
+    manual: true,
+  },
+  {
+    name: 'comparison:leaflet-canvas',
+    page: 'compare.html',
+    hook: '__compareCheckResult',
+    query: 'engine=leaflet-canvas',
+    manual: true,
+  },
+  {
+    name: 'comparison:leaflet-dom',
+    page: 'compare.html',
+    hook: '__compareCheckResult',
+    query: 'engine=leaflet-dom',
+    manual: true,
+  },
   { name: 'battery:interaction', page: 'interaction.html', hook: '__interactionCheckResult' },
   { name: 'battery:pick', page: 'pick.html', hook: '__pickCheckResult' },
   { name: 'battery:tiles-svg', page: 'tiles.html', hook: '__tileCheckResult', query: 'mode=svg' },
@@ -35,7 +53,11 @@ export const batteries = [
   { name: 'battery:ui', page: 'ui.html', hook: '__uiCheckResult' },
   { name: 'battery:detail', page: 'detail.html', hook: '__detailCheckResult' },
   { name: 'battery:markers', page: 'markers.html', hook: '__markerCheckResult' },
-  { name: 'battery:plugins-builtin', page: 'plugins-builtin.html', hook: '__builtinPluginCheckResult' },
+  {
+    name: 'battery:plugins-builtin',
+    page: 'plugins-builtin.html',
+    hook: '__builtinPluginCheckResult',
+  },
   { name: 'battery:fonts', page: 'fonts.html', hook: '__fontCheckResult' },
   { name: 'battery:media', page: 'media.html', hook: '__mediaCheckResult' },
   { name: 'battery:import', page: 'import.html', hook: '__importCheckResult' },
@@ -49,21 +71,29 @@ export const batteries = [
 const METERS_PER_DEG_LAT = 110574;
 const metersBetween = (a, b) => {
   const dy = (a.lat - b.lat) * METERS_PER_DEG_LAT;
-  const dx = (a.lng - b.lng) * METERS_PER_DEG_LAT * Math.cos(((a.lat + b.lat) / 2) * Math.PI / 180);
+  const dx =
+    (a.lng - b.lng) * METERS_PER_DEG_LAT * Math.cos((((a.lat + b.lat) / 2) * Math.PI) / 180);
   return Math.hypot(dx, dy);
 };
 const near = (pixel, [r, g, b], tolerance = 40) =>
-  Math.abs(pixel.r - r) <= tolerance && Math.abs(pixel.g - g) <= tolerance && Math.abs(pixel.b - b) <= tolerance;
+  Math.abs(pixel.r - r) <= tolerance &&
+  Math.abs(pixel.g - g) <= tolerance &&
+  Math.abs(pixel.b - b) <= tolerance;
 const midpoint = (a, b) => ({ lat: (a.lat + b.lat) / 2, lng: (a.lng + b.lng) / 2 });
 const describe = (pixel) => `rgba(${pixel.r},${pixel.g},${pixel.b},${pixel.a})`;
 
 const positionOf = (session, source, id) =>
   session.evaluate(`window.__e2e.positionOf(window.__e2e.${source}, '${id}')`);
 const screenOf = (session, source, id) =>
-  session.evaluate(`window.__e2e.screenOf(window.__e2e.positionOf(window.__e2e.${source}, '${id}'))`);
+  session.evaluate(
+    `window.__e2e.screenOf(window.__e2e.positionOf(window.__e2e.${source}, '${id}'))`,
+  );
 const pointTarget = (session, position) =>
-  session.evaluate(`window.__e2e.points.features.update('p1', { geometry: { type: 'point', position: ${JSON.stringify(position)} } }).revision`);
-const pixelAt = (session, position) => session.evaluate(`window.__e2e.pixel(${JSON.stringify(position)})`);
+  session.evaluate(
+    `window.__e2e.points.features.update('p1', { geometry: { type: 'point', position: ${JSON.stringify(position)} } }).revision`,
+  );
+const pixelAt = (session, position) =>
+  session.evaluate(`window.__e2e.pixel(${JSON.stringify(position)})`);
 const awaitRendered = (session, revision) => session.evaluate(`window.__e2e.rendered(${revision})`);
 
 /** Finds a background pixel so pan/zoom gestures start on empty canvas. */
@@ -89,16 +119,29 @@ export const scenarios = [
   { name: 'retained-mixed-scene', page: 'e2e/scene.html', run: retainedScene },
   { name: 'complex-scene-performance', page: 'e2e/scene.html', manual: true, run: complexScene },
   { name: 'retained-point-buffers', page: 'e2e/scene.html', run: retainedPoints },
-  { name: 'comparison-updates:maplet', page: 'compare.html', query: 'engine=maplet',
-    ready: '!!window.__comparison', manual: true, run: compareUpdates },
-  { name: 'comparison-updates:leaflet-canvas', page: 'compare.html', query: 'engine=leaflet-canvas',
-    ready: '!!window.__comparison', manual: true, run: compareUpdates },
+  {
+    name: 'comparison-updates:maplet',
+    page: 'compare.html',
+    query: 'engine=maplet',
+    ready: '!!window.__comparison',
+    manual: true,
+    run: compareUpdates,
+  },
+  {
+    name: 'comparison-updates:leaflet-canvas',
+    page: 'compare.html',
+    query: 'engine=leaflet-canvas',
+    ready: '!!window.__comparison',
+    manual: true,
+    run: compareUpdates,
+  },
   {
     name: 'scene-renders',
     page: 'e2e/scene.html',
     run: async ({ session, expect, options }) => {
       const backend = await session.evaluate('window.__e2e.map.capabilities().backend');
-      if (options.webgpu) expect.equal(backend, 'webgpu', 'runner --webgpu uses the WebGPU backend');
+      if (options.webgpu)
+        expect.equal(backend, 'webgpu', 'runner --webgpu uses the WebGPU backend');
       const probe = await session.evaluate(`(async () => {
         const e = window.__e2e;
         const plate = e.shapes.features.get('plate').geometry;
@@ -118,7 +161,10 @@ export const scenarios = [
       expect.ok(near(probe.t1, [22, 163, 74]), `t1 pixel ${describe(probe.t1)}`);
       expect.ok(near(probe.plate, [249, 115, 22]), `plate pixel ${describe(probe.plate)}`);
       expect.ok(near(probe.route, [220, 38, 38]), `route pixel ${describe(probe.route)}`);
-      expect.ok(near(probe.empty, [255, 255, 255]) && probe.empty.a === 255, `empty pixel ${describe(probe.empty)}`);
+      expect.ok(
+        near(probe.empty, [255, 255, 255]) && probe.empty.a === 255,
+        `empty pixel ${describe(probe.empty)}`,
+      );
     },
   },
   {
@@ -145,13 +191,20 @@ export const scenarios = [
         y += dy;
         await session.mouse('mouseMoved', x, y, { dragging: true });
         await sleep(40);
-        const expected = await session.evaluate(`window.__e2e.map.screenToPosition({ x: ${x}, y: ${y} })`);
+        const expected = await session.evaluate(
+          `window.__e2e.map.screenToPosition({ x: ${x}, y: ${y} })`,
+        );
         const actual = await positionOf(session, 'points', 'p1');
         const error = metersBetween(actual, expected);
-        expect.ok(error < 3, `pointer at (${x}, ${y}): point is ${Math.round(error)} m away from the pointer`);
+        expect.ok(
+          error < 3,
+          `pointer at (${x}, ${y}): point is ${Math.round(error)} m away from the pointer`,
+        );
       }
       await session.mouse('mouseReleased', x, y);
-      const expectedEnd = await session.evaluate(`window.__e2e.map.screenToPosition({ x: ${x}, y: ${y} })`);
+      const expectedEnd = await session.evaluate(
+        `window.__e2e.map.screenToPosition({ x: ${x}, y: ${y} })`,
+      );
       await sleep(150);
       const end = await positionOf(session, 'points', 'p1');
       expect.ok(metersBetween(end, expectedEnd) < 3, 'point drifted after release');
@@ -160,7 +213,10 @@ export const scenarios = [
       await awaitRendered(session, revision);
       const atTarget = await pixelAt(session, end);
       const atStart = await pixelAt(session, start);
-      expect.ok(near(atTarget, [37, 99, 235]), `rendered point not at the drop position: ${describe(atTarget)}`);
+      expect.ok(
+        near(atTarget, [37, 99, 235]),
+        `rendered point not at the drop position: ${describe(atTarget)}`,
+      );
       expect.ok(!near(atStart, [37, 99, 235]), `old position still drawn: ${describe(atStart)}`);
     },
   },
@@ -187,8 +243,14 @@ export const scenarios = [
       await awaitRendered(session, revision);
       const newMid = await pixelAt(session, midpoint(moved, p2));
       const oldMidPixel = await pixelAt(session, oldMid);
-      expect.ok(near(newMid, [124, 58, 237]), `binding link did not follow: midpoint ${describe(newMid)}`);
-      expect.ok(!near(oldMidPixel, [124, 58, 237]), `old link position still drawn: ${describe(oldMidPixel)}`);
+      expect.ok(
+        near(newMid, [124, 58, 237]),
+        `binding link did not follow: midpoint ${describe(newMid)}`,
+      );
+      expect.ok(
+        !near(oldMidPixel, [124, 58, 237]),
+        `old link position still drawn: ${describe(oldMidPixel)}`,
+      );
     },
   },
   {
@@ -202,7 +264,9 @@ export const scenarios = [
         `window.__e2e.map.state.get(window.__e2e.ref(window.__e2e.points, 'p1')).hovered`,
       );
       expect.equal(hovered, true, 'hovered state after real mouse move');
-      const cursor = await session.evaluate(`getComputedStyle(document.getElementById('map')).cursor`);
+      const cursor = await session.evaluate(
+        `getComputedStyle(document.getElementById('map')).cursor`,
+      );
       expect.equal(cursor, 'move', 'draggable feature cursor');
 
       await session.move(620, 40);
@@ -265,8 +329,9 @@ export const scenarios = [
     name: 'wheel-zoom-around-cursor',
     page: 'e2e/scene.html',
     run: async ({ session, expect }) => {
-      const p3 = await positionOf(session, 'points', 'p3');
-      const cursor = await session.evaluate(`window.__e2e.screenOf(window.__e2e.positionOf(window.__e2e.points, 'p3'))`);
+      const cursor = await session.evaluate(
+        `window.__e2e.screenOf(window.__e2e.positionOf(window.__e2e.points, 'p3'))`,
+      );
       const before = await session.evaluate('window.__e2e.map.getView().zoom');
       const p1 = await screenOf(session, 'points', 'p1');
       const p2 = await screenOf(session, 'points', 'p2');
@@ -280,12 +345,22 @@ export const scenarios = [
       const p1b = await screenOf(session, 'points', 'p1');
       const p2b = await screenOf(session, 'points', 'p2');
       const distanceAfter = Math.hypot(p2b.x - p1b.x, p2b.y - p1b.y);
-      expect.close(distanceAfter / distanceBefore, ratio, 0.05 * ratio, 'screen distance scaled with zoom');
+      expect.close(
+        distanceAfter / distanceBefore,
+        ratio,
+        0.05 * ratio,
+        'screen distance scaled with zoom',
+      );
       // Zoom around the cursor: the feature under the cursor stays under it.
       const revision = await session.evaluate('window.__e2e.stats().revision');
       await awaitRendered(session, revision);
-      const pixel = await session.evaluate(`window.__e2e.samplePixel(${Math.round(cursor.x)}, ${Math.round(cursor.y)})`);
-      expect.ok(near(pixel, [37, 99, 235]), `feature under the cursor after zoom: ${describe(pixel)}`);
+      const pixel = await session.evaluate(
+        `window.__e2e.samplePixel(${Math.round(cursor.x)}, ${Math.round(cursor.y)})`,
+      );
+      expect.ok(
+        near(pixel, [37, 99, 235]),
+        `feature under the cursor after zoom: ${describe(pixel)}`,
+      );
     },
   },
   {
@@ -312,7 +387,12 @@ export const scenarios = [
       const distanceAfter = Math.hypot(p2b.x - p1b.x, p2b.y - p1b.y);
       const ratio = 2 ** (after - before);
       expect.ok(after > before, `zoom control changed zoom (${before} -> ${after})`);
-      expect.close(distanceAfter / distanceBefore, ratio, 0.05 * ratio, 'rendered geometry scaled with the control zoom');
+      expect.close(
+        distanceAfter / distanceBefore,
+        ratio,
+        0.05 * ratio,
+        'rendered geometry scaled with the control zoom',
+      );
     },
   },
   {
@@ -341,10 +421,16 @@ export const scenarios = [
         const revision = await pointTarget(session, target);
         await awaitRendered(session, revision);
         const pixel = await pixelAt(session, target);
-        expect.ok(near(pixel, [37, 99, 235]), `step ${step}: point not rendered at the updated position (${describe(pixel)})`);
+        expect.ok(
+          near(pixel, [37, 99, 235]),
+          `step ${step}: point not rendered at the updated position (${describe(pixel)})`,
+        );
         if (step > 0) {
           const stale = await pixelAt(session, previous);
-          expect.ok(!near(stale, [37, 99, 235]), `step ${step}: previous position still rendered (${describe(stale)})`);
+          expect.ok(
+            !near(stale, [37, 99, 235]),
+            `step ${step}: previous position still rendered (${describe(stale)})`,
+          );
         }
         previous = target;
       }
@@ -370,7 +456,11 @@ export const scenarios = [
       await awaitRendered(session, removed);
       const cleared = await pixelAt(session, position);
       expect.ok(!near(cleared, [22, 163, 74]), `removed point gone (${describe(cleared)})`);
-      expect.equal(await session.evaluate('window.__e2e.targets.features.count()'), 1, 'count after remove');
+      expect.equal(
+        await session.evaluate('window.__e2e.targets.features.count()'),
+        1,
+        'count after remove',
+      );
     },
   },
   {
@@ -391,7 +481,10 @@ export const scenarios = [
       await awaitRendered(session, revision);
       const drawn = await pixelAt(session, { lat: 49.94, lng: 14.0 });
       const cleared = await pixelAt(session, oldMid);
-      expect.ok(near(drawn, [220, 38, 38]), `updated line rendered at the new geometry (${describe(drawn)})`);
+      expect.ok(
+        near(drawn, [220, 38, 38]),
+        `updated line rendered at the new geometry (${describe(drawn)})`,
+      );
       expect.ok(!near(cleared, [220, 38, 38]), `old line position gone (${describe(cleared)})`);
     },
   },
@@ -411,7 +504,10 @@ export const scenarios = [
       await awaitRendered(session, revision);
       const drawn = await pixelAt(session, { lat: 50.035, lng: 14.025 });
       const cleared = await pixelAt(session, oldCenter);
-      expect.ok(near(drawn, [249, 115, 22]), `updated fill rendered at the new geometry (${describe(drawn)})`);
+      expect.ok(
+        near(drawn, [249, 115, 22]),
+        `updated fill rendered at the new geometry (${describe(drawn)})`,
+      );
       expect.ok(!near(cleared, [249, 115, 22]), `old fill position gone (${describe(cleared)})`);
     },
   },
@@ -431,10 +527,16 @@ export const scenarios = [
         );
         await awaitRendered(session, revision);
         const drawn = await pixelAt(session, target);
-        expect.ok(near(drawn, [219, 39, 119]), `planar update ${index}: point rendered at (${target.x},${target.y}) -> ${describe(drawn)}`);
+        expect.ok(
+          near(drawn, [219, 39, 119]),
+          `planar update ${index}: point rendered at (${target.x},${target.y}) -> ${describe(drawn)}`,
+        );
         if (index > 0) {
           const stale = await pixelAt(session, previous);
-          expect.ok(!near(stale, [219, 39, 119]), `planar update ${index}: previous position still drawn (${describe(stale)})`);
+          expect.ok(
+            !near(stale, [219, 39, 119]),
+            `planar update ${index}: previous position still drawn (${describe(stale)})`,
+          );
         }
         previous = target;
       }
@@ -460,10 +562,15 @@ export const scenarios = [
         y += dy;
         await session.mouse('mouseMoved', x, y, { dragging: true });
         await sleep(40);
-        const expected = await session.evaluate(`window.__e2e.map.screenToPosition({ x: ${x}, y: ${y} })`);
+        const expected = await session.evaluate(
+          `window.__e2e.map.screenToPosition({ x: ${x}, y: ${y} })`,
+        );
         const actual = await positionOf(session, 'marks', 'm1');
         const error = Math.hypot(actual.x - expected.x, actual.y - expected.y);
-        expect.ok(error < 1e-6, `planar drag to (${x}, ${y}): point is ${error.toExponential(2)} units off the pointer`);
+        expect.ok(
+          error < 1e-6,
+          `planar drag to (${x}, ${y}): point is ${error.toExponential(2)} units off the pointer`,
+        );
       }
       await session.mouse('mouseReleased', x, y);
       await sleep(150);
@@ -472,8 +579,14 @@ export const scenarios = [
       await awaitRendered(session, revision);
       const drawn = await pixelAt(session, end);
       const cleared = await pixelAt(session, start);
-      expect.ok(near(drawn, [219, 39, 119]), `planar point rendered at the drop position (${describe(drawn)})`);
-      expect.ok(!near(cleared, [219, 39, 119]), `planar point left the start position (${describe(cleared)})`);
+      expect.ok(
+        near(drawn, [219, 39, 119]),
+        `planar point rendered at the drop position (${describe(drawn)})`,
+      );
+      expect.ok(
+        !near(cleared, [219, 39, 119]),
+        `planar point left the start position (${describe(cleared)})`,
+      );
     },
   },
   {
@@ -492,7 +605,9 @@ export const scenarios = [
         `window.__maplet.map.debug.samplePixel({ x: ${Math.round(probe.screen.x)}, y: ${Math.round(probe.screen.y)} })`,
       );
       // Anchor the view first so the station is at a known spot.
-      await session.evaluate(`window.__maplet.map.setView({ center: { lat: 50.08, lng: 14.44 }, zoom: 10 }); 1`);
+      await session.evaluate(
+        `window.__maplet.map.setView({ center: { lat: 50.08, lng: 14.44 }, zoom: 10 }); 1`,
+      );
       await sleep(200);
       const screen = await session.evaluate(
         `window.__maplet.map.positionToScreen(window.__maplet.stations.features.get('a').geometry.position)`,
@@ -517,10 +632,17 @@ export const scenarios = [
         previous = { x: previous.x + dx, y: previous.y + dy };
         await session.mouse('mouseMoved', x, y, { dragging: true });
         await sleep(45);
-        const expected = await session.evaluate(`window.__maplet.map.screenToPosition({ x: ${previous.x}, y: ${previous.y} })`);
-        const actual = await session.evaluate(`window.__maplet.stations.features.get('a').geometry.position`);
+        const expected = await session.evaluate(
+          `window.__maplet.map.screenToPosition({ x: ${previous.x}, y: ${previous.y} })`,
+        );
+        const actual = await session.evaluate(
+          `window.__maplet.stations.features.get('a').geometry.position`,
+        );
         const error = metersBetween(actual, expected);
-        expect.ok(error < 3, `station at container (${previous.x}, ${previous.y}) is ${Math.round(error)} m off`);
+        expect.ok(
+          error < 3,
+          `station at container (${previous.x}, ${previous.y}) is ${Math.round(error)} m off`,
+        );
       }
       await session.mouse('mouseReleased', x, y);
       // Move the pointer away so the hover style does not tint the sample.
@@ -528,10 +650,15 @@ export const scenarios = [
       await sleep(300);
       const revision = await session.evaluate('window.__maplet.map.stats().revision');
       await session.evaluate(`window.__maplet.map.whenRendered(${revision})`);
-      const pixelAfter = await session.evaluate(`window.__maplet.map.debug.samplePixel({ x: ${previous.x}, y: ${previous.y} })`);
+      const pixelAfter = await session.evaluate(
+        `window.__maplet.map.debug.samplePixel({ x: ${previous.x}, y: ${previous.y} })`,
+      );
       expect.ok(pixelAfter.a > 200, `station drawn at the drop position: ${describe(pixelAfter)}`);
       expect.ok(
-        Math.abs(pixelBefore.r - pixelAfter.r) + Math.abs(pixelBefore.g - pixelAfter.g) + Math.abs(pixelBefore.b - pixelAfter.b) < 30,
+        Math.abs(pixelBefore.r - pixelAfter.r) +
+          Math.abs(pixelBefore.g - pixelAfter.g) +
+          Math.abs(pixelBefore.b - pixelAfter.b) <
+          30,
         `station looks the same after the drag (${describe(pixelBefore)} -> ${describe(pixelAfter)})`,
       );
     },
@@ -545,10 +672,16 @@ export const scenarios = [
         target: window.__e2e.targets.features.ref('t1'),
         properties: { kind: 'copyProperty', from: window.__e2e.points.features.ref('p1'), field: 'name', toField: 'sourceName' },
       }); 1`);
-      const copied = await session.evaluate(`window.__e2e.targets.features.get('t1').properties.sourceName`);
+      const copied = await session.evaluate(
+        `window.__e2e.targets.features.get('t1').properties.sourceName`,
+      );
       expect.equal(copied, 'P1', 'binding copied the initial value');
-      await session.evaluate(`window.__e2e.points.features.update('p1', { properties: { name: 'P1-renamed' } }); 1`);
-      const updated = await session.evaluate(`window.__e2e.targets.features.get('t1').properties.sourceName`);
+      await session.evaluate(
+        `window.__e2e.points.features.update('p1', { properties: { name: 'P1-renamed' } }); 1`,
+      );
+      const updated = await session.evaluate(
+        `window.__e2e.targets.features.get('t1').properties.sourceName`,
+      );
       expect.equal(updated, 'P1-renamed', 'binding followed the property update');
     },
   },
@@ -566,8 +699,13 @@ export const scenarios = [
       const after = await session.evaluate(
         `window.__e2e.map.relations.neighbors(window.__e2e.points.features.ref('p1')).map((ref) => ref.id)`,
       );
-      expect.ok(after.includes('p2'), `relation neighbours after the move ${JSON.stringify(after)}`);
-      const relation = await session.evaluate(`window.__e2e.map.relations.get('p1-p2') !== undefined`);
+      expect.ok(
+        after.includes('p2'),
+        `relation neighbours after the move ${JSON.stringify(after)}`,
+      );
+      const relation = await session.evaluate(
+        `window.__e2e.map.relations.get('p1-p2') !== undefined`,
+      );
       expect.equal(relation, true, 'relation record still exists');
     },
   },

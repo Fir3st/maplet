@@ -66,12 +66,22 @@ const switcher = await createMapSwitcher({
     {
       id: 'overview',
       label: VIEWS.overview.label,
-      options: { renderer: rendererKind, center: VIEWS.overview.center, zoom: VIEWS.overview.zoom, controls: ['zoom', 'layers'] },
+      options: {
+        renderer: rendererKind,
+        center: VIEWS.overview.center,
+        zoom: VIEWS.overview.zoom,
+        controls: ['zoom', 'layers'],
+      },
     },
     {
       id: 'detail',
       label: VIEWS.detail.label,
-      options: { renderer: rendererKind, center: VIEWS.detail.center, zoom: VIEWS.detail.zoom, controls: ['zoom', 'layers'] },
+      options: {
+        renderer: rendererKind,
+        center: VIEWS.detail.center,
+        zoom: VIEWS.detail.zoom,
+        controls: ['zoom', 'layers'],
+      },
     },
   ],
 });
@@ -80,16 +90,25 @@ const switcher = await createMapSwitcher({
 // order, so each row toggles its whole subtree and shows the `label`.
 function buildNetwork(map) {
   const corridors = map.addLayer({ id: 'corridors', label: 'Corridors' });
-  corridors.addLines(CORRIDORS.map((ids) => path(CITIES, ids)), {
-    style: { color: '#bd573b', widthPx: 2.5, opacity: 0.9, cap: 'round' },
-  });
+  corridors.addLines(
+    CORRIDORS.map((ids) => path(CITIES, ids)),
+    {
+      style: { color: '#bd573b', widthPx: 2.5, opacity: 0.9, cap: 'round' },
+    },
+  );
   const depots = map.addLayer({ id: 'depots', label: 'Depots' });
   const points = depots.addPoints(CITIES.map(point), {
     style: { radiusPx: 7, color: '#16724c', strokeColor: '#ffffff', strokeWidthPx: 2 },
   });
   const names = map.addLayer({ id: 'names', label: 'City names' });
   names.addLabels(points.source, {
-    style: { text: style.field('name'), sizePx: 11, color: '#263e33', offsetPx: { x: 0, y: -16 }, collision: true },
+    style: {
+      text: style.field('name'),
+      sizePx: 11,
+      color: '#263e33',
+      offsetPx: { x: 0, y: -16 },
+      collision: true,
+    },
   });
   points.on('click', (event) => report(`${event.feature.properties.name} · national depot`));
   return { corridors, depots, points, names };
@@ -97,16 +116,25 @@ function buildNetwork(map) {
 
 function buildDetail(map) {
   const routes = map.addLayer({ id: 'routes', label: 'Routes' });
-  routes.addLines(LOCAL_ROUTES.map((ids) => path(PRAGUE_HUBS, ids)), {
-    style: { color: '#bd573b', widthPx: 4, opacity: 0.9, cap: 'round' },
-  });
+  routes.addLines(
+    LOCAL_ROUTES.map((ids) => path(PRAGUE_HUBS, ids)),
+    {
+      style: { color: '#bd573b', widthPx: 4, opacity: 0.9, cap: 'round' },
+    },
+  );
   const hubs = map.addLayer({ id: 'hubs', label: 'Hubs' });
   const points = hubs.addPoints(PRAGUE_HUBS.map(point), {
     style: { radiusPx: 8, color: '#2563eb', strokeColor: '#ffffff', strokeWidthPx: 2 },
   });
   const names = map.addLayer({ id: 'names', label: 'Hub names' });
   names.addLabels(points.source, {
-    style: { text: style.field('name'), sizePx: 12, color: '#263e33', offsetPx: { x: 0, y: -17 }, collision: true },
+    style: {
+      text: style.field('name'),
+      sizePx: 12,
+      color: '#263e33',
+      offsetPx: { x: 0, y: -17 },
+      collision: true,
+    },
   });
   points.on('click', (event) => report(`${event.feature.properties.name} · Prague hub`));
   return { routes, hubs, points, names };
@@ -140,7 +168,9 @@ action('Toggle depots in this view', async () => {
   }
   const visible = !view.depots.isVisible();
   view.depots.setVisible(visible);
-  report(`Depots ${visible ? 'shown' : 'hidden'} in ${VIEWS[id].label}. The other view is untouched.`);
+  report(
+    `Depots ${visible ? 'shown' : 'hidden'} in ${VIEWS[id].label}. The other view is untouched.`,
+  );
 });
 
 action('Fit this view to its depots', async () => {
@@ -174,7 +204,10 @@ const watch = (id) => {
   map.on('viewchange', update);
   update();
 };
-switcher.onChange((id) => { watch(id); update(); });
+switcher.onChange((id) => {
+  watch(id);
+  update();
+});
 watch('overview');
 await switcher.get('overview').whenRendered();
 for (const button of document.querySelectorAll('#example-tools button')) button.disabled = false;
@@ -189,4 +222,6 @@ update();
 report('Ready — switch views or toggle layers in each one.');
 window.__example = { switcher, built };
 window.__exampleReady = true;
-window.addEventListener('pagehide', (event) => { if (!event.persisted) switcher.destroy(); });
+window.addEventListener('pagehide', (event) => {
+  if (!event.persisted) switcher.destroy();
+});

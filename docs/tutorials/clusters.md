@@ -7,7 +7,7 @@ hovering it reveals the count, and clicking it zooms those pins apart.
 ## Turn it on
 
 ```ts
-map.addMarkers(places.map(place => ({ position: place.at, tooltip: place.name })));
+map.addMarkers(places.map((place) => ({ position: place.at, tooltip: place.name })));
 map.setMarkerClustering({ radiusPx: 64 });
 ```
 

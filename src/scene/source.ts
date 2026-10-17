@@ -20,7 +20,7 @@ import type {
   SubscribeOptions,
   Unsubscribe,
 } from '../api/types.ts';
-import { featureIdKey } from '../api/types.ts';
+import { featureIdKey, isArrayValue } from '../api/types.ts';
 import type { Crs, Position } from '../math/index.ts';
 import { nativeProjectionCode } from '../math/crs.ts';
 import { prepareParts, type PreparedPartsImport } from '../io/parts.ts';
@@ -248,7 +248,7 @@ export class SourceImpl {
     return {
       ref: this.refOf(record),
       geometry: geometry as Geometry,
-      properties: { ...record.properties } as FeatureProperties,
+      properties: { ...record.properties },
     };
   }
 
@@ -315,7 +315,11 @@ export class SourceImpl {
   }
 
   /** Fresh point imports use one atomic store adoption, not per-row CRUD/undo. */
-  initializePointImport(change: PendingChange, batch: ColumnarPointBatch, signal?: AbortSignal): boolean {
+  initializePointImport(
+    change: PendingChange,
+    batch: ColumnarPointBatch,
+    signal?: AbortSignal,
+  ): boolean {
     if (!this.store.pristine) return false;
     const result = this.store.initializePoints(batch, () => this.nextId(), signal);
     this.scene.recordUndo(result.undo);
@@ -350,8 +354,12 @@ export class SourceImpl {
     return this.finishInsert(change, id, namespace, result);
   }
 
-  private finishInsert(change: PendingChange, id: FeatureId, namespace: string | undefined,
-    result: import('./store.ts').AddRecordResult): { ref: FeatureRef<Geometry, FeatureProperties>; slot: number } {
+  private finishInsert(
+    change: PendingChange,
+    id: FeatureId,
+    namespace: string | undefined,
+    result: import('./store.ts').AddRecordResult,
+  ): { ref: FeatureRef<Geometry, FeatureProperties>; slot: number } {
     const undoStore = this.store;
     if (result.previous) {
       const previousRecord = result.previous;
@@ -379,12 +387,18 @@ export class SourceImpl {
     return { ref, slot: record.slot };
   }
 
-  importPreparedParts(change: PendingChange, batch: PreparedPartsImport, mode: 'replace' | 'append', signal?: AbortSignal): void {
+  importPreparedParts(
+    change: PendingChange,
+    batch: PreparedPartsImport,
+    mode: 'replace' | 'append',
+    signal?: AbortSignal,
+  ): void {
     const ids = batch.geometries.map((_, i) => batch.ids?.[i] ?? this.nextId());
     const seen = new Set<string>();
     for (const id of ids) {
       const key = featureIdKey(id);
-      if (seen.has(key)) fail('duplicate-id', `columnar import: duplicate id in input: ${String(id)}`, { id });
+      if (seen.has(key))
+        fail('duplicate-id', `columnar import: duplicate id in input: ${String(id)}`, { id });
       seen.add(key);
     }
     if (this.store.pristine) {
@@ -392,28 +406,42 @@ export class SourceImpl {
       for (const id of ids) change.added.push(id);
       if (this.scene.bindingsActive) {
         const available = TOUCHED_LIMIT - change.touched.length;
-        for (let slot = 0; slot < Math.min(ids.length, available); slot++) this.noteTouched(change, this.refOf(this.store.getBySlot(slot)!));
+        for (let slot = 0; slot < Math.min(ids.length, available); slot++)
+          this.noteTouched(change, this.refOf(this.store.getBySlot(slot)!));
         if (ids.length > available) change.touchedOverflow = true;
       }
       return;
     }
     if (mode === 'replace') {
       const removed: FeatureRef[] = [];
-      this.store.forEachLive((record) => { if (!seen.has(record.key)) removed.push(this.refOf(record)); });
-      for (const ref of removed) { throwIfAborted(signal); this.removeOne(change, ref, 'importColumnar'); }
+      this.store.forEachLive((record) => {
+        if (!seen.has(record.key)) removed.push(this.refOf(record));
+      });
+      for (const ref of removed) {
+        throwIfAborted(signal);
+        this.removeOne(change, ref, 'importColumnar');
+      }
     }
     for (let i = 0; i < ids.length; i++) {
       throwIfAborted(signal);
-      const id = ids[i]!, prepared = batch.geometries[i]!, properties = batch.properties?.[i] ?? EMPTY_PROPERTIES;
+      const id = ids[i]!,
+        prepared = batch.geometries[i]!,
+        properties = batch.properties?.[i] ?? EMPTY_PROPERTIES;
       const record = this.store.get(id);
       if (mode === 'replace' && record) {
         const ref = this.refOf(record);
         this.scene.checkGeometryUpdate(ref);
-        this.scene.checkPropertyUpdate(ref, Array.from(new Set([...Object.keys(record.properties), ...Object.keys(properties)])));
+        this.scene.checkPropertyUpdate(
+          ref,
+          Array.from(new Set([...Object.keys(record.properties), ...Object.keys(properties)])),
+        );
         this.applyPreparedGeometry(record, prepared);
         const previous = this.store.setProperties(record.slot, properties);
-        this.scene.recordUndo(() => { this.store.setProperties(record.slot, previous); });
-        change.updated.push(id); this.noteTouched(change, ref);
+        this.scene.recordUndo(() => {
+          this.store.setProperties(record.slot, previous);
+        });
+        change.updated.push(id);
+        this.noteTouched(change, ref);
       } else {
         const result = this.store.addPrepared({ id, namespace: undefined, prepared, properties });
         this.finishInsert(change, id, undefined, result);
@@ -446,7 +474,7 @@ export class SourceImpl {
   replaceOne(change: PendingChange, ref: FeatureRef, item: FeatureInput): void {
     const record = this.resolveRef(ref, 'features.replace');
     this.scene.checkGeometryUpdate(ref);
-    const nextProperties = (item.properties ?? EMPTY_PROPERTIES) as Readonly<Record<string, unknown>>;
+    const nextProperties = item.properties ?? EMPTY_PROPERTIES;
     const keys = new Set([...Object.keys(record.properties), ...Object.keys(nextProperties)]);
     this.scene.checkPropertyUpdate(ref, Array.from(keys));
     this.applyGeometry(change, record, item.geometry);
@@ -480,11 +508,7 @@ export class SourceImpl {
     this.noteTouched(change, this.refOf(this.store.getBySlot(slot)!));
   }
 
-  private applyGeometry(
-    _change: PendingChange,
-    record: SlotRecord,
-    geometry: unknown,
-  ): void {
+  private applyGeometry(_change: PendingChange, record: SlotRecord, geometry: unknown): void {
     // User input is always prepared here; prepared objects only reach the store
     // through `replaceGeometryInternal` (bindings). Duck-typing a user geometry
     // by its keys misclassified data (e.g. an object carrying bbox/payload).
@@ -650,14 +674,15 @@ export interface VectorSourceHandle<G = Geometry, P = FeatureProperties> {
    * Columnar (typed-array) import; the batch is validated before publication and
    * prepared by the import worker when available (IO-05..IO-11).
    */
-  importColumnar(
-    batch: ColumnarBatch,
-    options?: ColumnarImportOptions,
-  ): Promise<Commit>;
+  importColumnar(batch: ColumnarBatch, options?: ColumnarImportOptions): Promise<Commit>;
   /** GeoJSON export of the canonical data (not the clipped render fragments). */
   exportGeoJson(options?: { readonly ids?: readonly FeatureId[] }): GeoJsonFeatureCollection;
   subscribe(fn: (snapshot: SourceSnapshot) => void, options?: SubscribeOptions): Unsubscribe;
-  on(type: 'change', fn: (snapshot: SourceSnapshot) => void, options?: SubscribeOptions): Unsubscribe;
+  on(
+    type: 'change',
+    fn: (snapshot: SourceSnapshot) => void,
+    options?: SubscribeOptions,
+  ): Unsubscribe;
 }
 
 /** Scene services a vector source handle needs beyond its own store. */
@@ -666,7 +691,10 @@ export interface SourceHandleContext {
   readonly importPipeline: ImportPipeline;
 }
 
-export function createSourceHandle(source: SourceImpl, scene: SourceHandleContext): {
+export function createSourceHandle(
+  source: SourceImpl,
+  scene: SourceHandleContext,
+): {
   handle: VectorSourceHandle;
   source: SourceImpl;
 } {
@@ -704,7 +732,7 @@ export function createSourceHandle(source: SourceImpl, scene: SourceHandleContex
     update(idOrRef, patch, options) {
       const ref = resolveInput(source, idOrRef, options);
       source.mutate((change) => {
-        source.updateOne(change, ref, patch as FeaturePatch, 'features.update');
+        source.updateOne(change, ref, patch, 'features.update');
       });
       return { revision: scene.revision };
     },
@@ -713,15 +741,15 @@ export function createSourceHandle(source: SourceImpl, scene: SourceHandleContex
       source.mutate((change) => {
         for (const entry of entries) {
           const ref = resolveInput(source, entry.id, undefined);
-          source.updateOne(change, ref, entry.patch as FeaturePatch, 'features.updateMany');
+          source.updateOne(change, ref, entry.patch, 'features.updateMany');
         }
       });
       return { revision: scene.revision };
     },
     remove(idOrRef, options = {}) {
       source.mutate((change) => {
-        if (Array.isArray(idOrRef)) {
-          for (const id of idOrRef) {
+        if (isArrayValue(idOrRef)) {
+          for (const id of idOrRef as readonly FeatureId[]) {
             const record = source.store.get(id, options.namespace);
             if (!record) {
               fail('not-found', `feature not found: ${String(id)}`, { id, sourceId: source.id });
@@ -735,8 +763,11 @@ export function createSourceHandle(source: SourceImpl, scene: SourceHandleContex
       });
       return { revision: scene.revision };
     },
+    // Validation failures reject the returned promise instead of throwing
+    // synchronously, which is the documented async contract (IO-09).
+    // eslint-disable-next-line @typescript-eslint/require-await
     async replace(items, options = {}) {
-      assertArgument(Array.isArray(items), 'features.replace: expected an array of features');
+      assertArgument(isArrayValue(items), 'features.replace: expected an array of features');
       throwIfAborted(options.signal);
       for (let index = 0; index < items.length; index++) {
         const item = items[index];
@@ -750,12 +781,14 @@ export function createSourceHandle(source: SourceImpl, scene: SourceHandleContex
       });
       return { revision: scene.revision };
     },
+    // See replace above: the rejection contract is part of the async signature.
+    // eslint-disable-next-line @typescript-eslint/require-await
     async append(items, options = {}) {
-      assertArgument(Array.isArray(items), 'features.append: expected an array of features');
+      assertArgument(isArrayValue(items), 'features.append: expected an array of features');
       throwIfAborted(options.signal);
       source.mutate((change) => {
         for (const item of items) {
-          source.addOne(change, item as FeatureInput, {
+          source.addOne(change, item, {
             upsert: options.upsert === true,
             ...(options.namespace === undefined ? {} : { namespace: options.namespace }),
           });
@@ -778,7 +811,7 @@ export function createSourceHandle(source: SourceImpl, scene: SourceHandleContex
       let seen = 0;
       source.store.forEachLive((record) => {
         if (options?.namespace !== undefined && record.namespace !== options.namespace) return;
-        visit(source.snapshotOf(record) as FeatureSnapshot);
+        visit(source.snapshotOf(record));
         seen++;
       });
       return seen;
@@ -820,7 +853,7 @@ export function createSourceHandle(source: SourceImpl, scene: SourceHandleContex
     },
     async importGeoJson(geojson, options = {}) {
       const items = await scene.importPipeline.submit(
-        { kind: 'geojson', sourceId: source.id, input: geojson as string | object },
+        { kind: 'geojson', sourceId: source.id, input: geojson },
         pipelineOptions(options),
       );
       await applyPrepared(items, options.mode ?? 'replace', options.signal);
@@ -828,12 +861,26 @@ export function createSourceHandle(source: SourceImpl, scene: SourceHandleContex
     },
     async importColumnar(batch, options = {}) {
       if (batch?.kind === 'point') {
-        const prepared = await scene.importPipeline.submit({
-          kind: 'columnar-points', sourceId: source.id, batch, positionKind: source.crs.positionKind,
-        }, pipelineOptions(options));
+        const prepared = await scene.importPipeline.submit(
+          {
+            kind: 'columnar-points',
+            sourceId: source.id,
+            batch,
+            positionKind: source.crs.positionKind,
+          },
+          pipelineOptions(options),
+        );
         await cancellationCheckpoint(options.signal);
         throwIfAborted(options.signal);
-        source.mutate((change) => importPointTransaction(source, change, prepared, options.mode ?? 'replace', options.signal));
+        source.mutate((change) =>
+          importPointTransaction(
+            source,
+            change,
+            prepared,
+            options.mode ?? 'replace',
+            options.signal,
+          ),
+        );
         return { revision: scene.revision };
       }
       const projectionCode = nativeProjectionCode(source.crs);
@@ -849,8 +896,13 @@ export function createSourceHandle(source: SourceImpl, scene: SourceHandleContex
       );
       throwIfAborted(options.signal);
       await cancellationCheckpoint(options.signal);
-      const prepared = parts.kind === 'raw-parts' ? prepareParts(parts.batch, source.crs, `columnar(${source.id})`) : parts;
-      source.mutate((change) => source.importPreparedParts(change, prepared, options.mode ?? 'replace', options.signal));
+      const prepared =
+        parts.kind === 'raw-parts'
+          ? prepareParts(parts.batch, source.crs, `columnar(${source.id})`)
+          : parts;
+      source.mutate((change) =>
+        source.importPreparedParts(change, prepared, options.mode ?? 'replace', options.signal),
+      );
       return { revision: scene.revision };
     },
     exportGeoJson(options = {}) {
@@ -897,9 +949,9 @@ function resolveInput(
   options: FeatureQueryOptions | undefined,
 ): FeatureRef {
   if (typeof input === 'object' && input !== null && 'id' in input && 'generation' in input) {
-    return input as FeatureRef;
+    return input;
   }
-  const id = input as FeatureId;
+  const id = input;
   const namespace = options?.namespace;
   const record = source.store.get(id, namespace);
   if (!record) {
@@ -972,21 +1024,30 @@ function replaceTransaction(
 }
 
 /** Publish the validated columns directly, avoiding a second full feature-object tree. */
-function importPointTransaction(source: SourceImpl, change: PendingChange, batch: ColumnarPointBatch, mode: 'replace' | 'append', signal: AbortSignal | undefined): void {
+function importPointTransaction(
+  source: SourceImpl,
+  change: PendingChange,
+  batch: ColumnarPointBatch,
+  mode: 'replace' | 'append',
+  signal: AbortSignal | undefined,
+): void {
   if (source.initializePointImport(change, batch, signal)) return;
   const count = batch.positions.length / 2;
-  const ids: FeatureId[] = new Array(count);
+  const ids: FeatureId[] = new Array<FeatureId>(count);
   const seen = new Set<string>();
   for (let i = 0; i < count; i++) {
     const id = batch.ids?.[i] ?? source.nextId();
     const key = featureIdKey(id);
-    if (seen.has(key)) fail('duplicate-id', `columnar import: duplicate id in input: ${String(id)}`, { id });
+    if (seen.has(key))
+      fail('duplicate-id', `columnar import: duplicate id in input: ${String(id)}`, { id });
     seen.add(key);
     ids[i] = id;
   }
   if (mode === 'replace') {
     const removed: SlotRecord[] = [];
-    source.store.forEachLive((record) => { if (!seen.has(record.key)) removed.push(record); });
+    source.store.forEachLive((record) => {
+      if (!seen.has(record.key)) removed.push(record);
+    });
     for (const record of removed) source.removeOne(change, source.refOf(record), 'importColumnar');
   }
   for (let i = 0; i < count; i++) {
@@ -994,9 +1055,17 @@ function importPointTransaction(source: SourceImpl, change: PendingChange, batch
     const x = batch.positions[i * 2]!;
     const y = batch.positions[i * 2 + 1]!;
     const altitude = batch.altitudes?.[i];
-    const position = source.crs.positionKind === 'planar' ? { x, y } :
-      altitude === undefined || Number.isNaN(altitude) ? { lng: x, lat: y } : { lng: x, lat: y, altitude };
-    const input = { id: ids[i]!, geometry: { type: 'point', position } as Geometry, properties: batch.properties?.[i] ?? EMPTY_PROPERTIES };
+    const position =
+      source.crs.positionKind === 'planar'
+        ? { x, y }
+        : altitude === undefined || Number.isNaN(altitude)
+          ? { lng: x, lat: y }
+          : { lng: x, lat: y, altitude };
+    const input = {
+      id: ids[i]!,
+      geometry: { type: 'point', position } as Geometry,
+      properties: batch.properties?.[i] ?? EMPTY_PROPERTIES,
+    };
     const record = source.store.get(input.id);
     if (record && mode === 'replace') source.replaceOne(change, source.refOf(record), input);
     else source.addOne(change, input, {});

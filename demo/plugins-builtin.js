@@ -21,7 +21,10 @@ function finalize() {
   if (finalized) return;
   finalized = true;
   result.ms = Math.round(performance.now() - started);
-  result.pass = result.errors.length === 0 && result.checks.length === 11 && result.checks.every((entry) => entry.pass);
+  result.pass =
+    result.errors.length === 0 &&
+    result.checks.length === 11 &&
+    result.checks.every((entry) => entry.pass);
   window.__builtinPluginCheckResult = result;
   document.title = 'builtin-plugin-check-done';
   const summary = document.getElementById('summary');
@@ -32,9 +35,13 @@ function finalize() {
 let started = 0;
 
 const map = await createMap('map', {
-  renderer: { primary: new URLSearchParams(location.search).get('backend') === 'webgpu' ? 'webgpu' : 'webgl1', fallback: false },
+  renderer: {
+    primary: new URLSearchParams(location.search).get('backend') === 'webgpu' ? 'webgpu' : 'webgl1',
+    fallback: false,
+  },
   size: { width: WIDTH, height: HEIGHT },
-  center: { lat: 50.0, lng: 14.0 }, zoom: 13,
+  center: { lat: 50.0, lng: 14.0 },
+  zoom: 13,
   controls: ['zoom'],
 });
 
@@ -43,20 +50,45 @@ const element = document.getElementById('map');
 window.__builtinPluginDebug = { map, element };
 const rect = element.getBoundingClientRect();
 const pointer = (type, pointerId, x, y, options = {}) =>
-  element.dispatchEvent(new PointerEvent(type, {
-    bubbles: true, cancelable: true, composed: true, pointerId, isPrimary: pointerId === 1,
-    button: 0, buttons: type === 'pointerup' ? 0 : 1,
-    clientX: rect.left + x, clientY: rect.top + y, ...options,
-  }));
+  element.dispatchEvent(
+    new PointerEvent(type, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+      pointerId,
+      isPrimary: pointerId === 1,
+      button: 0,
+      buttons: type === 'pointerup' ? 0 : 1,
+      clientX: rect.left + x,
+      clientY: rect.top + y,
+      ...options,
+    }),
+  );
 const touch = (type, pointerId, x, y) => pointer(type, pointerId, x, y, { pointerType: 'touch' });
-const mouse = (type, pointerId, x, y, options = {}) => pointer(type, pointerId, x, y, { pointerType: 'mouse', ...options });
+const mouse = (type, pointerId, x, y, options = {}) =>
+  pointer(type, pointerId, x, y, { pointerType: 'mouse', ...options });
 const wheel = (x, y, deltaY, options = {}) => {
-  const event = new WheelEvent('wheel', { bubbles: true, cancelable: true, clientX: rect.left + x, clientY: rect.top + y, deltaY, ...options });
+  const event = new WheelEvent('wheel', {
+    bubbles: true,
+    cancelable: true,
+    clientX: rect.left + x,
+    clientY: rect.top + y,
+    deltaY,
+    ...options,
+  });
   element.dispatchEvent(event);
   return event;
 };
 const doubleClick = (x, y, options = {}) =>
-  element.dispatchEvent(new MouseEvent('dblclick', { bubbles: true, cancelable: true, clientX: rect.left + x, clientY: rect.top + y, ...options }));
+  element.dispatchEvent(
+    new MouseEvent('dblclick', {
+      bubbles: true,
+      cancelable: true,
+      clientX: rect.left + x,
+      clientY: rect.top + y,
+      ...options,
+    }),
+  );
 const center = () => {
   const value = map.getCenter();
   return { lat: value.lat, lng: value.lng };
@@ -75,7 +107,6 @@ async function check(name, fn) {
 }
 
 let guardHandle = null;
-let guardApi = null;
 let fullscreenHandle = null;
 let fullscreenApi = null;
 
@@ -83,7 +114,6 @@ started = performance.now();
 
 await check('INPUT-09 one finger is ignored on touch, two fingers pinch and pan', async () => {
   guardHandle = map.use(gestureGuard());
-  guardApi = guardHandle.api;
   const touchAction = element.style.touchAction;
   const before = center();
   const beforeZoom = zoom();
@@ -116,7 +146,14 @@ await check('INPUT-09 one finger is ignored on touch, two fingers pinch and pan'
       pinchedZoom > beforeZoom + 0.5 &&
       !same(before, panned) &&
       same(afterLift, liftedStill),
-    detail: { touchAction, oneBlocked, beforeZoom, pinchedZoom, panned: !same(before, panned), afterLiftBlocked: same(afterLift, liftedStill) },
+    detail: {
+      touchAction,
+      oneBlocked,
+      beforeZoom,
+      pinchedZoom,
+      panned: !same(before, panned),
+      afterLiftBlocked: same(afterLift, liftedStill),
+    },
   };
 });
 
@@ -145,7 +182,8 @@ await check('INPUT-09 mouse pan, wheel and double-click need the modifier', asyn
   doubleClick(320, 240, { altKey: true });
   const doubleAllowed = zoom() === zoomBeforeDouble + 1;
   return {
-    pass: panBlocked && wheelBlocked && doubleBlocked && panAllowed && wheelAllowed && doubleAllowed,
+    pass:
+      panBlocked && wheelBlocked && doubleBlocked && panAllowed && wheelAllowed && doubleAllowed,
     detail: { panBlocked, wheelBlocked, doubleBlocked, panAllowed, wheelAllowed, doubleAllowed },
   };
 });
@@ -181,9 +219,16 @@ await check('INPUT-09 unlock, lock, modifier switching and onChange', async () =
   const altOnly = same(beforeAlt, center());
   handle.remove();
   guardHandle = null;
-  guardApi = null;
   return {
-    pass: locked && unlocked && lockedAgain && controlAllowed && altOnly && changes.length === 2 && changes[0] === true && changes[1] === false,
+    pass:
+      locked &&
+      unlocked &&
+      lockedAgain &&
+      controlAllowed &&
+      altOnly &&
+      changes.length === 2 &&
+      changes[0] === true &&
+      changes[1] === false,
     detail: { locked, unlocked, lockedAgain, controlAllowed, altOnly, changes },
   };
 });
@@ -247,77 +292,111 @@ await check('INPUT-09 a blocked attempt explains itself with a hint that expires
       expired &&
       removed &&
       silent,
-    detail: { visible, notPrevented, wheelText, touchText, hiddenByAllowed, shownAgain, expired, removed, silent },
+    detail: {
+      visible,
+      notPrevented,
+      wheelText,
+      touchText,
+      hiddenByAllowed,
+      shownAgain,
+      expired,
+      removed,
+      silent,
+    },
   };
 });
 
-await check('FULLSCREEN enter, exit, browser exits and the corner button stay in sync', async () => {
-  // Stub the Fullscreen API so the battery does not depend on a user gesture.
-  const store = { element: null, exitCalls: 0 };
-  Object.defineProperty(document, 'fullscreenElement', { configurable: true, get: () => store.element });
-  const realExit = document.exitFullscreen;
-  document.exitFullscreen = async () => {
-    store.element = null;
-    store.exitCalls += 1;
-    document.dispatchEvent(new Event('fullscreenchange'));
-  };
-  const realRequest = element.requestFullscreen;
-  element.requestFullscreen = async () => {
-    store.element = element;
-    document.dispatchEvent(new Event('fullscreenchange'));
-  };
-  try {
-    const changes = [];
-    fullscreenHandle = map.use(fullscreenMode({ control: true, onChange: (active) => changes.push(active) }));
-    fullscreenApi = fullscreenHandle.api;
-    const supported = fullscreenApi.supported;
-    const button = element.querySelector('[data-maplet-control="fullscreen"]');
-    const entered = await fullscreenApi.enter();
-    const activeAfterEnter = fullscreenApi.active && fullscreenApi.element() === element;
-    const nativeMode = fullscreenApi.mode === 'native';
-    const buttonExit = button?.getAttribute('aria-label') === 'Exit fullscreen';
-    // A browser or user exit is picked up from the event alone.
-    store.element = null;
-    document.dispatchEvent(new Event('fullscreenchange'));
-    const browserExit = !fullscreenApi.active && button?.getAttribute('aria-label') === 'Enter fullscreen';
-    // The button toggles through the same path (a synthetic click is enough).
-    button?.click();
-    await sleep(30);
-    const buttonEntered = fullscreenApi.active;
-    button?.click();
-    await sleep(30);
-    const buttonExited = !fullscreenApi.active;
-    const toggled = (await fullscreenApi.toggle()) && fullscreenApi.active;
-    await fullscreenApi.exit();
-    return {
-      pass:
-        supported &&
-        !!button &&
-        entered &&
-        activeAfterEnter &&
-        nativeMode &&
-        buttonExit &&
-        browserExit &&
-        buttonEntered &&
-        buttonExited &&
-        toggled &&
-        changes[0] === true &&
-        changes.includes(false),
-      detail: { supported, hasButton: !!button, entered, activeAfterEnter, nativeMode, buttonExit, browserExit, buttonEntered, buttonExited, toggled, changes },
+await check(
+  'FULLSCREEN enter, exit, browser exits and the corner button stay in sync',
+  async () => {
+    // Stub the Fullscreen API so the battery does not depend on a user gesture.
+    const store = { element: null, exitCalls: 0 };
+    Object.defineProperty(document, 'fullscreenElement', {
+      configurable: true,
+      get: () => store.element,
+    });
+    const realExit = document.exitFullscreen;
+    document.exitFullscreen = async () => {
+      store.element = null;
+      store.exitCalls += 1;
+      document.dispatchEvent(new Event('fullscreenchange'));
     };
-  } finally {
-    fullscreenHandle?.remove();
-    fullscreenHandle = null;
-    fullscreenApi = null;
-    element.requestFullscreen = realRequest;
-    document.exitFullscreen = realExit;
-    delete document.fullscreenElement;
-  }
-});
+    const realRequest = element.requestFullscreen;
+    element.requestFullscreen = async () => {
+      store.element = element;
+      document.dispatchEvent(new Event('fullscreenchange'));
+    };
+    try {
+      const changes = [];
+      fullscreenHandle = map.use(
+        fullscreenMode({ control: true, onChange: (active) => changes.push(active) }),
+      );
+      fullscreenApi = fullscreenHandle.api;
+      const supported = fullscreenApi.supported;
+      const button = element.querySelector('[data-maplet-control="fullscreen"]');
+      const entered = await fullscreenApi.enter();
+      const activeAfterEnter = fullscreenApi.active && fullscreenApi.element() === element;
+      const nativeMode = fullscreenApi.mode === 'native';
+      const buttonExit = button?.getAttribute('aria-label') === 'Exit fullscreen';
+      // A browser or user exit is picked up from the event alone.
+      store.element = null;
+      document.dispatchEvent(new Event('fullscreenchange'));
+      const browserExit =
+        !fullscreenApi.active && button?.getAttribute('aria-label') === 'Enter fullscreen';
+      // The button toggles through the same path (a synthetic click is enough).
+      button?.click();
+      await sleep(30);
+      const buttonEntered = fullscreenApi.active;
+      button?.click();
+      await sleep(30);
+      const buttonExited = !fullscreenApi.active;
+      const toggled = (await fullscreenApi.toggle()) && fullscreenApi.active;
+      await fullscreenApi.exit();
+      return {
+        pass:
+          supported &&
+          !!button &&
+          entered &&
+          activeAfterEnter &&
+          nativeMode &&
+          buttonExit &&
+          browserExit &&
+          buttonEntered &&
+          buttonExited &&
+          toggled &&
+          changes[0] === true &&
+          changes.includes(false),
+        detail: {
+          supported,
+          hasButton: !!button,
+          entered,
+          activeAfterEnter,
+          nativeMode,
+          buttonExit,
+          browserExit,
+          buttonEntered,
+          buttonExited,
+          toggled,
+          changes,
+        },
+      };
+    } finally {
+      fullscreenHandle?.remove();
+      fullscreenHandle = null;
+      fullscreenApi = null;
+      element.requestFullscreen = realRequest;
+      document.exitFullscreen = realExit;
+      delete document.fullscreenElement;
+    }
+  },
+);
 
 await check('FULLSCREEN cleanup exits and the map follows container resizes', async () => {
   const store = { element: null, exitCalls: 0 };
-  Object.defineProperty(document, 'fullscreenElement', { configurable: true, get: () => store.element });
+  Object.defineProperty(document, 'fullscreenElement', {
+    configurable: true,
+    get: () => store.element,
+  });
   const realExit = document.exitFullscreen;
   document.exitFullscreen = async () => {
     store.element = null;
@@ -388,41 +467,63 @@ await check('FULLSCREEN cleanup exits and the map follows container resizes', as
   }
 });
 
-await check('FULLSCREEN a denied request falls back to the viewport cover and Escape exits', async () => {
-  const realRequest = element.requestFullscreen;
-  element.requestFullscreen = async () => {
-    throw new Error('denied by a stub');
-  };
-  try {
-    const handle = map.use(fullscreenMode({ control: true, fallback: true }));
-    const api = handle.api;
-    const entered = await api.enter();
-    const fallbackMode = api.mode === 'fallback' && api.active;
-    const covered =
-      element.dataset.mapletFullscreenFallback === 'true' &&
-      element.style.position === 'fixed' &&
-      element.style.inset !== '';
-    const button = element.querySelector('[data-maplet-control="fullscreen"]');
-    const buttonTitle = button?.title.includes('viewport fallback') === true;
-    // Escape leaves the CSS fallback because the browser has nothing to exit here.
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-    await sleep(80);
-    const escaped = api.mode === null && !api.active;
-    const restored = element.style.position === '' && element.dataset.mapletFullscreenFallback === undefined;
-    handle.remove();
-    // The fallback is optional: without it a denied request reports false.
-    const strict = map.use(fullscreenMode({ fallback: false }));
-    const refused = await strict.api.enter();
-    const strictState = strict.api.mode === null && !strict.api.active && element.style.position === '';
-    strict.remove();
-    return {
-      pass: entered && fallbackMode && covered && buttonTitle && escaped && restored && refused === false && strictState,
-      detail: { entered, fallbackMode, covered, buttonTitle, escaped, restored, refused, strictState },
+await check(
+  'FULLSCREEN a denied request falls back to the viewport cover and Escape exits',
+  async () => {
+    const realRequest = element.requestFullscreen;
+    element.requestFullscreen = async () => {
+      throw new Error('denied by a stub');
     };
-  } finally {
-    element.requestFullscreen = realRequest;
-  }
-});
+    try {
+      const handle = map.use(fullscreenMode({ control: true, fallback: true }));
+      const api = handle.api;
+      const entered = await api.enter();
+      const fallbackMode = api.mode === 'fallback' && api.active;
+      const covered =
+        element.dataset.mapletFullscreenFallback === 'true' &&
+        element.style.position === 'fixed' &&
+        element.style.inset !== '';
+      const button = element.querySelector('[data-maplet-control="fullscreen"]');
+      const buttonTitle = button?.title.includes('viewport fallback') === true;
+      // Escape leaves the CSS fallback because the browser has nothing to exit here.
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      await sleep(80);
+      const escaped = api.mode === null && !api.active;
+      const restored =
+        element.style.position === '' && element.dataset.mapletFullscreenFallback === undefined;
+      handle.remove();
+      // The fallback is optional: without it a denied request reports false.
+      const strict = map.use(fullscreenMode({ fallback: false }));
+      const refused = await strict.api.enter();
+      const strictState =
+        strict.api.mode === null && !strict.api.active && element.style.position === '';
+      strict.remove();
+      return {
+        pass:
+          entered &&
+          fallbackMode &&
+          covered &&
+          buttonTitle &&
+          escaped &&
+          restored &&
+          refused === false &&
+          strictState,
+        detail: {
+          entered,
+          fallbackMode,
+          covered,
+          buttonTitle,
+          escaped,
+          restored,
+          refused,
+          strictState,
+        },
+      };
+    } finally {
+      element.requestFullscreen = realRequest;
+    }
+  },
+);
 
 await check('HEAT-10 a weighted field renders, restyles and clears', async () => {
   const field = (canvas) => {
@@ -443,14 +544,16 @@ await check('HEAT-10 a weighted field renders, restyles and clears', async () =>
   // Earlier checks panned the map; the heat field needs a known view.
   map.setView({ center: { lat: 50, lng: 14 }, zoom: 13 });
   await map.whenRendered();
-  const heat = map.use(heatmap({
-    points: [
-      { position: [50.02, 14.02], weight: 1 },
-      { position: [50.02, 14.02], weight: 1 },
-      { position: [50.005, 14.03], weight: 0.4 },
-    ],
-    radius: 28,
-  }));
+  const heat = map.use(
+    heatmap({
+      points: [
+        { position: [50.02, 14.02], weight: 1 },
+        { position: [50.02, 14.02], weight: 1 },
+        { position: [50.005, 14.03], weight: 0.4 },
+      ],
+      radius: 28,
+    }),
+  );
   await map.whenRendered();
   const canvas = element.querySelector('canvas[data-maplet-heatmap]');
   if (!canvas) return { pass: false, detail: { reason: 'no overlay canvas' } };
@@ -459,14 +562,23 @@ await check('HEAT-10 a weighted field renders, restyles and clears', async () =>
     canvas.getAttribute('aria-hidden') === 'true' &&
     canvas.dataset.mapletHeatmap === 'true';
   const first = field(canvas);
-  const hot = first.painted > 400 && first.strongest.alpha > 200 && first.strongest.color[0] > first.strongest.color[2];
+  const hot =
+    first.painted > 400 &&
+    first.strongest.alpha > 200 &&
+    first.strongest.color[0] > first.strongest.color[2];
   const count = heat.api.count;
 
   // Appearance changes reach the next frame: the hot core turns green.
-  heat.api.setOptions({ gradient: [[0, '#3b0764'], [1, '#22ff22']] });
+  heat.api.setOptions({
+    gradient: [
+      [0, '#3b0764'],
+      [1, '#22ff22'],
+    ],
+  });
   await map.whenRendered();
   const second = field(canvas);
-  const ramp = second.strongest.color[1] > second.strongest.color[0] && second.strongest.color[1] > 200;
+  const ramp =
+    second.strongest.color[1] > second.strongest.color[0] && second.strongest.color[1] > 200;
 
   // A smaller radius shrinks the field; addPoint and clear() follow the data hook.
   heat.api.setOptions({ radius: 10 });
@@ -492,7 +604,9 @@ await check('HEAT-10 the field stays inert without data and follows the containe
   const canvas = element.querySelector('canvas[data-maplet-heatmap]');
   if (!canvas) return { pass: false, detail: { reason: 'no overlay canvas' } };
   const empty = heat.api.count === 0 && canvas.width > 0 && canvas.height > 0;
-  const sized = canvas.style.width === `${element.clientWidth}px` && canvas.style.height === `${element.clientHeight}px`;
+  const sized =
+    canvas.style.width === `${element.clientWidth}px` &&
+    canvas.style.height === `${element.clientHeight}px`;
   const untouched = element.style.position === before;
   heat.api.addPoint([50, 14], 1);
   await map.whenRendered();
@@ -530,7 +644,8 @@ await check('HEAT-10 the field follows the view through the renderer projection'
     let best = { alpha: -1, x: 0, y: 0 };
     for (let index = 0; index < data.length; index += 4) {
       const alpha = data[index + 3];
-      if (alpha > best.alpha) best = { alpha, x: (index / 4) % canvas.width, y: Math.floor(index / 4 / canvas.width) };
+      if (alpha > best.alpha)
+        best = { alpha, x: (index / 4) % canvas.width, y: Math.floor(index / 4 / canvas.width) };
     }
     return best;
   };
@@ -539,7 +654,10 @@ await check('HEAT-10 the field follows the view through the renderer projection'
   await map.whenRendered();
   const splatAfter = hottest();
   const projectedAfter = { x: projected.x, y: projected.y };
-  const oracle = { dx: projectedAfter.x - projectedBefore.x, dy: projectedAfter.y - projectedBefore.y };
+  const oracle = {
+    dx: projectedAfter.x - projectedBefore.x,
+    dy: projectedAfter.y - projectedBefore.y,
+  };
   const actual = { dx: splatAfter.x - splatBefore.x, dy: splatAfter.y - splatBefore.y };
   const moved = Math.abs(actual.dx - oracle.dx) <= 2 && Math.abs(actual.dy - oracle.dy) <= 2;
   heat.remove();

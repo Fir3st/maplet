@@ -285,12 +285,13 @@ export class SelectionStore {
 }
 
 const EMPTY_CUSTOM: Readonly<Record<string, unknown>> = Object.freeze({});
-const EMPTY_STATE: FeatureState = Object.freeze({ hovered: false, selected: false, disabled: false, custom: EMPTY_CUSTOM });
+const EMPTY_STATE: FeatureState = Object.freeze({
+  hovered: false,
+  selected: false,
+  disabled: false,
+  custom: EMPTY_CUSTOM,
+});
 
 export function assertSelectionInput(refs: unknown): asserts refs is readonly FeatureRef[] {
-  assertArgument(
-    Array.isArray(refs),
-    'selection expects an array of feature references',
-    { refs },
-  );
+  assertArgument(Array.isArray(refs), 'selection expects an array of feature references', { refs });
 }

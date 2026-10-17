@@ -79,7 +79,8 @@ export function fullscreenMode(options: FullscreenOptions = {}): Plugin<Fullscre
     if (!container) fail('unsupported-capability', 'fullscreenMode requires a map container', {});
     const target = options.target ?? container;
     const doc = target.ownerDocument;
-    const supported = typeof target.requestFullscreen === 'function' && typeof doc.exitFullscreen === 'function';
+    const supported =
+      typeof target.requestFullscreen === 'function' && typeof doc.exitFullscreen === 'function';
     const fallbackAllowed = options.fallback !== false;
     let mode: FullscreenMode = doc.fullscreenElement === target ? 'native' : null;
     let fallback = false;
@@ -118,10 +119,13 @@ export function fullscreenMode(options: FullscreenOptions = {}): Plugin<Fullscre
 
     const enterFallback = (): void => {
       if (fallback) return;
-      previousStyles = {};
-      for (const key of Object.keys(FALLBACK_STYLE)) {
-        previousStyles[key] = target.style[key as keyof CSSStyleDeclaration] as string;
-      }
+      previousStyles = {
+        position: target.style.position,
+        inset: target.style.inset,
+        zIndex: target.style.zIndex,
+        overflow: target.style.overflow,
+        background: target.style.background,
+      };
       target.dataset.mapletFullscreenFallback = 'true';
       target.style.position = FALLBACK_STYLE.position;
       target.style.inset = FALLBACK_STYLE.inset;

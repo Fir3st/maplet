@@ -13,12 +13,20 @@ const switcher = await createMapSwitcher({
   label: 'Logistics map views',
   initial: 'overview',
   maps: [
-    { id: 'overview', label: 'Network overview', options: { center: [49.8, 15.3], zoom: 7.1, controls: ['zoom', 'layers'] } },
-    { id: 'detail', label: 'Prague detail', options: { center: [50.08, 14.43], zoom: 12.4, controls: ['zoom', 'layers'] } },
+    {
+      id: 'overview',
+      label: 'Network overview',
+      options: { center: [49.8, 15.3], zoom: 7.1, controls: ['zoom', 'layers'] },
+    },
+    {
+      id: 'detail',
+      label: 'Prague detail',
+      options: { center: [50.08, 14.43], zoom: 12.4, controls: ['zoom', 'layers'] },
+    },
   ],
 });
 
-const overview = switcher.get('overview');    // created by the call above
+const overview = switcher.get('overview'); // created by the call above
 const detail = await switcher.show('detail'); // created on first activation
 ```
 

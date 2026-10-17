@@ -46,7 +46,7 @@ export class Emitter<M extends object> {
 
   off<K extends keyof M>(type: K, fn: ListenerFn<M[K]>): void {
     const set = this.listeners.get(type);
-    if (set?.delete(fn as ListenerFn<never>) && set.size === 0) {
+    if (set?.delete(fn) && set.size === 0) {
       this.listeners.delete(type);
     }
   }

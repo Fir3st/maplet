@@ -23,7 +23,15 @@
  * Playwright cache under ~/Library/Caches/ms-playwright, Google Chrome.
  */
 import { spawn } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import {
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
@@ -92,8 +100,24 @@ function resolveBrowser() {
     for (const entry of readdirSync(cache).sort().reverse()) {
       if (entry.startsWith('chromium-') && !entry.includes('headless')) {
         candidates.push(
-          path.join(cache, entry, 'chrome-mac-arm64', 'Google Chrome for Testing.app', 'Contents', 'MacOS', 'Google Chrome for Testing'),
-          path.join(cache, entry, 'chrome-mac', 'Google Chrome for Testing.app', 'Contents', 'MacOS', 'Google Chrome for Testing'),
+          path.join(
+            cache,
+            entry,
+            'chrome-mac-arm64',
+            'Google Chrome for Testing.app',
+            'Contents',
+            'MacOS',
+            'Google Chrome for Testing',
+          ),
+          path.join(
+            cache,
+            entry,
+            'chrome-mac',
+            'Google Chrome for Testing.app',
+            'Contents',
+            'MacOS',
+            'Google Chrome for Testing',
+          ),
           path.join(cache, entry, 'chrome-linux', 'chrome'),
         );
       }
@@ -121,7 +145,9 @@ class Cdp {
     const socket = new WebSocket(url);
     await new Promise((resolve, reject) => {
       socket.addEventListener('open', resolve, { once: true });
-      socket.addEventListener('error', () => reject(new Error(`cannot connect to ${url}`)), { once: true });
+      socket.addEventListener('error', () => reject(new Error(`cannot connect to ${url}`)), {
+        once: true,
+      });
     });
     return new Cdp(socket, onEvent);
   }
@@ -195,7 +221,9 @@ class Session {
     for (;;) {
       // Only a truthy value counts as ready: `false`/`undefined` means the page
       // (or the navigation) has not reached the state yet.
-      const value = await this.evaluate(`(() => { try { return ${expression}; } catch { return null; } })()`);
+      const value = await this.evaluate(
+        `(() => { try { return ${expression}; } catch { return null; } })()`,
+      );
       if (value !== null && value !== undefined && value !== false) return value;
       if (Date.now() > deadline) throw new Error(`timeout waiting for ${label}`);
       await sleep(120);
@@ -220,14 +248,17 @@ class Session {
   /* real input through the interaction controller */
   mouse(type, x, y, options = {}) {
     const button = options.button ?? 'left';
-    const buttons = options.buttons ?? (type === 'mouseMoved' && options.dragging ? 1 : type === 'mousePressed' ? 1 : 0);
+    const buttons =
+      options.buttons ??
+      (type === 'mouseMoved' && options.dragging ? 1 : type === 'mousePressed' ? 1 : 0);
     return this.send('Input.dispatchMouseEvent', {
       type,
       x,
       y,
       button: type === 'mouseMoved' && !options.dragging ? 'none' : button,
       buttons,
-      clickCount: options.clickCount ?? (type === 'mousePressed' || type === 'mouseReleased' ? 1 : 0),
+      clickCount:
+        options.clickCount ?? (type === 'mousePressed' || type === 'mouseReleased' ? 1 : 0),
       pointerType: 'mouse',
     });
   }
@@ -281,7 +312,7 @@ function sleep(ms) {
 
 /* ------------------------------ expectations ------------------------------ */
 
-export function makeExpect(session, name) {
+export function makeExpect(session) {
   const failures = [];
   const expect = {
     failures,
@@ -295,13 +326,12 @@ export function makeExpect(session, name) {
       return within;
     },
     equal(actual, expected, message) {
-      if (actual !== expected) failures.push(`${message}: ${JSON.stringify(actual)} != ${JSON.stringify(expected)}`);
+      if (actual !== expected)
+        failures.push(`${message}: ${JSON.stringify(actual)} != ${JSON.stringify(expected)}`);
       return actual === expected;
     },
     async renderedPixel(x, y) {
-      return session.evaluate(
-        `window.__e2e.samplePixel(${Math.round(x)}, ${Math.round(y)})`,
-      );
+      return session.evaluate(`window.__e2e.samplePixel(${Math.round(x)}, ${Math.round(y)})`);
     },
   };
   return expect;
@@ -310,7 +340,7 @@ export function makeExpect(session, name) {
 /* ------------------------------ run pipeline ------------------------------ */
 
 async function runScenario(kind, definition, context) {
-  const { cdp, base, options, tempDir } = context;
+  const { cdp, base, options } = context;
   const created = await cdp.send('Target.createTarget', { url: 'about:blank' });
   const targetId = created.targetId;
   const attached = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
@@ -323,10 +353,15 @@ async function runScenario(kind, definition, context) {
   const onEvent = (message) => {
     if (message.sessionId !== session.sessionId) return;
     if (message.method === 'Runtime.exceptionThrown') {
-      session.exceptions.push(message.params.exceptionDetails?.exception?.description ?? message.params.exceptionDetails?.text);
+      session.exceptions.push(
+        message.params.exceptionDetails?.exception?.description ??
+          message.params.exceptionDetails?.text,
+      );
     }
     if (message.method === 'Runtime.consoleAPICalled' && message.params.type === 'error') {
-      session.consoleErrors.push(message.params.args?.map((arg) => arg.value ?? arg.description).join(' '));
+      session.consoleErrors.push(
+        message.params.args?.map((arg) => arg.value ?? arg.description).join(' '),
+      );
     }
   };
   // Attach the event listener to the shared socket: filter by session id.
@@ -339,7 +374,9 @@ async function runScenario(kind, definition, context) {
     await session.send('Page.enable');
     await session.send('Runtime.enable');
     if (options.basic) {
-      await session.send('Page.addScriptToEvaluateOnNewDocument', { source: BASIC_PROFILE_PRELUDE });
+      await session.send('Page.addScriptToEvaluateOnNewDocument', {
+        source: BASIC_PROFILE_PRELUDE,
+      });
     }
     const query = [
       definition.query,
@@ -353,11 +390,18 @@ async function runScenario(kind, definition, context) {
     await session.navigate(url);
 
     if (kind === 'battery') {
-      const result = await session.waitFor(`window['${definition.hook}']`, options.timeout, definition.hook);
+      const result = await session.waitFor(
+        `window['${definition.hook}']`,
+        options.timeout,
+        definition.hook,
+      );
       const failedChecks = Array.isArray(result.checks)
         ? result.checks
             .filter((check) => !check.pass)
-            .map((check) => `${check.name}${check.detail === undefined ? '' : ` — ${JSON.stringify(check.detail)}`}`)
+            .map(
+              (check) =>
+                `${check.name}${check.detail === undefined ? '' : ` — ${JSON.stringify(check.detail)}`}`,
+            )
         : Object.entries(result.checks ?? {})
             .filter(([, value]) => value && value.pass === false)
             .map(([key]) => key);
@@ -369,13 +413,19 @@ async function runScenario(kind, definition, context) {
         );
       }
     } else {
-      await session.waitFor(definition.ready ?? 'window.__e2e && window.__e2e.ready === true', 30000, definition.ready ?? '__e2e.ready');
-      const expect = makeExpect(session, definition.name);
+      await session.waitFor(
+        definition.ready ?? 'window.__e2e && window.__e2e.ready === true',
+        30000,
+        definition.ready ?? '__e2e.ready',
+      );
+      const expect = makeExpect(session);
       await definition.run({ session, expect, options, cdp });
       failures.push(...expect.failures);
     }
     if (session.exceptions.length > 0) {
-      failures.push(...session.exceptions.map((text) => `uncaught: ${String(text).split('\n')[0]}`));
+      failures.push(
+        ...session.exceptions.map((text) => `uncaught: ${String(text).split('\n')[0]}`),
+      );
     }
   } catch (error) {
     failures.push(String(error.message ?? error));
@@ -398,7 +448,15 @@ async function runScenario(kind, definition, context) {
   if (!options.keepOpen) {
     await cdp.send('Target.closeTarget', { targetId });
   }
-  return { name: definition.name, kind, pass: failures.length === 0, failures, ms, screenshot, batteryChecks };
+  return {
+    name: definition.name,
+    kind,
+    pass: failures.length === 0,
+    failures,
+    ms,
+    screenshot,
+    batteryChecks,
+  };
 }
 
 // Read from `demo/serve.py` so the two copies cannot drift: a running server
@@ -445,10 +503,15 @@ async function ensureServer(base) {
 
 async function main() {
   if (flags.webgpu && flags.basic) {
-    console.error('--webgpu and --basic are mutually exclusive: --basic forces the fallback WebGL 1 profile');
+    console.error(
+      '--webgpu and --basic are mutually exclusive: --basic forces the fallback WebGL 1 profile',
+    );
     return 1;
   }
-  const list = [...scenarios.map((scenario) => ({ kind: 'scenario', ...scenario })), ...batteries.map((battery) => ({ kind: 'battery', ...battery }))];
+  const list = [
+    ...scenarios.map((scenario) => ({ kind: 'scenario', ...scenario })),
+    ...batteries.map((battery) => ({ kind: 'battery', ...battery })),
+  ];
   if (flags.list) {
     for (const entry of list) console.log(`${entry.kind.padEnd(9)} ${entry.name}`);
     return 0;
@@ -533,7 +596,9 @@ async function main() {
   };
 
   console.log(`browser: ${browser}`);
-  console.log(`mode:    ${flags.webgpu ? 'webgpu' : flags.basic ? 'webgl1-basic (no ANGLE instancing, mediump fragments)' : 'webgl1'}`);
+  console.log(
+    `mode:    ${flags.webgpu ? 'webgpu' : flags.basic ? 'webgl1-basic (no ANGLE instancing, mediump fragments)' : 'webgl1'}`,
+  );
   console.log(`base:    ${context.base}`);
   console.log('');
 
@@ -548,7 +613,9 @@ async function main() {
       for (const failure of result.failures) console.log(`    ${failure}`);
       if (flags.verbose && result.batteryChecks) {
         for (const check of result.batteryChecks) {
-          console.log(`    ${check.pass ? 'ok  ' : 'FAIL'} ${check.name}${check.detail === undefined ? '' : ` — ${JSON.stringify(check.detail)}`}`);
+          console.log(
+            `    ${check.pass ? 'ok  ' : 'FAIL'} ${check.name}${check.detail === undefined ? '' : ` — ${JSON.stringify(check.detail)}`}`,
+          );
         }
       }
       if (result.screenshot) console.log(`    screenshot: ${result.screenshot}`);

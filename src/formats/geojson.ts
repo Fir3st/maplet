@@ -9,7 +9,16 @@
  */
 
 import { fail } from '../api/errors.ts';
-import type { FeatureId, FeatureProperties, FeatureSnapshot, Geometry, GeoPosition, PlanarPosition, Position } from '../api/types.ts';
+import { isArrayValue } from '../api/types.ts';
+import type {
+  FeatureId,
+  FeatureProperties,
+  FeatureSnapshot,
+  Geometry,
+  GeoPosition,
+  PlanarPosition,
+  Position,
+} from '../api/types.ts';
 import type { FeatureInput } from '../scene/source.ts';
 
 export type GeoJsonCoordinates = readonly number[];
@@ -35,53 +44,62 @@ export interface GeoJsonFeatureCollection {
 export type GeoJsonInput = GeoJsonFeature | GeoJsonFeatureCollection | GeoJsonGeometry;
 
 function toPosition(coordinates: GeoJsonCoordinates, context: string): GeoPosition {
-  if (!Array.isArray(coordinates) || coordinates.length < 2) {
+  if (!isArrayValue(coordinates) || coordinates.length < 2) {
     fail('import-invalid', `${context}: coordinates must be [lng, lat, altitude?]`, {
       coordinates,
     });
   }
   const lng = coordinates[0];
   const lat = coordinates[1];
-  if (typeof lng !== 'number' || typeof lat !== 'number' || !Number.isFinite(lng) || !Number.isFinite(lat)) {
+  if (
+    typeof lng !== 'number' ||
+    typeof lat !== 'number' ||
+    !Number.isFinite(lng) ||
+    !Number.isFinite(lat)
+  ) {
     fail('import-invalid', `${context}: coordinates must be finite numbers`, { coordinates });
   }
   const altitude = coordinates[2];
-  return altitude === undefined
-    ? { lat, lng }
-    : { lat, lng, altitude: Number(altitude) };
+  return altitude === undefined ? { lat, lng } : { lat, lng, altitude: Number(altitude) };
 }
 
 function positionList(value: unknown, context: string): GeoPosition[] {
-  if (!Array.isArray(value)) {
+  if (!isArrayValue(value)) {
     fail('import-invalid', `${context}: expected an array of positions`, { value });
   }
-  return value.map((coordinates, index) =>
+  return (value as readonly unknown[]).map((coordinates, index) =>
     toPosition(coordinates as GeoJsonCoordinates, `${context}[${index}]`),
   );
 }
 
 function positionLists(value: unknown, context: string): GeoPosition[][] {
-  if (!Array.isArray(value)) {
+  if (!isArrayValue(value)) {
     fail('import-invalid', `${context}: expected an array of line strings`, { value });
   }
-  return value.map((line, index) =>
+  return (value as readonly unknown[]).map((line, index) =>
     positionList(line, `${context}[${index}]`),
   );
 }
 
 function positionListLists(value: unknown, context: string): GeoPosition[][][] {
-  if (!Array.isArray(value)) {
+  if (!isArrayValue(value)) {
     fail('import-invalid', `${context}: expected an array of polygons`, { value });
   }
-  return value.map((polygon, index) =>
+  return (value as readonly unknown[]).map((polygon, index) =>
     positionLists(polygon, `${context}[${index}]`),
   );
 }
 
-export function geoJsonGeometryToGeometry(geometry: GeoJsonGeometry, context = 'geometry'): Geometry {
+export function geoJsonGeometryToGeometry(
+  geometry: GeoJsonGeometry,
+  context = 'geometry',
+): Geometry {
   switch (geometry.type) {
     case 'Point':
-      return { type: 'point', position: toPosition(geometry.coordinates as GeoJsonCoordinates, context) };
+      return {
+        type: 'point',
+        position: toPosition(geometry.coordinates as GeoJsonCoordinates, context),
+      };
     case 'MultiPoint':
       return { type: 'multiPoint', positions: positionList(geometry.coordinates, context) };
     case 'LineString':
@@ -105,7 +123,10 @@ export function geoJsonGeometryToGeometry(geometry: GeoJsonGeometry, context = '
       if (kinds.size === 1) {
         const kind = parts[0]!.type;
         if (kind === 'point') {
-          return { type: 'multiPoint', positions: parts.map((part) => (part as { position: GeoPosition }).position) };
+          return {
+            type: 'multiPoint',
+            positions: parts.map((part) => (part as { position: GeoPosition }).position),
+          };
         }
         if (kind === 'lineString') {
           return {
@@ -116,7 +137,9 @@ export function geoJsonGeometryToGeometry(geometry: GeoJsonGeometry, context = '
         if (kind === 'polygon') {
           return {
             type: 'multiPolygon',
-            polygons: parts.map((part) => (part as { rings: readonly (readonly GeoPosition[])[] }).rings),
+            polygons: parts.map(
+              (part) => (part as { rings: readonly (readonly GeoPosition[])[] }).rings,
+            ),
           };
         }
       }
@@ -146,7 +169,10 @@ export interface ParsedGeoJsonFeature {
  * Parses GeoJSON text or an object into feature inputs. Duplicate IDs are left to
  * the source transaction to reject; unsafe numeric IDs fail here (IO-03, IO-04).
  */
-export function parseGeoJson(input: string | GeoJsonInput, options: ParseGeoJsonOptions = {}): ParsedGeoJsonFeature[] {
+export function parseGeoJson(
+  input: string | GeoJsonInput,
+  options: ParseGeoJsonOptions = {},
+): ParsedGeoJsonFeature[] {
   let value: GeoJsonInput;
   if (typeof input === 'string') {
     try {
@@ -165,7 +191,7 @@ export function parseGeoJson(input: string | GeoJsonInput, options: ParseGeoJson
   }
   if (value.type === 'FeatureCollection') {
     const features = (value as GeoJsonFeatureCollection).features;
-    if (!Array.isArray(features)) {
+    if (!isArrayValue(features)) {
       fail('import-invalid', `${context}: FeatureCollection.features must be an array`, {});
     }
     return features.map((feature, index) => parseFeature(feature, `${context}.features[${index}]`));
@@ -175,7 +201,7 @@ export function parseGeoJson(input: string | GeoJsonInput, options: ParseGeoJson
   }
   return [
     {
-      geometry: geoJsonGeometryToGeometry(value as GeoJsonGeometry, context),
+      geometry: geoJsonGeometryToGeometry(value, context),
       properties: {},
     },
   ];
@@ -210,7 +236,7 @@ function parseFeature(feature: GeoJsonFeature, context: string): ParsedGeoJsonFe
   return {
     ...(featureId === undefined ? {} : { id: featureId }),
     geometry: geoJsonGeometryToGeometry(feature.geometry, `${context}.geometry`),
-    properties: properties as FeatureProperties,
+    properties,
   };
 }
 
@@ -224,10 +250,12 @@ function positionToCoordinates(position: Position): number[] {
       ? [position.lng, position.lat]
       : [position.lng, position.lat, position.altitude];
   }
-  return [(position as PlanarPosition).x, (position as PlanarPosition).y];
+  return [position.x, position.y];
 }
 
-export function geometryToGeoJson(geometry: Geometry<GeoPosition | PlanarPosition>): GeoJsonGeometry {
+export function geometryToGeoJson(
+  geometry: Geometry<GeoPosition | PlanarPosition>,
+): GeoJsonGeometry {
   const positions = (list: readonly Position[]): number[][] => list.map(positionToCoordinates);
   switch (geometry.type) {
     case 'point':
@@ -241,7 +269,10 @@ export function geometryToGeoJson(geometry: Geometry<GeoPosition | PlanarPositio
     case 'polygon':
       return { type: 'Polygon', coordinates: geometry.rings.map(positions) };
     case 'multiPolygon':
-      return { type: 'MultiPolygon', coordinates: geometry.polygons.map((rings) => rings.map(positions)) };
+      return {
+        type: 'MultiPolygon',
+        coordinates: geometry.polygons.map((rings) => rings.map(positions)),
+      };
     case 'circle':
       fail('unsupported', 'circles cannot be exported as GeoJSON geometry', {});
     case 'rectangle': {
@@ -257,24 +288,16 @@ export function geometryToGeoJson(geometry: Geometry<GeoPosition | PlanarPositio
         ];
         return { type: 'Polygon', coordinates: [corners.map(positionToCoordinates)] };
       }
-      const sw = geometry.southwest as PlanarPosition;
+      const sw = geometry.southwest;
       const ne = geometry.northeast as PlanarPosition;
-      const corners: Position[] = [
-        sw,
-        { x: ne.x, y: sw.y },
-        ne,
-        { x: sw.x, y: ne.y },
-        sw,
-      ];
+      const corners: Position[] = [sw, { x: ne.x, y: sw.y }, ne, { x: sw.x, y: ne.y }, sw];
       return { type: 'Polygon', coordinates: [corners.map(positionToCoordinates)] };
     }
   }
 }
 
 /** Exports live feature snapshots as a FeatureCollection (IO-01, IO-12). */
-export function featuresToGeoJson(
-  snapshots: readonly FeatureSnapshot[],
-): GeoJsonFeatureCollection {
+export function featuresToGeoJson(snapshots: readonly FeatureSnapshot[]): GeoJsonFeatureCollection {
   return {
     type: 'FeatureCollection',
     features: snapshots.map((snapshot) => ({
@@ -291,5 +314,5 @@ export function parsedToFeatureInput(parsed: ParsedGeoJsonFeature): FeatureInput
     geometry: parsed.geometry,
     properties: parsed.properties,
     ...(parsed.id === undefined ? {} : { id: parsed.id }),
-  } as FeatureInput;
+  };
 }

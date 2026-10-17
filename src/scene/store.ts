@@ -98,8 +98,16 @@ export class SpatialIndex {
     return value;
   }
 
-  private clampRange(minX: number, minY: number, maxX: number, maxY: number): {
-    x0: number; y0: number; x1: number; y1: number;
+  private clampRange(
+    minX: number,
+    minY: number,
+    maxX: number,
+    maxY: number,
+  ): {
+    x0: number;
+    y0: number;
+    x1: number;
+    y1: number;
   } {
     return {
       x0: this.clampCell(Math.floor((minX / 256) * this.n)),
@@ -222,9 +230,15 @@ export class FeatureStore {
     return this.liveCount;
   }
 
-  get pointOnly(): boolean { return this.complexCount === 0; }
-  get slotCapacity(): number { return this.slots.length; }
-  get pristine(): boolean { return this.slots.length === 0 && this.identities.size === 0; }
+  get pointOnly(): boolean {
+    return this.complexCount === 0;
+  }
+  get slotCapacity(): number {
+    return this.slots.length;
+  }
+  get pristine(): boolean {
+    return this.slots.length === 0 && this.identities.size === 0;
+  }
 
   /** Destruction ends identity history too, even while callers retain a handle. */
   dispose(): void {
@@ -247,24 +261,33 @@ export class FeatureStore {
    * caller supplies validated, owned columns from the import pipeline. Existing
    * datasets keep the ordinary path (generation history and ownership checks).
    */
-  initializePoints(batch: ColumnarPointBatch, nextId: () => FeatureId, signal?: AbortSignal): {
-    ids: FeatureId[]; undo: () => void;
+  initializePoints(
+    batch: ColumnarPointBatch,
+    nextId: () => FeatureId,
+    signal?: AbortSignal,
+  ): {
+    ids: FeatureId[];
+    undo: () => void;
   } {
     if (!this.pristine) fail('invalid-state', 'point initialization requires a pristine store');
     const count = batch.positions.length / 2;
-    const ids: FeatureId[] = new Array(count);
+    const ids: FeatureId[] = new Array<FeatureId>(count);
     const byKey = new Map<string, number>();
     for (let slot = 0; slot < count; slot++) {
       const id = batch.ids?.[slot] ?? nextId();
       const key = featureIdKey(id);
       byKey.set(key, slot);
-      if (byKey.size !== slot + 1) fail('duplicate-id', `columnar import: duplicate id in input: ${String(id)}`, { id });
+      if (byKey.size !== slot + 1)
+        fail('duplicate-id', `columnar import: duplicate id in input: ${String(id)}`, { id });
       ids[slot] = id;
     }
-    const projected = nativeProjectionCode(this.crs) === undefined ? null : projectColumns(this.crs, batch.positions);
+    const projected =
+      nativeProjectionCode(this.crs) === undefined
+        ? null
+        : projectColumns(this.crs, batch.positions);
     const slots = new SlotTable(projected ?? undefined);
-    const identitySlots: number[] = new Array(count);
-    const generations: number[] = new Array(count).fill(1);
+    const identitySlots: number[] = new Array<number>(count);
+    const generations: number[] = new Array<number>(count).fill(1);
     const index = new SpatialIndex();
     let minX = Infinity;
     let minY = Infinity;
@@ -276,17 +299,33 @@ export class FeatureStore {
       const x = batch.positions[slot * 2]!;
       const y = batch.positions[slot * 2 + 1]!;
       const altitude = batch.altitudes?.[slot];
-      let wx: number, wy: number, alt = altitude === undefined || Number.isNaN(altitude) ? undefined : altitude;
+      let wx: number,
+        wy: number,
+        alt = altitude === undefined || Number.isNaN(altitude) ? undefined : altitude;
       if (projected) {
-        wx = projected[slot * 2]!; wy = projected[slot * 2 + 1]!;
+        wx = projected[slot * 2]!;
+        wy = projected[slot * 2 + 1]!;
       } else {
-        const position: Position = this.crs.positionKind === 'planar' ? { x, y } :
-          alt === undefined ? { lng: x, lat: y } : { lng: x, lat: y, altitude: alt };
+        const position: Position =
+          this.crs.positionKind === 'planar'
+            ? { x, y }
+            : alt === undefined
+              ? { lng: x, lat: y }
+              : { lng: x, lat: y, altitude: alt };
         const point = positionToWorldChecked(this.crs, position, 'geometry.position');
-        wx = point.wx; wy = point.wy; alt = point.alt;
+        wx = point.wx;
+        wy = point.wy;
+        alt = point.alt;
       }
-      slots.setPoint(slot, key, ids[slot]!, wx, wy, alt,
-        batch.properties?.[slot] ?? EMPTY_PROPERTIES);
+      slots.setPoint(
+        slot,
+        key,
+        ids[slot]!,
+        wx,
+        wy,
+        alt,
+        batch.properties?.[slot] ?? EMPTY_PROPERTIES,
+      );
       identitySlots[slot] = slot;
       index.addPoint(slot, wx, wy);
       minX = Math.min(minX, wx);
@@ -330,23 +369,45 @@ export class FeatureStore {
   }
 
   /** Compile complex imports off-store and publish all canonical pages together. */
-  initializePrepared(batch: PreparedPartsImport, ids: readonly FeatureId[], signal?: AbortSignal): () => void {
+  initializePrepared(
+    batch: PreparedPartsImport,
+    ids: readonly FeatureId[],
+    signal?: AbortSignal,
+  ): () => void {
     if (!this.pristine) fail('invalid-state', 'geometry initialization requires a pristine store');
     const staged = new FeatureStore(this.crs);
     for (let i = 0; i < ids.length; i++) {
       if (signal?.aborted) fail('aborted', 'operation aborted');
-      staged.addPrepared({ id: ids[i]!, namespace: undefined, prepared: batch.geometries[i]!, properties: batch.properties?.[i] });
+      staged.addPrepared({
+        id: ids[i]!,
+        namespace: undefined,
+        prepared: batch.geometries[i]!,
+        properties: batch.properties?.[i],
+      });
     }
     if (signal?.aborted) fail('aborted', 'operation aborted');
-    const previousSlots = this.slots, previousIndex = this.index;
-    this.slots = staged.slots; this.identities = staged.identities; this.index = staged.index;
-    this.identitySlots = staged.identitySlots; this.identityGenerations = staged.identityGenerations;
-    this.liveCount = staged.liveCount; this.complexCount = staged.complexCount;
-    this.boundsDirty = true; this.changes.invalidate();
+    const previousSlots = this.slots,
+      previousIndex = this.index;
+    this.slots = staged.slots;
+    this.identities = staged.identities;
+    this.index = staged.index;
+    this.identitySlots = staged.identitySlots;
+    this.identityGenerations = staged.identityGenerations;
+    this.liveCount = staged.liveCount;
+    this.complexCount = staged.complexCount;
+    this.boundsDirty = true;
+    this.changes.invalidate();
     return () => {
-      this.slots = previousSlots; this.identitySlots.fill(-1); this.index = previousIndex;
-      this.freeSlots.length = 0; this.liveCount = 0; this.complexCount = 0;
-      this.bounds = null; this.boundsDirty = false; this.visitStamp = new Uint32Array(0); this.visitEpoch = 0;
+      this.slots = previousSlots;
+      this.identitySlots.fill(-1);
+      this.index = previousIndex;
+      this.freeSlots.length = 0;
+      this.liveCount = 0;
+      this.complexCount = 0;
+      this.bounds = null;
+      this.boundsDirty = false;
+      this.visitStamp = new Uint32Array(0);
+      this.visitEpoch = 0;
       // Consumed generations survive rollback, including captured staged refs.
       this.changes.invalidate();
     };
@@ -383,17 +444,29 @@ export class FeatureStore {
    */
   add(input: AddRecordInput, upsert = false): AddRecordResult {
     const geometry = input.geometry;
-    if (typeof geometry === 'object' && geometry !== null && (geometry as { type?: unknown }).type === 'point') {
+    if (
+      typeof geometry === 'object' &&
+      geometry !== null &&
+      (geometry as { type?: unknown }).type === 'point'
+    ) {
       // Keep the same CRS validation/normalization, but store the checked point
       // inline instead of allocating a prepared payload and degenerate bbox.
-      const point = positionToWorldChecked(this.crs, (geometry as { position: Position }).position, 'geometry.position');
-      return this.insert(input, {
-        kind: GEOMETRY_KIND.point,
-        wx: point.wx,
-        wy: point.wy,
-        alt: point.alt,
-        geometry: null,
-      }, upsert);
+      const point = positionToWorldChecked(
+        this.crs,
+        (geometry as { position: Position }).position,
+        'geometry.position',
+      );
+      return this.insert(
+        input,
+        {
+          kind: GEOMETRY_KIND.point,
+          wx: point.wx,
+          wy: point.wy,
+          alt: point.alt,
+          geometry: null,
+        },
+        upsert,
+      );
     }
     return this.addPrepared(
       {
@@ -409,17 +482,27 @@ export class FeatureStore {
   /** Adds a record whose geometry was prepared by the caller (vector tiles). */
   addPrepared(input: AddPreparedRecordInput, upsert = false): AddRecordResult {
     const prepared = input.prepared;
-    return this.insert(input, {
-      kind: prepared.kind,
-      wx: prepared.anchorX,
-      wy: prepared.anchorY,
-      alt: prepared.kind === GEOMETRY_KIND.point && prepared.payload.kind === GEOMETRY_KIND.point
-        ? prepared.payload.alt : undefined,
-      geometry: prepared.kind === GEOMETRY_KIND.point ? null : prepared,
-    }, upsert);
+    return this.insert(
+      input,
+      {
+        kind: prepared.kind,
+        wx: prepared.anchorX,
+        wy: prepared.anchorY,
+        alt:
+          prepared.kind === GEOMETRY_KIND.point && prepared.payload.kind === GEOMETRY_KIND.point
+            ? prepared.payload.alt
+            : undefined,
+        geometry: prepared.kind === GEOMETRY_KIND.point ? null : prepared,
+      },
+      upsert,
+    );
   }
 
-  private insert(input: Omit<AddRecordInput, 'geometry'>, geometry: RecordGeometry, upsert: boolean): AddRecordResult {
+  private insert(
+    input: Omit<AddRecordInput, 'geometry'>,
+    geometry: RecordGeometry,
+    upsert: boolean,
+  ): AddRecordResult {
     const key = this.keyOf(input.id, input.namespace);
     let identity = this.identities.get(key);
     const previousSlot = identity === undefined ? -1 : this.identitySlots[identity]!;

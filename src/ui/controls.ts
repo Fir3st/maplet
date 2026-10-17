@@ -55,7 +55,11 @@ export interface ControlsContext {
     list(): readonly string[];
   };
   readonly view: {
-    get(): { readonly zoom: number; readonly centerLat: number; readonly positionKind: 'geographic' | 'planar' };
+    get(): {
+      readonly zoom: number;
+      readonly centerLat: number;
+      readonly positionKind: 'geographic' | 'planar';
+    };
   };
   /** Bounded result source of the accessible list (current view, capped). */
   readonly results: {
@@ -235,7 +239,11 @@ export class ControlsHost {
 }
 
 /** Builds one control's DOM and returns its state-driven update function. */
-function buildContent(spec: ControlSpec, element: HTMLElement, context: ControlsContext): () => void {
+function buildContent(
+  spec: ControlSpec,
+  element: HTMLElement,
+  context: ControlsContext,
+): () => void {
   switch (spec.kind) {
     case 'zoom':
       return buildZoom(element, context);
@@ -298,7 +306,8 @@ function buildLayers(element: HTMLElement, context: ControlsContext): () => void
       let row = rows.get(key);
       if (!row) {
         const label = document.createElement('label');
-        label.style.cssText = 'display:flex;align-items:center;gap:6px;cursor:pointer;white-space:nowrap;';
+        label.style.cssText =
+          'display:flex;align-items:center;gap:6px;cursor:pointer;white-space:nowrap;';
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.dataset.layerId = entry.id;
@@ -341,7 +350,8 @@ function buildScale(element: HTMLElement, context: ControlsContext): () => void 
   const label = document.createElement('div');
   label.style.cssText = 'text-align:center;margin-bottom:2px;';
   const bar = document.createElement('div');
-  bar.style.cssText = 'border:2px solid #374151;border-top:none;height:6px;box-sizing:border-box;margin:0 auto;';
+  bar.style.cssText =
+    'border:2px solid #374151;border-top:none;height:6px;box-sizing:border-box;margin:0 auto;';
   element.append(label, bar);
   let signature = '\u0000';
   return () => {
@@ -364,16 +374,22 @@ function buildScale(element: HTMLElement, context: ControlsContext): () => void 
  * Selection mirrors `map.selection` in both directions and changes are
  * announced through an `aria-live` region.
  */
-function buildList(element: HTMLElement, context: ControlsContext, options: ListControlOptions): () => void {
+function buildList(
+  element: HTMLElement,
+  context: ControlsContext,
+  options: ListControlOptions,
+): () => void {
   element.style.cssText =
     'background:#ffffff;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.25);padding:6px 8px;font:12px/1.6 system-ui,sans-serif;color:#111827;max-height:38vh;overflow:auto;max-width:240px;';
   const list = document.createElement('ul');
   list.setAttribute('aria-label', 'Map results');
-  list.style.cssText = 'margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:2px;';
+  list.style.cssText =
+    'margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:2px;';
   const live = document.createElement('div');
   live.setAttribute('aria-live', 'polite');
   live.dataset.mapletAnnounce = 'true';
-  live.style.cssText = 'position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;';
+  live.style.cssText =
+    'position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;';
   element.append(list, live);
   const rows = new Map<string, { item: HTMLElement; button: HTMLButtonElement }>();
   const limit = Math.max(1, Math.min(50, options.limit ?? 10));

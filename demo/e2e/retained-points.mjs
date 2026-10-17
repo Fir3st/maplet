@@ -85,5 +85,6 @@ export async function retainedPoints({ session, expect, options }) {
     }
     return checks;
   })()`);
-  for (const check of result) expect.ok(check.pass, `${check.name}: ${JSON.stringify(check.detail ?? null)}`);
+  for (const check of result)
+    expect.ok(check.pass, `${check.name}: ${JSON.stringify(check.detail ?? null)}`);
 }

@@ -48,7 +48,12 @@ export function quadVertices(
 }
 
 /** Axis-aligned bounds of a quad from `quadVertices` (collision, culling). */
-export function quadBounds(vertices: Float32Array): { x0: number; y0: number; x1: number; y1: number } {
+export function quadBounds(vertices: Float32Array): {
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
+} {
   let x0 = Infinity;
   let y0 = Infinity;
   let x1 = -Infinity;

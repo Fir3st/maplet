@@ -3,10 +3,7 @@
   "mode": "updates",
   "workload": {
     "points": 500000,
-    "viewportCssPx": [
-      720,
-      520
-    ],
+    "viewportCssPx": [720, 520],
     "zoom": 10,
     "radiusCssPx": 2,
     "color": "#2563eb",
@@ -17,12 +14,7 @@
     "mutations": {
       "repetitionsPerOperation": 5,
       "radiusCssPx": 8,
-      "operations": [
-        "hide",
-        "show",
-        "color",
-        "position"
-      ],
+      "operations": ["hide", "show", "color", "position"],
       "moveCssPx": 40
     }
   },

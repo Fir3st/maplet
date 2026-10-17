@@ -6,13 +6,15 @@ const spots = [
   { id: 'market', name: 'Market square', tint: '#16724c', at: { x: 0.1, y: 0.35 } },
   { id: 'river', name: 'River walk', tint: '#b45309', at: { x: 0.95, y: -0.3 } },
 ];
-const markers = map.addMarkers(spots.map(spot => ({
-  id: spot.id,
-  position: spot.at,
-  iconTint: spot.tint,
-  tooltip: spot.name,
-  popup: { content: `${spot.name} — click a pin and its popup follows the map.` },
-})));
+const markers = map.addMarkers(
+  spots.map((spot) => ({
+    id: spot.id,
+    position: spot.at,
+    iconTint: spot.tint,
+    tooltip: spot.name,
+    popup: { content: `${spot.name} — click a pin and its popup follows the map.` },
+  })),
+);
 const [depot, market, river] = markers;
 // A permanent tooltip stays visible without hover.
 depot.setTooltip({ content: 'Freight depot · 12 platforms', permanent: true });
@@ -49,7 +51,8 @@ const craneAt = row('Crane at');
 const craneDrops = row('Drops');
 panel.append(heading, rows);
 const craneHint = document.createElement('p');
-craneHint.textContent = 'Press the purple crane pin on the map and drag it — the pin follows the pointer while the map stays put.';
+craneHint.textContent =
+  'Press the purple crane pin on the map and drag it — the pin follows the pointer while the map stays put.';
 panel.append(craneHint);
 document.querySelector('#example-extra').append(panel);
 const craneText = () => {
@@ -58,7 +61,9 @@ const craneText = () => {
 };
 let drops = 0;
 craneText();
-crane.on('dragstart', () => report('Dragging the dock crane — the map will not pan until you drop it.'));
+crane.on('dragstart', () =>
+  report('Dragging the dock crane — the map will not pan until you drop it.'),
+);
 crane.on('dragend', () => {
   drops += 1;
   craneDrops.textContent = String(drops);
@@ -66,7 +71,9 @@ crane.on('dragend', () => {
   report('Dock crane dropped — the map never panned and the tooltip followed the pin.');
 });
 
-let away = false, pinned = true, extra = null;
+let away = false,
+  pinned = true,
+  extra = null;
 action('Move the market pin', () => {
   away = !away;
   market.setPosition(away ? { x: 0.62, y: -0.55 } : spots[1].at);

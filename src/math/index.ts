@@ -33,11 +33,7 @@ export {
   isGeoBounds,
 } from './bounds.ts';
 export type { Bounds, GeoBounds, PlanarBounds, ExtendBoundsOptions } from './bounds.ts';
-export {
-  distanceBetween,
-  metersPerPixel,
-  scaleBar,
-} from './measure.ts';
+export { distanceBetween, metersPerPixel, scaleBar } from './measure.ts';
 export type { ScaleBar } from './measure.ts';
 export {
   worldScaleAt,

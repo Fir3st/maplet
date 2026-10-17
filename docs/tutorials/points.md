@@ -9,9 +9,10 @@ The example uses a synthetic station grid in planar coordinates.
 an object handle per row. Request one with `get(id)` when you need to edit it.
 
 ```ts
-const stations = map.addPoints([
-  { id: 'first', position: { x: 0, y: 0 }, properties: { status: 'offline' } },
-], { draggable: true });
+const stations = map.addPoints(
+  [{ id: 'first', position: { x: 0, y: 0 }, properties: { status: 'offline' } }],
+  { draggable: true },
+);
 const first = stations.get('first');
 first?.setPosition({ x: 0.5, y: 0.2 });
 first?.setProperties({ status: 'online' });

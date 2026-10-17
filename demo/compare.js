@@ -17,7 +17,7 @@ const result = { pass: false, checks: [], errors: [] };
 const frame = () => new Promise((resolve) => requestAnimationFrame(resolve));
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const heap = () => performance.memory?.usedJSHeapSize ?? null;
-const mib = (bytes) => bytes === null ? null : Math.round(bytes / 1048576 * 10) / 10;
+const mib = (bytes) => (bytes === null ? null : Math.round((bytes / 1048576) * 10) / 10);
 let map;
 let source;
 let renderer;
@@ -26,12 +26,14 @@ let renderFrames = 0;
 
 function expectedScreen(position) {
   const unitY = (lat) => {
-    const sin = Math.sin(lat * Math.PI / 180);
+    const sin = Math.sin((lat * Math.PI) / 180);
     return 0.5 - Math.log((1 + sin) / (1 - sin)) / (4 * Math.PI);
   };
   const scale = 256 * 2 ** ZOOM;
-  return { x: 360 + (position.lng - CENTER.lng) / 360 * scale,
-    y: 260 + (unitY(position.lat) - unitY(CENTER.lat)) * scale };
+  return {
+    x: 360 + ((position.lng - CENTER.lng) / 360) * scale,
+    y: 260 + (unitY(position.lat) - unitY(CENTER.lat)) * scale,
+  };
 }
 
 function publish() {
@@ -79,7 +81,8 @@ async function verifyOutput() {
       const screen = map.latLngToContainerPoint(position);
       const element = document.elementFromPoint(rect.left + screen.x, rect.top + screen.y);
       return {
-        pass: element?.classList.contains('comparison-point') === true &&
+        pass:
+          element?.classList.contains('comparison-point') === true &&
           getComputedStyle(element).backgroundColor === 'rgb(37, 99, 235)',
         element: element?.className,
       };
@@ -94,7 +97,12 @@ async function verifyOutput() {
     } else {
       const screen = map.latLngToLayerPoint(position).subtract(renderer._bounds.min);
       const dpr = renderer._ctx.getTransform().a;
-      const data = renderer._ctx.getImageData(Math.round(screen.x * dpr), Math.round(screen.y * dpr), 1, 1).data;
+      const data = renderer._ctx.getImageData(
+        Math.round(screen.x * dpr),
+        Math.round(screen.y * dpr),
+        1,
+        1,
+      ).data;
       pixel = { r: data[0], g: data[1], b: data[2], a: data[3] };
     }
     pixels.push({ pass: pixel.b > 180 && pixel.r < 90 && pixel.g < 160 && pixel.a > 0, pixel });
@@ -119,7 +127,8 @@ async function panTest(durationMs) {
   }
   const elapsedMs = performance.now() - started;
   samples.sort((a, b) => a - b);
-  const percentile = (q) => Math.round(samples[Math.min(samples.length - 1, Math.floor(samples.length * q))] * 10) / 10;
+  const percentile = (q) =>
+    Math.round(samples[Math.min(samples.length - 1, Math.floor(samples.length * q))] * 10) / 10;
   return {
     samples: samples.length,
     renderUpdates: frameCount() - beforeFrames,
@@ -131,28 +140,46 @@ async function panTest(durationMs) {
 }
 
 try {
-  if (!['maplet', 'leaflet-canvas', 'leaflet-dom'].includes(engine)) throw new Error(`Unknown engine: ${engine}`);
+  if (!['maplet', 'leaflet-canvas', 'leaflet-dom'].includes(engine))
+    throw new Error(`Unknown engine: ${engine}`);
   if (typeof gc === 'function') gc();
   const baseHeap = heap();
   const setupStart = performance.now();
   if (engine === 'maplet') {
     map = await createMap('map', {
-    renderer: { primary: params.get('backend') === 'webgpu' ? 'webgpu' : 'webgl1', fallback: false },
-    size: { width: 720, height: 520 },
-    center: CENTER, zoom: ZOOM
-});
+      renderer: {
+        primary: params.get('backend') === 'webgpu' ? 'webgpu' : 'webgl1',
+        fallback: false,
+      },
+      size: { width: 720, height: 520 },
+      center: CENTER,
+      zoom: ZOOM,
+    });
     source = map.data.vector({ id: 'points' });
-    map.addLayer({ id: 'points', type: 'points', source,
-      style: { radiusPx: 2, color: '#2563eb' }, interactive: true  });
+    map.addLayer({
+      id: 'points',
+      type: 'points',
+      source,
+      style: { radiusPx: 2, color: '#2563eb' },
+      interactive: true,
+    });
   } else {
     renderer = engine === 'leaflet-canvas' ? L.canvas({ padding: 0 }) : undefined;
-    map = L.map('map', { renderer, zoomControl: false, attributionControl: false,
-      zoomAnimation: false, fadeAnimation: false, markerZoomAnimation: false })
-      .setView(CENTER, ZOOM);
+    map = L.map('map', {
+      renderer,
+      zoomControl: false,
+      attributionControl: false,
+      zoomAnimation: false,
+      fadeAnimation: false,
+      markerZoomAnimation: false,
+    }).setView(CENTER, ZOOM);
     if (renderer) {
       // Count actual canvas redraws without changing their work or timing.
       const redraw = renderer._redraw;
-      renderer._redraw = function () { renderFrames++; return redraw.call(this); };
+      renderer._redraw = function () {
+        renderFrames++;
+        return redraw.call(this);
+      };
     } else {
       map.on('move', () => renderFrames++);
     }
@@ -166,15 +193,27 @@ try {
     await source.importColumnar(batch, { copy: false });
   } else {
     points = new Array(COUNT);
-    const icon = engine === 'leaflet-dom'
-      ? L.divIcon({ className: 'comparison-point', html: '', iconSize: [4, 4], iconAnchor: [2, 2] })
-      : null;
+    const icon =
+      engine === 'leaflet-dom'
+        ? L.divIcon({
+            className: 'comparison-point',
+            html: '',
+            iconSize: [4, 4],
+            iconAnchor: [2, 2],
+          })
+        : null;
     for (let i = 0; i < COUNT; i++) {
       const position = [batch.positions[i * 2 + 1], batch.positions[i * 2]];
       const point = icon
         ? L.marker(position, { icon, keyboard: false, interactive: true })
-        : L.circleMarker(position, { renderer, radius: 2, stroke: false,
-          fillColor: '#2563eb', fillOpacity: 1, interactive: true });
+        : L.circleMarker(position, {
+            renderer,
+            radius: 2,
+            stroke: false,
+            fillColor: '#2563eb',
+            fillOpacity: 1,
+            interactive: true,
+          });
       point.feature = { id: batch.ids[i], properties: batch.properties[i] };
       points[i] = point;
     }
@@ -192,28 +231,45 @@ try {
   const output = await verifyOutput();
   const projections = PROBES.map((position) => {
     const expected = expectedScreen(position);
-    const actual = engine === 'maplet' ? map.positionToScreen(position) : map.latLngToContainerPoint(position);
-    return { expected, actual, pass: Math.abs(expected.x - actual.x) <= 1 && Math.abs(expected.y - actual.y) <= 1 };
+    const actual =
+      engine === 'maplet' ? map.positionToScreen(position) : map.latLngToContainerPoint(position);
+    return {
+      expected,
+      actual,
+      pass: Math.abs(expected.x - actual.x) <= 1 && Math.abs(expected.y - actual.y) <= 1,
+    };
   });
   const drawn = countRenderedPoints();
   if (typeof gc === 'function') gc();
   const heapAfter = heap();
-  result.checks.push({ name: 'same workload and visible output',
-    pass: (engine === 'maplet' ? source.features.count() : points.length) === COUNT &&
-      drawn > 50000 && output.every((probe) => probe.pass) && projections.every((probe) => probe.pass),
+  result.checks.push({
+    name: 'same workload and visible output',
+    pass:
+      (engine === 'maplet' ? source.features.count() : points.length) === COUNT &&
+      drawn > 50000 &&
+      output.every((probe) => probe.pass) &&
+      projections.every((probe) => probe.pass),
     detail: {
-      engine, backend: engine === 'maplet' ? map.capabilities().backend : L.version,
-      userAgent: navigator.userAgent, dpr: devicePixelRatio,
-      count: COUNT, renderedPointsOrDomMarkers: drawn,
+      engine,
+      backend: engine === 'maplet' ? map.capabilities().backend : L.version,
+      userAgent: navigator.userAgent,
+      dpr: devicePixelRatio,
+      count: COUNT,
+      renderedPointsOrDomMarkers: drawn,
       markerDomElements: document.querySelectorAll('.comparison-point').length,
-      mapCreateMs: Math.round(mapCreateMs), generateMs: Math.round(generateMs),
-      loadMs: Math.round(loadMs), paintWaitMs: Math.round(paintWaitMs),
+      mapCreateMs: Math.round(mapCreateMs),
+      generateMs: Math.round(generateMs),
+      loadMs: Math.round(loadMs),
+      paintWaitMs: Math.round(paintWaitMs),
       setupToPaintMs: Math.round(setupToPaintMs),
-      gcAvailable: typeof gc === 'function', heapDeltaMiB: heapAfter === null || baseHeap === null ? null : mib(heapAfter - baseHeap),
+      gcAvailable: typeof gc === 'function',
+      heapDeltaMiB: heapAfter === null || baseHeap === null ? null : mib(heapAfter - baseHeap),
       drawCalls: engine === 'maplet' ? map.stats().drawCalls : null,
       gpuMiB: engine === 'maplet' ? mib(map.stats().gpuBytes) : null,
-      output, projections,
-    } });
+      output,
+      projections,
+    },
+  });
   const coldPan = await panTest(2500);
   // Do not attribute the initial compositor cadence to steady-state cost.
   await panTest(5000);
@@ -225,10 +281,11 @@ try {
   await frame();
   await frame();
   const afterPan = await verifyOutput();
-  result.checks.push({ name: 'cold and warmed pan with output validation',
-    pass: coldPan.samples >= 2 && warmPan.samples >= 2 &&
-      afterPan.every((probe) => probe.pass),
-    detail: { coldPan, warmupMs: 5000, warmPan, afterPan } });
+  result.checks.push({
+    name: 'cold and warmed pan with output validation',
+    pass: coldPan.samples >= 2 && warmPan.samples >= 2 && afterPan.every((probe) => probe.pass),
+    detail: { coldPan, warmupMs: 5000, warmPan, afterPan },
+  });
   result.pass = result.errors.length === 0 && result.checks.every((check) => check.pass);
   // Keep the map available for independent browser inspection.
   window.__comparison = { map, engine, result, source, points };

@@ -33,7 +33,9 @@ function finalize() {
   finalized = true;
   result.ms = Math.round(performance.now() - started);
   result.pass =
-    result.errors.length === 0 && result.checks.length === 3 && result.checks.every((entry) => entry.pass);
+    result.errors.length === 0 &&
+    result.checks.length === 3 &&
+    result.checks.every((entry) => entry.pass);
   window.__scaleCheckResult = result;
   document.title = 'scale-check-done';
   document.getElementById('details').textContent = JSON.stringify(result, null, 2);
@@ -41,11 +43,13 @@ function finalize() {
 const started = performance.now();
 
 const map = await createMap('map', {
-    renderer: new URLSearchParams(location.search).get('backend') === 'webgpu'
-        ? { primary: 'webgpu', fallback: false }
-        : { primary: 'webgl1', fallback: false },
-    size: { width: 720, height: 520 },
-    center: CENTER, zoom: ZOOM
+  renderer:
+    new URLSearchParams(location.search).get('backend') === 'webgpu'
+      ? { primary: 'webgpu', fallback: false }
+      : { primary: 'webgl1', fallback: false },
+  size: { width: 720, height: 520 },
+  center: CENTER,
+  zoom: ZOOM,
 });
 const source = map.data.vector({ id: 'points' });
 map.addLayer({
@@ -53,7 +57,7 @@ map.addLayer({
   type: 'points',
   source,
   style: { radiusPx: 2, color: '#2563eb' },
-  interactive: true ,
+  interactive: true,
 });
 
 /* --------------------------------- HUD ------------------------------------- */
@@ -80,7 +84,10 @@ map.on('viewchange', () => {
 map.onFeature((event) => {
   if (event.type === 'mouseover') {
     const feature = source.features.get(event.feature.id);
-    hud('hover', `${String(event.feature.id)} · ${feature ? JSON.stringify(feature.properties) : ''}`);
+    hud(
+      'hover',
+      `${String(event.feature.id)} · ${feature ? JSON.stringify(feature.properties) : ''}`,
+    );
   } else if (event.type === 'mouseout') {
     hud('hover', '–');
   }
@@ -165,7 +172,8 @@ async function panTest(ms = 2500) {
   }
   const engineFrames = map.stats().frames - frames0;
   times.sort((a, b) => a - b);
-  const pct = (q) => Math.round(times[Math.min(times.length - 1, Math.floor(times.length * q))] * 10) / 10;
+  const pct = (q) =>
+    Math.round(times[Math.min(times.length - 1, Math.floor(times.length * q))] * 10) / 10;
   const metrics = { frames, engineFrames, p50Ms: pct(0.5), p95Ms: pct(0.95), maxMs: pct(1) };
   hud('pan', `${metrics.p50Ms} / ${metrics.p95Ms} ms`);
   updateStats();

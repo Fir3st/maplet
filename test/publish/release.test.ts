@@ -4,18 +4,22 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { version } from '../../src/index.ts';
-// @ts-expect-error The release helper is an executable-tool JavaScript module.
 import { planForPush, releasePlan } from '../../scripts/release-plan.mjs';
 
 test('public version matches the package manifest', () => {
-  const manifest = JSON.parse(readFileSync(fileURLToPath(new URL('../../package.json', import.meta.url)), 'utf8'));
+  const manifest = JSON.parse(
+    readFileSync(fileURLToPath(new URL('../../package.json', import.meta.url)), 'utf8'),
+  ) as { version: string };
   assert.equal(version, manifest.version);
 });
 
 test('release only on a changed version, including the first push', () => {
   assert.equal(releasePlan('0.1.0-alpha.1', '0.1.0-alpha.1').changed, false);
   assert.deepEqual(releasePlan('0.1.0-alpha.2', '0.1.0-alpha.1'), {
-    version: '0.1.0-alpha.2', tag: 'v0.1.0-alpha.2', changed: true, prerelease: true,
+    version: '0.1.0-alpha.2',
+    tag: 'v0.1.0-alpha.2',
+    changed: true,
+    prerelease: true,
   });
   assert.equal(releasePlan('1.0.0', undefined).changed, true);
 });
@@ -27,14 +31,24 @@ test('stable versions and build metadata are not prereleases', () => {
 });
 
 test('reject invalid versions before using them in workflow outputs', () => {
-  for (const version of [undefined, 'v1.0.0', '01.0.0', '1.0.0-01', '1.0', '1.0.0\n', '1.0.0\ntag=bad']) {
+  for (const version of [
+    undefined,
+    'v1.0.0',
+    '01.0.0',
+    '1.0.0-01',
+    '1.0',
+    '1.0.0\n',
+    '1.0.0\ntag=bad',
+  ]) {
     assert.throws(() => releasePlan(version, '0.9.0'), /valid SemVer/);
   }
 });
 
 test('push planning compares the actual previous commit manifest', () => {
   const commit = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
-  const previous = JSON.parse(execFileSync('git', ['show', `${commit}:package.json`], { encoding: 'utf8' }));
+  const previous = JSON.parse(
+    execFileSync('git', ['show', `${commit}:package.json`], { encoding: 'utf8' }),
+  ) as { version: string };
   const plan = planForPush(commit);
   const tag = execFileSync('git', ['tag', '--list', plan.tag], { encoding: 'utf8' }).trim();
   assert.equal(plan.changed, plan.version !== previous.version || tag !== plan.tag);

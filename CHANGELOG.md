@@ -80,7 +80,7 @@
 ## 0.1.0-alpha.11
 
 - Add marker clustering: `map.setMarkerClustering({ radiusPx, minCount,
-  disableAtZoom })` replaces pins whose screen distance is within the radius with
+disableAtZoom })` replaces pins whose screen distance is within the radius with
   one count badge, and `getMarkerClustering()` reports the options with defaults
   applied (`null` shows every pin again). Grouping is resolved in screen space at
   the current zoom, so panning never re-clusters while a zoom or a pin change
@@ -191,7 +191,7 @@
 ## 0.1.0-alpha.4
 
 - **Breaking:** replace the source-first map facade with `createMap(container,
-  options)`, direct map view methods, `addPoints`/`addLines`/`addPolygons` and
+options)`, direct map view methods, `addPoints`/`addLines`/`addPolygons` and
   one-step raster/media layers. Add lazy generation-bound objects, direct feature
   events, `style.by`, optional ids and initial control lists. Preserve advanced
   shared data/imports under `map.data`, rendering, transactions and bindings.

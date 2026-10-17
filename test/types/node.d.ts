@@ -64,7 +64,10 @@ declare module 'node:fs' {
   export function mkdirSync(path: string, options?: { readonly recursive?: boolean }): void;
   export function writeFileSync(path: string, contents: string): void;
   export function mkdtempSync(prefix: string): string;
-  export function rmSync(path: string, options: { readonly recursive?: boolean; readonly force?: boolean }): void;
+  export function rmSync(
+    path: string,
+    options: { readonly recursive?: boolean; readonly force?: boolean },
+  ): void;
 }
 
 declare module 'node:os' {

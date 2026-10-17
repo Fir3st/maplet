@@ -55,6 +55,16 @@ export function isPlanarPosition(value: unknown): value is PlanarPosition {
   );
 }
 
+/**
+ * True for real arrays. Deliberately a plain boolean, not a type predicate:
+ * `Array.isArray` narrows a readonly array to `any[]`, which would widen the
+ * element type of an already typed value at a public validation boundary and
+ * defeat every check that follows.
+ */
+export function isArrayValue(value: unknown): boolean {
+  return Array.isArray(value);
+}
+
 /* -------------------------------------------------------------------------- */
 /* Geometry                                                                    */
 /* -------------------------------------------------------------------------- */
@@ -189,13 +199,7 @@ export interface ViewSnapshotLike {
 export type BackendKind = 'webgpu' | 'webgl1' | 'none';
 
 export type FeatureEventType =
-  | 'click'
-  | 'mouseover'
-  | 'mouseout'
-  | 'mousemove'
-  | 'dragstart'
-  | 'drag'
-  | 'dragend';
+  'click' | 'mouseover' | 'mouseout' | 'mousemove' | 'dragstart' | 'drag' | 'dragend';
 
 /** Feature-level interaction event with references, positions and revision. */
 export interface MapFeatureEvent {
