@@ -284,4 +284,4 @@ export type {
   ViewUpdate,
 } from './view/view.ts';
 
-export const version = '0.1.0-alpha.15';
+export const version = '0.1.0';

@@ -5,11 +5,11 @@ Release archives are available without registry authentication.
 
 ## Release archive
 
-Download `fir3st-maplet-0.1.0-alpha.15.tgz` from
-[GitHub Releases](https://github.com/Fir3st/maplet/releases/tag/v0.1.0-alpha.15), then run:
+Download `fir3st-maplet-0.1.0.tgz` from
+[GitHub Releases](https://github.com/Fir3st/maplet/releases/tag/v0.1.0), then run:
 
 ```sh
-npm install ./fir3st-maplet-0.1.0-alpha.15.tgz
+npm install ./fir3st-maplet-0.1.0.tgz
 ```
 
 Import the package from your application:
@@ -23,7 +23,7 @@ import { createMap } from '@fir3st/maplet';
 With GitHub package-read authentication already configured:
 
 ```sh
-npm install @fir3st/maplet@next --registry=https://npm.pkg.github.com
+npm install @fir3st/maplet@latest --registry=https://npm.pkg.github.com
 ```
 
 The GitHub npm registry requires authentication even for public packages. For
@@ -31,8 +31,9 @@ projects with packages from multiple registries, configure only the `@fir3st`
 scope. Follow [GitHub's installation guide](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-npm-registry#installing-a-package).
 Do not put authentication material into application source.
 
-Prereleases use the `next` dist-tag. Pin a specific version for reproducible builds;
-alpha versions can include breaking changes. See [migration](api.md#migration-table).
+Stable releases use the `latest` dist-tag; prereleases use `next`. Pin a specific
+version for reproducible builds; the 0.1 line is pre-1.0, so a minor version can
+include breaking changes. See [migration](api.md#migration-table).
 
 ## Browser modules
 

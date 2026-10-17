@@ -40,8 +40,8 @@ Give `#map` a height before creating the map. Geographic tuples are
 ## Project
 
 Maplet is independent of Leaflet, with its own API. It ships ESM and TypeScript
-declarations, without runtime package dependencies. The current release is an
-alpha: read [known limitations](status.md#known-limitations) before relying on a feature.
+declarations, without runtime package dependencies. The current release is
+pre-1.0: read [known limitations](status.md#known-limitations) before relying on a feature.
 
 - [Development](development.md) and [website publication](examples.md).
 - [Implementation status](status.md) and [benchmark records](benchmarks/README.md).

@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.1.0
+
+First non-alpha release; it supersedes every `0.1.0-alpha.N` prerelease listed
+below and is published under the `latest` dist-tag.
+
+- Add ESLint and Prettier and fix every finding they report. `npm run check` now
+  enforces lint and formatting before the build: type-checked typescript-eslint
+  rules cover the library, tests and consumer type tests with project-aware
+  configurations, the publication tests consume the build scripts through
+  declaration files instead of `@ts-expect-error`, and Prettier formats code,
+  documentation and pages. Behavior-visible fixes: a label built from an object
+  property no longer renders `[object Object]`, `match` ignores non-primitive
+  values instead of stringifying them, a batch callback failure always rethrows
+  an `Error`, and readonly arrays validated at public boundaries keep their
+  element type instead of degrading to `any` under `Array.isArray`.
+
 ## 0.1.0-alpha.15
 
 - Serve WMS as tiles (WMS-06..WMS-11). A WMS source requests one GetMap per

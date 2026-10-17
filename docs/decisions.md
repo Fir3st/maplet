@@ -1,6 +1,6 @@
 # Maplet API contracts
 
-These contracts define units, defaults and observable behavior for the alpha
+These contracts define units, defaults and observable behavior for the pre-1.0
 implementation and its tests. Changes require an explicit contract update and
 matching test changes; tests must not establish defaults accidentally.
 
