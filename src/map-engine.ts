@@ -1496,7 +1496,13 @@ function buildHandle(
           },
         },
         layers: {
-          list: () => scene.layers.root.map((entry) => ({ id: entry.id, kind: 'layer' as const, visible: entry.visible })),
+          list: () =>
+            scene.layers.root.map((entry) => ({
+              id: entry.id,
+              kind: 'layer' as const,
+              label: entry.label ?? entry.id,
+              visible: entry.visible,
+            })),
           setVisible: (id, visible) => {
             scene.layers.setVisible(id, visible);
           },

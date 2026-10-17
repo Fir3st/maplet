@@ -20,7 +20,7 @@ to use this repository.
 | Picking | Shape-aware GPU queries, revision/generation checks, measured blocking/async readback; `demo/pick.html` |
 | Text and fonts | Labels, multi-line text, collisions, rotation, atlas eviction, font loading/fallback, platform shaping, bidi; `demo/labels.html`, `demo/fonts.html` |
 | Media | Sprites, anchor rotation, tinting, image/video bounds with placement rotation, runtime image/video URL changes, partial uploads and cleanup; `demo/icons.html`, `demo/media.html` |
-| HTML UI | Optional controls, scale, attribution, geolocation, feature detail and bounded accessible lists; `test/ui/`, `demo/ui.html`, `demo/detail.html` |
+| HTML UI | Optional controls (including labelled layer rows), a multi-map switcher, scale, attribution, geolocation, feature detail and bounded accessible lists; `test/ui/`, `test/scene/map-switcher.test.ts`, `demo/ui.html`, `demo/detail.html` |
 | Markers | Leaflet-style `addMarker`/`addMarkers` GPU pins with hover/permanent tooltips, one click popup with auto-pan, custom icons/tint, per-marker overrides and opt-in per-pin dragging; `demo/markers.html` |
 | Plugins | Plain setup functions, typed APIs, HTML access, abort/cleanup, render transforms, after-frame drawing, replaceable renderers and the built-in `gestureGuard`/`fullscreenMode`/`heatmap` plugins; plugin tests, consumer types, the `plugins` scenario and `demo/plugins-builtin.html`; [guide](plugins.md) |
 | Worker imports | Compact columns/canonical line and polygon pools, owned metadata on the publishing thread, validation, copy/move, cancellation, bounded queue, crash/CSP fallback; import tests, `demo/import.html`, `demo/csp.html?csp=worker-none` |
@@ -318,6 +318,21 @@ instead of assuming a 150 ms final-update render. The additional fixture is
 deterministic (`green-yellow.mp4`, green then yellow at 1 fps, with
 `generate-media.py`).
 
+The map-switcher and layer-label addition passes **347 unit tests**, the same
+build/type/distribution and consumer-type checks, and the complete default
+browser suite: **41/41 scenarios/batteries on each of WebGL 1, WebGPU and forced
+basic WebGL 1**. The `battery:ui` battery grew from ten to fourteen checks: only
+the initial switcher map exists before the first switch (the tab list exposes
+`tablist`/`tab` roles, `aria-selected`, roving `tabindex` and two laid-out
+panels), switching creates the second map on demand and keeps each view's
+center, zoom and layer visibility independent (the hidden layer's pixels leave
+the buffer and the restored layer returns), Arrow/Home keys move focus and
+switch, `onChange` reports both entries and stops after unsubscribe, and
+`destroy()` removes the switcher DOM, destroys both maps and rejects a later
+`show()` with `destroyed`. Layer rows render the new `label` and fall back to
+the id. The new `views` tutorial covers the switcher end to end; the 19-tutorial
+Gist plan measures 1229 KiB inside the 1280 KiB budget.
+
 The recorded browser environment was headless Chromium on an Apple M5 Pro,
 using ANGLE Metal for WebGL and `apple metal-3` for WebGPU. Pixel comparisons
 against decoded source bitmaps and between backends found zero differences at
@@ -400,6 +415,10 @@ Canvas setup is still faster at 282 ms. One-second warm-pan outliers persist.
   placement clockwise about its centre, without skew or color filters. Opacity
   is supported; custom blending modes are not. Image and video URLs can change
   at runtime.
+- **Map views:** `createMapSwitcher()` keeps independent maps; it does not mirror
+  view changes, selection or sources between entries. Every activated view holds
+  its own GPU context and retained buffers until `destroy()`, and the host needs
+  an explicit height like a single map container.
 - **Icons:** size is square via `iconSize` or natural size/DPR. `iconTint` multiplies
   the icon atlas RGB (default white); the shape fallback of a loading/failed icon
   keeps `color` and is not tinted. Shape fallbacks and ordinary point shapes do not

@@ -1,9 +1,11 @@
 /**
- * UI control battery (UI-01..UI-04, UI-07): zoom limits, layer list sync,
- * attribution dedup/shared notices, geographic vs planar scale and typed
- * geolocation with cancel/destroy semantics. Results: `window.__uiCheckResult`.
+ * UI control battery (UI-01..UI-04, UI-07, UI-10): zoom limits, layer list sync
+ * and labels, attribution dedup/shared notices, geographic vs planar scale,
+ * typed geolocation with cancel/destroy semantics, and a multi-map switcher that
+ * keeps independent views and layer state across accessible tabs.
+ * Results: `window.__uiCheckResult`.
  */
-import { createMap, crs } from '../dist/index.js';
+import { createMap, createMapSwitcher, crs } from '../dist/index.js';
 
 const result = { checks: [], pass: false, errors: [], ms: 0 };
 window.addEventListener('error', (event) => result.errors.push(String(event.message)));
@@ -110,6 +112,26 @@ planar.map = await createMap('map-planar', {
 });
 planar.scaleControl = planar.map.addControl({ kind: 'scale', id: 'scale' });
 
+/* ------------------------------ map switcher ------------------------------ */
+
+const views = {};
+views.host = await createMapSwitcher({
+  container: 'map-switcher',
+  label: 'Demo map views',
+  initial: 'red',
+  maps: [
+    { id: 'red', label: 'Red view', options: { renderer: rendererOptions, center: viewCenter, zoom: z } },
+    { id: 'green', label: 'Green view', options: { renderer: rendererOptions, center: viewCenter, zoom: z } },
+  ],
+});
+views.red = views.host.get('red');
+views.redLayer = views.red.addLayer({ id: 'red-view', label: 'Red points' });
+views.redLayer.addPoints([{ id: 'center', position: views.red.getCenter() }], {
+  style: { radiusPx: 64, color: '#dc2626' },
+});
+views.red.addControl('layers');
+await views.red.whenRendered();
+
 /* -------------------------------- helpers --------------------------------- */
 
 const containerMain = document.getElementById('map-main');
@@ -120,6 +142,10 @@ const layerCheckbox = (container, id) => controlIn(container, 'layers').querySel
 const attributionText = (container) => controlIn(container, 'attribution').textContent;
 const scaleLabel = (container) => controlIn(container, 'scale').children[0].textContent;
 const scaleWidth = (container) => parseFloat(controlIn(container, 'scale').children[1].style.width);
+const pixelText = (pixel) => `rgba(${pixel.r},${pixel.g},${pixel.b},${pixel.a})`;
+const switcherHost = document.getElementById('map-switcher');
+const switcherTabs = () => [...switcherHost.querySelectorAll('[role="tab"]')];
+const switcherPanel = (id) => switcherHost.querySelector(`[data-maplet-switcher-panel="${id}"]`);
 
 async function check(name, fn) {
   try {
@@ -444,6 +470,174 @@ await check('UI-09 controls are hit-testable and capture their own gestures', as
   };
 });
 
+await check('UI-10 the switcher creates only the initial map and exposes accessible tabs', async () => {
+  const tabs = switcherTabs();
+  const redPanel = switcherPanel('red');
+  const greenPanel = switcherPanel('green');
+  const pixel = await views.red.debug.samplePixel({ x: 280, y: 120 });
+  return {
+    pass:
+      views.host.activeId === 'red' &&
+      views.host.get('green') === undefined &&
+      views.host.ids.join(',') === 'red,green' &&
+      tabs.length === 2 &&
+      tabs[0].textContent === 'Red view' &&
+      tabs[1].textContent === 'Green view' &&
+      tabs[0].getAttribute('aria-selected') === 'true' &&
+      tabs[0].tabIndex === 0 &&
+      tabs[1].getAttribute('aria-selected') === 'false' &&
+      tabs[1].tabIndex === -1 &&
+      switcherHost.querySelector('[role="tablist"]').getAttribute('aria-label') === 'Demo map views' &&
+      getComputedStyle(redPanel).visibility === 'visible' &&
+      getComputedStyle(greenPanel).visibility === 'hidden' &&
+      pixel.r > 180 &&
+      pixel.g < 80 &&
+      pixel.b < 80 &&
+      pixel.a > 200,
+    detail: {
+      active: views.host.activeId,
+      ids: views.host.ids,
+      tabs: tabs.map((tab) => tab.textContent),
+      pixel: pixelText(pixel),
+    },
+  };
+});
+
+await check('UI-10 switching keeps each map view and layer state independent', async () => {
+  const red = views.red;
+  const center = red.getCenter();
+  red.setCenter({ lat: center.lat + 0.002, lng: center.lng + 0.002 });
+  const changedCenter = red.getCenter();
+  const redControl = controlIn(red.container, 'layers');
+  const redBox = redControl.querySelector('input[data-layer-id="red-view"]');
+  redBox.click();
+  const redHidden = !views.redLayer.isVisible();
+  await sleep(150);
+  const redWhileHidden = await red.debug.samplePixel({ x: 280, y: 120 });
+
+  const green = await views.host.show('green');
+  const greenLayer = green.addLayer({ id: 'green-view', label: 'Green points' });
+  greenLayer.addPoints([{ id: 'center', position: green.getCenter() }], {
+    style: { radiusPx: 64, color: '#16a34a' },
+  });
+  green.addControl('layers');
+  await green.whenRendered();
+  await sleep(120);
+  const greenPixel = await green.debug.samplePixel({ x: 280, y: 120 });
+  const greenControl = controlIn(green.container, 'layers');
+  const greenLabel = greenControl.textContent;
+  const redLabel = redControl.textContent;
+
+  await views.host.show('red');
+  await sleep(120);
+  const redBack = views.host.get('red');
+  const centerPreserved =
+    Math.abs(red.getCenter().lat - changedCenter.lat) < 1e-12 &&
+    Math.abs(red.getCenter().lng - changedCenter.lng) < 1e-12;
+  const redStillHidden = !views.redLayer.isVisible();
+  redBox.click();
+  await sleep(150);
+  const redRestored = await red.debug.samplePixel({ x: 280, y: 120 });
+
+  views.green = green;
+  return {
+    pass:
+      redHidden &&
+      redWhileHidden.a < 10 &&
+      views.host.activeId === 'red' &&
+      greenPixel.g > 120 &&
+      greenPixel.r < 80 &&
+      greenPixel.b < 80 &&
+      greenLabel.includes('Green points') &&
+      redLabel.includes('Red points') &&
+      redBack === red &&
+      centerPreserved &&
+      redStillHidden &&
+      redRestored.r > 180 &&
+      redRestored.g < 80 &&
+      redRestored.a > 200,
+    detail: {
+      redHidden,
+      redWhileHidden: pixelText(redWhileHidden),
+      greenPixel: pixelText(greenPixel),
+      greenLabel,
+      redLabel,
+      sameMap: redBack === red,
+      centerPreserved,
+      redStillHidden,
+      redRestored: pixelText(redRestored),
+    },
+  };
+});
+
+await check('UI-10 tabs switch with the keyboard and report active changes', async () => {
+  const tabs = switcherTabs();
+  const seen = [];
+  const off = views.host.onChange((id) => seen.push(id));
+  tabs[0].focus();
+  tabs[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }));
+  await sleep(150);
+  const afterRight = {
+    active: views.host.activeId,
+    selected: tabs[1].getAttribute('aria-selected'),
+    tabIndex: tabs[1].tabIndex,
+    focused: document.activeElement === tabs[1],
+  };
+  tabs[1].dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true, cancelable: true }));
+  await sleep(150);
+  const afterHome = {
+    active: views.host.activeId,
+    selected: tabs[0].getAttribute('aria-selected'),
+    focused: document.activeElement === tabs[0],
+  };
+  off();
+  const notified = seen.length;
+  tabs[1].click();
+  await sleep(150);
+  const afterOff = { active: views.host.activeId, seen: seen.length };
+  return {
+    pass:
+      afterRight.active === 'green' &&
+      afterRight.selected === 'true' &&
+      afterRight.tabIndex === 0 &&
+      afterRight.focused &&
+      afterHome.active === 'red' &&
+      afterHome.selected === 'true' &&
+      afterHome.focused &&
+      seen.includes('green') &&
+      seen.includes('red') &&
+      afterOff.active === 'green' &&
+      afterOff.seen === notified,
+    detail: { afterRight, afterHome, seen, afterOff },
+  };
+});
+
+await check('UI-10 destroy releases both maps and the switcher DOM', async () => {
+  const red = views.red;
+  const green = views.green;
+  views.host.destroy();
+  let afterDestroy = null;
+  try {
+    await views.host.show('red');
+  } catch (error) {
+    afterDestroy = error?.code ?? String(error);
+  }
+  return {
+    pass:
+      switcherHost.querySelector('[data-maplet-switcher]') === null &&
+      red.destroyed &&
+      green.destroyed &&
+      views.host.get('red') === undefined &&
+      afterDestroy === 'destroyed',
+    detail: {
+      childCount: switcherHost.childElementCount,
+      redDestroyed: red.destroyed,
+      greenDestroyed: green.destroyed,
+      afterDestroy,
+    },
+  };
+});
+
 await check('UI-07 destroy cancels watches and removes control DOM', async () => {
   const fake = fakeGeolocation();
   installGeolocation(fake.impl);
@@ -477,9 +671,9 @@ await check('UI-07 destroy cancels watches and removes control DOM', async () =>
 });
 
 result.ms = Math.round(performance.now() - started);
-result.pass = result.errors.length === 0 && result.checks.every((entry) => entry.pass) && result.checks.length === 10;
+result.pass = result.errors.length === 0 && result.checks.every((entry) => entry.pass) && result.checks.length === 14;
 window.__uiCheckResult = result;
-window.__ui = { main, planar };
+window.__ui = { main, planar, views };
 document.title = 'ui-check-done';
 const summary = document.getElementById('summary');
 summary.textContent = `${result.pass ? 'PASS' : 'FAIL'} · ${result.checks.filter((entry) => entry.pass).length}/${result.checks.length} checks · ${result.ms} ms`;

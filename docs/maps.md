@@ -63,6 +63,41 @@ tuples are rejected on a planar map. Other built-in choices are `crs.webMercator
 `crs.epsg4326()` and `crs.epsg3395()`; `crs.define(spec)` defines a custom
 projection. Geographic distance uses meters; simple-CRS distance uses planar units.
 
+## Multiple map views
+
+`createMapSwitcher()` manages several independent maps in one host with
+accessible tabs:
+
+```ts
+import { createMapSwitcher } from '@fir3st/maplet';
+
+const switcher = await createMapSwitcher({
+  container: 'views',
+  label: 'Map views',
+  initial: 'overview',
+  maps: [
+    { id: 'overview', label: 'Overview', options: { center: [49.8, 15.3], zoom: 7, controls: ['zoom', 'layers'] } },
+    { id: 'detail', label: 'Detail', options: { center: [50.08, 14.43], zoom: 12.4, controls: ['zoom', 'layers'] } },
+  ],
+});
+
+switcher.activeId;                            // 'overview'
+const detail = await switcher.show('detail'); // created on first activation
+switcher.get('overview');                     // the created map, or undefined
+switcher.onChange((id) => {});                // notified after the active entry changes
+switcher.destroy();                           // destroys every created map
+```
+
+The initial entry is created during the call; every other map is created on its
+first activation and then kept alive, so switching preserves pan, zoom, layer
+visibility, selection and subscriptions. Inactive panels stay laid out with
+`visibility`, so a lazily created map measures its real size before its first
+frame. The host needs an explicit height, like a single map container.
+
+A switcher is a plain composite: each view is an ordinary `MapHandle` with its
+own sources, layers and controls, and nothing is shared between views. Tabs
+expose `tablist`/`tab`/`tabpanel` roles, roving focus and arrow/Home/End keys.
+
 ## Headless scenes and cleanup
 
 `createMap(null, { renderer: 'none' })` provides data and transactions without a

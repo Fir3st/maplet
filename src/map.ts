@@ -40,6 +40,8 @@ export type MapOptions = Omit<EngineOptions, 'container' | 'view' | 'renderer'> 
 
 export interface LayerOptions {
   readonly id?: string;
+  /** Human-readable name for layer controls; defaults to the id. */
+  readonly label?: string;
   readonly visible?: boolean;
   /** Prefer parent.addLayer(options) when creating a nested layer. */
   readonly parent?: string;

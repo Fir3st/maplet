@@ -32,6 +32,8 @@ export interface PolygonInput<P = FeatureProperties> {
 
 export interface ObjectOptions<K extends LayerKind = LayerKind> {
   readonly id?: string;
+  /** Human-readable name for layer controls; defaults to the id. */
+  readonly label?: string;
   readonly style?: LayerStyleMap[K];
   readonly filter?: Filter | null;
   readonly namespace?: string;

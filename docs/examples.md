@@ -1,7 +1,7 @@
 # Documentation website and publication
 
 The public website includes an overview, installation, guides, API reference and
-eighteen tutorials with live maps. Tutorials cover first maps, editable points,
+nineteen tutorials with live maps. Tutorials cover first maps, editable points,
 lines/polygon holes, bindings, GeoJSON, route elevation, labels/image pins,
 markers with tooltips, popups and dragging, pin clustering, the gesture guard
 and fullscreen plugins, raster tiles and plugins, plus four real-world recipes:

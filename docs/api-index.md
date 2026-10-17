@@ -9,6 +9,12 @@ overloads. Guides explain behavior; reference pages provide the exact types.
 `await createMap(container, options)` returns a `MapHandle`. Pass an element,
 its ID, or `null` with `renderer: 'none'` for a headless scene.
 
+`await createMapSwitcher(options)` manages several independent maps in one host
+with accessible tabs (UI-10). The initial map is created during the call, every
+other map on its first activation; `show`, `get`, `activeId`, `ids`, `onChange`
+and `destroy` drive the active view. See
+[multiple map views](maps.md#multiple-map-views).
+
 | Option | Default | Meaning |
 | --- | --- | --- |
 | `projection` | Web Mercator | Coordinate reference system |

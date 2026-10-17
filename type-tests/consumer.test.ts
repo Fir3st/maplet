@@ -12,11 +12,13 @@
 
 import {
   createMap,
+  createMapSwitcher,
   style as expr,
   isMapletError,
   type ColumnarBatch,
   type FeatureRef,
   type GeoPosition,
+  type MapHandle,
   type PointGeometry,
   type Position,
   type VectorSourceHandle,
@@ -116,6 +118,33 @@ export async function consumerContracts(container: HTMLElement): Promise<void> {
     void hit;
   });
   stopFeature();
+
+  // UI-10: the switcher creates typed maps lazily and reports the active entry.
+  const switcher = await createMapSwitcher({
+    container,
+    label: 'Views',
+    initial: 'a',
+    maps: [
+      { id: 'a', label: 'First', options: { center: [50, 14], zoom: 8 } },
+      { id: 'b', label: 'Second', options: { controls: ['zoom', 'layers'] } },
+    ],
+  });
+  const activeMap: MapHandle = await switcher.show('b');
+  const known: MapHandle | undefined = switcher.get('a');
+  const activeId: string = switcher.activeId;
+  const ids: readonly string[] = switcher.ids;
+  const stopSwitcher = switcher.onChange((id: string) => {
+    const next: string = id;
+    void next;
+  });
+  stopSwitcher();
+  switcher.destroy();
+  void activeMap;
+  void known;
+  void activeId;
+  void ids;
+  // @ts-expect-error every entry needs a label
+  await createMapSwitcher({ container, maps: [{ id: 'no-label' }] });
   // @ts-expect-error event names are a closed set (TYPE-05)
   map.on('frame', () => {});
   const located = await map.locate({ setView: true });
@@ -181,6 +210,7 @@ export async function consumerContracts(container: HTMLElement): Promise<void> {
     id: 'typed',
     type: 'points',
     source: stations,
+    label: 'Stations',
     style: { color: statusColor, iconTint: statusColor },
   });
   // @ts-expect-error radiusPx is a number expression; a string field is rejected (TYPE-02/08)

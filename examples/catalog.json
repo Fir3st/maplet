@@ -120,6 +120,14 @@
     "origin": "demo/markers.js"
   },
   {
+    "id": "views", "title": "Two map views", "group": "Real-world recipes", "kind": "views",
+    "summary": "Switch between a network overview and a city detail; each view keeps its own layers and zoom.",
+    "learn": "createMapSwitcher() manages several independent maps in one host with accessible tabs. A map is created on first activation and kept alive, so switching preserves pan, zoom and layer visibility; show(), get() and onChange() drive the active view from code. Each view has its own layer control: give a root layer a label and its row toggles that subtree only.",
+    "hint": "Switch views · pan and zoom · toggle layers in each view",
+    "note": "Synthetic logistics stops in two independent maps. No basemap or external requests; the detail view is not created until you open it.",
+    "origin": "demo/ui.js"
+  },
+  {
     "id": "tracking", "title": "Track a vehicle on a route", "group": "Real-world recipes", "kind": "tracking",
     "summary": "A simulated GPS feed moves a vehicle along a real street route.",
     "learn": "The vehicle is one point whose icon rotation follows a heading property, and the travelled line commits with it so both can never disagree. Follow mode recentres with setView, the feed commits at a bounded cadence, and the loop pauses when the tab is hidden.",

@@ -7,6 +7,12 @@
  */
 
 export { createMap } from './map.ts';
+export {
+  createMapSwitcher,
+  type MapSwitcherEntry,
+  type MapSwitcherHandle,
+  type MapSwitcherOptions,
+} from './ui/map-switcher.ts';
 export { gestureGuard, type GestureGuardApi, type GestureGuardOptions, type GestureModifier } from './plugins/gesture-guard.ts';
 export { fullscreenMode, type FullscreenApi, type FullscreenControlOptions, type FullscreenOptions } from './plugins/display-mode.ts';
 export { heatmap, type HeatPoint, type HeatmapApi, type HeatmapOptions, type HeatmapUpdate } from './plugins/heatmap.ts';

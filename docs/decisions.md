@@ -341,7 +341,19 @@ The current public construction, object lifetime and migration contract is in
   control and removed with the last. Controls read `commit`/`viewchange` and call
   the public API; they do not maintain a second model.
 - Layer controls show root entries in painter order and update rows in place to
-  keep focus. Nested content is controlled through its root logical layer.
+  keep focus. Nested content is controlled through its root logical layer. Rows
+  use a layer's `label` (`LayerOptions`/`ObjectOptions`, also settable through
+  `layer.update`) and fall back to the id; `ControlLayerEntry.label` is the
+  resolved string.
+- `createMapSwitcher()` validates its entries before touching the DOM, creates
+  the initial map during the call and every other map on its first activation,
+  and keeps created maps alive across switches (UI-10). Inactive panels stay
+  laid out with `visibility`, never `display`, so lazily created maps measure
+  their real size. The tab list exposes `tablist`/`tab`/`tabpanel` semantics,
+  roving `tabindex` and arrow/Home/End keys; `show(id)` rejects with
+  `destroyed` after `destroy()`, which destroys every created map first.
+  `onChange` fires once per active-entry change, after that entry's map exists.
+  Each view is an ordinary independent map; nothing is shared between views.
 - Attribution uses sources with at least one layer, registration order and exact
   string deduplication. Shared notices remain while any contributing source exists.
   Attribution strings render as text, never active HTML.

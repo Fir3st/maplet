@@ -85,6 +85,11 @@ changing the tree. Visibility is the entry's flag AND every ancestor flag;
 showing a parent does not reset independently hidden children. Layer controls
 show root entries in that same order, not internal geometry collections.
 
+Container and collection options accept `label`, a human-readable name that the
+layer control shows instead of the id; `label` is also settable through
+`layer.update`. See [multiple map views](maps.md#multiple-map-views) for hosting
+several maps next to each other.
+
 ## Collections and objects
 
 ```ts

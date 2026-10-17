@@ -74,8 +74,9 @@ zoom.remove();
 ```
 
 Controls are opt-in. `map.controls.get/list/remove` manages them. Layer controls
-list root entries in painter order; toggling a root affects its subtree. Attribution
-follows active source membership and renders as text. Scale uses meters on geographic
+list root entries in painter order; toggling a root affects its subtree. Give a
+root layer a `label` and the row shows it instead of the id. Attribution follows
+active source membership and renders as text. Scale uses meters on geographic
 maps and planar units on simple CRS.
 
 The `list` control offers a bounded keyboard-operable feature list rather than a

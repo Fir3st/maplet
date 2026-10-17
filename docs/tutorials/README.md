@@ -31,6 +31,7 @@ JavaScript source. Start with a first map, then choose a topic.
 ## Real-world recipes
 
 - [A city guide on real tiles](city-guide.md) — markers, popups, a list and a filter over OpenStreetMap.
+- [Two map views](views.md) — a switcher over independent maps, each with labelled layers.
 - [Track a vehicle on a route](tracking.md) — a simulated GPS feed, a travelled path and follow mode.
 - [Filter and inspect a field dataset](field-explorer.md) — style expressions, filters, detail and in-view queries.
 - [Measure a route and an area](measure.md) — background clicks, geodesic distances and a closed ring.

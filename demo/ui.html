@@ -9,6 +9,7 @@
   .map { position: relative; background: #ffffff; flex: none; }
   #map-main { width: 560px; height: 420px; }
   #map-planar { width: 240px; height: 160px; }
+  #map-switcher { width: 560px; height: 280px; margin-top: 16px; }
   .label { font: 600 12px ui-monospace, monospace; color: #9ca3af; margin: 4px 0 0; }
   h1 { font-size: 15px; margin: 0 0 6px; }
   #summary { font-weight: 600; }
@@ -23,16 +24,20 @@
   <div>
     <div id="map-main" class="map" aria-label="Map with controls"></div>
     <p class="label">geographic map: zoom + layers + attribution + scale</p>
+    <div id="map-switcher" class="map" aria-label="Two switchable map views"></div>
+    <p class="label">map switcher: two independent maps + per-map layers</p>
   </div>
   <div>
     <div id="map-planar" class="map" aria-label="Planar map"></div>
     <p class="label">planar map: scale in CRS units</p>
     <h1>Maplet UI controls</h1>
     <p class="hint">
-      UI-01..UI-04 and UI-07: zoom buttons honour the view limits, the layer list
-      stays in sync with the API, attribution notices are deduplicated, the scale
-      uses the right CRS units and geolocation is typed with a stable cancel
-      contract. Results: <code>window.__uiCheckResult</code>.
+      UI-01..UI-04, UI-07 and UI-10: zoom buttons honour the view limits, the
+      layer list stays in sync with the API and shows its labels, attribution
+      notices are deduplicated, the scale uses the right CRS units and
+      geolocation is typed with a stable cancel contract. A map switcher keeps
+      two independent maps alive across tabs. Results:
+      <code>window.__uiCheckResult</code>.
     </p>
     <p id="summary">running…</p>
     <pre id="details"></pre>

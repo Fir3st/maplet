@@ -1,10 +1,11 @@
-import { createMap, crs, style, gestureGuard, fullscreenMode, heatmap, haversineMeters } from '../../dist/index.js';
+import { createMap, createMapSwitcher, crs, style, gestureGuard, fullscreenMode, heatmap, haversineMeters } from '../../dist/index.js';
 import { boundsFromPositions } from '../../dist/math/index.js';
-export { style, gestureGuard, fullscreenMode, heatmap, haversineMeters, boundsFromPositions };
+export { createMapSwitcher, style, gestureGuard, fullscreenMode, heatmap, haversineMeters, boundsFromPositions };
 
 const status = document.querySelector('#status');
 const tools = document.querySelector('#example-tools');
 const initialBackend = new URLSearchParams(location.search).get('backend') === 'webgpu' ? 'webgpu' : 'webgl1';
+export const rendererKind = initialBackend;
 const backend = document.querySelector('#backend');
 backend.value = initialBackend;
 backend.addEventListener('change', () => {

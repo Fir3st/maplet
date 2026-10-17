@@ -36,6 +36,8 @@ export interface ControlSpec {
 export interface ControlLayerEntry {
   readonly id: string;
   readonly kind: 'layer';
+  /** Human-readable label; falls back to the id. */
+  readonly label: string;
   readonly visible: boolean;
 }
 
@@ -304,7 +306,7 @@ function buildLayers(element: HTMLElement, context: ControlsContext): () => void
           context.layers.setVisible(entry.id, checkbox.checked),
         );
         const text = document.createElement('span');
-        text.textContent = entry.id;
+        text.textContent = entry.label;
         label.append(checkbox, text);
         row = { row: label, checkbox };
         rows.set(key, row);

@@ -133,6 +133,8 @@ export interface LayerSpec<K extends LayerKind = LayerKind> {
   /** Draws only one source layer of a vector tile source (MVT namespace). */
   readonly namespace?: string;
   readonly visible?: boolean;
+  /** Human-readable name for layer controls; defaults to the id. */
+  readonly label?: string;
   readonly interaction?: { readonly enabled?: boolean; readonly draggable?: boolean };
   /** Group id; when present the layer is appended to that group. */
   readonly group?: string;
@@ -162,6 +164,8 @@ export interface FeatureOverride {
 export interface GroupSpec {
   readonly id: string;
   readonly visible?: boolean;
+  /** Human-readable name for layer controls; defaults to the id. */
+  readonly label?: string;
   readonly parent?: string;
 }
 
@@ -190,6 +194,8 @@ export class LayerImpl {
   filter: Filter | null;
   namespace: string | undefined;
   visible: boolean;
+  /** Optional control label; the id is the fallback. */
+  label: string | undefined;
   interactionEnabled: boolean;
   /** True when `interaction.enabled` was set explicitly on the layer. */
   interactionExplicit: boolean;
@@ -214,6 +220,7 @@ export class LayerImpl {
     this.filter = spec.filter ?? null;
     this.namespace = spec.namespace;
     this.visible = spec.visible ?? true;
+    this.label = spec.label;
     this.interactionEnabled = spec.interaction?.enabled ?? true;
     this.interactionExplicit = spec.interaction?.enabled !== undefined;
     this.draggable = spec.interaction?.draggable ?? false;
@@ -247,6 +254,8 @@ export class LayerImpl {
 export class GroupImpl {
   readonly id: string;
   visible: boolean;
+  /** Optional control label; the id is the fallback. */
+  readonly label: string | undefined;
   parent: GroupImpl | null = null;
   children: (LayerImpl | GroupImpl)[] = [];
   /** Feature events bubble through groups between their layer and the map. */
@@ -257,6 +266,7 @@ export class GroupImpl {
   constructor(spec: GroupSpec) {
     this.id = spec.id;
     this.visible = spec.visible ?? true;
+    this.label = spec.label;
   }
 
   isAncestorOf(entry: LayerImpl | GroupImpl): boolean {
@@ -401,13 +411,14 @@ export class LayerRegistry {
     this.notify();
   }
 
-  update(id: string, patch: Partial<Pick<LayerSpec, 'style' | 'filter' | 'namespace' | 'visible' | 'interaction'>>): LayerImpl {
+  update(id: string, patch: Partial<Pick<LayerSpec, 'style' | 'filter' | 'namespace' | 'visible' | 'label' | 'interaction'>>): LayerImpl {
     const layer = this.layers.get(id);
     if (!layer) fail('not-found', `layer not found: ${id}`, { id });
     if (patch.style !== undefined) layer.style = patch.style as LayerStyleMap[LayerKind];
     if (patch.filter !== undefined) layer.filter = patch.filter;
     if (patch.namespace !== undefined) layer.namespace = patch.namespace;
     if (patch.visible !== undefined) layer.visible = patch.visible;
+    if (patch.label !== undefined) layer.label = patch.label;
     if (patch.interaction !== undefined) {
       if (patch.interaction.enabled !== undefined) layer.interactionExplicit = true;
       layer.interactionEnabled = patch.interaction.enabled ?? layer.interactionEnabled;
