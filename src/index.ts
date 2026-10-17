@@ -241,4 +241,4 @@ export type { PickResult } from './render/picking.ts';
 export { defaultClock } from './view/view.ts';
 export type { Clock, FitOptions, FlyOptions, FitPadding, ViewSnapshot, ViewUpdate } from './view/view.ts';
 
-export const version = '0.1.0-alpha.13';
+export const version = '0.1.0-alpha.14';

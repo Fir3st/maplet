@@ -1,6 +1,6 @@
 # Implementation status
 
-Maplet is an alpha library (`0.1.0-alpha.13`). This document describes the
+Maplet is an alpha library (`0.1.0-alpha.14`). This document describes the
 implementation, reproducible checks and known gaps. It replaces the internal
 development log; no external planning documents or saved screenshots are needed
 to use this repository.

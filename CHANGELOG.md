@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.1.0-alpha.14
+
+- Add runtime URL changes on video sources (MEDIA-09). `video.update({ url })`
+  enters the loading lifecycle: the descriptor revision bumps without touching
+  the uploaded pixels, the last decoded frame stays on screen until the new
+  source decodes, the requested playback state survives (a playing video
+  resumes by itself, a `pause()` during the load keeps it paused), and a failed
+  load reports `error` while the previous frame stays. Load listeners and frame
+  callbacks belong to exactly one load, so an aborted load can never fail or
+  repaint over its successor; both backends keep the previous texture while the
+  video element has no decodable frame. Adds the deterministic
+  `green-yellow.mp4` fixture and grows the media battery.
+
+- Add a map switcher and labelled layer controls (UI-10).
+  `createMapSwitcher({ container, maps })` hosts several independent maps in
+  one container with accessible tabs: the initial map is created during the
+  call, every other map on its first activation, switching only changes which
+  panel is visible (so pan, zoom, layer visibility, selection and
+  subscriptions survive), inactive panels stay laid out for correct lazy
+  sizing, `show`/`get`/`activeId`/`onChange` drive the active view and
+  `destroy()` releases every created map. Root layers and collections accept a
+  `label` that the built-in layers control shows instead of the id. Adds the
+  `views` tutorial with a network overview and a city detail, each with its own
+  labelled layers control.
+
 ## 0.1.0-alpha.13
 
 - Preserve line and polygon altitudes. The public normalization kernel, the
