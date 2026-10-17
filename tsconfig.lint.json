@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.type-tests.json",
+  "compilerOptions": {
+    "paths": {
+      "@fir3st/maplet": ["./src/index.ts"],
+      "@fir3st/maplet/math": ["./src/math/index.ts"],
+      "@fir3st/maplet/formats": ["./src/formats/geojson.ts"]
+    }
+  }
+}

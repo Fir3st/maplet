@@ -69,7 +69,10 @@ export default [
     files: ['test/**/*.ts', 'type-tests/**/*.ts'],
     languageOptions: {
       parserOptions: {
-        project: ['./tsconfig.test.json', './tsconfig.type-tests.json'],
+        // Consumer type tests resolve the package to its sources for linting
+        // (tsconfig.lint.json); the published-declaration check stays with
+        // `typecheck:types`, which builds `dist/` first.
+        project: ['./tsconfig.test.json', './tsconfig.lint.json'],
         tsconfigRootDir: import.meta.dirname,
       },
     },
