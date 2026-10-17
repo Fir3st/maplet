@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.1.0-alpha.15
+
+- Serve WMS as tiles (WMS-06..WMS-11). A WMS source requests one GetMap per
+  256 px tile of the standard grid, the tile's own geographic extent at the
+  declared CRS - so ancestor stand-ins, the tile cache, the re-request only when
+  the integer zoom level changes and picking behave like any tile basemap, and a
+  pan asks only for the tiles that entered the view. An undecoded tile is
+  substituted by up to two coarser ancestors or by decoded children, never by a
+  deeply magnified older view. `map.data.wmsCapabilities(url)` fetches and parses
+  a GetCapabilities answer - 1.3.0 or 1.1.1, including namespace prefixes, CDATA
+  and a DOCTYPE that is never processed - and returns the service title, the
+  declared CRS list (URN and OGC URL forms normalized), the GetMap formats, the
+  extent and the nested layer tree with inherited queryable flags, plus a
+  `preferred` request the endpoint supports (CRS:84, then EPSG:4326, then
+  EPSG:3857; `image/png` when declared). GetMap requests accept exactly those
+  three CRS; anything else - a national grid, for example - is refused with
+  `invalid-argument` instead of being sent with degree coordinates. Adds the
+  `wms-endpoint` tutorial, which discovers IPR Praha's "Základní mapa" service
+  behind a Czech INSPIRE record and requests only the layers you switch on.
+
 ## 0.1.0-alpha.14
 
 - Add runtime URL changes on video sources (MEDIA-09). `video.update({ url })`
