@@ -245,7 +245,10 @@ uses the receiver's methods. The separate `map.groups` API has been removed.
 Controls are opt-in through initial `controls` or `map.addControl('zoom')` (a full
 control descriptor works too). `map.controls.get/list/remove` are non-nullable;
 headless maps list no controls and reject DOM operations with
-`unsupported-capability`, rather than silently pretending to add a control.
+`unsupported-capability`, rather than silently pretending to add a control. The
+`locate` control requests one position and reports the typed result; its options
+are `label`, `setView`, `zoom`, `enableHighAccuracy`, `timeoutMs` and
+`maximumAgeMs`.
 Plugins and render callbacks receive the **new public map**, not the old engine.
 
 ## Migration table

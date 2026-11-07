@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.1.1
+
+- Add the `locate` HTML control (UI-11).
+  `map.addControl({ kind: 'locate', options })` asks the existing `map.locate()`
+  service for one position and moves the view by default. The button accepts a
+  `label`, `setView`, `zoom`, `enableHighAccuracy`, `timeoutMs` and
+  `maximumAgeMs`; a second press while a request is pending is ignored. Its
+  accessible state is explicit: `data-state` moves through
+  `idle`/`locating`/`found`/`error`, `aria-busy` covers the pending request, and
+  a polite live region announces `Locating…`, `Location found` or the typed
+  failure (permission, timeout, unavailable, unsupported). A removed control
+  ignores a late browser answer, and a planar map keeps its view just like
+  `map.locate()`.
+  Adds `test/ui/locate-control.test.ts`, a 15th `battery:ui` check and the
+  real-input `locate-control` browser scenario; the idle, found and error states
+  were inspected visually on the built page.
+
 ## 0.1.0
 
 First non-alpha release; it supersedes every `0.1.0-alpha.N` prerelease listed

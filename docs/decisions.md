@@ -412,6 +412,12 @@ The current public construction, object lifetime and migration contract is in
 - Accessible lists are bounded (default 10, maximum 50), drawn from the current
   view, with keyboard-operable buttons, selection mirrored by `aria-pressed`
   and changes announced through `aria-live`; no DOM button per source feature.
+- The locate control (UI-11) is one button over the existing `map.locate()`
+  service: a click requests one position, a pending press is ignored, and the
+  view moves only when `setView` allows it (`zoom` selects the target zoom).
+  `data-state` exposes `idle`/`locating`/`found`/`error`, `aria-busy` covers the
+  pending request, and a polite live region announces the typed result instead
+  of a silent icon change. A removed control ignores a late browser answer.
 - Control/detail overlays must receive hit tests and contain their own gestures.
   Set `pointer-events: auto` after content construction; pointer/wheel input
   must not fall through to map gestures. Tests use hit testing and real input,

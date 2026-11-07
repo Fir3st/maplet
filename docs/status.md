@@ -20,7 +20,7 @@ to use this repository.
 | Picking                | Shape-aware GPU queries, revision/generation checks, measured blocking/async readback; `demo/pick.html`                                                                                                                                                                                                    |
 | Text and fonts         | Labels, multi-line text, collisions, rotation, atlas eviction, font loading/fallback, platform shaping, bidi; `demo/labels.html`, `demo/fonts.html`                                                                                                                                                        |
 | Media                  | Sprites, anchor rotation, tinting, image/video bounds with placement rotation, runtime image/video URL changes, partial uploads and cleanup; `demo/icons.html`, `demo/media.html`                                                                                                                          |
-| HTML UI                | Optional controls (including labelled layer rows), a multi-map switcher, scale, attribution, geolocation, feature detail and bounded accessible lists; `test/ui/`, `test/scene/map-switcher.test.ts`, `demo/ui.html`, `demo/detail.html`                                                                   |
+| HTML UI                | Optional controls (including labelled layer rows and a typed locate button), a multi-map switcher, scale, attribution, geolocation, feature detail and bounded accessible lists; `test/ui/`, `test/scene/map-switcher.test.ts`, `demo/ui.html`, `demo/detail.html`                                         |
 | Markers                | Leaflet-style `addMarker`/`addMarkers` GPU pins with hover/permanent tooltips, one click popup with auto-pan, custom icons/tint, per-marker overrides and opt-in per-pin dragging; `demo/markers.html`                                                                                                     |
 | Plugins                | Plain setup functions, typed APIs, HTML access, abort/cleanup, render transforms, after-frame drawing, replaceable renderers and the built-in `gestureGuard`/`fullscreenMode`/`heatmap` plugins; plugin tests, consumer types, the `plugins` scenario and `demo/plugins-builtin.html`; [guide](plugins.md) |
 | Worker imports         | Compact columns/canonical line and polygon pools, owned metadata on the publishing thread, validation, copy/move, cancellation, bounded queue, crash/CSP fallback; import tests, `demo/import.html`, `demo/csp.html?csp=worker-none`                                                                       |
@@ -397,6 +397,20 @@ property no longer renders `[object Object]`, `match` ignores non-primitive
 values, a batch callback failure always rethrows an `Error`, and arrays
 validated at public boundaries keep their element type instead of degrading to
 `any` under `Array.isArray`.
+
+The locate-control addition passes **363 unit tests**, all build/type/
+distribution and consumer-type checks, and the complete default browser suite on
+WebGL 1: **42/42 scenarios/batteries**. The `battery:ui` battery now runs fifteen
+checks; the new one asserts the idle, pending, found and permission-denied
+states, one request per press, the configured zoom and the unchanged view on a
+denied result. The new real-input `locate-control` scenario clicks the built
+button with the CDP mouse, answers the deterministic geolocation request, and
+checks the located view, focus, `aria-busy`, live-region text and accent/danger
+icon colours. The same scenario and battery also pass on WebGPU and forced basic
+WebGL 1. The idle, found and error states were inspected on the built page:
+neutral, blue and red crosshair icons with the located marker at its new screen
+position. The locator only moves the view; it does not invent a DOM pin, so an
+application can add its own marker from `map.locate()` when it needs one.
 
 The recorded browser environment was headless Chromium on an Apple M5 Pro,
 using ANGLE Metal for WebGL and `apple metal-3` for WebGPU. Pixel comparisons

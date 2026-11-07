@@ -590,6 +590,61 @@ export const scenarios = [
     },
   },
   {
+    name: 'locate-control',
+    page: 'e2e/locate.html',
+    run: async ({ session, expect }) => {
+      const initial = await session.evaluate('window.__e2e.state()');
+      expect.equal(initial.state, 'idle', 'locate control starts idle');
+      expect.equal(initial.busy, 'false', 'an idle locate button is not busy');
+      expect.equal(initial.label, 'Find me', 'the control uses its configured label');
+      expect.equal(initial.color, 'rgb(55, 65, 81)', 'an idle locate icon is neutral');
+      expect.ok(initial.rect.x >= 10 && initial.rect.y >= 10, 'the control sits in the map corner');
+
+      const at = {
+        x: initial.rect.x + initial.rect.width / 2,
+        y: initial.rect.y + initial.rect.height / 2,
+      };
+      await session.click(at.x, at.y);
+      await sleep(120);
+      const pending = await session.evaluate('window.__e2e.state()');
+      expect.equal(pending.state, 'locating', 'a real click starts the request');
+      expect.equal(pending.busy, 'true', 'the pending request is exposed as aria-busy');
+      expect.equal(pending.status, 'Locating…', 'the live region announces the pending request');
+      expect.equal(pending.calls, 1, 'one click asks geolocation exactly once');
+      expect.equal(pending.options.timeout, 5000, 'control timeout reaches the browser options');
+      expect.close(pending.center.lat, initial.center.lat, 1e-9, 'pending locate does not pan');
+      expect.close(pending.center.lng, initial.center.lng, 1e-9, 'pending locate does not pan');
+
+      await session.evaluate('window.__e2e.respond(50.5, 15.5, 8)');
+      await sleep(150);
+      const found = await session.evaluate('window.__e2e.state()');
+      expect.equal(found.state, 'found', 'the resolved request reports success');
+      expect.equal(found.busy, 'false', 'a settled request is no longer busy');
+      expect.equal(found.status, 'Location found', 'the live region announces the position');
+      expect.equal(found.color, 'rgb(37, 99, 235)', 'the found icon uses the accent colour');
+      expect.close(found.center.lat, 50.5, 1e-9, 'the located latitude becomes the view centre');
+      expect.close(found.center.lng, 15.5, 1e-9, 'the located longitude becomes the view centre');
+      expect.equal(found.zoom, 6, 'the configured locate zoom is applied');
+      expect.equal(found.focused, true, 'the real click leaves focus on the locate button');
+
+      await session.click(at.x, at.y);
+      await sleep(120);
+      const secondPending = await session.evaluate('window.__e2e.state()');
+      expect.equal(secondPending.state, 'locating', 'a second click starts a new request');
+      expect.equal(secondPending.calls, 2, 'the second click asks geolocation again');
+      await session.evaluate('window.__e2e.fail(1)');
+      await sleep(150);
+      const denied = await session.evaluate('window.__e2e.state()');
+      expect.equal(denied.state, 'error', 'a denied request reports the error state');
+      expect.equal(denied.busy, 'false', 'a denied request is no longer busy');
+      expect.equal(denied.status, 'Location permission denied', 'the typed error is announced');
+      expect.equal(denied.color, 'rgb(185, 28, 28)', 'the error icon uses the danger colour');
+      expect.close(denied.center.lat, 50.5, 1e-9, 'a denied locate keeps the view');
+      expect.close(denied.center.lng, 15.5, 1e-9, 'a denied locate keeps the view');
+      expect.equal(denied.zoom, 6, 'a denied locate keeps the zoom');
+    },
+  },
+  {
     name: 'demo-page-drag-station',
     page: 'index.html',
     ready: 'window.__mapletReady === true',

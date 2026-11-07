@@ -1,8 +1,9 @@
 /**
- * UI control battery (UI-01..UI-04, UI-07, UI-10): zoom limits, layer list sync
- * and labels, attribution dedup/shared notices, geographic vs planar scale,
- * typed geolocation with cancel/destroy semantics, and a multi-map switcher that
- * keeps independent views and layer state across accessible tabs.
+ * UI control battery (UI-01..UI-04, UI-07, UI-10, UI-11): zoom limits, layer
+ * list sync and labels, attribution dedup/shared notices, geographic vs planar
+ * scale, typed geolocation with cancel/destroy semantics, the locate control's
+ * pending/found/error states, and a multi-map switcher that keeps independent
+ * views and layer state across accessible tabs.
  * Results: `window.__uiCheckResult`.
  */
 import { createMap, createMapSwitcher, crs } from '../dist/index.js';
@@ -98,6 +99,11 @@ main.layerB = map.addLayer({ id: 'layer-b', type: 'raster', source: 'src-b' });
 const group = map.addLayer({ id: 'grp' });
 main.layerG = group.addLayer({ id: 'layer-g', type: 'raster', source: 'src-b' });
 main.zoomControl = map.addControl({ kind: 'zoom', id: 'zoom' });
+main.locateControl = map.addControl({
+  kind: 'locate',
+  id: 'locate',
+  options: { zoom: 4, timeoutMs: 2000 },
+});
 main.layersControl = map.addControl({ kind: 'layers', id: 'layers' });
 main.attributionControl = map.addControl({ kind: 'attribution', id: 'attribution' });
 main.scaleControl = map.addControl({ kind: 'scale', id: 'scale' });
@@ -149,6 +155,10 @@ const containerPlanar = document.getElementById('map-planar');
 const controlIn = (container, kind) => container.querySelector(`[data-maplet-control="${kind}"]`);
 const zoomButton = (container, action) =>
   controlIn(container, 'zoom').querySelector(`[data-action="${action}"]`);
+const locateButton = (container) =>
+  controlIn(container, 'locate').querySelector('[data-action="locate"]');
+const locateStatus = (container) =>
+  controlIn(container, 'locate').querySelector('[data-maplet-locate-status]');
 const layerCheckbox = (container, id) =>
   controlIn(container, 'layers').querySelector(`input[data-layer-id="${id}"]`);
 const attributionText = (container) => controlIn(container, 'attribution').textContent;
@@ -406,6 +416,93 @@ await check('UI-07 watch delivers updates and cancel stops them', async () => {
   };
 });
 
+await check('UI-11 locate control requests once and reports typed results', async () => {
+  const fake = fakeGeolocation();
+  installGeolocation(fake.impl);
+  const button = locateButton(containerMain);
+  const status = locateStatus(containerMain);
+  const idle = {
+    state: button.dataset.state,
+    busy: button.getAttribute('aria-busy'),
+    label: button.getAttribute('aria-label'),
+    title: button.title,
+    color: getComputedStyle(button).color,
+  };
+  map.setView({ center: viewCenter, zoom: 2 });
+  const before = map.getView();
+  button.click();
+  await sleep(10);
+  const pending = {
+    state: button.dataset.state,
+    busy: button.getAttribute('aria-busy'),
+    status: status.textContent,
+    calls: fake.state.current.length,
+    options: fake.state.current.at(-1)?.options,
+    center: map.getView().center,
+  };
+  // A second press while the first request is in flight must not ask again.
+  button.click();
+  await sleep(10);
+  const duplicateCalls = fake.state.current.length;
+  fake.state.current.at(-1).success(fix(50.5, 15.5, 8));
+  await sleep(10);
+  const found = {
+    state: button.dataset.state,
+    busy: button.getAttribute('aria-busy'),
+    status: status.textContent,
+    title: button.title,
+    color: getComputedStyle(button).color,
+    center: map.getView().center,
+    zoom: map.getView().zoom,
+  };
+  button.click();
+  await sleep(10);
+  fake.state.current.at(-1).error({ code: 1, message: 'denied' });
+  await sleep(10);
+  const denied = {
+    state: button.dataset.state,
+    busy: button.getAttribute('aria-busy'),
+    status: status.textContent,
+    title: button.title,
+    color: getComputedStyle(button).color,
+    center: map.getView().center,
+    zoom: map.getView().zoom,
+  };
+  return {
+    pass:
+      idle.state === 'idle' &&
+      idle.busy === 'false' &&
+      idle.label === 'Show my location' &&
+      idle.title === 'Show my location' &&
+      idle.color === 'rgb(55, 65, 81)' &&
+      pending.state === 'locating' &&
+      pending.busy === 'true' &&
+      pending.status === 'Locating…' &&
+      pending.calls === 1 &&
+      pending.options.timeout === 2000 &&
+      pending.center.lat === before.center.lat &&
+      pending.center.lng === before.center.lng &&
+      duplicateCalls === 1 &&
+      found.state === 'found' &&
+      found.busy === 'false' &&
+      found.status === 'Location found' &&
+      found.title.includes('Location found') &&
+      found.color === 'rgb(37, 99, 235)' &&
+      Math.abs(found.center.lat - 50.5) < 1e-9 &&
+      Math.abs(found.center.lng - 15.5) < 1e-9 &&
+      found.zoom === 4 &&
+      denied.state === 'error' &&
+      denied.busy === 'false' &&
+      denied.status === 'Location permission denied' &&
+      denied.title.includes('Location permission denied') &&
+      denied.color === 'rgb(185, 28, 28)' &&
+      Math.abs(denied.center.lat - 50.5) < 1e-9 &&
+      Math.abs(denied.center.lng - 15.5) < 1e-9 &&
+      denied.zoom === 4,
+    detail: { idle, pending, duplicateCalls, found, denied },
+  };
+});
+
 await check('UI-09 controls are hit-testable and capture their own gestures', async () => {
   // UI-03 removed all earlier layers; add one back to probe a live checkbox.
   map.data.rasterTiles(sourceOptions('src-hit', '© HIT'));
@@ -417,6 +514,7 @@ await check('UI-09 controls are hit-testable and capture their own gestures', as
   const probes = [
     zoomButton(containerMain, 'in'),
     zoomButton(containerMain, 'out'),
+    locateButton(containerMain),
     layerCheckbox(containerMain, 'layer-hit'),
   ];
   const hitTargets = probes.map((element) => {
@@ -759,7 +857,7 @@ result.ms = Math.round(performance.now() - started);
 result.pass =
   result.errors.length === 0 &&
   result.checks.every((entry) => entry.pass) &&
-  result.checks.length === 14;
+  result.checks.length === 15;
 window.__uiCheckResult = result;
 window.__ui = { main, planar, views };
 document.title = 'ui-check-done';

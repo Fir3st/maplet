@@ -821,7 +821,10 @@ function buildMap(engine: MapEngine, projection: Crs): MapHandle {
     },
     addControl: (control) => {
       if (!engine.controls) fail('unsupported-capability', 'controls require a map container');
-      return engine.controls.add(typeof control === 'string' ? { kind: control } : control);
+      if (typeof control !== 'string') return engine.controls.add(control);
+      if (control === 'list') return engine.controls.add({ kind: control });
+      if (control === 'locate') return engine.controls.add({ kind: control });
+      return engine.controls.add({ kind: control });
     },
     getView: engine.view.get.bind(engine.view),
     getCenter: () => engine.view.get().center,
@@ -892,6 +895,7 @@ export type {
   DetailOptions,
   DetailServiceHandle,
   ListControlOptions,
+  LocateControlOptions,
   LocateErrorCode,
   LocateHandle,
   LocateOptions,

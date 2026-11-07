@@ -126,6 +126,18 @@ export async function consumerContracts(container: HTMLElement): Promise<void> {
   });
   stopFeature();
 
+  // UI-11: the locate control accepts typed view and geolocation options.
+  const locateControl = map.addControl({
+    kind: 'locate',
+    options: { label: 'Find me', setView: true, zoom: 12, timeoutMs: 2000 },
+  });
+  const locateButton: HTMLElement = locateControl.element();
+  void locateButton;
+  // @ts-expect-error the locate label is text, not a number
+  map.addControl({ kind: 'locate', options: { label: 42 } });
+  // @ts-expect-error list-only options do not belong to the locate control
+  map.addControl({ kind: 'locate', options: { sources: ['stations'] } });
+
   // UI-10: the switcher creates typed maps lazily and reports the active entry.
   const switcher = await createMapSwitcher({
     container,

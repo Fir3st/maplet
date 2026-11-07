@@ -91,6 +91,7 @@ export type {
   SourceLayerSpec,
   RenderLayerHandle,
   ListControlOptions,
+  LocateControlOptions,
   LocateErrorCode,
   LocateHandle,
   LocateOptions,
@@ -284,4 +285,4 @@ export type {
   ViewUpdate,
 } from './view/view.ts';
 
-export const version = '0.1.0';
+export const version = '0.1.1';

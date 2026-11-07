@@ -71,13 +71,23 @@ measured stall. See [picking contracts](decisions.md#picking-and-interaction).
 const map = await createMap('map', { controls: ['zoom', 'layers', 'scale', 'attribution'] });
 const zoom = map.addControl({ kind: 'zoom', position: 'topright' });
 zoom.remove();
+
+const locate = map.addControl({
+  kind: 'locate',
+  options: { label: 'Find me', zoom: 14, timeoutMs: 8000 },
+});
 ```
 
 Controls are opt-in. `map.controls.get/list/remove` manages them. Layer controls
 list root entries in painter order; toggling a root affects its subtree. Give a
 root layer a `label` and the row shows it instead of the id. Attribution follows
 active source membership and renders as text. Scale uses meters on geographic
-maps and planar units on simple CRS.
+maps and planar units on simple CRS. The locate control asks the browser for a
+position and moves the view by default; its accessible status announces
+`Locating…`, `Location found` or the typed failure (`Location permission denied`,
+`Location request timed out`, `Location unavailable`, `Location is not supported`).
+Set `setView: false` to keep the view still, or `zoom` to choose the located
+zoom. A planar projection ignores the view move, like `map.locate()`.
 
 The `list` control offers a bounded keyboard-operable feature list rather than a
 DOM button for every source record. Headless maps reject DOM-only operations.

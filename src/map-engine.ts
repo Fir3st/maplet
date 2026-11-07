@@ -444,6 +444,7 @@ export type {
   ControlPosition,
   ControlSpec,
   ListControlOptions,
+  LocateControlOptions,
 } from './ui/controls.ts';
 export type {
   DetailContent,
@@ -1635,6 +1636,57 @@ function buildHandle(
     },
   };
 
+  const locator = createLocator(() =>
+    typeof navigator !== 'undefined' && 'geolocation' in navigator
+      ? navigator.geolocation
+      : undefined,
+  );
+  const activeWatches = new Set<LocateWatch>();
+  const applyLocatedView = (
+    position: { lat: number; lng: number },
+    setView: LocateOptions['setView'],
+  ): void => {
+    if (!setView || scene.crs.positionKind !== 'geographic') return;
+    const zoom =
+      typeof setView === 'object' && setView.zoom !== undefined ? setView.zoom : undefined;
+    const center = { lat: position.lat, lng: position.lng };
+    view.set(zoom === undefined ? { center } : { center, zoom });
+  };
+  const locate = Object.assign(
+    async (options?: LocateOptions): Promise<LocateResult> => {
+      scene.assertAlive('locate');
+      const result = await locator.locate(options);
+      if (result.ok) applyLocatedView(result.position, options?.setView);
+      return result;
+    },
+    {
+      watch(options: LocateWatchOptions): LocateWatch {
+        scene.assertAlive('locate.watch');
+        const inner = locator.watch({
+          ...options,
+          onUpdate: (result) => {
+            if (result.ok) applyLocatedView(result.position, options.setView);
+            options.onUpdate?.(result);
+          },
+        });
+        let active = true;
+        const handle: LocateWatch = {
+          get active() {
+            return active && inner.active;
+          },
+          cancel: () => {
+            if (!active) return;
+            active = false;
+            inner.cancel();
+            activeWatches.delete(handle);
+          },
+        };
+        activeWatches.add(handle);
+        return handle;
+      },
+    },
+  );
+
   let destroyed = false;
 
   const controlsHost = container
@@ -1676,6 +1728,9 @@ function buildHandle(
               })),
               scene.layers.list().map((layer) => ({ sourceId: layer.sourceId })),
             ),
+        },
+        locate: {
+          request: (options) => locate(options),
         },
         view: {
           get: () => {
@@ -1735,57 +1790,6 @@ function buildHandle(
         },
       }
     : null;
-
-  const locator = createLocator(() =>
-    typeof navigator !== 'undefined' && 'geolocation' in navigator
-      ? navigator.geolocation
-      : undefined,
-  );
-  const activeWatches = new Set<LocateWatch>();
-  const applyLocatedView = (
-    position: { lat: number; lng: number },
-    setView: LocateOptions['setView'],
-  ): void => {
-    if (!setView || scene.crs.positionKind !== 'geographic') return;
-    const zoom =
-      typeof setView === 'object' && setView.zoom !== undefined ? setView.zoom : undefined;
-    const center = { lat: position.lat, lng: position.lng };
-    view.set(zoom === undefined ? { center } : { center, zoom });
-  };
-  const locate = Object.assign(
-    async (options?: LocateOptions): Promise<LocateResult> => {
-      scene.assertAlive('locate');
-      const result = await locator.locate(options);
-      if (result.ok) applyLocatedView(result.position, options?.setView);
-      return result;
-    },
-    {
-      watch(options: LocateWatchOptions): LocateWatch {
-        scene.assertAlive('locate.watch');
-        const inner = locator.watch({
-          ...options,
-          onUpdate: (result) => {
-            if (result.ok) applyLocatedView(result.position, options.setView);
-            options.onUpdate?.(result);
-          },
-        });
-        let active = true;
-        const handle: LocateWatch = {
-          get active() {
-            return active && inner.active;
-          },
-          cancel: () => {
-            if (!active) return;
-            active = false;
-            inner.cancel();
-            activeWatches.delete(handle);
-          },
-        };
-        activeWatches.add(handle);
-        return handle;
-      },
-    },
-  );
 
   // Lazily created: a map without details subscribes to nothing and adds no DOM.
   let detailController: DetailController | null = null;

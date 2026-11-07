@@ -11,9 +11,10 @@
 
 import { MapletError } from '../api/errors.ts';
 import type { FeatureRef, FeatureSnapshot } from '../api/types.ts';
+import type { LocateErrorCode, LocateOptions, LocateResult } from './locate.ts';
 import { geographicScale, planarScale } from './scale.ts';
 
-export type ControlKind = 'zoom' | 'attribution' | 'scale' | 'layers' | 'list';
+export type ControlKind = 'zoom' | 'attribution' | 'scale' | 'layers' | 'list' | 'locate';
 export type ControlPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
 
 export interface ListControlOptions {
@@ -25,13 +26,41 @@ export interface ListControlOptions {
   readonly onSelect?: (feature: FeatureSnapshot) => void;
 }
 
-export interface ControlSpec {
-  readonly id?: string;
-  readonly kind: ControlKind;
-  readonly position?: ControlPosition;
-  /** Options of the `list` control; ignored by the other kinds. */
-  readonly options?: ListControlOptions;
+/**
+ * `locate` control options (UI-11). The control asks `map.locate()` for a
+ * position, moves the view when `setView` allows it and announces the typed
+ * result through an `aria-live` status instead of keeping a second model.
+ */
+export interface LocateControlOptions {
+  /** Accessible button label and tooltip; defaults to "Show my location". */
+  readonly label?: string;
+  /** Move the view to the result (default true; planar maps ignore it). */
+  readonly setView?: boolean;
+  /** Zoom applied with the located view; the current zoom is kept when omitted. */
+  readonly zoom?: number;
+  readonly enableHighAccuracy?: boolean;
+  readonly timeoutMs?: number;
+  readonly maximumAgeMs?: number;
 }
+
+export type ControlSpec =
+  | {
+      readonly id?: string;
+      readonly kind: 'zoom' | 'attribution' | 'scale' | 'layers';
+      readonly position?: ControlPosition;
+    }
+  | {
+      readonly id?: string;
+      readonly kind: 'list';
+      readonly position?: ControlPosition;
+      readonly options?: ListControlOptions;
+    }
+  | {
+      readonly id?: string;
+      readonly kind: 'locate';
+      readonly position?: ControlPosition;
+      readonly options?: LocateControlOptions;
+    };
 
 export interface ControlLayerEntry {
   readonly id: string;
@@ -53,6 +82,9 @@ export interface ControlsContext {
   };
   readonly attributions: {
     list(): readonly string[];
+  };
+  readonly locate: {
+    request(options?: LocateOptions): Promise<LocateResult>;
   };
   readonly view: {
     get(): {
@@ -89,6 +121,7 @@ interface ManagedControl {
 
 const DEFAULT_POSITION: Record<ControlKind, ControlPosition> = {
   zoom: 'top-left',
+  locate: 'top-left',
   layers: 'top-right',
   list: 'top-right',
   scale: 'bottom-left',
@@ -247,6 +280,8 @@ function buildContent(
   switch (spec.kind) {
     case 'zoom':
       return buildZoom(element, context);
+    case 'locate':
+      return buildLocate(element, context, spec.options ?? {});
     case 'layers':
       return buildLayers(element, context);
     case 'attribution':
@@ -285,6 +320,98 @@ function buildZoom(element: HTMLElement, context: ControlsContext): () => void {
     const state = context.zoom.get();
     zoomIn.disabled = state.zoom >= state.maxZoom - 1e-9;
     zoomOut.disabled = state.zoom <= state.minZoom + 1e-9;
+  };
+}
+
+const LOCATE_ICON = `<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
+
+/** Human-readable status for a typed locate failure (UI-11). */
+export function locateFailureMessage(code: LocateErrorCode): string {
+  switch (code) {
+    case 'permission':
+      return 'Location permission denied';
+    case 'timeout':
+      return 'Location request timed out';
+    case 'unavailable':
+      return 'Location unavailable';
+    case 'unsupported':
+      return 'Location is not supported';
+  }
+}
+
+/** Resolves the control's view request without inventing a second view model. */
+export function locateViewOption(
+  options: LocateControlOptions,
+): Exclude<LocateOptions['setView'], undefined> {
+  if (options.setView === false) return false;
+  if (options.zoom === undefined) return true;
+  return { zoom: options.zoom };
+}
+
+/** Locate button (UI-11): one request, a typed result and no second state model. */
+function buildLocate(
+  element: HTMLElement,
+  context: ControlsContext,
+  options: LocateControlOptions,
+): () => void {
+  const label = options.label ?? 'Show my location';
+  element.style.cssText = 'position:relative;display:flex;';
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.dataset.action = 'locate';
+  button.dataset.state = 'idle';
+  button.setAttribute('aria-label', label);
+  button.title = label;
+  button.style.cssText =
+    'width:34px;height:34px;border:0;border-radius:6px;background:#ffffff;box-shadow:0 1px 4px rgba(0,0,0,.35);color:#374151;cursor:pointer;padding:0;display:grid;place-items:center;';
+  button.innerHTML = LOCATE_ICON;
+  const status = document.createElement('span');
+  status.setAttribute('role', 'status');
+  status.setAttribute('aria-live', 'polite');
+  status.dataset.mapletLocateStatus = 'true';
+  status.style.cssText =
+    'position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;';
+  element.append(button, status);
+
+  const render = (state: 'idle' | 'locating' | 'found' | 'error', message = ''): void => {
+    button.dataset.state = state;
+    button.setAttribute('aria-busy', state === 'locating' ? 'true' : 'false');
+    button.title = message ? `${label} — ${message}` : label;
+    button.style.color = state === 'error' ? '#b91c1c' : state === 'idle' ? '#374151' : '#2563eb';
+    button.style.cursor = state === 'locating' ? 'progress' : 'pointer';
+    if (message) status.textContent = message;
+  };
+  render('idle');
+
+  let pending = false;
+  const request = async (): Promise<void> => {
+    if (pending) return;
+    pending = true;
+    render('locating', 'Locating…');
+    try {
+      const result = await context.locate.request({
+        setView: locateViewOption(options),
+        ...(options.enableHighAccuracy !== undefined
+          ? { enableHighAccuracy: options.enableHighAccuracy }
+          : {}),
+        ...(options.timeoutMs !== undefined ? { timeoutMs: options.timeoutMs } : {}),
+        ...(options.maximumAgeMs !== undefined ? { maximumAgeMs: options.maximumAgeMs } : {}),
+      });
+      if (!button.isConnected) return;
+      pending = false;
+      if (result.ok) render('found', 'Location found');
+      else render('error', locateFailureMessage(result.code));
+    } catch (error) {
+      if (!button.isConnected) return;
+      pending = false;
+      render('error', error instanceof MapletError ? error.message : 'Location unavailable');
+    }
+  };
+  button.addEventListener('click', () => {
+    void request();
+  });
+  return () => {
+    // State is derived from the button itself; removal needs no extra cleanup.
   };
 }
 
