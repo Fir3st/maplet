@@ -62,17 +62,18 @@ push `main`. Prereleases use `next`; stable versions use `latest`. Existing publ
 versions are never overwritten. The workflow retains package build artifacts for
 14 days and attaches the archive to the release.
 
-npmjs.com publication is manual and is not performed by CI. Run the checks and
-publish the same version from the release commit:
+npmjs.com publication is manual and is not performed by CI. Publish the same
+version from the release commit:
 
 ```sh
-npm run check
 npm publish --access public
 ```
 
-The first publish of the scoped package needs `--access public`; later publishes
-keep the public access level. GitHub Packages publication and the GitHub Release
-remain automatic when the version change reaches `main`.
+The `prepublishOnly` script runs `npm run check`, so lint, formatting, build,
+type checks and tests must pass and `dist` is rebuilt from the current source
+before packing. The first publish of the scoped package needs `--access public`;
+later publishes keep the public access level. GitHub Packages publication and the
+GitHub Release remain automatic when the version change reaches `main`.
 
 If a workflow fails, fix the cause before retrying. An incomplete GitHub release
 requires explicit cleanup in GitHub; the workflow refuses to overwrite it silently.
