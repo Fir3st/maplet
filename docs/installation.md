@@ -1,7 +1,35 @@
 # Download and installation
 
-Maplet is published as **@fir3st/maplet** to GitHub Packages, not npmjs.com.
-Release archives are available without registry authentication.
+Maplet is published as **@fir3st/maplet** to npmjs.com and mirrored to GitHub
+Packages. Release archives are available without registry authentication.
+
+## npmjs.com
+
+```sh
+npm install @fir3st/maplet
+```
+
+Stable releases use the `latest` dist-tag; prereleases use `next`:
+
+```sh
+npm install @fir3st/maplet@next
+```
+
+Pin a specific version for reproducible builds; the 0.1 line is pre-1.0, so a
+minor version can include breaking changes. See [migration](api.md#migration-table).
+
+## GitHub Packages
+
+The GitHub npm registry requires authentication even for public packages. With
+GitHub package-read authentication already configured:
+
+```sh
+npm install @fir3st/maplet@latest --registry=https://npm.pkg.github.com
+```
+
+For projects with packages from multiple registries, configure only the
+`@fir3st` scope. Follow [GitHub's installation guide](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-npm-registry#installing-a-package).
+Do not put authentication material into application source.
 
 ## Release archive
 
@@ -17,23 +45,6 @@ Import the package from your application:
 ```ts
 import { createMap } from '@fir3st/maplet';
 ```
-
-## GitHub Packages
-
-With GitHub package-read authentication already configured:
-
-```sh
-npm install @fir3st/maplet@latest --registry=https://npm.pkg.github.com
-```
-
-The GitHub npm registry requires authentication even for public packages. For
-projects with packages from multiple registries, configure only the `@fir3st`
-scope. Follow [GitHub's installation guide](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-npm-registry#installing-a-package).
-Do not put authentication material into application source.
-
-Stable releases use the `latest` dist-tag; prereleases use `next`. Pin a specific
-version for reproducible builds; the 0.1 line is pre-1.0, so a minor version can
-include breaking changes. See [migration](api.md#migration-table).
 
 ## Browser modules
 

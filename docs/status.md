@@ -658,5 +658,6 @@ and verifies its output. Consumer type tests resolve the package's root, math
 and formats exports against those generated declarations.
 
 The archive audit uses `npm pack --dry-run` to check runtime assets and exclude
-development files. GitHub Packages publication uses the repository-linked registry;
-the same tested archive is attached to GitHub Releases.
+development files. GitHub Packages publication uses the repository-linked registry
+and npmjs.com publication is performed manually from the tested archive; the same
+archive is attached to GitHub Releases.

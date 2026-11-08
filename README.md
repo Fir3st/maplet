@@ -14,15 +14,21 @@ and [known limitations](docs/status.md#known-limitations).
 
 ## Install
 
-Download the `.tgz` from [GitHub Releases](https://github.com/Fir3st/maplet/releases)
-and install it locally, or use GitHub Packages with package-read authentication:
-
 ```sh
-npm install @fir3st/maplet@next --registry=https://npm.pkg.github.com
+npm install @fir3st/maplet
 ```
 
-Maplet has no runtime package dependencies and includes TypeScript declarations.
-See [installation](docs/installation.md) for archive and browser-module setup.
+The package is published to npmjs.com and mirrored to GitHub Packages, which
+requires package-read authentication even for public packages:
+
+```sh
+npm install @fir3st/maplet@latest --registry=https://npm.pkg.github.com
+```
+
+Release archives are also available on
+[GitHub Releases](https://github.com/Fir3st/maplet/releases). Maplet has no
+runtime package dependencies and includes TypeScript declarations. See
+[installation](docs/installation.md) for archive and browser-module setup.
 
 ## Quick start
 
