@@ -12,9 +12,6 @@
   "bugs": {
     "url": "https://github.com/Fir3st/maplet/issues"
   },
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
-  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

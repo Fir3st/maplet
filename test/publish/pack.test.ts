@@ -38,11 +38,7 @@ test('npm pack includes the runtime assets and no development files', () => {
     encoding: 'utf8',
   });
   const [report] = JSON.parse(output) as [{ filename: string; files: { path: string }[] }];
-  assert.match(
-    report.filename,
-    /^fir3st-maplet-.*\.tgz$/,
-    'archive must use the GitHub Packages scope',
-  );
+  assert.match(report.filename, /^fir3st-maplet-.*\.tgz$/, 'archive must use the published scope');
   const files = report.files.map((entry) => entry.path);
   for (const required of [
     'package.json',
@@ -74,16 +70,20 @@ test('npm pack includes the runtime assets and no development files', () => {
   }
 });
 
-test('package targets the repository-linked GitHub npm registry', () => {
+test('package publishes to npmjs by default and links to its repository', () => {
   const manifest = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')) as {
     name: string;
     private?: boolean;
-    publishConfig: { registry: string };
+    publishConfig?: { registry?: string };
     repository: { url: string };
   };
   assert.equal(manifest.name, '@fir3st/maplet');
   assert.notEqual(manifest.private, true, 'private packages cannot be published');
-  assert.equal(manifest.publishConfig.registry, 'https://npm.pkg.github.com');
+  assert.equal(
+    manifest.publishConfig?.registry,
+    undefined,
+    'manual publishes must default to npmjs.com; GitHub Packages is selected in CI',
+  );
   assert.equal(manifest.repository.url, 'git+https://github.com/Fir3st/maplet.git');
 });
 
